@@ -1,6 +1,7 @@
 package com.kxsv.schooldiary
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -65,9 +66,10 @@ fun DefaultPreview() {
                 .layoutId("chips")
         ) {
             items(2) {
-                ChipSection(chips = listOf("Расписание", "Задания", "Оценки", "Оценки", "Оценки"))
+                ChipSection(chips = listOf("Расписание", "Задания", "Оценки"))
                 WeeklyReport(days = listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб"))
                 CurrentDay()
+                RegularDay()
             }
         }
     }
@@ -218,44 +220,56 @@ fun WeeklyReport(
                         color = MainText,
                         overflow = TextOverflow.Ellipsis,
                     )
-
                 }
             }
-            Divider(
+            ShowMore()
+        }
+    }
+}
+
+@Composable
+fun ShowMore(
+    // TODO link to the screen that opens after click
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { /*TODO callback*/ }
+    ) {
+        Divider(
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(bottom = 8.dp)
+                .fillMaxWidth(0.9512195f),
+            color = com.kxsv.schooldiary.ui.theme.Divider,
+            thickness = 1.dp
+        )
+        Row {
+            Icon(
+                imageVector = Icons.Filled.ArrowForward,
+                contentDescription = ""/* TODO Localized description*/,
                 modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(bottom = 8.dp)
-                    .fillMaxWidth(0.9512195f),
-                color = com.kxsv.schooldiary.ui.theme.Divider,
-                thickness = 1.dp
+                    .padding(start = 10.dp)
             )
-            Row() {
-                Icon(
-                    imageVector = Icons.Filled.ArrowForward,
-                    contentDescription = ""/* TODO Localized description*/,
-                    modifier = Modifier
-                        .padding(start = 10.dp)
-                )
-                Text(
-                    text = "Показать больше",
-                    textAlign = TextAlign.Left,
-                    fontSize = 14.sp,
-                    //fontFamily = fontFamily,
-                    fontWeight = FontWeight.Normal,
-                    color = MainText,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .padding(top = 4.dp, bottom = 14.dp, start = 10.dp)
-                )
-            }
+            Text(
+                text = "Показать больше",
+                textAlign = TextAlign.Left,
+                fontSize = 14.sp,
+                //fontFamily = fontFamily,
+                fontWeight = FontWeight.Normal,
+                color = MainText,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .padding(top = 4.dp, bottom = 14.dp, start = 10.dp)
+            )
         }
     }
 }
 
 @Composable
 fun DayHeader(
-    dayOfWeek: String = "Сегодня",
-    date: String = "19 февраля"
+    dayOfWeek: String = "where?",
+    date: String = "где?"
 ) {
     Row(
         modifier = Modifier
@@ -302,6 +316,7 @@ fun CurrentDay(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(bottom = 18.dp)
             .layoutId("currentday"),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -310,11 +325,179 @@ fun CurrentDay(
             CardSubHeader(icon, heading, 14.sp)
             LessonDetailed()
         }
+        // TODO CHECK FOR LESSON and if there are then do this part
         Spacer(
             modifier = Modifier
                 .height(8.dp)
         )
-        NextLessonsBox()
+        ScheduleDetailed()
+    }
+}
+
+@Composable
+fun RegularDay(
+    icon: ImageVector = Icons.Outlined.Notifications,
+    heading: String = "Предстоящие задания",
+    dayOfWeek: String = "где он?", // REVIEW may be useless, just take today's day
+    date: String = "где?"
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        DayHeader(dayOfWeek, date)
+        MainScreenCard {
+            CardSubHeader(icon, heading, 14.sp)
+            TaskGrid()
+            ShowMore()
+        }
+        MiniSchedule()
+    }
+}
+
+@Composable
+fun MiniSchedule(
+    lessons: List<String> = listOf(
+        "Русский язык",
+        "Геометрия",
+        "Физика",
+        "Иностранный язык (английский)",
+        "Английский язык",
+        "Алгебра",
+        "Немецкий язык",
+    ),
+    time: List<Pair<String, String>> = listOf(
+        Pair("8:30", "9:15"),
+        Pair("9:30", "10:15"),
+        Pair("10:30", "11:15"),
+        Pair("11:25", "12:10"),
+        Pair("12:30", "13:15"),
+        Pair("13:35", "14:20"),
+        Pair("14:30", "15:15"),
+        Pair("15:25", "16:10"),
+    )
+) {
+    if (lessons.isEmpty() or time.isEmpty()) {
+        // TODO THROW error
+        return
+    }
+    Column(
+        modifier = Modifier
+            .wrapContentWidth()
+            .fillMaxWidth(0.9f)
+            .padding(start = 10.dp, top = 8.dp),
+        horizontalAlignment = Alignment.Start,
+        verticalArrangement = Arrangement.Top
+
+    ) {
+        lessons.forEachIndexed{index, lesson ->
+            ScheduleRow(time[index],lesson)
+        }
+    }
+}
+
+@Composable
+fun ScheduleRow(
+    time: Pair<String, String> = Pair("8:30", "9:15"),
+    lesson: String = "Геометрия"
+) {
+    Row(
+        modifier = Modifier
+            .wrapContentSize()
+            .padding(bottom = 0.dp)
+    ) {
+        Text(
+            text = "${time.first} - ${time.second}",
+            textAlign = TextAlign.End,
+            fontSize = 10.sp,
+            //fontFamily = fontFamily,
+            fontWeight = FontWeight.Normal,
+            color = MainText,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .width(65.dp) // REVIEW
+                .padding(end = 8.dp)
+                .alignByBaseline()
+        )
+        Text(
+            text = lesson,
+            textAlign = TextAlign.Center,
+            fontSize = 14.sp,
+            //fontFamily = fontFamily,
+            fontWeight = FontWeight.Normal,
+            color = MainText,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .alignByBaseline()
+        )
+    }
+}
+
+@Composable
+fun TaskGrid(
+    tasks: List<Pair<String, String>> = listOf(
+        Pair("Пресс качат", "Русский язык"),
+        Pair("т) бегит", "Физика"),
+        Pair("турник", "Математика"),
+        Pair("Анжуманя", "Английский язык"),
+        Pair("Пресс качат", "Немецкий язык"),
+        Pair("бегит", "Алгебра"),
+        Pair("турник", "Геометрия"),
+        Pair("Анжуманя", "Физкультура"),
+        Pair("гантели", "Обществознание"),
+    )
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 10.dp, end = 10.dp, bottom = 12.dp),
+    ) {
+        // TODO COLUMNS\ROWS AMOUNT SCREEN ADAPTIVE
+        var rowsAmount = 3
+        var columnsAmount = 2
+        var alreadyPrinted = 0
+
+        if (tasks.size <= rowsAmount) {
+            rowsAmount = tasks.size
+            columnsAmount = 1
+        }
+
+        for (column in 0 until columnsAmount) {
+            var padding = 32.dp
+            if ((column + 1) == columnsAmount) { // isLastColumn
+                padding = 0.dp
+            }
+            Column(
+                modifier = Modifier
+                    .wrapContentWidth()
+                    .padding(end = padding)
+            ) {
+                for (row in 0 until rowsAmount) {
+                    Text(
+                        text = "${row + 1 + alreadyPrinted}) ${tasks[row + alreadyPrinted].first}",
+                        textAlign = TextAlign.Center,
+                        fontSize = 16.sp,
+                        //fontFamily = fontFamily,
+                        fontWeight = FontWeight.Normal,
+                        color = MainText,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = tasks[row + alreadyPrinted].second,
+                        textAlign = TextAlign.Center,
+                        fontSize = 12.sp,
+                        //fontFamily = fontFamily,
+                        fontWeight = FontWeight.Normal,
+                        color = MainText,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                alreadyPrinted += rowsAmount
+                if (tasks.size < 6) rowsAmount = tasks.size - alreadyPrinted
+            }
+        }
     }
 }
 
@@ -362,7 +545,6 @@ fun CardSubHeader(
     }
 }
 
-@Preview(showBackground = true)
 @Composable
 fun LessonDetailed(
     lessonName: String? = "Русский язык",
@@ -453,36 +635,47 @@ fun LessonDetailed(
 }
 
 @Composable
-fun NextLessonsBox(
+fun ScheduleDetailed(
     lessons: List<String> = listOf(
         "Русский язык",
         "Геометрия",
         "Физика",
         "Иностранный язык (английский)",
-        "Английский язык"
+        "Английский язык",
+        "Алгебра",
+        "Немецкий язык",
     ),
     time: List<Pair<String, String>> = listOf(
-        Pair("09:30", "10:15"),
+        Pair("9:30", "10:15"),
         Pair("10:30", "11:15"),
         Pair("11:25", "12:10"),
         Pair("12:30", "13:15"),
         Pair("13:35", "14:20"),
+        Pair("14:30", "15:15"),
+        Pair("15:25", "16:10"),
     )
 ) {
+    if (lessons.isEmpty() or time.isEmpty()) {
+        // TODO THROW error
+        return
+    }
     MainScreenCard {
         CardSubHeader(Icons.Filled.DateRange, "Следующие уроки", 14.sp)
         LessonDetailed(lessons[0], time[0], "310")
-        val lessons = lessons.drop(1)
-        val time = time.drop(1)
-        Divider(
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(bottom = 8.dp)
-                .fillMaxWidth(0.9512195f),
-            color = com.kxsv.schooldiary.ui.theme.Divider,
-            thickness = 1.dp
-        )
+        if (lessons.size > 1) {
+            Divider(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(bottom = 8.dp)
+                    .fillMaxWidth(0.9512195f),
+                color = com.kxsv.schooldiary.ui.theme.Divider,
+                thickness = 1.dp
+            )
+        }
         lessons.forEachIndexed { it, v ->
+            if ((it == 0) or (it >= 4)) {
+                return@forEachIndexed
+            }
             Column {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -532,5 +725,6 @@ fun NextLessonsBox(
                 }
             }
         }
+        ShowMore()
     }
 }
