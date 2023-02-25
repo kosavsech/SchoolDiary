@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -79,7 +80,8 @@ fun DefaultPreview() {
 @Composable
 fun TopBar(
     title: String = "Главное меню",
-    isDeadEnd: Boolean = false
+    isDeadEnd: Boolean = false,
+    bottomPadding: Dp = 14.dp,
 ) {
     val imageVector = if (isDeadEnd) {
         Icons.Filled.Close
@@ -88,6 +90,7 @@ fun TopBar(
     }
     TopAppBar(
         modifier = Modifier
+            .padding(bottom = bottomPadding)
             .layoutId("topbar"),
         title = {
             Text(
@@ -112,7 +115,8 @@ fun TopBar(
                     contentDescription = ""/* TODO Localized description*/
                 )
             }
-        })
+        }
+    )
 }
 
 @Composable
@@ -131,7 +135,7 @@ fun ChipSection(
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = MainText),
                 contentPadding = PaddingValues(16.dp, 10.dp),
                 modifier = Modifier
-                    .padding(start = 18.dp, top = 14.dp, bottom = 20.dp)
+                    .padding(start = 18.dp, bottom = 20.dp)
             ) {
                 Text(
                     text = chips[it],
