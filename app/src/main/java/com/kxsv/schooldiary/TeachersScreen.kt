@@ -1,5 +1,6 @@
 package com.kxsv.schooldiary
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -11,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -21,17 +23,18 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.ConstraintSet
 import androidx.constraintlayout.compose.layoutId
 import com.kxsv.schooldiary.ui.theme.MainText
+import com.kxsv.schooldiary.ui.theme.TopBarBackground
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
-fun GradesPreview() {
+fun TeachersPreview() {
     val c = ConstraintSet {
         val topBar = createRefFor("topbar")
-        val subject = createRefFor("subjects")
+        val table = createRefFor("table")
 
-        constrain(subject) {
+        constrain(table) {
             top.linkTo(topBar.bottom)
         }
     }
@@ -54,10 +57,14 @@ fun GradesPreview() {
         "Настройки",
     )
     val selectedItem = remember { mutableStateOf(items[0]) }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            ModalDrawerSheet {
+            ModalDrawerSheet(
+                modifier = Modifier
+                    .fillMaxWidth(0.7f)
+            ) {
                 Spacer(Modifier.height(12.dp))
                 items.forEach { item ->
                     if (item == "divider") {
@@ -99,28 +106,14 @@ fun GradesPreview() {
                 modifier = Modifier
                     .fillMaxSize()
             ) {
-                TopBar("Оценки", drawerState = drawerState, scope = scope)
-                LazyColumn(
+                TopBar("Учителя", bottomPadding = 0.dp, drawerState = drawerState, scope = scope)
+                Column(
                     modifier = Modifier
-                        .layoutId("subjects")
+                        .layoutId("table")
                 ) {
-                    for (i in 1..1) {
-                        item {
-                            SubjectGrade()
-                        }
-                        item {
-                            SubjectGrade("Русский язык")
-                        }
-                        item {
-                            SubjectGrade("Геометрия")
-                        }
-                        item {
-                            SubjectGrade("Английский язык")
-                        }
-                        item {
-                            SubjectGrade("Иностранный язык (английский)")
-                        }
-                    }
+                    //items(1) {
+                    TeachersTable()
+                    //}
                 }
             }
         }
@@ -128,99 +121,61 @@ fun GradesPreview() {
 }
 
 @Composable
-fun SubjectGrade(
-    lesson: String = "Русский язык",
-    isTags: Boolean = true,
+fun TeachersTable(
+    teachers: List<Pair<String, String>> = listOf(
+        Pair("Пермякова П.А.", "+19631223511"),
+        Pair("Муллин А.А.", "+29631223512"),
+        Pair("Лихашерстный В.Ю.", "+39631223513"),
+        Pair("Пермякова П.А.", "+19631223511"),
+        Pair("Муллин А.А.", "+29631223512"),
+    )
 ) {
-    Column {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier
-                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
-                .fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier
-            ) {
-                Text(
-                    text = lesson,
-                    textAlign = TextAlign.Start,
-                    fontSize = 23.sp,
-                    //fontFamily = fontFamily,
-                    fontWeight = FontWeight.Normal,
-                    color = MainText,
-                    overflow = TextOverflow.Ellipsis,
+    LazyColumn {
+        teachers.forEachIndexed { index, teacher ->
+            // REVIEW)))
+            val rowColor = if (index % 2 == 0) Color.Transparent else TopBarBackground
+            item {
+                Row(
                     modifier = Modifier
-                        .widthIn(max = 208.dp)
-                )
-                if (isTags) {
-                    Text(
-                        text = "Теги: tagname",
-                        textAlign = TextAlign.Start,
-                        fontSize = 14.sp,
-                        //fontFamily = fontFamily,
-                        fontWeight = FontWeight.Normal,
-                        color = MainText,
-                        overflow = TextOverflow.Ellipsis,
+                        .fillMaxWidth()
+                        .heightIn(42.dp)
+                        .background(rowColor),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
-                            .widthIn(max = 208.dp)
-
-                    )
+                            .fillMaxWidth(0.5f)
+                    ) {
+                        Text(
+                            text = teacher.first,
+                            textAlign = TextAlign.Center,
+                            fontSize = 19.sp,
+                            //fontFamily = fontFamily,
+                            fontWeight = FontWeight.Normal,
+                            color = MainText,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    Column(
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    ) {
+                        Text(
+                            text = teacher.second,
+                            textAlign = TextAlign.Center,
+                            fontSize = 19.sp,
+                            //fontFamily = fontFamily,
+                            fontWeight = FontWeight.Normal,
+                            color = MainText,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
             }
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(18.dp),
-                modifier = Modifier
-                    .wrapContentSize()
-            ) {
-                Grade() //todo show last 3 or just last if less than 3 marks
-                Grade()
-                Grade()
-            }
         }
-        Divider(
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(bottom = 16.dp)
-                .fillMaxWidth(0.9512195f),
-            color = com.kxsv.schooldiary.ui.theme.Divider,
-            thickness = 1.dp
-        )
-    }
-
-}
-
-@Composable
-fun Grade(
-    date: String = "10.12",
-    mark: String = "3",
-    //workType: String = "Вид работ"
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-        modifier = Modifier
-            .wrapContentSize()
-    ) {
-        Text(
-            text = date,
-            textAlign = TextAlign.Center,
-            fontSize = 12.sp,
-            //fontFamily = fontFamily,
-            fontWeight = FontWeight.Normal,
-            color = MainText,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Text(
-            text = mark,
-            textAlign = TextAlign.Center,
-            fontSize = 19.sp,
-            //fontFamily = fontFamily,
-            fontWeight = FontWeight.Normal,
-            color = MainText,
-            overflow = TextOverflow.Ellipsis,
-        )
     }
 }
