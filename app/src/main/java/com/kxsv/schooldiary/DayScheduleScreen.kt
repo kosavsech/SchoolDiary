@@ -5,19 +5,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.*
-import androidx.compose.material3.Divider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -25,10 +22,47 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.ConstraintSet
 import androidx.constraintlayout.compose.layoutId
 import com.kxsv.schooldiary.ui.theme.MainText
+import com.kxsv.schooldiary.ui.theme.SecondaryText
 import kotlinx.coroutines.launch
-import com.kxsv.schooldiary.ui.theme.BorderOfBoxes
 
-
+// TODO introduce DB for that stuff
+val time: List<Pair<String, String>> = listOf(
+    Pair("8:30", "9:15"),
+    Pair("9:30", "10:15"),
+    Pair("10:30", "11:15"),
+    Pair("11:25", "12:10"),
+    Pair("12:30", "13:15"),
+    Pair("13:35", "14:20"),
+    Pair("14:30", "15:15"),
+    Pair("15:25", "16:10"),
+    Pair("16:20", "17:05"),
+    Pair("17:15", "18:00"),
+    Pair("18:10", "18:55"),
+)
+val cabinets: List<String> = listOf(
+"110",
+"210",
+"310",
+"410",
+"510",
+"610",
+"710",
+"810",
+"910",
+"1010",
+)
+val tags: List<String> = listOf(
+    "tagName",
+    "tagName",
+    "tagName",
+    "tagName",
+    "tagName",
+    "tagName",
+    "tagName",
+    "tagName",
+    "tagName",
+    "tagName",
+)
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
@@ -138,7 +172,7 @@ fun DayOfWeekHeader(
             color = MainText,
         )
         Text(
-            text = "У тебя ${lessonsAmount} уроков",
+            text = "У тебя $lessonsAmount уроков",
             textAlign = TextAlign.Start,
             fontSize = 14.sp,
             fontWeight = FontWeight.Normal,
@@ -157,99 +191,83 @@ fun Lessons(
         "Английский язык",
         "Алгебра",
         "Немецкий язык",
-    ),
-    time: List<Pair<String, String>> = listOf(
-        Pair("9:30", "10:15"),
-        Pair("10:30", "11:15"),
-        Pair("11:25", "12:10"),
-        Pair("12:30", "13:15"),
-        Pair("13:35", "14:20"),
-        Pair("14:30", "15:15"),
-        Pair("15:25", "16:10"),
-    ),
-    cabinets: List<String> = listOf(
-        "310",
-        "310",
-        "310",
-        "310",
-        "310",
-        "310",
-        "310",
-    ),
-    tags: List<String> = listOf(
-        "govno",
-        "govno",
-        "govno",
-        "govno",
-        "govno",
-        "govno",
-        "govno",
+        "Английский язык",
+        "Алгебра",
+        "Немецкий язык",
     ),
 ) {
-
     lessons.forEachIndexed { it, lesson ->
-        if ((it == 0) or (it >= 10)) {
-            return@forEachIndexed
-        }
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp),
-
-            ) {
-            Text(
-                text = "${time[it].first} - ${time[it].second}",
-                textAlign = TextAlign.Start,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = BorderOfBoxes,
-            )
-            Text(
-                text = lesson,
-                textAlign = TextAlign.Start,
-                fontSize = 23.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MainText
-            )
-            Row {
-                Row(
-                    modifier = Modifier
-                        .padding(end = 12.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_cabinet),
-                        contentDescription = "ic_cabinet",
-                        modifier = Modifier
-                            .align(Alignment.CenterVertically)
-                            .size(13.dp, 15.dp)
-                            .padding(end = 6.dp)
-                    )
-                    Text(
-                        text = cabinets[it],
-                        textAlign = TextAlign.Start,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = BorderOfBoxes
-                    )
-                }
-                Text(
-                    text = "Теги: ${tags[it]}",
-                    textAlign = TextAlign.Start,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = BorderOfBoxes
-                )
-            }
-
-        }
-        if (it + 1 != lessons.size) {
+        Lesson(it, lesson)
+        if (it != lessons.lastIndex) {
             Divider(
                 modifier = Modifier
-                    .padding(bottom = 8.dp, top = 12.dp)
-                    .fillMaxWidth(1f),
+                    .padding(bottom = 14.dp, top = 14.dp)
+                    .fillMaxWidth(),
                 color = com.kxsv.schooldiary.ui.theme.Divider,
                 thickness = 1.dp,
             )
         }
+    }
+}
+
+@Composable
+fun Lesson(
+    index : Int,
+    name : String = "lesson name",
+){
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp),
+    ) {
+        Text(
+            text = "${time[index].first} - ${time[index].second}",
+            textAlign = TextAlign.Start,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = SecondaryText,
+        )
+        Text(
+            text = name,
+            textAlign = TextAlign.Start,
+            fontSize = 23.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = MainText,
+            modifier = Modifier
+                .padding(top = 4.dp)
+        )
+        Row(
+            modifier = Modifier
+                .padding(top = 4.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(end = 12.dp)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_cabinet),
+                    contentDescription = "", // TODO
+                    modifier = Modifier
+                        .align(Alignment.CenterVertically)
+                        .size(13.dp, 15.dp)
+                        .padding(end = 6.dp)
+                )
+                Text(
+                    text = cabinets[index],
+                    textAlign = TextAlign.Start,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = SecondaryText
+                )
+            }
+            Text(
+                text = "Теги: ${tags[index]}",
+                textAlign = TextAlign.Start,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = SecondaryText
+            )
+        }
+
     }
 }
