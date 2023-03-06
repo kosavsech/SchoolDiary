@@ -1,123 +1,60 @@
-package com.kxsv.schooldiary
+package com.kxsv.schooldiary.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.ConstraintSet
 import androidx.constraintlayout.compose.layoutId
+import androidx.navigation.NavController
 import com.kxsv.schooldiary.ui.theme.MainText
 import com.kxsv.schooldiary.ui.theme.TopBarBackground
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true)
 @Composable
-fun TeachersPreview() {
+fun TeachersPreview(
+    navController: NavController,
+    drawerState: DrawerState,
+    scope: CoroutineScope
+) {
     val c = ConstraintSet {
         val topBar = createRefFor("topbar")
-        val table = createRefFor("table")
+        val content = createRefFor("content")
 
-        constrain(table) {
+        constrain(content) {
             top.linkTo(topBar.bottom)
         }
     }
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
-// icons to mimic drawer destinations
-    val items = listOf(
-        "Главное меню",
-        "Расписание",
-        "Задания",
-        "Оценки",
-        "divider",
-        "Список учителей",
-        "Посещаемость",
-        "Заметки",
-        "Звуковые записи",
-        "Учебные сайты",
-        "divider",
-        "Помощь и обратная связь",
-        "Настройки",
-    )
-    val selectedItem = remember { mutableStateOf(items[0]) }
-
-    ModalNavigationDrawer(
+    val selectedItem = remember { mutableStateOf(items[5]) }
+    SideMenu(
+        navController = navController,
+        selectedItem = selectedItem,
         drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet(
-                modifier = Modifier
-                    .fillMaxWidth(0.7f)
-            ) {
-                Spacer(Modifier.height(12.dp))
-                items.forEach { item ->
-                    if (item == "divider") {
-                        Divider(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            color = com.kxsv.schooldiary.ui.theme.Divider,
-                            thickness = 1.dp
-                        )
-                    } else {
-                        NavigationDrawerItem(
-                            icon = { Icon(Icons.Default.Email, contentDescription = null) },
-                            label = {
-                                Text(
-                                    text = item,
-                                    textAlign = TextAlign.Center,
-                                    fontSize = 14.sp,
-                                    //fontFamily = fontFamily,
-                                    fontWeight = FontWeight.Normal,
-                                    color = MainText,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            },
-                            selected = item == selectedItem.value,
-                            onClick = {
-                                scope.launch { drawerState.close() }
-                                selectedItem.value = item
-                            },
-                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                        )
-                    }
-                }
-            }
-        },
-        content = {
-            ConstraintLayout(
-                constraintSet = c,
-                modifier = Modifier
-                    .fillMaxSize()
-            ) {
-                TopBar("Учителя", bottomPadding = 0.dp, drawerState = drawerState, scope = scope)
-                Column(
-                    modifier = Modifier
-                        .layoutId("table")
-                ) {
-                    //items(1) {
-                    TeachersTable()
-                    //}
-                }
-            }
+        scope = scope
+    ) {
+        ConstraintLayout(
+            constraintSet = c,
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            TopBar("Учителя", bottomPadding = 0.dp, drawerState = drawerState, scope = scope)
+            TeachersTable()
         }
-    )
+    }
+
 }
 
 @Composable
@@ -130,7 +67,7 @@ fun TeachersTable(
         Pair("Муллин А.А.", "+29631223512"),
     )
 ) {
-    LazyColumn {
+    LazyColumn(Modifier.layoutId("content")) {
         teachers.forEachIndexed { index, teacher ->
             // REVIEW)))
             val rowColor = if (index % 2 == 0) Color.Transparent else TopBarBackground

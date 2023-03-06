@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary
+package com.kxsv.schooldiary.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -11,10 +11,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,7 +20,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -31,6 +27,8 @@ import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.ConstraintSet
 import androidx.constraintlayout.compose.layoutId
+import androidx.navigation.NavController
+import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.ui.theme.BorderOfBoxes
 import com.kxsv.schooldiary.ui.theme.MainText
 import com.kxsv.schooldiary.ui.theme.SecondaryText
@@ -38,53 +36,92 @@ import com.kxsv.schooldiary.ui.theme.TopBarBackground
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
+val items = listOf(
+    Pair("home_screen", "Главное меню"),
+    Pair("schedule_screen", "Расписание"),
+    Pair("tasks_screen", "Задания"),
+    Pair("grades_screen", "Оценки"),
+    Pair("", "divider"),
+    Pair("teachers_screen", "Список учителей"),
+    Pair("attendance_screen", "Посещаемость"),
+    Pair("notes_screen", "Заметки"),
+    Pair("recordings_screen", "Звуковые записи"),
+    Pair("study_sites_screen", "Учебные сайты"),
+    Pair("", "divider"),
+    Pair("help_feedback_screen", "Помощь и обратная связь"),
+    Pair("settings_screen", "Настройки"),
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true)
 @Composable
-fun DefaultPreview() {
+fun MainScreen(
+    navController: NavController,
+    drawerState: DrawerState,
+    scope: CoroutineScope
+) {
     val c = ConstraintSet {
         val topBar = createRefFor("topbar")
-        val chips = createRefFor("chips")
-        val weeklyReport = createRefFor("weeklyreport")
-        val currentDay = createRefFor("currentday")
+        val content = createRefFor("content")
 
-        constrain(chips) {
+        constrain(content) {
             top.linkTo(topBar.bottom)
         }
-        constrain(weeklyReport) {
-            top.linkTo(chips.bottom)
-            start.linkTo(parent.start)
-        }
-        constrain(currentDay) {
-            top.linkTo(weeklyReport.bottom)
+    }
+
+    val selectedItem = remember { mutableStateOf(items[0]) }
+    SideMenu(navController = navController, selectedItem = selectedItem, drawerState = drawerState, scope = scope){
+        ConstraintLayout(
+            constraintSet = c,
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            TopBar(scope = scope, drawerState = drawerState)
+            LazyColumn(
+                modifier = Modifier
+                    .layoutId("content")
+            ) {
+                for (i in 1..2) {
+                    item {
+                        ChipSection(
+                            chips = listOf(
+                                Pair("schedule_screen", "Расписание"),
+                                Pair("tasks_screen", "Задания"),
+                                Pair("grades_screen", "Оценки")
+                            ), navController
+                        )
+                    }
+                    item {
+                        WeeklyReport(days = listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб"))
+                    }
+                    item {
+                        CurrentDay()
+                    }
+                    item {
+                        RegularDay()
+                    }
+                }
+            }
         }
     }
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
-// icons to mimic drawer destinations
-    val items = listOf(
-        "Главное меню",
-        "Расписание",
-        "Задания",
-        "Оценки",
-        "divider",
-        "Список учителей",
-        "Посещаемость",
-        "Заметки",
-        "Звуковые записи",
-        "Учебные сайты",
-        "divider",
-        "Помощь и обратная связь",
-        "Настройки",
-    )
-    val selectedItem = remember { mutableStateOf(items[0]) }
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SideMenu(
+    navController: NavController,
+    drawerState: DrawerState,
+    scope: CoroutineScope,
+    selectedItem: MutableState<Pair<String, String>>,
+    content: @Composable () -> Unit,
+){
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
                 Spacer(Modifier.height(12.dp))
                 items.forEach { item ->
-                    if (item == "divider") {
+                    if (item.second == "divider") {
                         Divider(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -97,7 +134,7 @@ fun DefaultPreview() {
                             icon = { Icon(Icons.Default.Email, contentDescription = null) },
                             label = {
                                 Text(
-                                    text = item,
+                                    text = item.second,
                                     textAlign = TextAlign.Center,
                                     fontSize = 14.sp,
                                     //fontFamily = fontFamily,
@@ -110,6 +147,7 @@ fun DefaultPreview() {
                             onClick = {
                                 scope.launch { drawerState.close() }
                                 selectedItem.value = item
+                                navController.navigate(item.first)
                             },
                             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                         )
@@ -117,37 +155,9 @@ fun DefaultPreview() {
                 }
             }
         },
-        content = {
-            ConstraintLayout(
-                constraintSet = c,
-                modifier = Modifier
-                    .fillMaxSize()
-            ) {
-                TopBar(scope = scope, drawerState = drawerState)
-                LazyColumn(
-                    modifier = Modifier
-                        .layoutId("chips")
-                ) {
-                    for (i in 1..2) {
-                        item {
-                            ChipSection(chips = listOf("Расписание", "Задания", "Оценки"))
-                        }
-                        item {
-                            WeeklyReport(days = listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб"))
-                        }
-                        item {
-                            CurrentDay()
-                        }
-                        item {
-                            RegularDay()
-                        }
-                    }
-                }
-            }
-        }
+        content = content
     )
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBar(
@@ -195,15 +205,15 @@ fun TopBar(
 
 @Composable
 fun ChipSection(
-    chips: List<String>
+    chips: List<Pair<String, String>>,
+    navController: NavController
 ) {
-    LazyRow(
-        modifier = Modifier
-        //.layoutId("chips")
-    ) {
+    LazyRow() {
         items(chips.size) {
             OutlinedButton(
-                onClick = {/* TODO goToScreen(it) */ },
+                onClick = {
+                    navController.navigate(chips[it].first)
+                },
                 border = BorderStroke(1.dp, BorderOfBoxes),
                 shape = RoundedCornerShape(20.dp),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = MainText),
@@ -212,7 +222,7 @@ fun ChipSection(
                     .padding(start = 18.dp, bottom = 20.dp)
             ) {
                 Text(
-                    text = chips[it],
+                    text = chips[it].second,
                     textAlign = TextAlign.Center,
                     fontSize = 16.sp,
                     //fontFamily = fontFamily,
@@ -232,7 +242,6 @@ fun WeeklyReport(
     Column(
         // REVIEW make MainScreenCard to receive layoutId and padding to get rid of redundant column
         modifier = Modifier
-            .layoutId("weeklyreport")
             .padding(bottom = 24.dp),
     ) {
         MainScreenCard {
@@ -392,8 +401,7 @@ fun CurrentDay(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 18.dp)
-            .layoutId("currentday"),
+            .padding(bottom = 18.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         DayHeader(dayOfWeek, date)
