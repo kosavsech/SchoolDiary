@@ -17,10 +17,11 @@ import kotlinx.coroutines.CoroutineScope
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecordingsScreen(
+fun NoteDetailedScreen(
     navController: NavController,
     drawerState: DrawerState,
-    scope: CoroutineScope
+    scope: CoroutineScope,
+    name: String?,
 ) {
     val c = ConstraintSet {
         val topBar = createRefFor("topbar")
@@ -31,7 +32,7 @@ fun RecordingsScreen(
         }
     }
 
-    val selectedItem = remember { mutableStateOf(SideMenuScreens[7]) }
+    val selectedItem = remember { mutableStateOf(SideMenuScreens[6]) }
     SideMenu(
         navController = navController,
         selectedItem = selectedItem,
@@ -43,7 +44,7 @@ fun RecordingsScreen(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            TopBar("Звуковые записи", drawerState = drawerState, scope = scope, navController = navController)
+            TopBar(name, drawerState = drawerState, scope = scope, isDeadEnd = true, navController = navController)
             Text(text = "NOT DONE YET", Modifier.layoutId("content"), color = Color.Red) // TODO
         }
     }

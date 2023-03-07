@@ -29,7 +29,7 @@ fun TasksPreview(
         }
     }
 
-    val selectedItem = remember { mutableStateOf(items[2]) }
+    val selectedItem = remember { mutableStateOf(SideMenuScreens[2]) }
     SideMenu(
         navController = navController,
         selectedItem = selectedItem,
@@ -41,7 +41,7 @@ fun TasksPreview(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            TopBar("Задания", drawerState = drawerState, scope = scope)
+            TopBar("Задания", drawerState = drawerState, scope = scope, navController = navController)
             Text(text = "NOT DONE YET", Modifier.layoutId("content"), color = Color.Red) // TODO
         }
     }

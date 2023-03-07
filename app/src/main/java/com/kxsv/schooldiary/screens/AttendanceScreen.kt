@@ -31,7 +31,7 @@ fun AttendanceScreen(
         }
     }
 
-    val selectedItem = remember { mutableStateOf(items[6]) }
+    val selectedItem = remember { mutableStateOf(SideMenuScreens[5]) }
     SideMenu(
         navController = navController,
         selectedItem = selectedItem,
@@ -43,7 +43,7 @@ fun AttendanceScreen(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            TopBar("Посещаемость", drawerState = drawerState, scope = scope)
+            TopBar("Посещаемость", drawerState = drawerState, scope = scope, navController = navController)
             Text(text = "NOT DONE YET", Modifier.layoutId("content"), color = Color.Red) // TODO
         }
     }

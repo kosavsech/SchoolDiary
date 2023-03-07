@@ -62,7 +62,6 @@ val tags: List<String> = listOf(
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
-//@Preview(showBackground = true)
 @Composable
 fun DaySchedulePreview(
     navController: NavController,
@@ -78,7 +77,7 @@ fun DaySchedulePreview(
         }
     }
 
-    val selectedItem = remember { mutableStateOf(items[1]) }
+    val selectedItem = remember { mutableStateOf(SideMenuScreens[1]) }
     SideMenu(
         navController = navController,
         selectedItem = selectedItem,
@@ -90,14 +89,26 @@ fun DaySchedulePreview(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            TopBar("Расписание", drawerState = drawerState, scope = scope)
+            TopBar("Расписание", drawerState = drawerState, scope = scope, navController = navController)
             LazyColumn(
                 modifier = Modifier
                     .layoutId("content")
             ) {
+                val lessons = listOf(
+                    "Русский язык",
+                    "Геометрия",
+                    "Физика",
+                    "Иностранный язык (английский)",
+                    "Английский язык",
+                    "Алгебра",
+                    "Немецкий язык",
+                    "Английский язык",
+                    "Алгебра",
+                    "Немецкий язык",
+                )
                 item {
-                    DayOfWeekHeader()
-                    LessonsList()
+                    DayOfWeekHeader(lessonsAmount = lessons.size)
+                    LessonsList(lessons)
                 }
             }
         }
@@ -107,7 +118,7 @@ fun DaySchedulePreview(
 @Composable
 fun DayOfWeekHeader(
     dayOfWeek: String = "dayofweek",
-    lessonsAmount: String = "0"
+    lessonsAmount: Int = 0
 ) {
     Column(
         modifier = Modifier
@@ -133,18 +144,7 @@ fun DayOfWeekHeader(
 
 @Composable
 fun LessonsList(
-    lessons: List<String> = listOf(
-        "Русский язык",
-        "Геометрия",
-        "Физика",
-        "Иностранный язык (английский)",
-        "Английский язык",
-        "Алгебра",
-        "Немецкий язык",
-        "Английский язык",
-        "Алгебра",
-        "Немецкий язык",
-    ),
+    lessons: List<String>,
 ) {
     lessons.forEachIndexed { it, lesson ->
         LessonStroke(it, lesson)

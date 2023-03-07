@@ -31,7 +31,7 @@ fun NotesScreen(
         }
     }
 
-    val selectedItem = remember { mutableStateOf(items[7]) }
+    val selectedItem = remember { mutableStateOf(SideMenuScreens[6]) }
     SideMenu(
         navController = navController,
         selectedItem = selectedItem,
@@ -43,8 +43,11 @@ fun NotesScreen(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            TopBar("Заметки", drawerState = drawerState, scope = scope)
+            TopBar("Заметки", drawerState = drawerState, scope = scope, navController = navController)
             Text(text = "NOT DONE YET", Modifier.layoutId("content"), color = Color.Red) // TODO
         }
     }
 }
+
+// to open NoteDetailedScreen with specific title
+// navController.navigate(Screen.NoteDetailedScreen.withArgs(titleText))

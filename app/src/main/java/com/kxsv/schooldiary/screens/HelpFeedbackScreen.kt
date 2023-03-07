@@ -29,7 +29,7 @@ fun HelpFeedback(
         }
     }
 
-    val selectedItem = remember { mutableStateOf(items[11]) }
+    val selectedItem = remember { mutableStateOf(SideMenuScreens[9]) }
     SideMenu(
         navController = navController,
         selectedItem = selectedItem,
@@ -41,7 +41,7 @@ fun HelpFeedback(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            TopBar("Помощь и обратная связь", drawerState = drawerState, scope = scope)
+            TopBar("Помощь и обратная связь", drawerState = drawerState, scope = scope, navController = navController)
             Text(text = "NOT DONE YET", Modifier.layoutId("content"), color = Color.Red) // TODO
         }
     }

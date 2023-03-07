@@ -36,7 +36,7 @@ fun GradesPreview(
         }
     }
 
-    val selectedItem = remember { mutableStateOf(items[3]) }
+    val selectedItem = remember { mutableStateOf(SideMenuScreens[3]) }
     SideMenu(
         navController = navController,
         selectedItem = selectedItem,
@@ -48,7 +48,7 @@ fun GradesPreview(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            TopBar("Оценки", drawerState = drawerState, scope = scope)
+            TopBar("Оценки", drawerState = drawerState, scope = scope, navController = navController)
             LazyColumn(
                 modifier = Modifier
                     .layoutId("content")

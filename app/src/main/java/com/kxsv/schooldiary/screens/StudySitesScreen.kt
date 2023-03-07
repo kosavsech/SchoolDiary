@@ -29,7 +29,7 @@ fun StudySites(
         }
     }
 
-    val selectedItem = remember { mutableStateOf(items[9]) }
+    val selectedItem = remember { mutableStateOf(SideMenuScreens[8]) }
     SideMenu(
         navController = navController,
         selectedItem = selectedItem,
@@ -41,7 +41,7 @@ fun StudySites(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            TopBar("Учебные сайты", drawerState = drawerState, scope = scope)
+            TopBar("Учебные сайты", drawerState = drawerState, scope = scope, navController = navController)
             Text(text = "NOT DONE YET", Modifier.layoutId("content"), color = Color.Red) // TODO
         }
     }

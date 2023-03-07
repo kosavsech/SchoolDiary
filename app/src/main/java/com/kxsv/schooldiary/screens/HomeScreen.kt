@@ -29,27 +29,29 @@ import androidx.constraintlayout.compose.ConstraintSet
 import androidx.constraintlayout.compose.layoutId
 import androidx.navigation.NavController
 import com.kxsv.schooldiary.R
+import com.kxsv.schooldiary.Screen
 import com.kxsv.schooldiary.ui.theme.BorderOfBoxes
 import com.kxsv.schooldiary.ui.theme.MainText
 import com.kxsv.schooldiary.ui.theme.SecondaryText
 import com.kxsv.schooldiary.ui.theme.TopBarBackground
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-
-val items = listOf(
-    Pair("home_screen", "Главное меню"),
-    Pair("schedule_screen", "Расписание"),
-    Pair("tasks_screen", "Задания"),
-    Pair("grades_screen", "Оценки"),
-    Pair("", "divider"),
-    Pair("teachers_screen", "Список учителей"),
-    Pair("attendance_screen", "Посещаемость"),
-    Pair("notes_screen", "Заметки"),
-    Pair("recordings_screen", "Звуковые записи"),
-    Pair("study_sites_screen", "Учебные сайты"),
-    Pair("", "divider"),
-    Pair("help_feedback_screen", "Помощь и обратная связь"),
-    Pair("settings_screen", "Настройки"),
+val SideMenuScreens = listOf(
+    Screen.HomeScreen,
+    Screen.ScheduleScreen,
+    Screen.TasksScreen,
+    Screen.GradesScreen,
+    Screen.TeachersScreen,
+    Screen.AttendanceScreen,
+    Screen.NotesScreen,
+    Screen.RecordingsScreen,
+    Screen.StudySitesScreen,
+    Screen.HelpFeedbackScreen,
+    Screen.SettingsScreen,
+)
+val SideMenuDividers = listOf(
+    Screen.TeachersScreen,
+    Screen.HelpFeedbackScreen,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,14 +70,19 @@ fun MainScreen(
         }
     }
 
-    val selectedItem = remember { mutableStateOf(items[0]) }
-    SideMenu(navController = navController, selectedItem = selectedItem, drawerState = drawerState, scope = scope){
+    val selectedItem = remember { mutableStateOf(SideMenuScreens[0]) }
+    SideMenu(
+        navController = navController,
+        selectedItem = selectedItem,
+        drawerState = drawerState,
+        scope = scope
+    ) {
         ConstraintLayout(
             constraintSet = c,
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            TopBar(scope = scope, drawerState = drawerState)
+            TopBar(scope = scope, drawerState = drawerState, navController = navController)
             LazyColumn(
                 modifier = Modifier
                     .layoutId("content")
@@ -84,9 +91,9 @@ fun MainScreen(
                     item {
                         ChipSection(
                             chips = listOf(
-                                Pair("schedule_screen", "Расписание"),
-                                Pair("tasks_screen", "Задания"),
-                                Pair("grades_screen", "Оценки")
+                                SideMenuScreens[1],
+                                SideMenuScreens[2],
+                                SideMenuScreens[3]
                             ), navController
                         )
                     }
@@ -112,16 +119,16 @@ fun SideMenu(
     navController: NavController,
     drawerState: DrawerState,
     scope: CoroutineScope,
-    selectedItem: MutableState<Pair<String, String>>,
+    selectedItem: MutableState<Screen>,
     content: @Composable () -> Unit,
-){
+) {
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
                 Spacer(Modifier.height(12.dp))
-                items.forEach { item ->
-                    if (item.second == "divider") {
+                SideMenuScreens.forEach { screen ->
+                    if (SideMenuDividers.contains(screen)) {
                         Divider(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -129,73 +136,82 @@ fun SideMenu(
                             color = com.kxsv.schooldiary.ui.theme.Divider,
                             thickness = 1.dp
                         )
-                    } else {
-                        NavigationDrawerItem(
-                            icon = { Icon(Icons.Default.Email, contentDescription = null) },
-                            label = {
-                                Text(
-                                    text = item.second,
-                                    textAlign = TextAlign.Center,
-                                    fontSize = 14.sp,
-                                    //fontFamily = fontFamily,
-                                    fontWeight = FontWeight.Normal,
-                                    color = MainText,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            },
-                            selected = item == selectedItem.value,
-                            onClick = {
-                                scope.launch { drawerState.close() }
-                                selectedItem.value = item
-                                navController.navigate(item.first)
-                            },
-                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                        )
                     }
+                    NavigationDrawerItem(
+                        icon = { Icon(Icons.Default.Email, contentDescription = null) },
+                        label = {
+                            Text(
+                                text = screen.name,
+                                textAlign = TextAlign.Center,
+                                fontSize = 14.sp,
+                                //fontFamily = fontFamily,
+                                fontWeight = FontWeight.Normal,
+                                color = MainText,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        },
+                        selected = screen == selectedItem.value,
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                            selectedItem.value = screen
+                            navController.navigate(screen.route)
+                        },
+                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                    )
                 }
             }
         },
         content = content
     )
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBar(
-    title: String = "Главное меню",
+    title: String? = "Главное меню",
+    navController: NavController,
     isDeadEnd: Boolean = false,
     bottomPadding: Dp = 14.dp,
     scope: CoroutineScope,
     drawerState: DrawerState
 ) {
-    val imageVector = if (isDeadEnd) {
-        Icons.Filled.Close
-    } else {
-        Icons.Filled.Menu
-    }
     TopAppBar(
         modifier = Modifier
             .padding(bottom = bottomPadding)
             .layoutId("topbar"),
         title = {
-            Text(
-                title,
-                maxLines = 1,
-                fontSize = 23.sp,
-                //fontFamily = fontFamily,
-                fontWeight = FontWeight.Bold,
-                color = SecondaryText,
-                overflow = TextOverflow.Ellipsis
-            )
+            if (title != null) {
+                Text(
+                    title,
+                    maxLines = 1,
+                    fontSize = 23.sp,
+                    //fontFamily = fontFamily,
+                    fontWeight = FontWeight.Bold,
+                    color = SecondaryText,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         },
         colors = TopAppBarDefaults.smallTopAppBarColors(
             containerColor = TopBarBackground,
-            navigationIconContentColor = BorderOfBoxes,
-            titleContentColor = BorderOfBoxes,
+            navigationIconContentColor = SecondaryText,
+            titleContentColor = SecondaryText,
         ),
         navigationIcon = {
-            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+            IconButton(onClick = {
+                if (isDeadEnd) {
+                    navController.popBackStack()
+                } else {
+                    scope.launch { drawerState.open() }
+                }
+            }) {
                 Icon(
-                    imageVector = imageVector,
+                    imageVector =
+                    if (isDeadEnd) {
+                        Icons.Filled.Close
+                    } else {
+                        Icons.Filled.Menu
+                    },
                     contentDescription = ""/* TODO Localized description*/
                 )
             }
@@ -205,14 +221,14 @@ fun TopBar(
 
 @Composable
 fun ChipSection(
-    chips: List<Pair<String, String>>,
+    chips: List<Screen>,
     navController: NavController
 ) {
-    LazyRow() {
+    LazyRow {
         items(chips.size) {
             OutlinedButton(
                 onClick = {
-                    navController.navigate(chips[it].first)
+                    navController.navigate(chips[it].route)
                 },
                 border = BorderStroke(1.dp, BorderOfBoxes),
                 shape = RoundedCornerShape(20.dp),
@@ -222,7 +238,7 @@ fun ChipSection(
                     .padding(start = 18.dp, bottom = 20.dp)
             ) {
                 Text(
-                    text = chips[it].second,
+                    text = chips[it].name,
                     textAlign = TextAlign.Center,
                     fontSize = 16.sp,
                     //fontFamily = fontFamily,

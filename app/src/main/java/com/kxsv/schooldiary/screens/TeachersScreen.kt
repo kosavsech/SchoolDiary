@@ -38,7 +38,7 @@ fun TeachersPreview(
             top.linkTo(topBar.bottom)
         }
     }
-    val selectedItem = remember { mutableStateOf(items[5]) }
+    val selectedItem = remember { mutableStateOf(SideMenuScreens[4]) }
     SideMenu(
         navController = navController,
         selectedItem = selectedItem,
@@ -50,7 +50,7 @@ fun TeachersPreview(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            TopBar("Учителя", bottomPadding = 0.dp, drawerState = drawerState, scope = scope)
+            TopBar("Учителя", bottomPadding = 0.dp, drawerState = drawerState, scope = scope, navController = navController)
             TeachersTable()
         }
     }

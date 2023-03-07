@@ -31,7 +31,7 @@ fun SettingsScreen(
         }
     }
 
-    val selectedItem = remember { mutableStateOf(items[12]) }
+    val selectedItem = remember { mutableStateOf(SideMenuScreens[10]) }
     SideMenu(
         navController = navController,
         selectedItem = selectedItem,
@@ -43,7 +43,7 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            TopBar("Настройки", drawerState = drawerState, scope = scope)
+            TopBar("Настройки", drawerState = drawerState, scope = scope, navController = navController)
             Text(text = "NOT DONE YET", Modifier.layoutId("content"), color = Color.Red) // TODO
         }
     }
