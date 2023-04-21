@@ -13,11 +13,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.constraintlayout.compose.ConstraintSet
-import androidx.constraintlayout.compose.layoutId
 import androidx.navigation.NavController
-import com.kxsv.schooldiary.ui.theme.MainText
+import com.kxsv.schooldiary.DB
+import com.kxsv.schooldiary.core.presentation.components.TopBar
+import com.kxsv.schooldiary.main_presentation.ui.theme.MainText
 import kotlinx.coroutines.CoroutineScope
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -27,15 +26,6 @@ fun GradesPreview(
     drawerState: DrawerState,
     scope: CoroutineScope
 ) {
-    val c = ConstraintSet {
-        val topBar = createRefFor("topbar")
-        val content = createRefFor("content")
-
-        constrain(content) {
-            top.linkTo(topBar.bottom)
-        }
-    }
-
     val selectedItem = remember { mutableStateOf(SideMenuScreens[3]) }
     SideMenu(
         navController = navController,
@@ -43,31 +33,21 @@ fun GradesPreview(
         drawerState = drawerState,
         scope = scope
     ) {
-        ConstraintLayout(
-            constraintSet = c,
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            TopBar("Оценки", drawerState = drawerState, scope = scope, navController = navController)
-            LazyColumn(
-                modifier = Modifier
-                    .layoutId("content")
-            ) {
-                for (i in 1..1) {
+        androidx.compose.material.Scaffold(
+            topBar = {
+                TopBar(
+                    "Оценки",
+                    drawerState = drawerState,
+                    scope = scope,
+                    navController = navController
+                )
+
+            },
+        ) { innerPadding ->
+            LazyColumn(modifier = Modifier.padding(innerPadding.calculateTopPadding())) {
+                DB.subjectFullNames.forEach { lessonName ->
                     item {
-                        SubjectGrade()
-                    }
-                    item {
-                        SubjectGrade("Русский язык")
-                    }
-                    item {
-                        SubjectGrade("Геометрия")
-                    }
-                    item {
-                        SubjectGrade("Английский язык")
-                    }
-                    item {
-                        SubjectGrade("Иностранный язык (английский)")
+                        SubjectGrade(lesson = lessonName)
                     }
                 }
             }
@@ -133,7 +113,7 @@ fun SubjectGrade(
                 .align(Alignment.CenterHorizontally)
                 .padding(bottom = 16.dp)
                 .fillMaxWidth(0.9512195f),
-            color = com.kxsv.schooldiary.ui.theme.Divider,
+            color = com.kxsv.schooldiary.main_presentation.ui.theme.Divider,
             thickness = 1.dp
         )
     }

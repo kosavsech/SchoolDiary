@@ -15,12 +15,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.constraintlayout.compose.ConstraintSet
-import androidx.constraintlayout.compose.layoutId
 import androidx.navigation.NavController
-import com.kxsv.schooldiary.ui.theme.MainText
-import com.kxsv.schooldiary.ui.theme.TopBarBackground
+import com.kxsv.schooldiary.core.presentation.components.TopBar
+import com.kxsv.schooldiary.main_presentation.ui.theme.MainText
+import com.kxsv.schooldiary.main_presentation.ui.theme.TopBarBackground
 import kotlinx.coroutines.CoroutineScope
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,14 +28,7 @@ fun TeachersPreview(
     drawerState: DrawerState,
     scope: CoroutineScope
 ) {
-    val c = ConstraintSet {
-        val topBar = createRefFor("topbar")
-        val content = createRefFor("content")
 
-        constrain(content) {
-            top.linkTo(topBar.bottom)
-        }
-    }
     val selectedItem = remember { mutableStateOf(SideMenuScreens[4]) }
     SideMenu(
         navController = navController,
@@ -45,16 +36,20 @@ fun TeachersPreview(
         drawerState = drawerState,
         scope = scope
     ) {
-        ConstraintLayout(
-            constraintSet = c,
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            TopBar("Учителя", bottomPadding = 0.dp, drawerState = drawerState, scope = scope, navController = navController)
-            TeachersTable()
+        androidx.compose.material.Scaffold(
+            topBar = {
+                TopBar(
+                    "Учителя",
+                    drawerState = drawerState,
+                    scope = scope,
+                    navController = navController
+                )
+
+            },
+        ) { innerPadding ->
+            TeachersTable(innerPadding = innerPadding)
         }
     }
-
 }
 
 @Composable
@@ -65,9 +60,10 @@ fun TeachersTable(
         Pair("Лихашерстный В.Ю.", "+39631223513"),
         Pair("Пермякова П.А.", "+19631223511"),
         Pair("Муллин А.А.", "+29631223512"),
-    )
+    ),
+    innerPadding: PaddingValues,
 ) {
-    LazyColumn(Modifier.layoutId("content")) {
+    LazyColumn(modifier = Modifier.padding(innerPadding.calculateTopPadding())) {
         teachers.forEachIndexed { index, teacher ->
             // REVIEW)))
             val rowColor = if (index % 2 == 0) Color.Transparent else TopBarBackground

@@ -13,13 +13,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.constraintlayout.compose.ConstraintSet
-import androidx.constraintlayout.compose.layoutId
 import androidx.navigation.NavController
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.ui.theme.MainText
-import com.kxsv.schooldiary.ui.theme.SecondaryText
+import com.kxsv.schooldiary.core.presentation.components.TopBar
+import com.kxsv.schooldiary.main_presentation.ui.theme.MainText
+import com.kxsv.schooldiary.main_presentation.ui.theme.SecondaryText
 import kotlinx.coroutines.CoroutineScope
 
 // TODO introduce DB for that stuff
@@ -68,15 +66,6 @@ fun DaySchedulePreview(
     drawerState: DrawerState,
     scope: CoroutineScope
 ) {
-    val c = ConstraintSet {
-        val topBar = createRefFor("topbar")
-        val content = createRefFor("content")
-
-        constrain(content) {
-            top.linkTo(topBar.bottom)
-        }
-    }
-
     val selectedItem = remember { mutableStateOf(SideMenuScreens[1]) }
     SideMenu(
         navController = navController,
@@ -84,16 +73,18 @@ fun DaySchedulePreview(
         drawerState = drawerState,
         scope = scope
     ) {
-        ConstraintLayout(
-            constraintSet = c,
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            TopBar("Расписание", drawerState = drawerState, scope = scope, navController = navController)
-            LazyColumn(
-                modifier = Modifier
-                    .layoutId("content")
-            ) {
+        androidx.compose.material.Scaffold(
+            topBar = {
+                TopBar(
+                    "Расписание",
+                    drawerState = drawerState,
+                    scope = scope,
+                    navController = navController
+                )
+
+            },
+        ) { innerPadding ->
+            LazyColumn(modifier = Modifier.padding(innerPadding.calculateTopPadding())) {
                 val lessons = listOf(
                     "Русский язык",
                     "Геометрия",
@@ -153,7 +144,7 @@ fun LessonsList(
                 modifier = Modifier
                     .padding(bottom = 14.dp, top = 14.dp)
                     .fillMaxWidth(),
-                color = com.kxsv.schooldiary.ui.theme.Divider,
+                color = com.kxsv.schooldiary.main_presentation.ui.theme.Divider,
                 thickness = 1.dp,
             )
         }

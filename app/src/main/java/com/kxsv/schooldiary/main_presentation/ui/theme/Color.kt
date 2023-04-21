@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.ui.theme
+package com.kxsv.schooldiary.main_presentation.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

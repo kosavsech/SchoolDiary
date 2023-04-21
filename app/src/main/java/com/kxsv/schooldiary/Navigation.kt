@@ -1,5 +1,6 @@
 package com.kxsv.schooldiary
 
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberDrawerState
@@ -17,10 +18,11 @@ import com.kxsv.schooldiary.screens.*
 fun Navigation() {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scaffoldState = rememberScaffoldState()
     val scope = rememberCoroutineScope()
     NavHost(navController = navController, startDestination = Screen.HomeScreen.route) {
         composable(route = Screen.HomeScreen.route) {
-            MainScreen(navController = navController, drawerState = drawerState, scope = scope)
+            MainScreen(navController = navController, scaffoldState = scaffoldState, drawerState = drawerState, scope = scope)
         }
         composable(route = Screen.ScheduleScreen.route) {
             DaySchedulePreview(

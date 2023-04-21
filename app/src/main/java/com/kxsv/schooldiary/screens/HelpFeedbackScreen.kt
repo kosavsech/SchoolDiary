@@ -7,10 +7,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.constraintlayout.compose.ConstraintSet
 import androidx.constraintlayout.compose.layoutId
 import androidx.navigation.NavController
+import com.kxsv.schooldiary.core.presentation.components.TopBar
 import kotlinx.coroutines.CoroutineScope
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -20,15 +19,6 @@ fun HelpFeedback(
     drawerState: DrawerState,
     scope: CoroutineScope
 ) {
-    val c = ConstraintSet {
-        val topBar = createRefFor("topbar")
-        val content = createRefFor("content")
-
-        constrain(content) {
-            top.linkTo(topBar.bottom)
-        }
-    }
-
     val selectedItem = remember { mutableStateOf(SideMenuScreens[9]) }
     SideMenu(
         navController = navController,
@@ -36,13 +26,22 @@ fun HelpFeedback(
         drawerState = drawerState,
         scope = scope
     ) {
-        ConstraintLayout(
-            constraintSet = c,
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            TopBar("Помощь и обратная связь", drawerState = drawerState, scope = scope, navController = navController)
-            Text(text = "NOT DONE YET", Modifier.layoutId("content"), color = Color.Red) // TODO
+        androidx.compose.material.Scaffold(
+            topBar = {
+                TopBar(
+                    "Помощь и обратная связь",
+                    drawerState = drawerState,
+                    scope = scope,
+                    navController = navController
+                )
+
+            },
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier.padding(innerPadding.calculateTopPadding())
+            ){
+                Text(text = "NOT DONE YET", Modifier.layoutId("content"), color = Color.Red) // TODO
+            }
         }
     }
 }

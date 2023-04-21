@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ScaffoldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.AccountCircle
@@ -20,22 +21,19 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.constraintlayout.compose.ConstraintSet
-import androidx.constraintlayout.compose.layoutId
 import androidx.navigation.NavController
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.Screen
-import com.kxsv.schooldiary.ui.theme.BorderOfBoxes
-import com.kxsv.schooldiary.ui.theme.MainText
-import com.kxsv.schooldiary.ui.theme.SecondaryText
-import com.kxsv.schooldiary.ui.theme.TopBarBackground
+import com.kxsv.schooldiary.core.presentation.components.TopBar
+import com.kxsv.schooldiary.main_presentation.ui.theme.BorderOfBoxes
+import com.kxsv.schooldiary.main_presentation.ui.theme.MainText
+import com.kxsv.schooldiary.main_presentation.ui.theme.SecondaryText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+
 val SideMenuScreens = listOf(
     Screen.HomeScreen,
     Screen.ScheduleScreen,
@@ -58,18 +56,10 @@ val SideMenuDividers = listOf(
 @Composable
 fun MainScreen(
     navController: NavController,
+    scaffoldState: ScaffoldState,
     drawerState: DrawerState,
     scope: CoroutineScope
 ) {
-    val c = ConstraintSet {
-        val topBar = createRefFor("topbar")
-        val content = createRefFor("content")
-
-        constrain(content) {
-            top.linkTo(topBar.bottom)
-        }
-    }
-
     val selectedItem = remember { mutableStateOf(SideMenuScreens[0]) }
     SideMenu(
         navController = navController,
@@ -77,16 +67,19 @@ fun MainScreen(
         drawerState = drawerState,
         scope = scope
     ) {
-        ConstraintLayout(
-            constraintSet = c,
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            TopBar(scope = scope, drawerState = drawerState, navController = navController)
+        androidx.compose.material.Scaffold(
+            topBar = {
+                TopBar(
+                    navController = navController,
+                    drawerState = drawerState,
+                    scope = scope
+                )
+            },
+        ) { innerPadding ->
             LazyColumn(
-                modifier = Modifier
-                    .layoutId("content")
+                modifier = Modifier.padding(innerPadding.calculateTopPadding())
             ) {
+                item { Spacer(modifier = Modifier.height(10.dp))}
                 for (i in 1..2) {
                     item {
                         ChipSection(
@@ -133,7 +126,7 @@ fun SideMenu(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 8.dp),
-                            color = com.kxsv.schooldiary.ui.theme.Divider,
+                            color = com.kxsv.schooldiary.main_presentation.ui.theme.Divider,
                             thickness = 1.dp
                         )
                     }
@@ -162,60 +155,6 @@ fun SideMenu(
             }
         },
         content = content
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TopBar(
-    title: String? = "Главное меню",
-    navController: NavController,
-    isDeadEnd: Boolean = false,
-    bottomPadding: Dp = 14.dp,
-    scope: CoroutineScope,
-    drawerState: DrawerState
-) {
-    TopAppBar(
-        modifier = Modifier
-            .padding(bottom = bottomPadding)
-            .layoutId("topbar"),
-        title = {
-            if (title != null) {
-                Text(
-                    title,
-                    maxLines = 1,
-                    fontSize = 23.sp,
-                    //fontFamily = fontFamily,
-                    fontWeight = FontWeight.Bold,
-                    color = SecondaryText,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        },
-        colors = TopAppBarDefaults.smallTopAppBarColors(
-            containerColor = TopBarBackground,
-            navigationIconContentColor = SecondaryText,
-            titleContentColor = SecondaryText,
-        ),
-        navigationIcon = {
-            IconButton(onClick = {
-                if (isDeadEnd) {
-                    navController.popBackStack()
-                } else {
-                    scope.launch { drawerState.open() }
-                }
-            }) {
-                Icon(
-                    imageVector =
-                    if (isDeadEnd) {
-                        Icons.Filled.Close
-                    } else {
-                        Icons.Filled.Menu
-                    },
-                    contentDescription = ""/* TODO Localized description*/
-                )
-            }
-        }
     )
 }
 
@@ -342,7 +281,7 @@ fun ShowMore(
                 .align(Alignment.CenterHorizontally)
                 .padding(bottom = 8.dp)
                 .fillMaxWidth(0.9512195f),
-            color = com.kxsv.schooldiary.ui.theme.Divider,
+            color = com.kxsv.schooldiary.main_presentation.ui.theme.Divider,
             thickness = 1.dp
         )
         Row {
@@ -775,7 +714,7 @@ fun ScheduleDetailed(
                     .align(Alignment.CenterHorizontally)
                     .padding(bottom = 8.dp)
                     .fillMaxWidth(0.9512195f),
-                color = com.kxsv.schooldiary.ui.theme.Divider,
+                color = com.kxsv.schooldiary.main_presentation.ui.theme.Divider,
                 thickness = 1.dp
             )
         }
