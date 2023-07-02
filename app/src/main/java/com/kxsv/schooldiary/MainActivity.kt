@@ -3,18 +3,18 @@ package com.kxsv.schooldiary
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.kxsv.schooldiary.core.domain.util.EduTatarParser
+import com.kxsv.schooldiary.ui.theme.SchoolDiaryTheme
 import dagger.hilt.android.AndroidEntryPoint
-
-val user = EduTatarParser()
-val DB = DataBase()
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Navigation()
+            SchoolDiaryTheme {
+                AppNavGraph()
+            }
         }
 
         /*runBlocking {
