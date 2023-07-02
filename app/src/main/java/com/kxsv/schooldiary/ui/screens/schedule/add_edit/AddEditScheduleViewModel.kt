@@ -1,4 +1,5 @@
 package com.kxsv.schooldiary.ui.screens.schedule.add_edit
+/*
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -162,4 +163,4 @@ class AddEditScheduleViewModel @Inject constructor(
             }
         }
     }
-}
+}*/

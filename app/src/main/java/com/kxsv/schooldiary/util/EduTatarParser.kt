@@ -86,7 +86,6 @@ class EduTatarParser {
             names.add(element.text())
         }
         names.sort()
-        DB.subjectFullNames = names
     }
 
     // TODO

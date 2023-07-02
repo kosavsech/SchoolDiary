@@ -1,5 +1,6 @@
 package com.kxsv.schooldiary.ui.screens.schedule.add_edit
 
+/*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -201,4 +202,4 @@ private fun AddEditScheduleContent(
             }
         }
     }
-}
+}*/
