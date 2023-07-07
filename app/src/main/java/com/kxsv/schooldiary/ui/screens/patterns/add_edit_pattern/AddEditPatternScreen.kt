@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -48,6 +49,7 @@ import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 import kotlinx.coroutines.Job
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.Locale
 
 @Composable
@@ -59,7 +61,7 @@ fun AddEditTimePatternScreen(
 	viewModel: AddEditPatternViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
-	androidx.compose.material3.Scaffold(
+	Scaffold(
 		modifier = modifier.fillMaxSize(),
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		topBar = { AddEditPatternTopAppBar(topBarTitle, onBack) },
@@ -124,8 +126,11 @@ private fun AddEditPatternContent(
 	onStrokeDelete: (PatternStroke) -> Job,
 	modifier: Modifier = Modifier,
 ) {
-	
-	LoadingContent(loading, empty = false, emptyContent = { Text(text = "Empty") }, onRefresh = {}) {
+	LoadingContent(
+		loading,
+		empty = false,
+		emptyContent = { Text(text = "Empty") },
+		onRefresh = {}) {
 		Column(
 			modifier
 				.fillMaxWidth()
@@ -159,7 +164,10 @@ private fun AddEditPatternContent(
 					verticalAlignment = Alignment.CenterVertically
 				) {
 					Text(
-						text = stroke.startTime + " - " + stroke.endTime,
+						text = stroke.startTime
+							.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)) +
+								" - "
+								+ stroke.endTime,
 						fontSize = 20.sp
 					)
 					IconButton(onClick = { onStrokeDelete(stroke) }) {
@@ -193,7 +201,9 @@ private fun AddEditStrokeDialog(
 		onCloseRequest = { hideStrokeDialog() },
 		buttons = {
 			positiveButton(text = stringResource(R.string.btn_save), onClick = { saveStroke() })
-			negativeButton(text = stringResource(R.string.btn_cancel), onClick = { hideStrokeDialog() })
+			negativeButton(
+				text = stringResource(R.string.btn_cancel),
+				onClick = { hideStrokeDialog() })
 		}
 	) {
 		Column(

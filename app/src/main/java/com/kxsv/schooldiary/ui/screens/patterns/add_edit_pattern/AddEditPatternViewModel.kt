@@ -6,9 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.AppDestinationsArgs
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.features.time_pattern.TimePattern
-import com.kxsv.schooldiary.domain.TimePatternRepository
 import com.kxsv.schooldiary.data.features.time_pattern.pattern_stroke.PatternStroke
 import com.kxsv.schooldiary.domain.PatternStrokeRepository
+import com.kxsv.schooldiary.domain.TimePatternRepository
 import com.kxsv.schooldiary.util.copyExclusively
 import com.kxsv.schooldiary.util.copyInclusively
 import com.kxsv.schooldiary.util.copyRefresh
@@ -19,8 +19,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 import javax.inject.Inject
 
 data class AddEditPatternUiState(
@@ -57,17 +55,16 @@ class AddEditPatternViewModel @Inject constructor(
 		if (uiState.value.stroke != null) {
 			newStrokes = copyRefresh(uiState.value.strokes)
 			newStrokes.find { it == uiState.value.stroke }?.let {
-				it.startTime = fromLocalTime(uiState.value.startTime)
-				it.endTime = fromLocalTime(uiState.value.endTime)
+				it.startTime = uiState.value.startTime
+				it.endTime = uiState.value.endTime
 			}
 		} else {
 			val stroke =
 				PatternStroke(
-					startTime = fromLocalTime(uiState.value.startTime),
-					endTime = fromLocalTime(uiState.value.endTime)
+					startTime = uiState.value.startTime,
+					endTime = uiState.value.endTime
 				)
 			newStrokes = copyInclusively(stroke, uiState.value.strokes)
-			
 		}
 		
 		_uiState.update {
@@ -161,8 +158,8 @@ class AddEditPatternViewModel @Inject constructor(
 		_uiState.update {
 			it.copy(
 				isStrokeDialogShown = true,
-				startTime = toLocalTime(stroke.startTime),
-				endTime = toLocalTime(stroke.endTime),
+				startTime = stroke.startTime,
+				endTime = stroke.endTime,
 				stroke = stroke
 			)
 		}
@@ -220,15 +217,5 @@ class AddEditPatternViewModel @Inject constructor(
 				}
 			}
 		}
-	}
-	
-	// LocalTime <-> String
-	private fun fromLocalTime(localTime: LocalTime): String {
-		return localTime.format(DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH))
-	}
-	
-	private fun toLocalTime(string: String): LocalTime {
-		val parser = DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH)
-		return LocalTime.parse(string, parser)
 	}
 }

@@ -49,6 +49,9 @@ import com.kxsv.schooldiary.data.features.time_pattern.TimePattern
 import com.kxsv.schooldiary.data.features.time_pattern.pattern_stroke.PatternStroke
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.kxsv.schooldiary.util.ui.PatternSelectionTopAppBar
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 @Composable
 fun PatternSelectionScreen(
@@ -211,7 +214,8 @@ private fun TimeStrokes(
 				Row {
 					Text(text = (index + 1).toString())
 					Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.list_item_padding)))
-					Text(text = patternStroke.startTime + " - " + patternStroke.endTime)
+					Text(text = patternStroke.startTime.format(DateTimeFormatter.ofLocalizedTime(
+						FormatStyle.SHORT)) + " - " + patternStroke.endTime)
 				}
 			}
 		}
@@ -229,123 +233,15 @@ private fun PatternsSelectionPreview() {
 				PatternWithStrokes(
 					TimePattern("Default", patternId = 5),
 					listOf(
-						PatternStroke(startTime = "8:30", endTime = "9:15"),
-						PatternStroke(startTime = "9:30", endTime = "10:15"),
-						PatternStroke(startTime = "10:30", endTime = "11:15"),
-						PatternStroke(startTime = "11:25", endTime = "12:10"),
-						PatternStroke(startTime = "12:30", endTime = "13:15"),
-						PatternStroke(startTime = "13:30", endTime = "14:20"),
-						PatternStroke(startTime = "14:30", endTime = "15:15"),
+						PatternStroke(startTime = LocalTime.of(8, 30), endTime = LocalTime.of(9, 15)),
+						PatternStroke(startTime = LocalTime.of(9, 30), endTime = LocalTime.of(10, 15)),
+						PatternStroke(startTime = LocalTime.of(10, 30), endTime = LocalTime.of(11, 15)),
+						PatternStroke(startTime = LocalTime.of(11, 25), endTime = LocalTime.of(12, 10)),
+						PatternStroke(startTime = LocalTime.of(12, 30), endTime = LocalTime.of(13, 15)),
+						PatternStroke(startTime = LocalTime.of(13, 30), endTime = LocalTime.of(14, 20)),
+						PatternStroke(startTime = LocalTime.of(14, 30), endTime = LocalTime.of(15, 15)),
 					)
 				),
-				PatternWithStrokes(
-					TimePattern("Monday"),
-					listOf(
-						PatternStroke(startTime = "8:30", endTime = "9:10"),
-						PatternStroke(startTime = "9:25", endTime = "10:10"),
-						PatternStroke(startTime = "10:20", endTime = "11:05"),
-						PatternStroke(startTime = "11:25", endTime = "12:10"),
-						PatternStroke(startTime = "12:30", endTime = "13:15"),
-						PatternStroke(startTime = "13:30", endTime = "14:20"),
-						PatternStroke(startTime = "14:30", endTime = "15:15"),
-					)
-				),
-				PatternWithStrokes(
-					TimePattern("Tuesday"),
-					listOf(
-						PatternStroke(startTime = "8:30", endTime = "9:10"),
-						PatternStroke(startTime = "9:25", endTime = "10:10"),
-						PatternStroke(startTime = "10:20", endTime = "11:05"),
-						PatternStroke(startTime = "11:25", endTime = "12:10"),
-						PatternStroke(startTime = "12:30", endTime = "13:15"),
-						PatternStroke(startTime = "13:30", endTime = "14:20"),
-						PatternStroke(startTime = "14:30", endTime = "15:15"),
-					)
-				),
-				PatternWithStrokes(
-					TimePattern("Holiday"),
-					listOf(
-						PatternStroke(startTime = "8:30", endTime = "9:10"),
-						PatternStroke(startTime = "9:25", endTime = "10:10"),
-						PatternStroke(startTime = "10:20", endTime = "11:05"),
-						PatternStroke(startTime = "11:25", endTime = "12:10"),
-						PatternStroke(startTime = "12:30", endTime = "13:15"),
-						PatternStroke(startTime = "13:30", endTime = "14:20"),
-						PatternStroke(startTime = "14:30", endTime = "15:15"),
-					)
-				),
-				PatternWithStrokes(
-					TimePattern("Monday"),
-					listOf(
-						PatternStroke(startTime = "8:30", endTime = "9:10"),
-						PatternStroke(startTime = "9:25", endTime = "10:10"),
-						PatternStroke(startTime = "10:20", endTime = "11:05"),
-						PatternStroke(startTime = "11:25", endTime = "12:10"),
-						PatternStroke(startTime = "12:30", endTime = "13:15"),
-						PatternStroke(startTime = "13:30", endTime = "14:20"),
-						PatternStroke(startTime = "14:30", endTime = "15:15"),
-					)
-				),
-				PatternWithStrokes(
-					TimePattern("Monday"),
-					listOf(
-						PatternStroke(startTime = "8:30", endTime = "9:10"),
-						PatternStroke(startTime = "9:25", endTime = "10:10"),
-						PatternStroke(startTime = "10:20", endTime = "11:05"),
-						PatternStroke(startTime = "11:25", endTime = "12:10"),
-						PatternStroke(startTime = "12:30", endTime = "13:15"),
-						PatternStroke(startTime = "13:30", endTime = "14:20"),
-						PatternStroke(startTime = "14:30", endTime = "15:15"),
-					)
-				),
-				PatternWithStrokes(
-					TimePattern("Monday"),
-					listOf(
-						PatternStroke(startTime = "8:30", endTime = "9:10"),
-						PatternStroke(startTime = "9:25", endTime = "10:10"),
-						PatternStroke(startTime = "10:20", endTime = "11:05"),
-						PatternStroke(startTime = "11:25", endTime = "12:10"),
-						PatternStroke(startTime = "12:30", endTime = "13:15"),
-						PatternStroke(startTime = "13:30", endTime = "14:20"),
-						PatternStroke(startTime = "14:30", endTime = "15:15"),
-					)
-				),
-				PatternWithStrokes(
-					TimePattern("Monday"),
-					listOf(
-						PatternStroke(startTime = "8:30", endTime = "9:10"),
-						PatternStroke(startTime = "9:25", endTime = "10:10"),
-						PatternStroke(startTime = "10:20", endTime = "11:05"),
-						PatternStroke(startTime = "11:25", endTime = "12:10"),
-						PatternStroke(startTime = "12:30", endTime = "13:15"),
-						PatternStroke(startTime = "13:30", endTime = "14:20"),
-						PatternStroke(startTime = "14:30", endTime = "15:15"),
-					)
-				),
-				PatternWithStrokes(
-					TimePattern("Tuesday"),
-					listOf(
-						PatternStroke(startTime = "8:30", endTime = "9:10"),
-						PatternStroke(startTime = "9:25", endTime = "10:10"),
-						PatternStroke(startTime = "10:20", endTime = "11:05"),
-						PatternStroke(startTime = "11:25", endTime = "12:10"),
-						PatternStroke(startTime = "12:30", endTime = "13:15"),
-						PatternStroke(startTime = "13:30", endTime = "14:20"),
-						PatternStroke(startTime = "14:30", endTime = "15:15"),
-					)
-				),
-				PatternWithStrokes(
-					TimePattern("Holiday"),
-					listOf(
-						PatternStroke(startTime = "8:30", endTime = "9:10"),
-						PatternStroke(startTime = "9:25", endTime = "10:10"),
-						PatternStroke(startTime = "10:20", endTime = "11:05"),
-						PatternStroke(startTime = "11:25", endTime = "12:10"),
-						PatternStroke(startTime = "12:30", endTime = "13:15"),
-						PatternStroke(startTime = "13:30", endTime = "14:20"),
-						PatternStroke(startTime = "14:30", endTime = "15:15"),
-					)
-				)
 			),
 			defaultPatternId = 5,
 			editPattern = {},

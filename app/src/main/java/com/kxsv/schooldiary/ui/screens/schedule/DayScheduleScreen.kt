@@ -64,9 +64,11 @@ import com.vanpra.composematerialdialogs.MaterialDialogState
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.Month
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.time.format.TextStyle
 import java.util.Locale
 
@@ -191,8 +193,14 @@ private fun LessonDialog(
 				
 				// TODO: add format for lesson.index in message
 				val text: String = if (classDetailed.schedule.index <= currentPattern.lastIndex) {
-					currentPattern[classDetailed.schedule.index].startTime + " - " +
-							currentPattern[classDetailed.schedule.index].endTime
+					currentPattern[classDetailed.schedule.index].startTime.format(
+						DateTimeFormatter.ofLocalizedTime(
+							FormatStyle.SHORT
+						)
+					) + " - " +
+							currentPattern[classDetailed.schedule.index].endTime.format(
+								DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+							)
 				} else stringResource(
 					R.string.class_out_of_strokes_bounds_message,
 					classDetailed.schedule.index
@@ -427,8 +435,16 @@ private fun ClassItem(
 			.padding(vertical = dimensionResource(R.dimen.list_item_padding))
 	) {
 		val text: String = if (lesson.schedule.index <= currentPattern.lastIndex) {
-			currentPattern[lesson.schedule.index].startTime + " - " +
-					currentPattern[lesson.schedule.index].endTime
+			currentPattern[lesson.schedule.index].startTime.format(
+				DateTimeFormatter.ofLocalizedTime(
+					FormatStyle.SHORT
+				)
+			) + " - " +
+					currentPattern[lesson.schedule.index].endTime.format(
+						DateTimeFormatter.ofLocalizedTime(
+							FormatStyle.SHORT
+						)
+					)
 		} else stringResource(
 			R.string.class_out_of_strokes_bounds_message,
 			lesson.schedule.index
@@ -480,8 +496,8 @@ private fun DayScheduleContentPreview() {
 			),
 			date = LocalDate.now(),
 			currentPattern = listOf(
-				PatternStroke(startTime = "8:30", endTime = "9:15"),
-				PatternStroke(startTime = "9:30", endTime = "10:15"),
+				PatternStroke(startTime = LocalTime.of(8, 30), endTime = LocalTime.of(9, 15)),
+				PatternStroke(startTime = LocalTime.of(9, 30), endTime = LocalTime.of(10, 15)),
 			),
 			changeDate = {},
 			onClassClick = {},
@@ -502,8 +518,8 @@ private fun LessonDialogPreview() {
 			),
 			date = LocalDate.now(),
 			currentPattern = listOf(
-				PatternStroke(startTime = "8:30", endTime = "9:15"),
-				PatternStroke(startTime = "9:30", endTime = "10:15"),
+				PatternStroke(startTime = LocalTime.of(8, 30), endTime = LocalTime.of(9, 15)),
+				PatternStroke(startTime = LocalTime.of(9, 30), endTime = LocalTime.of(10, 15)),
 			),
 			onDeleteClass = {},
 			onEditClass = {},

@@ -134,7 +134,6 @@ class AddEditScheduleViewModel @Inject constructor(
 			schedule = Schedule(
 				index = uiState.value.classIndex.toInt(),
 				subjectAncestorId = uiState.value.pickedSubject!!.subjectId,
-				scheduleId = scheduleId
 			),
 			date = uiState.value.classDate!!
 		)

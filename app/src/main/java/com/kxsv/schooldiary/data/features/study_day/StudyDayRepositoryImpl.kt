@@ -41,11 +41,6 @@ class StudyDayRepositoryImpl @Inject constructor(
 	}
 	
 	override suspend fun updateStudyDay(studyDay: StudyDay) {
-		val newStudyDay = studyDayDataSource.getById(studyDay.studyDayId)!!.copy(
-			date = studyDay.date,
-			studyDayId = studyDay.studyDayId,
-			appliedPatternId = studyDay.appliedPatternId
-		)
 		studyDayDataSource.upsert(studyDay)
 	}
 	

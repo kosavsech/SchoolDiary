@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 import com.kxsv.schooldiary.data.features.time_pattern.TimePattern
+import java.time.LocalTime
 
 @Entity(
     foreignKeys = [
@@ -20,9 +21,8 @@ import com.kxsv.schooldiary.data.features.time_pattern.TimePattern
 data class PatternStroke(
     @ColumnInfo(index = true)
     var patternMasterId: Long? = null,
-    // TODO: convert these strings to local time
-    var startTime: String = "",
-    var endTime: String = "",
+    var startTime: LocalTime,
+    var endTime: LocalTime,
     @PrimaryKey(autoGenerate = true)
     val strokeId: Int = 0,
 )
