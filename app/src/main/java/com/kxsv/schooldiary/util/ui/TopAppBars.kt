@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -45,6 +46,19 @@ fun AddEditScheduleTopAppBar(onBack: () -> Unit) {
 fun AddEditSubjectTopAppBar(onBack: () -> Unit) {
     TopAppBar(
         title = {},
+        navigationIcon = {
+            IconButton(onClick = onBack) {
+                Icon(Icons.Filled.ArrowBack, stringResource(id = R.string.menu_back))
+            }
+        },
+        modifier = Modifier.fillMaxWidth()
+    )
+}
+
+@Composable
+fun PatternSelectionTopAppBar(onBack: () -> Unit) {
+    TopAppBar(
+        title = { Text(text = stringResource(id = R.string.pattern_selection_title)) },
         navigationIcon = {
             IconButton(onClick = onBack) {
                 Icon(Icons.Filled.ArrowBack, stringResource(id = R.string.menu_back))
@@ -94,7 +108,7 @@ fun SubjectsTopAppBar(openDrawer: () -> Unit) {
 }
 
 @Composable
-fun ScheduleTopAppBar(openDrawer: () -> Unit) {
+fun ScheduleTopAppBar(onChangePattern: () -> Unit,openDrawer: () -> Unit) {
     TopAppBar(
         title = { Text(text = stringResource(R.string.timetable)) },
         navigationIcon = {
@@ -102,7 +116,12 @@ fun ScheduleTopAppBar(openDrawer: () -> Unit) {
                 Icon(Icons.Filled.Menu, stringResource(id = R.string.open_drawer))
             }
         },
-        // TODO: add action to switch to day/week view mode
+        // TODO: add action to switch screens of day/week view mode
+        actions = {
+            IconButton(onClick = onChangePattern) {
+                Icon(Icons.Default.Schedule, stringResource(R.string.change_current_pattern))
+            }
+        },
         modifier = Modifier.fillMaxWidth()
     )
 }

@@ -13,7 +13,7 @@ import com.kxsv.schooldiary.data.features.teachers.Teacher
 data class Subject(
     val name: String,
     val cabinet: String,
-//    val tags: List<Tag>, // TODO: create many to many connection for tag and teacher
+//    val tags: List<Tag>, // TODO: create many to many connection for tag
     @PrimaryKey(autoGenerate = true)
     val subjectId: Long = 0,
 )

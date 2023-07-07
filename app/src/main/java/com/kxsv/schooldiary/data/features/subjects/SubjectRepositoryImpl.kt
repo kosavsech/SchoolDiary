@@ -3,6 +3,7 @@ package com.kxsv.schooldiary.data.features.subjects
 import com.kxsv.schooldiary.data.features.associative_tables.subject_teacher.SubjectTeacher
 import com.kxsv.schooldiary.data.features.associative_tables.subject_teacher.SubjectTeacherDao
 import com.kxsv.schooldiary.data.features.teachers.Teacher
+import com.kxsv.schooldiary.domain.SubjectRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton

@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.AppDestinationsArgs
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.features.subjects.Subject
-import com.kxsv.schooldiary.data.features.subjects.SubjectRepository
+import com.kxsv.schooldiary.domain.SubjectRepository
 import com.kxsv.schooldiary.util.Async
 import com.kxsv.schooldiary.util.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,8 +29,8 @@ data class SubjectDetailUiState(
 
 @HiltViewModel
 class SubjectDetailViewModel @Inject constructor(
-    private val subjectRepository: SubjectRepository,
-    savedStateHandle: SavedStateHandle,
+	private val subjectRepository: SubjectRepository,
+	savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
     val subjectId: Long = savedStateHandle[AppDestinationsArgs.SUBJECT_ID_ARG]!!

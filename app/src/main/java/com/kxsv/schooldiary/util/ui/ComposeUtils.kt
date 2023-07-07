@@ -28,8 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
-// TODO: need to remake it. Cause on SubjectDetailScreen it's drawn behind the elevated card
-
 /**
  * Display an initial empty state or swipe to refresh content.
  *
@@ -43,25 +41,31 @@ import androidx.compose.ui.Modifier
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun LoadingContent(
-    loading: Boolean,
-    empty: Boolean,
-    emptyContent: @Composable () -> Unit,
-    onRefresh: () -> Unit,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
+	loading: Boolean,
+	isContentScrollable: Boolean = false,
+	empty: Boolean,
+	emptyContent: @Composable () -> Unit,
+	onRefresh: () -> Unit,
+	modifier: Modifier = Modifier,
+	content: @Composable () -> Unit,
 ) {
-    val pullRefreshState = rememberPullRefreshState(loading, onRefresh)
-    if (empty) {
-        emptyContent()
-    } else {
-        Box(
-            modifier = modifier
-                .pullRefresh(pullRefreshState)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-        ) {
-            PullRefreshIndicator(loading, pullRefreshState, Modifier.align(Alignment.TopCenter))
-            content()
-        }
-    }
+	val scrollModifier = if (!isContentScrollable) {
+		Modifier.verticalScroll(rememberScrollState())
+	} else {
+		Modifier
+	}
+	val pullRefreshState = rememberPullRefreshState(loading, onRefresh)
+	if (empty && !loading) {
+		emptyContent()
+	} else {
+		Box(
+			modifier = modifier
+				.pullRefresh(pullRefreshState)
+				.fillMaxSize()
+				.then(scrollModifier),
+		) {
+			content()
+			PullRefreshIndicator(loading, pullRefreshState, Modifier.align(Alignment.TopCenter))
+		}
+	}
 }

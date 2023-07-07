@@ -1,5 +1,7 @@
-package com.kxsv.schooldiary.data.features.time_pattern
+package com.kxsv.schooldiary.domain
 
+import com.kxsv.schooldiary.data.features.time_pattern.PatternWithStrokes
+import com.kxsv.schooldiary.data.features.time_pattern.TimePattern
 import com.kxsv.schooldiary.data.features.time_pattern.pattern_stroke.PatternStroke
 import kotlinx.coroutines.flow.Flow
 
@@ -21,8 +23,7 @@ interface TimePatternRepository {
 
     suspend fun deleteAllPatterns()
 
-    // TODO: remove fields add entity
-    suspend fun updatePatternWithStrokes(patternId: Long, name: String, strokes: List<PatternStroke>)
+    suspend fun updatePatternWithStrokes(pattern: TimePattern, strokes: List<PatternStroke>)
 
     suspend fun deletePattern(patternId: Long)
 }

@@ -58,4 +58,23 @@
     <string name="btn_edit">Edit</string>
     <string name="btn_delete">Delete</string>
     <string name="save_schedule">Save lesson in timetable</string>
+    <string name="pick_date_hint">Pick a date</string>
+    <string name="pick_subject_hint">Pick a subject</string>
+    <string name="fill_required_fields_message">Fill in the required fields</string>
+    <string name="picked_date">Picked date</string>
+    <string name="picked_subject">Picked subject</string>
+    <string name="successfully_deleted_stroke">Stroke deleted</string>
+    <string name="successfully_deleted_schedule_message">Class deleted</string>
+    <string name="successfully_saved_schedule_message">Class saved</string>
+    <string name="successfully_added_schedule_message">Class added</string>
+    <string name="pick_index_hint">Choose class number</string>
+    <string name="picked_class_number">Picked class number</string>
+    <string name="set_pattern_as_default">Set pattern as default</string>
+    <string name="loading_default_pattern_id_error">Error while loading default pattern id</string>
+    <string name="default_pattern_absent_hint">Choose default time pattern first</string>
+    <string name="successfully_set_default_pattern">Pattern was set as a default</string>
+    <string name="change_current_pattern">Change current time pattern</string>
+    <string name="successfully_set_custom_pattern">Pattern for this day was changed</string>
+    <string name="class_out_of_strokes_bounds_message">You don\'t have time pattern stroke for %1$s class to be shown</string>
+    <string name="pattern_selection_title">Select custom pattern</string>
 </resources>

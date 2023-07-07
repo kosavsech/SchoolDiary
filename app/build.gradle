@@ -4,15 +4,17 @@ plugins {
     id 'kotlin-kapt'
     id 'com.google.dagger.hilt.android'
     id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.serialization'
 }
 
 android {
     namespace 'com.kxsv.schooldiary'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.kxsv.schooldiary"
         minSdk 26
+        //noinspection OldTargetApi
         targetSdk 33
         versionCode 1
         versionName "1.0"
@@ -40,7 +42,7 @@ android {
         compose true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion compose_comp_version
+        kotlinCompilerExtensionVersion "1.4.7"
     }
     packagingOptions {
         resources {
@@ -57,36 +59,36 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 
     // Compose dependencies
-    implementation "androidx.compose.ui:ui:$compose_version"
-    implementation "androidx.compose.material:material-icons-extended:$compose_version"
-    implementation "androidx.compose.material:material:$compose_version"
+    implementation 'androidx.compose.ui:ui:1.5.0-beta01'
+    implementation "androidx.compose.material:material-icons-extended:1.4.3"
+    implementation "androidx.compose.material:material:1.5.0-beta01"
     implementation 'androidx.compose.material3:material3:1.1.1'
-    implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
+    implementation 'androidx.compose.ui:ui-tooling-preview:1.5.0-beta01'
     implementation 'androidx.navigation:navigation-compose:2.6.0'
-    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycle_version"
-    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.6.1"
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
-    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1"
     implementation 'androidx.activity:activity-compose:1.7.2'
     implementation 'androidx.constraintlayout:constraintlayout-compose:1.0.1'
-    androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
-    debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
-    debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
+    androidTestImplementation 'androidx.compose.ui:ui-test-junit4:1.4.3'
+    debugImplementation 'androidx.compose.ui:ui-tooling:1.5.0-beta01'
+    debugImplementation 'androidx.compose.ui:ui-test-manifest:1.4.3'
 
     // Coroutines
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.2"
 
     //Dagger - Hilt
     implementation 'androidx.hilt:hilt-navigation-compose:1.0.0'
-    implementation "com.google.dagger:hilt-android:$dagger_version"
-    kapt "com.google.dagger:hilt-compiler:$dagger_version"
+    implementation "com.google.dagger:hilt-android:2.46.1"
+    kapt "com.google.dagger:hilt-compiler:2.46.1"
 
     // Room
-    implementation "androidx.room:room-runtime:$room_version"
-    implementation "androidx.room:room-common:$room_version"
-    kapt "androidx.room:room-compiler:$room_version"
+    implementation "androidx.room:room-runtime:2.5.2"
+    implementation "androidx.room:room-common:2.5.2"
+    kapt "androidx.room:room-compiler:2.5.2"
 
     // https://mvnrepository.com/artifact/com.google.code.gson/gson
     implementation 'com.google.code.gson:gson:2.10.1'
@@ -95,7 +97,7 @@ dependencies {
     implementation("org.burnoutcrew.composereorderable:reorderable:0.9.6")
 
     // Kotlin Extensions and Coroutines support for Room
-    implementation "androidx.room:room-ktx:$room_version"
+    implementation "androidx.room:room-ktx:2.5.2"
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1'
 
     // Jsoup
@@ -103,9 +105,18 @@ dependencies {
 
     //DateTimePicker
     //https://github.com/vanpra/compose-material-dialogs
-    implementation "io.github.vanpra.compose-material-dialogs:core:$datetimepicker_version"
-    implementation "io.github.vanpra.compose-material-dialogs:datetime:$datetimepicker_version"
-    implementation "io.github.vanpra.compose-material-dialogs:color:$datetimepicker_version"
+    implementation "io.github.vanpra.compose-material-dialogs:core:0.9.0"
+    implementation "io.github.vanpra.compose-material-dialogs:datetime:0.9.0"
+    implementation "io.github.vanpra.compose-material-dialogs:color:0.9.0"
+
+    // Proto DataStore
+    implementation 'androidx.datastore:datastore:1.1.0-alpha04'
+    implementation 'androidx.datastore:datastore-preferences-core:1.1.0-alpha04'
+    implementation "org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.5"
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1'
+
+    // The compose calendar library
+    implementation 'com.kizitonwose.calendar:compose:2.4.0-beta01'
 }
 kapt {
     correctErrorTypes true

@@ -20,7 +20,7 @@ import com.kxsv.schooldiary.data.features.time_pattern.TimePattern
 data class PatternStroke(
     @ColumnInfo(index = true)
     var patternMasterId: Long? = null,
-    // TODO: Add index
+    // TODO: convert these strings to local time
     var startTime: String = "",
     var endTime: String = "",
     @PrimaryKey(autoGenerate = true)

@@ -6,9 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.AppDestinationsArgs
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.features.subjects.Subject
-import com.kxsv.schooldiary.data.features.subjects.SubjectRepository
+import com.kxsv.schooldiary.domain.SubjectRepository
 import com.kxsv.schooldiary.data.features.teachers.Teacher
-import com.kxsv.schooldiary.data.features.teachers.TeacherRepository
+import com.kxsv.schooldiary.domain.TeacherRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

@@ -1,5 +1,6 @@
 package com.kxsv.schooldiary.data.features.teachers
 
+import com.kxsv.schooldiary.domain.TeacherRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton

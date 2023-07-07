@@ -1,5 +1,6 @@
-package com.kxsv.schooldiary.data.features.time_pattern.pattern_stroke
+package com.kxsv.schooldiary.domain
 
+import com.kxsv.schooldiary.data.features.time_pattern.pattern_stroke.PatternStroke
 import kotlinx.coroutines.flow.Flow
 
 interface PatternStrokeRepository {
@@ -25,8 +26,6 @@ interface PatternStrokeRepository {
     suspend fun updateStroke(patternStroke: PatternStroke)
 
     suspend fun deleteAll()
-
-    suspend fun deleteAllByPatternId(patternId: Long)
-
+    
     suspend fun deleteStrokeById(id: Int)
 }

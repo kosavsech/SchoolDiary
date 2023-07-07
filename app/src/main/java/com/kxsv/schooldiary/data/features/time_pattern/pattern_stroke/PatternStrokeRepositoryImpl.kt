@@ -1,5 +1,6 @@
 package com.kxsv.schooldiary.data.features.time_pattern.pattern_stroke
 
+import com.kxsv.schooldiary.domain.PatternStrokeRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -52,11 +53,7 @@ class PatternStrokeRepositoryImpl @Inject constructor(
     override suspend fun deleteAll() {
         return localDataSource.deleteAll()
     }
-
-    override suspend fun deleteAllByPatternId(patternId: Long) {
-        return localDataSource.deleteAllByPatternId(patternId)
-    }
-
+    
     override suspend fun deleteStrokeById(id: Int) {
         return localDataSource.deleteById(id)
     }

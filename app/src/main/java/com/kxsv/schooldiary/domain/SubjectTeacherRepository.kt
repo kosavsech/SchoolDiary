@@ -1,5 +1,8 @@
-package com.kxsv.schooldiary.data.features.associative_tables.subject_teacher
+package com.kxsv.schooldiary.domain
 
+import com.kxsv.schooldiary.data.features.associative_tables.subject_teacher.SubjectTeacher
+
+/*
 interface SubjectTeacherRepository {
 
     suspend fun upsertSubjectTeacher(subjectTeacher: SubjectTeacher)
@@ -10,4 +13,4 @@ interface SubjectTeacherRepository {
 
     suspend fun deleteByTeacherId(teacherId: Int)
 
-}
+}*/

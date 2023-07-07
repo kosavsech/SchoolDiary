@@ -19,102 +19,127 @@ import com.kxsv.schooldiary.AppNavigationActions
 import com.kxsv.schooldiary.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.ZoneId
 
 @Composable
 fun AppModalDrawer(
-    drawerState: DrawerState,
-    currentRoute: String,
-    navigationActions: AppNavigationActions,
-    coroutineScope: CoroutineScope = rememberCoroutineScope(),
-    content: @Composable () -> Unit,
+	drawerState: DrawerState,
+	currentRoute: String,
+	navigationActions: AppNavigationActions,
+	coroutineScope: CoroutineScope = rememberCoroutineScope(),
+	content: @Composable () -> Unit,
 ) {
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet {
-                AppDrawer(
-                    currentRoute = currentRoute,
-                    navigateToPatterns = { navigationActions.navigateToPatterns() },
-                    navigateToTeachers = { navigationActions.navigateToTeachers() },
-                    navigateToSubjects = { navigationActions.navigateToSubjects() },
-                    closeDrawer = { coroutineScope.launch { drawerState.close() } }
-                )
-            }
-        }
-    ) {
-        content()
-    }
+	ModalNavigationDrawer(
+		drawerState = drawerState,
+		drawerContent = {
+			ModalDrawerSheet {
+				AppDrawer(
+					currentRoute = currentRoute,
+					navigateToPatterns = { navigationActions.navigateToPatterns() },
+					navigateToTeachers = { navigationActions.navigateToTeachers() },
+					navigateToSubjects = { navigationActions.navigateToSubjects() },
+					navigateToSchedule = {
+						navigationActions.navigateToDaySchedule(
+							dateStamp = localDateToTimestamp(LocalDate.now())
+						)
+					},
+					closeDrawer = { coroutineScope.launch { drawerState.close() } }
+				)
+			}
+		}
+	) {
+		content()
+	}
 }
 
+private fun localDateToTimestamp(date: LocalDate): Long =
+	date.atStartOfDay(ZoneId.of("UTC")).toEpochSecond()
 
 @Composable
 private fun AppDrawer(
-    currentRoute: String,
-    navigateToPatterns: () -> Unit,
-    navigateToTeachers: () -> Unit,
-    navigateToSubjects: () -> Unit,
-    closeDrawer: () -> Unit,
-    modifier: Modifier = Modifier,
+	currentRoute: String,
+	navigateToPatterns: () -> Unit,
+	navigateToTeachers: () -> Unit,
+	navigateToSubjects: () -> Unit,
+	navigateToSchedule: () -> Unit,
+	closeDrawer: () -> Unit,
+	modifier: Modifier = Modifier,
 ) {
-
-    Column(modifier = modifier.fillMaxSize()) {
-        NavigationDrawerItem(
-            label = {
-                Text(
-                    text = stringResource(R.string.patterns_list),
-                    style = MaterialTheme.typography.body2,
-                    //color = tintColor,
-                )
-            },
-            selected = currentRoute == AppDestinations.PATTERNS_ROUTE,
-            onClick = {
-                navigateToPatterns()
-                closeDrawer()
-            }
-        )
-        NavigationDrawerItem(
-            label = {
-                Text(
-                    text = stringResource(R.string.teachers_title),
-                    style = MaterialTheme.typography.body2,
-                    //color = tintColor,
-                )
-            },
-            selected = currentRoute == AppDestinations.TEACHERS_ROUTE,
-            onClick = {
-                navigateToTeachers()
-                closeDrawer()
-            }
-        )
-        NavigationDrawerItem(
-            label = {
-                Text(
-                    text = stringResource(R.string.subjects_title),
-                    style = MaterialTheme.typography.body2,
-                    //color = tintColor,
-                )
-            },
-            selected = currentRoute == AppDestinations.SUBJECTS_ROUTE,
-            onClick = {
-                navigateToSubjects()
-                closeDrawer()
-            }
-        )
-    }
+	
+	Column(modifier = modifier.fillMaxSize()) {
+		NavigationDrawerItem(
+			label = {
+				Text(
+					text = stringResource(R.string.patterns_list),
+					style = MaterialTheme.typography.body2,
+					//color = tintColor,
+				)
+			},
+			selected = currentRoute == AppDestinations.PATTERNS_ROUTE,
+			onClick = {
+				navigateToPatterns()
+				closeDrawer()
+			}
+		)
+		NavigationDrawerItem(
+			label = {
+				Text(
+					text = stringResource(R.string.teachers_title),
+					style = MaterialTheme.typography.body2,
+					//color = tintColor,
+				)
+			},
+			selected = currentRoute == AppDestinations.TEACHERS_ROUTE,
+			onClick = {
+				navigateToTeachers()
+				closeDrawer()
+			}
+		)
+		NavigationDrawerItem(
+			label = {
+				Text(
+					text = stringResource(R.string.subjects_title),
+					style = MaterialTheme.typography.body2,
+					//color = tintColor,
+				)
+			},
+			selected = currentRoute == AppDestinations.SUBJECTS_ROUTE,
+			onClick = {
+				navigateToSubjects()
+				closeDrawer()
+			}
+		)
+		NavigationDrawerItem(
+			label = {
+				Text(
+					text = stringResource(R.string.timetable),
+					style = MaterialTheme.typography.body2,
+					//color = tintColor,
+				)
+			},
+			selected = currentRoute == AppDestinations.DAY_SCHEDULE_ROUTE,
+			onClick = {
+				navigateToSchedule()
+				closeDrawer()
+			}
+		)
+		
+	}
 }
 
 
 @Preview("Drawer contents")
 @Composable
 fun PreviewAppDrawer() {
-    Surface {
-        AppDrawer(
-            currentRoute = AppDestinations.PATTERNS_ROUTE,
-            navigateToPatterns = {},
-            navigateToTeachers = {},
-            navigateToSubjects = {},
-            closeDrawer = {}
-        )
-    }
-
+	Surface {
+		AppDrawer(
+			currentRoute = AppDestinations.DAY_SCHEDULE_ROUTE,
+			navigateToPatterns = {},
+			navigateToTeachers = {},
+			navigateToSubjects = {},
+			navigateToSchedule = {},
+			closeDrawer = {}
+		)
+	}
 }

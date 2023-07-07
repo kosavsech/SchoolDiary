@@ -7,6 +7,8 @@ import com.kxsv.schooldiary.data.features.associative_tables.subject_teacher.Sub
 import com.kxsv.schooldiary.data.features.associative_tables.subject_teacher.SubjectTeacherDao
 import com.kxsv.schooldiary.data.features.schedule.Schedule
 import com.kxsv.schooldiary.data.features.schedule.ScheduleDao
+import com.kxsv.schooldiary.data.features.study_day.StudyDay
+import com.kxsv.schooldiary.data.features.study_day.StudyDayDao
 import com.kxsv.schooldiary.data.features.subjects.Subject
 import com.kxsv.schooldiary.data.features.subjects.SubjectDao
 import com.kxsv.schooldiary.data.features.teachers.Teacher
@@ -22,9 +24,10 @@ import com.kxsv.schooldiary.util.Converters
     // TODO: create Tag with data layer and ui
     entities = [
         Teacher::class, TimePattern::class, PatternStroke::class,
-        Subject::class, SubjectTeacher::class, Schedule::class
+        Subject::class, SubjectTeacher::class, Schedule::class,
+        StudyDay::class
     ],
-    version = 2,
+    version = 1,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -36,6 +39,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun subjectDao(): SubjectDao
     abstract fun subjectTeacherDao(): SubjectTeacherDao
     abstract fun scheduleDao(): ScheduleDao
-
+    abstract fun studyDayDao(): StudyDayDao
+    
 }
 

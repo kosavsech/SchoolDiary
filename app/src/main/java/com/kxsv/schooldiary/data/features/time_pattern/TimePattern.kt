@@ -4,6 +4,7 @@ import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.Relation
+import com.kxsv.schooldiary.data.features.study_day.StudyDay
 import com.kxsv.schooldiary.data.features.time_pattern.pattern_stroke.PatternStroke
 
 @Entity
@@ -22,4 +23,15 @@ data class PatternWithStrokes(
         entityColumn = "patternMasterId",
     )
     val strokes: List<PatternStroke>
+)
+
+data class PatternWithStrokesAndStudyDay(
+    @Embedded
+    val patternWithStrokes: PatternWithStrokes,
+    @Relation(
+        entity = StudyDay::class,
+        parentColumn = "patternId",
+        entityColumn = "appliedPatternId"
+    )
+    val studyDay: StudyDay
 )

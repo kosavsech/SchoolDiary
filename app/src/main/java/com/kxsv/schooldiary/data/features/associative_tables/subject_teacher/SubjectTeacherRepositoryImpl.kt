@@ -1,8 +1,6 @@
 package com.kxsv.schooldiary.data.features.associative_tables.subject_teacher
 
-import javax.inject.Inject
-import javax.inject.Singleton
-
+/*
 @Singleton
 class SubjectTeacherRepositoryImpl @Inject constructor(
     private val subjectTeacherDataSource: SubjectTeacherDao,
@@ -24,4 +22,4 @@ class SubjectTeacherRepositoryImpl @Inject constructor(
         subjectTeacherDataSource.deleteByTeacherId(teacherId)
     }
 
-}
+}*/

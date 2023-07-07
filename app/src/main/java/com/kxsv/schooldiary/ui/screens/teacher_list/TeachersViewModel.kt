@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.features.teachers.Teacher
-import com.kxsv.schooldiary.data.features.teachers.TeacherRepository
+import com.kxsv.schooldiary.domain.TeacherRepository
 import com.kxsv.schooldiary.util.Async
 import com.kxsv.schooldiary.util.WhileUiSubscribed
 import com.kxsv.schooldiary.util.copyExclusively
@@ -32,7 +32,7 @@ data class TeachersUiState(
 
 @HiltViewModel
 class TeachersViewModel @Inject constructor(
-    private val teacherRepository: TeacherRepository,
+	private val teacherRepository: TeacherRepository,
 ) : ViewModel() {
 
     private val _teachersAsync = teacherRepository.getTeachersStream()
