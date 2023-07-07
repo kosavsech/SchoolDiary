@@ -23,9 +23,12 @@ interface ScheduleDao {
 	@Query("SELECT * FROM Schedule")
 	suspend fun getAll(): List<Schedule>
 	
-	@Transaction
 	@Query("SELECT * FROM Schedule WHERE studyDayMasterId = :studyDayId ORDER BY `index` ASC")
-	suspend fun getAllWithSubjectByDate(studyDayId: Long): List<ScheduleWithSubject>
+	suspend fun getAllByMasterId(studyDayId: Long): List<Schedule>
+	
+/*	@Transaction
+	@Query("SELECT * FROM Schedule WHERE studyDayMasterId = :studyDayId ORDER BY `index` ASC")
+	suspend fun getAllWithSubjectByDate(studyDayId: Long): List<ScheduleWithSubject>*/
 	
 	@Query("SELECT * FROM Schedule WHERE scheduleId = :scheduleId")
 	suspend fun getById(scheduleId: Long): Schedule?

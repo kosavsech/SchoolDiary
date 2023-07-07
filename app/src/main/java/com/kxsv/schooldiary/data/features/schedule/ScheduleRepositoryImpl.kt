@@ -61,6 +61,33 @@ class ScheduleRepositoryImpl @Inject constructor(
 		scheduleDataSource.upsert(newSchedule)
 	}
 	
+	override suspend fun copyScheduleFromDate(fromDate: LocalDate, toDate: LocalDate) {
+		val refStudyDay = studyDayDataSource.getByDate(fromDate)
+		val copyOfStudyDay = refStudyDay?.copy(date = toDate, studyDayId = 0)
+			?: throw Exception("StudyDay (date $fromDate) not found")
+		
+		val copyOfSchedules: MutableList<Schedule> = mutableListOf()
+		val idOfStudyDayCopy = studyDayDataSource.upsert(copyOfStudyDay)
+		
+		scheduleDataSource.getAllByMasterId(refStudyDay.studyDayId).forEach {
+			copyOfSchedules.add(it.copy(studyDayMasterId = idOfStudyDayCopy))
+		}
+		scheduleDataSource.upsertAll(copyOfSchedules)
+	}
+	
+	override suspend fun copyScheduleFromStudyDayId(refStudyDayId: Long, toDate: LocalDate) {
+		val refStudyDay = studyDayDataSource.getById(refStudyDayId)
+		val copyOfStudyDay = refStudyDay?.copy(date = toDate, studyDayId = 0)
+			?: throw Exception("StudyDay (id $refStudyDayId) not found")
+		
+		val copyOfSchedules: MutableList<Schedule> = mutableListOf()
+		val idOfStudyDayCopy = studyDayDataSource.upsert(copyOfStudyDay)
+		
+		scheduleDataSource.getAllByMasterId(refStudyDay.studyDayId).forEach {
+			copyOfSchedules.add(it.copy(studyDayMasterId = idOfStudyDayCopy))
+		}
+		scheduleDataSource.upsertAll(copyOfSchedules)	}
+	
 	override suspend fun deleteAllSchedules() {
 		scheduleDataSource.deleteAll()
 	}
