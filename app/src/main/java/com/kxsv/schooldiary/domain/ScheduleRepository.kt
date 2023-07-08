@@ -26,7 +26,11 @@ interface ScheduleRepository {
 	
 	suspend fun copyScheduleFromDate(fromDate: LocalDate, toDate: LocalDate)
 	
-	suspend fun copyScheduleFromStudyDayId(refStudyDayId: Long, toDate: LocalDate)
+	suspend fun copyScheduleFromId(refStudyDayId: Long, toDate: LocalDate)
+	
+	suspend fun copyScheduleFromDateToId(fromDate: LocalDate, toStudyDayId: Long)
+	
+	suspend fun copyScheduleFromIdToId(refStudyDayId: Long, toStudyDayId: Long)
 	
 	suspend fun deleteAllSchedules()
 	

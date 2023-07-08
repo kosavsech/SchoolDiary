@@ -11,7 +11,6 @@ import com.kxsv.schooldiary.domain.PatternStrokeRepository
 import com.kxsv.schooldiary.domain.TimePatternRepository
 import com.kxsv.schooldiary.util.copyExclusively
 import com.kxsv.schooldiary.util.copyInclusively
-import com.kxsv.schooldiary.util.copyRefresh
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -53,11 +52,15 @@ class AddEditPatternViewModel @Inject constructor(
 	fun saveStroke() = viewModelScope.launch {
 		val newStrokes: MutableList<PatternStroke>
 		if (uiState.value.stroke != null) {
-			newStrokes = copyRefresh(uiState.value.strokes)
-			newStrokes.find { it == uiState.value.stroke }?.let {
-				it.startTime = uiState.value.startTime
-				it.endTime = uiState.value.endTime
-			}
+			newStrokes = copyExclusively(
+				targetItem = uiState.value.stroke!!,
+				elements = uiState.value.strokes
+			)
+			val updatedStroke = uiState.value.stroke!!.copy(
+				startTime = uiState.value.startTime,
+				endTime = uiState.value.endTime
+			)
+			newStrokes.add(updatedStroke)
 		} else {
 			val stroke =
 				PatternStroke(

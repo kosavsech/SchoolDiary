@@ -19,10 +19,12 @@ import java.time.LocalTime
     ]
 )
 data class PatternStroke(
-    @ColumnInfo(index = true)
-    var patternMasterId: Long? = null,
-    var startTime: LocalTime,
-    var endTime: LocalTime,
-    @PrimaryKey(autoGenerate = true)
-    val strokeId: Int = 0,
+	@ColumnInfo(index = true)
+	var patternMasterId: Long? = null,
+	// TODO: add indexes
+	// TODO: everywhere when we create this times set seconds and etc to zero
+	val startTime: LocalTime,
+	val endTime: LocalTime,
+	@PrimaryKey(autoGenerate = true)
+	val strokeId: Int = 0,
 )

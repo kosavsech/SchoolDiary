@@ -214,9 +214,17 @@ private fun PatternStrokes(
 				Row {
 					Text(text = (index + 1).toString())
 					Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.list_item_padding)))
-					Text(text = patternStroke.startTime.format(
-						DateTimeFormatter.ofLocalizedTime(
-						FormatStyle.SHORT)) + " - " + patternStroke.endTime)
+					Text(
+						text = patternStroke.startTime.format(
+							DateTimeFormatter.ofLocalizedTime(
+								FormatStyle.SHORT
+							)
+						) + " - " + patternStroke.endTime.format(
+							DateTimeFormatter.ofLocalizedTime(
+								FormatStyle.SHORT
+							)
+						)
+					)
 				}
 			}
 		}

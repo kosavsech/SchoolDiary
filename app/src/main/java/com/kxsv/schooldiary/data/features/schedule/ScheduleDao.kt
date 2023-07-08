@@ -50,6 +50,9 @@ interface ScheduleDao {
 	@Query("DELETE FROM Schedule")
 	suspend fun deleteAll()
 	
+	@Query("DELETE FROM Schedule WHERE studyDayMasterId = :studyDayMasterId")
+	suspend fun deleteAllByDayId(studyDayMasterId: Long)
+	
 	@Query("DELETE FROM Schedule WHERE scheduleId = :scheduleId")
 	suspend fun deleteById(scheduleId: Long)
 }

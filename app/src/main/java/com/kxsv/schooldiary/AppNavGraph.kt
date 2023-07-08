@@ -15,12 +15,15 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.navigation
 import com.kxsv.schooldiary.AppDestinations.ADD_EDIT_PATTERN_ROUTE
 import com.kxsv.schooldiary.AppDestinations.ADD_EDIT_SCHEDULE_ROUTE
 import com.kxsv.schooldiary.AppDestinations.ADD_EDIT_SUBJECT_ROUTE
+import com.kxsv.schooldiary.AppDestinations.COPY_DAY_SCHEDULE_ROUTE
 import com.kxsv.schooldiary.AppDestinations.DAY_SCHEDULE_ROUTE
 import com.kxsv.schooldiary.AppDestinations.PATTERNS_ROUTE
 import com.kxsv.schooldiary.AppDestinations.PATTERNS_SELECTION_ROUTE
+import com.kxsv.schooldiary.AppDestinations.SCHEDULE_ROUTE
 import com.kxsv.schooldiary.AppDestinations.SUBJECTS_ROUTE
 import com.kxsv.schooldiary.AppDestinations.SUBJECT_DETAIL_ROUTE
 import com.kxsv.schooldiary.AppDestinations.TEACHERS_ROUTE
@@ -36,13 +39,16 @@ import com.kxsv.schooldiary.AppDestinationsArgs.USER_MESSAGE_ARG
 import com.kxsv.schooldiary.ui.screens.patterns.PatternSelectionScreen
 import com.kxsv.schooldiary.ui.screens.patterns.PatternsScreen
 import com.kxsv.schooldiary.ui.screens.patterns.add_edit_pattern.AddEditTimePatternScreen
+import com.kxsv.schooldiary.ui.screens.schedule.DayScheduleCopyScreen
 import com.kxsv.schooldiary.ui.screens.schedule.DayScheduleScreen
+import com.kxsv.schooldiary.ui.screens.schedule.DayScheduleViewModel
 import com.kxsv.schooldiary.ui.screens.schedule.add_edit.AddEditScheduleScreen
 import com.kxsv.schooldiary.ui.screens.subject_detail.SubjectDetailScreen
 import com.kxsv.schooldiary.ui.screens.subject_detail.add_edit.AddEditSubjectScreen
 import com.kxsv.schooldiary.ui.screens.subject_list.SubjectsScreen
 import com.kxsv.schooldiary.ui.screens.teacher_list.TeachersScreen
 import com.kxsv.schooldiary.util.ui.AppModalDrawer
+import com.kxsv.schooldiary.util.ui.sharedViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -52,7 +58,7 @@ fun AppNavGraph(
 	navController: NavHostController = rememberNavController(),
 	coroutineScope: CoroutineScope = rememberCoroutineScope(),
 	drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
-	startDestination: String = SUBJECTS_ROUTE,
+	startDestination: String = SCHEDULE_ROUTE,
 	navActions: AppNavigationActions = remember(navController) {
 		AppNavigationActions(navController)
 	},
@@ -73,37 +79,56 @@ fun AppNavGraph(
 				)
 			}
 		}
-		composable(
-			DAY_SCHEDULE_ROUTE,
-			arguments = listOf(
-				navArgument(SELECTED_PATTERN_ARG) {
-					type = NavType.LongType; nullable = false; defaultValue = 0
-				},
-				navArgument(DATESTAMP_ARG) { type = NavType.LongType },
-				navArgument(USER_MESSAGE_ARG) { type = NavType.IntType; defaultValue = 0 }
-			)
-		) { entry ->
-			AppModalDrawer(drawerState, currentRoute, navActions) {
-				DayScheduleScreen(
-					userMessage = entry.arguments?.getInt(USER_MESSAGE_ARG)!!,
-					isCustomPatternWasSet = entry.savedStateHandle.get<Boolean>(
-						CUSTOM_PATTERN_SET_ARG
-					),
-					onUserMessageDisplayed = { entry.arguments?.putInt(USER_MESSAGE_ARG, 0) },
-					onAddSchedule = { dateStamp ->
-						navActions.navigateToAddEditSchedule(
-							scheduleId = null,
-							dateStamp = dateStamp
-						)
+		navigation(
+			startDestination = DAY_SCHEDULE_ROUTE,
+			route = SCHEDULE_ROUTE
+		) {
+			composable(
+				DAY_SCHEDULE_ROUTE,
+				arguments = listOf(
+					navArgument(SELECTED_PATTERN_ARG) {
+						type = NavType.LongType; nullable = false; defaultValue = 0
 					},
-					onEditClass = { scheduleId ->
-						navActions.navigateToAddEditSchedule(scheduleId = scheduleId, 0)
-					},
-					onChangePattern = { studyDayId ->
-						navActions.navigateToPatternsSelection(studyDayId = studyDayId)
-					},
-					openDrawer = { coroutineScope.launch { drawerState.open() } }
+					navArgument(DATESTAMP_ARG) { type = NavType.LongType },
+					navArgument(USER_MESSAGE_ARG) { type = NavType.IntType; defaultValue = 0 }
 				)
+			) { entry ->
+				val sharedScheduleViewModel =
+					entry.sharedViewModel<DayScheduleViewModel>(navController)
+				AppModalDrawer(drawerState, currentRoute, navActions) {
+					DayScheduleScreen(
+						userMessage = entry.arguments?.getInt(USER_MESSAGE_ARG)!!,
+						onUserMessageDisplayed = { entry.arguments?.putInt(USER_MESSAGE_ARG, 0) },
+						isCustomPatternWasSet = entry.savedStateHandle.get<Boolean>(
+							CUSTOM_PATTERN_SET_ARG
+						),
+						onAddSchedule = { dateStamp ->
+							navActions.navigateToAddEditSchedule(
+								scheduleId = null,
+								dateStamp = dateStamp
+							)
+						},
+						onEditClass = { scheduleId ->
+							navActions.navigateToAddEditSchedule(scheduleId = scheduleId, 0)
+						},
+						onChangePattern = { studyDayId ->
+							navActions.navigateToPatternsSelection(studyDayId = studyDayId)
+						},
+						onChangeDaySchedule = {
+							navActions.navigateToCopyOfDaySchedule()
+						},
+						viewModel = sharedScheduleViewModel,
+						openDrawer = { coroutineScope.launch { drawerState.open() } }
+					)
+				}
+			}
+			
+			composable(
+				COPY_DAY_SCHEDULE_ROUTE,
+			) { entry ->
+				val sharedScheduleViewModel =
+					entry.sharedViewModel<DayScheduleViewModel>(navController)
+				DayScheduleCopyScreen(viewModel = sharedScheduleViewModel)
 			}
 		}
 		composable(

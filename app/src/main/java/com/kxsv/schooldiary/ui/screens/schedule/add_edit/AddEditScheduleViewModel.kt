@@ -132,7 +132,7 @@ class AddEditScheduleViewModel @Inject constructor(
 	private fun createNewClass() = viewModelScope.launch {
 		scheduleRepository.createSchedule(
 			schedule = Schedule(
-				index = uiState.value.classIndex.toInt(),
+				index = uiState.value.classIndex.toInt() - 1,
 				subjectAncestorId = uiState.value.pickedSubject!!.subjectId,
 			),
 			date = uiState.value.classDate!!
@@ -146,7 +146,7 @@ class AddEditScheduleViewModel @Inject constructor(
 		viewModelScope.launch {
 			scheduleRepository.updateSchedule(
 				schedule = Schedule(
-					index = uiState.value.classIndex.toInt(),
+					index = uiState.value.classIndex.toInt() - 1,
 					subjectAncestorId = uiState.value.pickedSubject!!.subjectId,
 					scheduleId = scheduleId
 				),

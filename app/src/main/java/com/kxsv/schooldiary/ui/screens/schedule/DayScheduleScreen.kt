@@ -49,7 +49,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.kizitonwose.calendar.compose.WeekCalendar
 import com.kizitonwose.calendar.compose.weekcalendar.rememberWeekCalendarState
 import com.kxsv.schooldiary.R
@@ -59,18 +58,15 @@ import com.kxsv.schooldiary.data.features.subjects.Subject
 import com.kxsv.schooldiary.data.features.time_pattern.pattern_stroke.PatternStroke
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.kxsv.schooldiary.util.ui.ScheduleTopAppBar
+import com.kxsv.schooldiary.util.ui.displayText
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.MaterialDialogState
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.Month
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import java.time.format.TextStyle
-import java.util.Locale
 
 private fun localDateToTimestamp(date: LocalDate): Long =
 	date.atStartOfDay(ZoneId.of("UTC")).toEpochSecond()
@@ -83,19 +79,27 @@ fun DayScheduleScreen(
 	onAddSchedule: (Long) -> Unit,
 	onEditClass: (Long) -> Unit,
 	onChangePattern: (Long) -> Unit,
+	onChangeDaySchedule: () -> Unit,
 	openDrawer: () -> Unit,
 	modifier: Modifier = Modifier,
-	viewModel: DayScheduleViewModel = hiltViewModel(),
+	viewModel: DayScheduleViewModel,
 	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
-	
 	Scaffold(
 		topBar = {
 			// TODO add check and show message about considering creating of lessons first
 			ScheduleTopAppBar(
-				{ uiState.studyDay?.let { onChangePattern(it.studyDayId) } },
-				openDrawer
+				onChangePattern = {
+					if (uiState.studyDay != null) {
+						onChangePattern(uiState.studyDay.studyDayId)
+					} else {
+						viewModel.showSnackbarMessage(R.string.no_schedule_for_custom_pattern_message)
+					}
+				},
+				onCopyDaySchedule = { onChangeDaySchedule() },
+				onCopyDateRangeSchedule = {},
+				openDrawer = openDrawer
 			)
 		},
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -103,7 +107,7 @@ fun DayScheduleScreen(
 		floatingActionButton = {
 			FloatingActionButton(
 				onClick = {
-					onAddSchedule(localDateToTimestamp(uiState.date))
+					onAddSchedule(localDateToTimestamp(uiState.selectedDate))
 				}
 			) {
 				Icon(Icons.Default.Add, stringResource(R.string.add_schedule_item))
@@ -115,18 +119,18 @@ fun DayScheduleScreen(
 		DayScheduleContent(
 			loading = uiState.isLoading,
 			classes = uiState.classes,
-			date = uiState.date,
-			currentPattern = uiState.currentPattern,
-			changeDate = viewModel::updateDayWithClasses,
+			selectedDate = uiState.selectedDate,
+			currentPattern = uiState.currentTimings,
+			changeDate = viewModel::updateDay,
 			onClassClick = { (viewModel::selectClass)(it); dialogState.show() },
-			onRefresh = { (viewModel::updateDayWithClasses)(uiState.date) },
+			onRefresh = { (viewModel::updateDay)(uiState.selectedDate) },
 			modifier = Modifier.padding(paddingValues),
 		)
 		
 		LessonDialog(
 			classDetailed = uiState.classDetailed,
-			date = uiState.date,
-			currentPattern = uiState.currentPattern,
+			selectedDate = uiState.selectedDate,
+			currentPattern = uiState.currentTimings,
 			onDeleteClass = viewModel::deleteClass,
 			onEditClass = onEditClass,
 			unselectClass = viewModel::unselectClass,
@@ -141,15 +145,9 @@ fun DayScheduleScreen(
 			}
 		}
 		
-		LaunchedEffect(uiState.isClassDeleted) {
-			if (uiState.isClassDeleted) {
-				viewModel.onDeleteClass()
-			}
-		}
-		
 		LaunchedEffect(isCustomPatternWasSet) {
 			if (isCustomPatternWasSet == true) {
-				viewModel.updateDayWithClasses(uiState.date)
+				viewModel.updateDay(uiState.selectedDate)
 			}
 		}
 		
@@ -167,9 +165,9 @@ fun DayScheduleScreen(
 @Composable
 private fun LessonDialog(
 	classDetailed: ScheduleWithSubject?,
-	date: LocalDate,
+	selectedDate: LocalDate,
 	currentPattern: List<PatternStroke>,
-	onDeleteClass: (Long) -> Unit,
+	onDeleteClass: (ScheduleWithSubject) -> Unit,
 	onEditClass: (Long) -> Unit,
 	unselectClass: () -> Unit,
 	dialogState: MaterialDialogState,
@@ -186,7 +184,7 @@ private fun LessonDialog(
 				)
 				Spacer(modifier = Modifier.padding(vertical = 4.dp))
 				Text(
-					date.dayOfWeek.name,
+					selectedDate.dayOfWeek.name,
 					style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Normal)
 				)
 				Spacer(modifier = Modifier.padding(vertical = 2.dp))
@@ -203,7 +201,7 @@ private fun LessonDialog(
 							)
 				} else stringResource(
 					R.string.class_out_of_strokes_bounds_message,
-					classDetailed.schedule.index
+					classDetailed.schedule.index + 1
 				)
 				Text(
 					text,
@@ -227,7 +225,7 @@ private fun LessonDialog(
 					}
 					Spacer(modifier = Modifier.fillMaxWidth(0.18181819f))
 					FilledTonalButton(
-						onClick = { onDeleteClass(classDetailed.schedule.scheduleId) },
+						onClick = { onDeleteClass(classDetailed) },
 						modifier = Modifier.fillMaxWidth()
 					) {
 						Text(text = stringResource(R.string.btn_delete))
@@ -253,11 +251,12 @@ private fun LessonDialog(
 	}
 }
 
+// TODO: rework so skipped lessons shown better
 @Composable
 private fun DayScheduleContent(
 	loading: Boolean,
 	classes: List<ScheduleWithSubject>,
-	date: LocalDate,
+	selectedDate: LocalDate,
 	currentPattern: List<PatternStroke>,
 	changeDate: (LocalDate) -> Unit,
 //@StringRes noPatternsLabel: Int,
@@ -266,7 +265,7 @@ private fun DayScheduleContent(
 	modifier: Modifier,
 ) {
 	Column(modifier = modifier) {
-		CalendarLine(changeDate = changeDate, selectedDate = date)
+		CalendarLine(changeDate = changeDate, selectedDate = selectedDate)
 		LoadingContent(
 			loading = loading,
 			isContentScrollable = true,
@@ -275,7 +274,7 @@ private fun DayScheduleContent(
 				Column(
 					modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.horizontal_margin))
 				) {
-					DayOfWeekHeader(date = date, lessonsAmount = classes.size)
+					DayOfWeekHeader(date = selectedDate, lessonsAmount = classes.size)
 					Text(text = "No schedule for this day for now")
 				}
 				
@@ -286,7 +285,7 @@ private fun DayScheduleContent(
 				Modifier.padding(horizontal = dimensionResource(R.dimen.horizontal_margin))
 			) {
 				item {
-					DayOfWeekHeader(date = date, lessonsAmount = classes.size)
+					DayOfWeekHeader(date = selectedDate, lessonsAmount = classes.size)
 				}
 				classes.forEachIndexed { it, lesson ->
 					item(contentType = { lesson }) {
@@ -311,12 +310,13 @@ private fun CalendarLine(
 	changeDate: (LocalDate) -> Unit,
 	selectedDate: LocalDate,
 ) {
-	val startDate = LocalDate.now().minusMonths(2)
-	val endDate = LocalDate.now().plusMonths(2)
-	
+	val currentDate = remember { LocalDate.now() }
+	val startDate = remember { currentDate.minusDays(600) }
+	val endDate = remember { currentDate.plusDays(600) }
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
+			.background(Color.Transparent)
 	) {
 		val state = rememberWeekCalendarState(
 			startDate = startDate,
@@ -388,17 +388,6 @@ private fun Day(
 	}
 }
 
-fun Month.displayText(short: Boolean = true): String {
-	val style = if (short) TextStyle.SHORT else TextStyle.FULL
-	return getDisplayName(style, Locale.getDefault())
-}
-
-fun DayOfWeek.displayText(uppercase: Boolean = false): String {
-	return getDisplayName(TextStyle.SHORT, Locale.getDefault()).let { value ->
-		if (uppercase) value.uppercase(Locale.getDefault()) else value
-	}
-}
-
 @Composable
 private fun DayOfWeekHeader(
 	lessonsAmount: Int,
@@ -412,12 +401,13 @@ private fun DayOfWeekHeader(
 			date.dayOfWeek.name,
 			style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold)
 		)
-		if (lessonsAmount != 0) {
-			Text(
-				stringResource(R.string.lessons_quantity_label, lessonsAmount),
-				style = MaterialTheme.typography.labelLarge
-			)
-		}
+		val text: String = if (lessonsAmount != 0) {
+			stringResource(R.string.lessons_quantity_label, lessonsAmount)
+		} else stringResource(R.string.no_lessons_label)
+		Text(
+			text = text,
+			style = MaterialTheme.typography.labelLarge
+		)
 	}
 }
 
@@ -494,7 +484,7 @@ private fun DayScheduleContentPreview() {
 					Subject("Русский язык", "210")
 				),
 			),
-			date = LocalDate.now(),
+			selectedDate = LocalDate.now(),
 			currentPattern = listOf(
 				PatternStroke(startTime = LocalTime.of(8, 30), endTime = LocalTime.of(9, 15)),
 				PatternStroke(startTime = LocalTime.of(9, 30), endTime = LocalTime.of(10, 15)),
@@ -516,7 +506,7 @@ private fun LessonDialogPreview() {
 				subject = Subject(name = "Английский язык", cabinet = "316", subjectId = 0),
 				schedule = Schedule(index = 0, studyDayMasterId = 0, subjectAncestorId = 0)
 			),
-			date = LocalDate.now(),
+			selectedDate = LocalDate.now(),
 			currentPattern = listOf(
 				PatternStroke(startTime = LocalTime.of(8, 30), endTime = LocalTime.of(9, 15)),
 				PatternStroke(startTime = LocalTime.of(9, 30), endTime = LocalTime.of(10, 15)),

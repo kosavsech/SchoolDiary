@@ -167,7 +167,11 @@ private fun AddEditPatternContent(
 						text = stroke.startTime
 							.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)) +
 								" - "
-								+ stroke.endTime,
+								+ stroke.endTime.format(
+							DateTimeFormatter.ofLocalizedTime(
+								FormatStyle.SHORT
+							)
+						),
 						fontSize = 20.sp
 					)
 					IconButton(onClick = { onStrokeDelete(stroke) }) {

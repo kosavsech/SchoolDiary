@@ -63,9 +63,9 @@ class ScheduleRepositoryImpl @Inject constructor(
 	
 	override suspend fun copyScheduleFromDate(fromDate: LocalDate, toDate: LocalDate) {
 		val refStudyDay = studyDayDataSource.getByDate(fromDate)
-		val copyOfStudyDay = refStudyDay?.copy(date = toDate, studyDayId = 0)
 			?: throw Exception("StudyDay (date $fromDate) not found")
 		
+		val copyOfStudyDay = refStudyDay.copy(date = toDate, studyDayId = 0)
 		val copyOfSchedules: MutableList<Schedule> = mutableListOf()
 		val idOfStudyDayCopy = studyDayDataSource.upsert(copyOfStudyDay)
 		
@@ -75,18 +75,56 @@ class ScheduleRepositoryImpl @Inject constructor(
 		scheduleDataSource.upsertAll(copyOfSchedules)
 	}
 	
-	override suspend fun copyScheduleFromStudyDayId(refStudyDayId: Long, toDate: LocalDate) {
+	override suspend fun copyScheduleFromId(refStudyDayId: Long, toDate: LocalDate) {
 		val refStudyDay = studyDayDataSource.getById(refStudyDayId)
-		val copyOfStudyDay = refStudyDay?.copy(date = toDate, studyDayId = 0)
 			?: throw Exception("StudyDay (id $refStudyDayId) not found")
 		
+		val copyOfStudyDay = refStudyDay.copy(date = toDate, studyDayId = 0)
 		val copyOfSchedules: MutableList<Schedule> = mutableListOf()
 		val idOfStudyDayCopy = studyDayDataSource.upsert(copyOfStudyDay)
 		
 		scheduleDataSource.getAllByMasterId(refStudyDay.studyDayId).forEach {
 			copyOfSchedules.add(it.copy(studyDayMasterId = idOfStudyDayCopy))
 		}
-		scheduleDataSource.upsertAll(copyOfSchedules)	}
+		scheduleDataSource.upsertAll(copyOfSchedules)
+	}
+	
+	override suspend fun copyScheduleFromDateToId(fromDate: LocalDate, toStudyDayId: Long) {
+		val refStudyDay = studyDayDataSource.getByDate(fromDate)
+			?: throw Exception("Reference StudyDay (date $fromDate) not found")
+		val toStudyDay = studyDayDataSource.getById(toStudyDayId)
+			?: throw Exception("Destination StudyDay (id $toStudyDayId) not found")
+		
+		val updatedStudyDay = toStudyDay.copy(appliedPatternId = refStudyDay.appliedPatternId)
+		studyDayDataSource.upsert(updatedStudyDay)
+		scheduleDataSource.deleteAllByDayId(toStudyDay.studyDayId)
+		
+		val copyOfSchedules: MutableList<Schedule> = mutableListOf()
+		scheduleDataSource.getAllByMasterId(refStudyDay.studyDayId).forEach {
+			copyOfSchedules.add(it.copy(studyDayMasterId = toStudyDay.studyDayId))
+		}
+		scheduleDataSource.upsertAll(copyOfSchedules)
+	}
+	
+	override suspend fun copyScheduleFromIdToId(
+		refStudyDayId: Long,
+		toStudyDayId: Long,
+	) {
+		val refStudyDay = studyDayDataSource.getById(refStudyDayId)
+			?: throw Exception("Reference StudyDay (id $refStudyDayId) not found")
+		val toStudyDay = studyDayDataSource.getById(toStudyDayId)
+			?: throw Exception("Destination StudyDay (id $toStudyDayId) not found")
+		
+		val updatedStudyDay = toStudyDay.copy(appliedPatternId = refStudyDay.appliedPatternId)
+		studyDayDataSource.upsert(updatedStudyDay)
+		scheduleDataSource.deleteAllByDayId(toStudyDay.studyDayId)
+		
+		val copyOfSchedules: MutableList<Schedule> = mutableListOf()
+		scheduleDataSource.getAllByMasterId(refStudyDay.studyDayId).forEach {
+			copyOfSchedules.add(it.copy(studyDayMasterId = toStudyDay.studyDayId))
+		}
+		scheduleDataSource.upsertAll(copyOfSchedules)
+	}
 	
 	override suspend fun deleteAllSchedules() {
 		scheduleDataSource.deleteAll()
