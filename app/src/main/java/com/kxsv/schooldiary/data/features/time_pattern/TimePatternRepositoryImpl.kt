@@ -38,7 +38,6 @@ class TimePatternRepositoryImpl @Inject constructor(
 		return patternDataSource.upsert(pattern)
 	}
 	
-	// TODO: merge create update method in all repositories
 	override suspend fun createPatternWithStrokes(
 		name: String,
 		strokes: List<PatternStroke>,

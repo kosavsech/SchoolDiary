@@ -60,7 +60,7 @@ class PatternsViewModel @Inject constructor(
 			is Async.Error -> {
 				showSnackbarMessage(defaultPatternId.errorMessage)
 			}
-			//todo?
+			
 			Async.Loading -> {
 				PatternsUiState(isLoading = true)
 			}

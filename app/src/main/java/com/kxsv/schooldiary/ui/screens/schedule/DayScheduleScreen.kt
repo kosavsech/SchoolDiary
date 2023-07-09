@@ -88,7 +88,6 @@ fun DayScheduleScreen(
 	val uiState = viewModel.uiState.collectAsState().value
 	Scaffold(
 		topBar = {
-			// TODO add check and show message about considering creating of lessons first
 			ScheduleTopAppBar(
 				onChangePattern = {
 					if (uiState.studyDay != null) {
@@ -189,7 +188,6 @@ private fun LessonDialog(
 				)
 				Spacer(modifier = Modifier.padding(vertical = 2.dp))
 				
-				// TODO: add format for lesson.index in message
 				val text: String = if (classDetailed.schedule.index <= currentPattern.lastIndex) {
 					currentPattern[classDetailed.schedule.index].startTime.format(
 						DateTimeFormatter.ofLocalizedTime(
@@ -251,7 +249,6 @@ private fun LessonDialog(
 	}
 }
 
-// TODO: rework so skipped lessons shown better
 @Composable
 private fun DayScheduleContent(
 	loading: Boolean,
@@ -465,7 +462,6 @@ private fun ClassItem(
 			}
 			Spacer(modifier = Modifier.padding(horizontal = 4.dp))
 			// TODO: add tags
-//            Text("Tags: ${lessonStroke.subject..tags}", fontSize = 14.sp,)
 		}
 		Spacer(modifier = Modifier.padding(vertical = 4.dp))
 		

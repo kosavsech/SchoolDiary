@@ -20,8 +20,6 @@ import com.kxsv.schooldiary.data.features.time_pattern.pattern_stroke.PatternStr
 import com.kxsv.schooldiary.util.Converters
 
 @Database(
-    // TODO: create Grade with data layer and ui
-    // TODO: create Tag with data layer and ui
     entities = [
         Teacher::class, TimePattern::class, PatternStroke::class,
         Subject::class, SubjectTeacher::class, Schedule::class,

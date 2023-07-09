@@ -100,7 +100,6 @@ private fun SubjectContent(
 					modifier = Modifier.padding(dimensionResource(R.dimen.vertical_margin))
 				) {
 					if (!loading) {
-						// TODO: remake for teacher full name
 						Text(
 							text = subject!!.name,
 							style = MaterialTheme.typography.titleMedium,

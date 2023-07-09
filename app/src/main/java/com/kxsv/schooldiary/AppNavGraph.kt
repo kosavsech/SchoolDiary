@@ -74,7 +74,6 @@ fun AppNavGraph(
 		composable(TEACHERS_ROUTE) {
 			AppModalDrawer(drawerState, currentRoute, navActions) {
 				TeachersScreen(
-					// TODO: add other stuff
 					openDrawer = { coroutineScope.launch { drawerState.open() } }
 				)
 			}
@@ -215,7 +214,6 @@ fun AppNavGraph(
 				topBarTitle = entry.arguments?.getInt(TITLE_ARG)!!,
 				onPatternUpdate = {
 					navController.popBackStack()
-					// TODO: create separate method in navActions to pop back stack with arguments
 					/*navActions.navigateToPatterns(
 						if (patternId == 0L) ADD_EDIT_RESULT_OK else EDIT_RESULT_OK
 					)*/
@@ -233,7 +231,6 @@ fun AppNavGraph(
 		) { entry ->
 			val subjectId = entry.arguments?.getLong(SUBJECT_ID_ARG)
 			AddEditSubjectScreen(
-				// TODO: need to go subjectDetailed onUpdate and to subjectsScreen onCreate
 				onSubjectUpdate = {
 					navActions.navigateToSubjects(
 						if (subjectId == 0L) ADD_EDIT_RESULT_OK else EDIT_RESULT_OK

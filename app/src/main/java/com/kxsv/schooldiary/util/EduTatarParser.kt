@@ -88,7 +88,6 @@ class EduTatarParser {
         names.sort()
     }
 
-    // TODO
     /*suspend fun GetSubjectsShortName() {
         val lessons: MutableSet<String> = mutableSetOf()
         //val daysOnPage = dayPage.select("tbody > tr > td.tt-days > div > span")
@@ -148,7 +147,7 @@ class EduTatarParser {
                 "task" -> 3
                 "comment" -> 4
                 "grade" -> 5
-                else -> 2 // TODO throw exception
+                else -> 2 // throw exception
             }
         val lines = dayPage.select("div.d-table > table > tbody > tr > td:nth-child($column)")
         lines.forEach {

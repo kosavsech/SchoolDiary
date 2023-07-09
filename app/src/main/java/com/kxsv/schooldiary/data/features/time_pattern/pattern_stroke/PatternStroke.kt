@@ -21,8 +21,6 @@ import java.time.LocalTime
 data class PatternStroke(
 	@ColumnInfo(index = true)
 	var patternMasterId: Long? = null,
-	// TODO: add indexes
-	// TODO: everywhere when we create this times set seconds and etc to zero
 	val startTime: LocalTime,
 	val endTime: LocalTime,
 	@PrimaryKey(autoGenerate = true)
