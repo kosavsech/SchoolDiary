@@ -29,7 +29,9 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
+
 
 private const val TAG = "DayScheduleViewModel"
 
@@ -40,8 +42,8 @@ data class DayScheduleUiState(
 	val classDetailed: ScheduleWithSubject? = null,
 	val selectedDate: LocalDate = LocalDate.now(), // unique for DayScheduleScreen
 	val selectedCalendarDay: CalendarDay? = null, // unique for DayScheduleCopyScreen
-	val startDate: LocalDate? = null,
-	val endDate: LocalDate? = null,
+	val refRange: ClosedRange<LocalDate>? = null,
+	val destRange: ClosedRange<LocalDate>? = null,
 	val userMessage: Int? = null,
 	val isLoading: Boolean = false,
 )
@@ -102,6 +104,14 @@ class DayScheduleViewModel @Inject constructor(
 		showEditResultMessage(DELETE_RESULT_OK)
 	}
 	
+	fun selectRefRange(startDate: LocalDate, endDate: LocalDate) {
+		_uiState.update { it.copy(refRange = startDate..endDate) }
+	}
+	
+	private fun selectDestRange(startDate: LocalDate, endDate: LocalDate) {
+		_uiState.update { it.copy(destRange = startDate..endDate) }
+	}
+	
 	fun selectClass(lesson: ScheduleWithSubject) {
 		_uiState.update { it.copy(classDetailed = lesson) }
 	}
@@ -145,30 +155,64 @@ class DayScheduleViewModel @Inject constructor(
 	fun copySchedule(toCopyPattern: Boolean) {
 		if (uiState.value.selectedCalendarDay == null)
 			throw RuntimeException("copySchedule() was called but selectedCalendarDay is null.")
-		
-		copyScheduleFromDate(
-			fromDate = uiState.value.selectedCalendarDay!!.date,
-			toDate = uiState.value.selectedDate,
-			toCopyPattern = toCopyPattern
-		)
+		viewModelScope.launch {
+			copyScheduleFromDate(
+				fromDate = uiState.value.selectedCalendarDay!!.date,
+				toDate = uiState.value.selectedDate,
+				toCopyPattern = toCopyPattern
+			)
+		}
 	}
 	
-	fun copyScheduleFromRange(toCopyPattern: Boolean) {
-		if (uiState.value.selectedCalendarDay == null)
-			throw RuntimeException("copySchedule() was called but selectedCalendarDay is null.")
-		
-		copyScheduleFromDate(
-			fromDate = uiState.value.selectedCalendarDay!!.date,
-			toDate = uiState.value.selectedDate,
-			toCopyPattern = toCopyPattern
-		)
+	private fun ClosedRange<LocalDate>.rangeToList(limiter: Long? = null): List<LocalDate> {
+		val dates = mutableListOf(this.start)
+		var daysAdded = 1L
+		while (daysAdded <= ChronoUnit.DAYS.between(this.start, this.endInclusive)) {
+			dates.add(this.start.plusDays(daysAdded))
+			daysAdded++
+			if (limiter != null && limiter == daysAdded) break
+		}
+		Log.d(TAG, "rangeToList() called on range = $this and returns $dates")
+		return dates
 	}
 	
-	private fun copyScheduleFromDate(
+	fun copyScheduleToRange(startDate: LocalDate, endDate: LocalDate) {
+		if (uiState.value.refRange == null)
+			throw RuntimeException("copyScheduleToRange() was called but refRange is null.")
+		selectDestRange(startDate, endDate)
+		
+		val copyFromDays = uiState.value.refRange!!.rangeToList()
+		val copyToDays = uiState.value.destRange!!.rangeToList(copyFromDays.size.toLong())
+		
+		for ((index, dateCopyTo) in copyToDays.withIndex()) {
+			viewModelScope.launch {
+				Log.d(
+					TAG,
+					"copyScheduleToRange() called with: dateCopyFrom = ${copyFromDays[index]}, dateCopyTo = $dateCopyTo"
+				)
+				copyScheduleFromDate(
+					fromDate = copyFromDays[index],
+					toDate = dateCopyTo,
+					toCopyPattern = true
+				)
+			}
+		}
+		_uiState.update { it.copy(refRange = null, destRange = null) }
+	}
+	
+	private suspend fun copyScheduleFromDate(
 		fromDate: LocalDate, toDate: LocalDate, toCopyPattern: Boolean,
-	) = viewModelScope.launch {
+	) {
 		val refStudyDay = studyDayRepository.getStudyDayByDate(fromDate)
-			?: throw NoSuchElementException("Reference StudyDay (date $fromDate) to copy from not found.")
+		if (refStudyDay == null) {
+			Log.d(
+				TAG,
+				"copyScheduleFromDate() called with: fromDate = $fromDate, toDate = $toDate, toCopyPattern = $toCopyPattern" +
+						"\nReference StudyDay (date $fromDate) to copy from not found."
+			)
+			return
+			/*throw NoSuchElementException("Reference StudyDay (date $fromDate) to copy from not found.")*/
+		}
 		val toStudyDay = studyDayRepository.getStudyDayByDate(toDate)
 		
 		val idOfDestinationDay = if (toStudyDay != null) {

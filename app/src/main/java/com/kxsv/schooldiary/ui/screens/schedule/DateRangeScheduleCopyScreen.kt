@@ -60,7 +60,6 @@ import com.kxsv.schooldiary.util.ui.DateSelection
 import com.kxsv.schooldiary.util.ui.backgroundHighlight
 import com.kxsv.schooldiary.util.ui.displayText
 import com.kxsv.schooldiary.util.ui.rememberFirstCompletelyVisibleMonth
-import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -78,7 +77,6 @@ fun DateRangeScheduleCopyScreen(
 	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
-	val dialogState = rememberMaterialDialogState()
 	
 	Scaffold(
 		topBar = {
@@ -95,8 +93,16 @@ fun DateRangeScheduleCopyScreen(
 		
 		DateRangeScheduleCopyContent(
 			modifier = Modifier.padding(paddingValues),
-			isSelectingReference = true,
-			selectedDate = LocalDate.now()
+			rangeSelected = { startDate, endDate ->
+				if (uiState.refRange == null) {
+					viewModel.selectRefRange(startDate, endDate)
+				} else {
+					viewModel.copyScheduleToRange(startDate, endDate)
+					onBack()
+				}
+			},
+			isSelectingReference = uiState.refRange == null,
+			selectedDay = LocalDate.now()
 		)
 		
 		
@@ -113,11 +119,11 @@ fun DateRangeScheduleCopyScreen(
 @Composable
 fun DateRangeScheduleCopyContent(
 	modifier: Modifier,
-	dateSelected: (startDate: LocalDate, endDate: LocalDate) -> Unit = { _, _ -> },
-	selectedDate: LocalDate,
+	rangeSelected: (startDate: LocalDate, endDate: LocalDate) -> Unit = { _, _ -> },
+	selectedDay: LocalDate,
 	isSelectingReference: Boolean,
 ) {
-	val currentMonth = remember(selectedDate) { YearMonth.from(selectedDate) }
+	val currentMonth = remember(selectedDay) { YearMonth.from(selectedDay) }
 	val startMonth = remember { currentMonth.minusMonths(24) }
 	val endMonth = remember { currentMonth.plusMonths(24) }
 	val today = remember { LocalDate.now() }
@@ -207,10 +213,12 @@ fun DateRangeScheduleCopyContent(
 					.background(Color.White)
 					.align(Alignment.BottomCenter),
 				selection = selection,
+				isSelectingReference = isSelectingReference,
 				save = {
 					val (startDate, endDate) = selection
 					if (startDate != null && endDate != null) {
-						dateSelected(startDate, endDate)
+						rangeSelected(startDate, endDate)
+						selection = DateSelection()
 					}
 				},
 			)
@@ -227,6 +235,7 @@ private val continuousSelectionColor = Color.LightGray.copy(alpha = 0.3f)
 private fun CalendarBottom(
 	modifier: Modifier = Modifier,
 	selection: DateSelection,
+	isSelectingReference: Boolean,
 	save: () -> Unit,
 ) {
 	Column(modifier.fillMaxWidth()) {
@@ -235,8 +244,13 @@ private fun CalendarBottom(
 			modifier = Modifier.padding(16.dp),
 			verticalAlignment = Alignment.CenterVertically,
 		) {
+			val text = if (isSelectingReference) {
+				"Select days to copy from" // todo string resources
+			} else {
+				"Select days to copy to"
+			}
 			Text(
-				text = "Select days to copy from?",
+				text = text,
 				fontWeight = FontWeight.Bold,
 			)
 			Spacer(modifier = Modifier.weight(1f))

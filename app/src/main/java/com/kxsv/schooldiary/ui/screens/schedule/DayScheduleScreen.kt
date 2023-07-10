@@ -189,19 +189,20 @@ private fun LessonDialog(
 				)
 				Spacer(modifier = Modifier.padding(vertical = 2.dp))
 				
-				val text: String = if (classDetailed.schedule.index <= currentPattern.lastIndex) {
-					currentPattern[classDetailed.schedule.index].startTime.format(
-						DateTimeFormatter.ofLocalizedTime(
-							FormatStyle.SHORT
-						)
-					) + " - " +
-							currentPattern[classDetailed.schedule.index].endTime.format(
-								DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+				val text: String =
+					if (classDetailed.schedule.index >= 0 && classDetailed.schedule.index <= currentPattern.lastIndex) {
+						currentPattern[classDetailed.schedule.index].startTime.format(
+							DateTimeFormatter.ofLocalizedTime(
+								FormatStyle.SHORT
 							)
-				} else stringResource(
-					R.string.class_out_of_strokes_bounds_message,
-					classDetailed.schedule.index + 1
-				)
+						) + " - " +
+								currentPattern[classDetailed.schedule.index].endTime.format(
+									DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+								)
+					} else stringResource(
+						R.string.class_out_of_strokes_bounds_message,
+						classDetailed.schedule.index + 1
+					)
 				Text(
 					text,
 					style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Normal)
@@ -422,21 +423,22 @@ private fun ClassItem(
 			.clickable { onClassClick(lesson) }
 			.padding(vertical = dimensionResource(R.dimen.list_item_padding))
 	) {
-		val text: String = if (lesson.schedule.index <= currentPattern.lastIndex) {
-			currentPattern[lesson.schedule.index].startTime.format(
-				DateTimeFormatter.ofLocalizedTime(
-					FormatStyle.SHORT
-				)
-			) + " - " +
-					currentPattern[lesson.schedule.index].endTime.format(
-						DateTimeFormatter.ofLocalizedTime(
-							FormatStyle.SHORT
-						)
+		val text: String =
+			if (lesson.schedule.index >= 0 && lesson.schedule.index <= currentPattern.lastIndex) {
+				currentPattern[lesson.schedule.index].startTime.format(
+					DateTimeFormatter.ofLocalizedTime(
+						FormatStyle.SHORT
 					)
-		} else stringResource(
-			R.string.class_out_of_strokes_bounds_message,
-			lesson.schedule.index
-		)
+				) + " - " +
+						currentPattern[lesson.schedule.index].endTime.format(
+							DateTimeFormatter.ofLocalizedTime(
+								FormatStyle.SHORT
+							)
+						)
+			} else stringResource(
+				R.string.class_out_of_strokes_bounds_message,
+				lesson.schedule.index + 1
+			)
 		Text(
 			text = text,
 			style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium)
