@@ -36,11 +36,11 @@ class StudyDayRepositoryImpl @Inject constructor(
 		return studyDayDataSource.getByDateWithSchedulesAndSubjects(date)
 	}
 	
-	override suspend fun createStudyDay(studyDay: StudyDay): Long {
+	override suspend fun create(studyDay: StudyDay): Long {
 		return studyDayDataSource.upsert(studyDay)
 	}
 	
-	override suspend fun updateStudyDay(studyDay: StudyDay) {
+	override suspend fun update(studyDay: StudyDay) {
 		studyDayDataSource.upsert(studyDay)
 	}
 	

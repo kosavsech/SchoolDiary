@@ -14,11 +14,15 @@ interface ScheduleRepository {
 	
 	suspend fun getSchedules(): List<Schedule>
 	
+	suspend fun getAllByMasterId(studyDayId: Long): List<Schedule>
+	
 	suspend fun getSchedule(scheduleId: Long): Schedule?
 	
 	suspend fun getScheduleWithSubject(scheduleId: Long): ScheduleWithSubject?
 	
 	suspend fun getScheduleWithStudyDay(scheduleId: Long): ScheduleWithStudyDay?
+	
+	suspend fun upsertAll(schedules: List<Schedule>)
 	
 	suspend fun createSchedule(schedule: Schedule, date: LocalDate)
 	
@@ -33,6 +37,8 @@ interface ScheduleRepository {
 	suspend fun copyScheduleFromIdToId(refStudyDayId: Long, toStudyDayId: Long)
 	
 	suspend fun deleteAllSchedules()
+	
+	suspend fun deleteAllByDayId(studyDayMasterId: Long)
 	
 	suspend fun deleteSchedule(scheduleId: Long)
 }

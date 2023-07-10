@@ -79,7 +79,8 @@ fun DayScheduleScreen(
 	onAddSchedule: (Long) -> Unit,
 	onEditClass: (Long) -> Unit,
 	onChangePattern: (Long) -> Unit,
-	onChangeDaySchedule: () -> Unit,
+	onCopyDaySchedule: () -> Unit,
+	onCopyDateRangeSchedule: () -> Unit,
 	openDrawer: () -> Unit,
 	modifier: Modifier = Modifier,
 	viewModel: DayScheduleViewModel,
@@ -96,8 +97,8 @@ fun DayScheduleScreen(
 						viewModel.showSnackbarMessage(R.string.no_schedule_for_custom_pattern_message)
 					}
 				},
-				onCopyDaySchedule = { onChangeDaySchedule() },
-				onCopyDateRangeSchedule = {},
+				onCopyDaySchedule = onCopyDaySchedule,
+				onCopyDateRangeSchedule = onCopyDateRangeSchedule,
 				openDrawer = openDrawer
 			)
 		},

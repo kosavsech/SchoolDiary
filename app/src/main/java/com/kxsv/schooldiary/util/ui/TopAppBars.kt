@@ -1,12 +1,10 @@
 package com.kxsv.schooldiary.util.ui
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.TopAppBar
-import androidx.compose.material.darkColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
@@ -17,10 +15,8 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -146,7 +142,7 @@ fun ScheduleTopAppBar(
 }
 
 @Composable
-fun MoreActions(
+private fun MoreActions(
 	onChangePattern: () -> Unit,
 	onCopyDaySchedule: () -> Unit,
 	onCopyDateRangeSchedule: () -> Unit,
@@ -158,48 +154,59 @@ fun MoreActions(
 			contentDescription = stringResource(R.string.more_actions),
 			tint = Color.White
 		)
-		CompositionLocalProvider(LocalContentColor provides darkColors().onSurface) {
-			
-			DropdownMenu(
-				expanded = expanded.value,
-				onDismissRequest = { expanded.value = false },
-				modifier = Modifier.background(Color.Black)
-			) {
-				DropdownMenuItem(
-					text = { Text(text = stringResource(R.string.change_pattern)) },
-					onClick = { onChangePattern(); expanded.value = false },
-					leadingIcon = {
-						Icon(
-							Icons.Default.Schedule,
-							stringResource(R.string.change_pattern)
-						)
-					}
-				)
-				DropdownMenuItem(
-					text = { Text(text = stringResource(R.string.copy_schedule_day)) },
-					onClick = { onCopyDaySchedule(); expanded.value = false },
-					leadingIcon = {
-						Icon(
-							Icons.Default.Today,
-							stringResource(R.string.copy_schedule_day)
-						)
-					}
-				)
-				DropdownMenuItem(
-					text = { Text(text = stringResource(R.string.copy_schedule_date_range)) },
-					onClick = { onCopyDateRangeSchedule(); expanded.value = false },
-					leadingIcon = {
-						Icon(
-							Icons.Default.DateRange,
-							stringResource(R.string.copy_schedule_date_range)
-						)
-					}
-				)
-			}
+		DropdownMenu(
+			expanded = expanded.value,
+			onDismissRequest = { expanded.value = false },
+		) {
+			DropdownMenuItem(
+				text = { Text(text = stringResource(R.string.change_pattern)) },
+				onClick = { onChangePattern(); expanded.value = false },
+				leadingIcon = {
+					Icon(
+						Icons.Default.Schedule,
+						stringResource(R.string.change_pattern),
+						tint = Color.Black
+					)
+				}
+			)
+			DropdownMenuItem(
+				text = { Text(text = stringResource(R.string.copy_schedule_day)) },
+				onClick = { onCopyDaySchedule(); expanded.value = false },
+				leadingIcon = {
+					Icon(
+						Icons.Default.Today,
+						stringResource(R.string.copy_schedule_day),
+						tint = Color.Black
+					)
+				}
+			)
+			DropdownMenuItem(
+				text = { Text(text = stringResource(R.string.copy_schedule_date_range)) },
+				onClick = { onCopyDateRangeSchedule(); expanded.value = false },
+				leadingIcon = {
+					Icon(
+						Icons.Default.DateRange,
+						stringResource(R.string.copy_schedule_date_range),
+						tint = Color.Black
+					)
+				}
+			)
 		}
 	}
 }
 
+@Composable
+fun CopyScheduleForDayTopAppBar(date: String? = "", onBack: () -> Unit) {
+	TopAppBar(
+		title = { if (date != null) Text(text = "Copy schedule to $date") },
+		navigationIcon = {
+			IconButton(onClick = onBack) {
+				Icon(Icons.Filled.ArrowBack, stringResource(id = R.string.menu_back))
+			}
+		},
+		modifier = Modifier.fillMaxWidth()
+	)
+}
 
 @Composable
 fun SubjectDetailTopAppBar(title: String? = "", onBack: () -> Unit, onDelete: () -> Unit) {

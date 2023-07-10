@@ -1,6 +1,6 @@
 package com.kxsv.schooldiary.ui.screens.schedule
 
-import android.content.res.Configuration
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,15 +25,16 @@ import androidx.compose.material.darkColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowLeft
 import androidx.compose.material.icons.filled.ArrowRight
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.ripple.LocalRippleTheme
 import androidx.compose.material.ripple.RippleTheme
 import androidx.compose.material3.Divider
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -53,7 +54,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kizitonwose.calendar.compose.HorizontalCalendar
@@ -66,26 +66,61 @@ import com.kizitonwose.calendar.core.nextMonth
 import com.kizitonwose.calendar.core.previousMonth
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.features.schedule.ScheduleWithSubject
+import com.kxsv.schooldiary.util.ui.CopyScheduleForDayTopAppBar
 import com.kxsv.schooldiary.util.ui.displayText
 import com.kxsv.schooldiary.util.ui.rememberFirstCompletelyVisibleMonth
+import com.vanpra.composematerialdialogs.MaterialDialog
+import com.vanpra.composematerialdialogs.MaterialDialogState
+import com.vanpra.composematerialdialogs.message
+import com.vanpra.composematerialdialogs.rememberMaterialDialogState
+import com.vanpra.composematerialdialogs.title
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 private const val TAG = "DayScheduleCopyScreen"
 
 @Composable
 fun DayScheduleCopyScreen(
-//	onBack: () -> Unit,
+	onBack: () -> Unit,
 	modifier: Modifier = Modifier,
 	viewModel: DayScheduleViewModel,
 	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
+	val dialogState = rememberMaterialDialogState()
+	
 	Scaffold(
-		topBar = {},
+		topBar = {
+			CopyScheduleForDayTopAppBar(
+				onBack = onBack,
+				date = uiState.selectedDate.format(
+					DateTimeFormatter.ISO_LOCAL_DATE.withLocale(Locale.getDefault())
+				)
+			)
+		},
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+		floatingActionButton = {
+			val showButton = remember(key1 = uiState.selectedCalendarDay, key2 = uiState.classes) {
+				Log.d(
+					TAG, "DayScheduleCopyScreen() selectedCalendarDay update of showButton to" +
+							" ${uiState.selectedCalendarDay != null && uiState.classes.isNotEmpty()}"
+				)
+				uiState.selectedCalendarDay != null && uiState.classes.isNotEmpty()
+			}
+			if (showButton) {
+				FloatingActionButton(
+					onClick = {
+						dialogState.show()
+					}
+				) {
+					Icon(Icons.Default.ContentCopy, "Copy schedule from selected calendar day")
+				}
+			}
+		},
 		modifier = modifier.fillMaxSize(),
 	) { paddingValues ->
 		
@@ -97,6 +132,12 @@ fun DayScheduleCopyScreen(
 			modifier = Modifier.padding(paddingValues)
 		)
 		
+		DayScheduleCopyDialog(
+			dialogState = dialogState,
+			copyScheduleFromDay = viewModel::copySchedule,
+			onScheduleCopied = onBack
+		)
+		
 		uiState.userMessage?.let { userMessage ->
 			val snackbarText = stringResource(userMessage)
 			LaunchedEffect(snackbarHostState, viewModel, userMessage, snackbarText) {
@@ -104,6 +145,24 @@ fun DayScheduleCopyScreen(
 				viewModel.snackbarMessageShown()
 			}
 		}
+	}
+}
+
+@Composable
+fun DayScheduleCopyDialog(
+	dialogState: MaterialDialogState,
+	copyScheduleFromDay: (Boolean) -> Unit,
+	onScheduleCopied: () -> Unit,
+) {
+	MaterialDialog(
+		dialogState = dialogState,
+		buttons = {
+			positiveButton("Yes", onClick = { copyScheduleFromDay(true); onScheduleCopied() })
+			negativeButton("No", onClick = { copyScheduleFromDay(false); onScheduleCopied() })
+		}
+	) {
+		title(text = "Copy time pattern too?") // TODO create string resource
+		message(text = "Should we also copy bell timings from that day ?")
 	}
 }
 
@@ -319,7 +378,7 @@ private fun Day(
 }
 
 @Composable
-fun CalendarHeader(
+private fun CalendarHeader(
 	modifier: Modifier,
 	currentMonth: YearMonth,
 	goToPrevious: () -> Unit,
@@ -382,14 +441,4 @@ private object Example3RippleTheme : RippleTheme {
 	@Composable
 	override fun rippleAlpha() =
 		RippleTheme.defaultRippleAlpha(Color.Gray, lightTheme = false)
-}
-
-@Preview(
-	device = "id:pixel_4",
-	uiMode = Configuration.UI_MODE_NIGHT_NO or Configuration.UI_MODE_TYPE_NORMAL,
-	showSystemUi = true, showBackground = true
-)
-@Composable
-private fun Example3Preview() = Surface {
-
 }

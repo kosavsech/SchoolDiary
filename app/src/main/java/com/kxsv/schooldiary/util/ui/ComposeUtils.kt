@@ -16,9 +16,13 @@
 
 package com.kxsv.schooldiary.util.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
@@ -31,19 +35,39 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import com.kizitonwose.calendar.compose.CalendarLayoutInfo
 import com.kizitonwose.calendar.compose.CalendarState
+import com.kizitonwose.calendar.core.CalendarDay
 import com.kizitonwose.calendar.core.CalendarMonth
+import com.kizitonwose.calendar.core.DayPosition
+import com.kxsv.schooldiary.R
+import com.kxsv.schooldiary.util.ui.ContinuousSelectionHelper.isInDateBetweenSelection
+import com.kxsv.schooldiary.util.ui.ContinuousSelectionHelper.isOutDateBetweenSelection
 import kotlinx.coroutines.flow.filterNotNull
 import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.Month
 import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
+import kotlin.math.roundToInt
 
 /**
  * Display an initial empty state or swipe to refresh content.
@@ -149,4 +173,144 @@ fun DayOfWeek.displayText(uppercase: Boolean = false): String {
 	return getDisplayName(TextStyle.SHORT, Locale.getDefault()).let { value ->
 		if (uppercase) value.uppercase(Locale.getDefault()) else value
 	}
+}
+
+/**
+ * Modern Airbnb highlight style, as seen in the app.
+ */
+fun Modifier.backgroundHighlight(
+	day: CalendarDay,
+	today: LocalDate,
+	selection: DateSelection,
+	selectionColor: Color,
+	continuousSelectionColor: Color,
+	textColor: (Color) -> Unit,
+): Modifier = composed {
+	val (startDate, endDate) = selection
+	val padding = 4.dp
+	when (day.position) {
+		DayPosition.MonthDate -> {
+			when {
+				startDate == day.date && endDate == null -> {
+					textColor(Color.White)
+					padding(padding)
+						.background(color = selectionColor, shape = CircleShape)
+				}
+				
+				day.date == startDate -> {
+					textColor(Color.White)
+					padding(vertical = padding)
+						.background(
+							color = continuousSelectionColor,
+							shape = HalfSizeShape(clipStart = true),
+						)
+						.padding(horizontal = padding)
+						.background(color = selectionColor, shape = CircleShape)
+				}
+				
+				day.date == endDate -> {
+					textColor(Color.White)
+					padding(vertical = padding)
+						.background(
+							color = continuousSelectionColor,
+							shape = HalfSizeShape(clipStart = false),
+						)
+						.padding(horizontal = padding)
+						.background(color = selectionColor, shape = CircleShape)
+				}
+				
+				startDate != null && endDate != null && (day.date > startDate && day.date < endDate) -> {
+					val backgroundModifier = if (day.date.dayOfWeek != DayOfWeek.SUNDAY) {
+						textColor(colorResource(R.color.example_4_grey))
+						Modifier.background(
+							color = continuousSelectionColor,
+						)
+					} else {
+						textColor(Color.Red)
+						Modifier.background(
+							color = continuousSelectionColor.copy(alpha = 0.5f),
+							shape = DottedShape(8.dp)
+						)
+					}
+					padding(vertical = padding)
+						.then(backgroundModifier)
+				}
+				
+				day.date == today -> {
+					textColor(colorResource(R.color.example_4_grey))
+					padding(padding)
+						.border(
+							width = 1.dp,
+							shape = CircleShape,
+							color = colorResource(R.color.inactive_text_color),
+						)
+				}
+				
+				else -> {
+					textColor(colorResource(R.color.example_4_grey))
+					this
+				}
+			}
+		}
+		
+		DayPosition.InDate -> {
+			textColor(Color.Transparent)
+			if (startDate != null && endDate != null &&
+				isInDateBetweenSelection(day.date, startDate, endDate)
+			) {
+				padding(vertical = padding)
+					.background(color = continuousSelectionColor)
+			} else this
+		}
+		
+		DayPosition.OutDate -> {
+			textColor(Color.Transparent)
+			if (startDate != null && endDate != null &&
+				isOutDateBetweenSelection(day.date, startDate, endDate)
+			) {
+				padding(vertical = padding)
+					.background(color = continuousSelectionColor)
+			} else this
+		}
+	}
+}
+
+private class HalfSizeShape(private val clipStart: Boolean) : Shape {
+	override fun createOutline(
+		size: Size,
+		layoutDirection: LayoutDirection,
+		density: Density,
+	): Outline {
+		val half = size.width / 2f
+		val offset = if (layoutDirection == LayoutDirection.Ltr) {
+			if (clipStart) Offset(half, 0f) else Offset.Zero
+		} else {
+			if (clipStart) Offset.Zero else Offset(half, 0f)
+		}
+		return Outline.Rectangle(Rect(offset, Size(half, size.height)))
+	}
+}
+
+private data class DottedShape(
+	val step: Dp,
+) : Shape {
+	override fun createOutline(
+		size: Size,
+		layoutDirection: LayoutDirection,
+		density: Density,
+	) = Outline.Generic(Path().apply {
+		val stepPx = with(density) { step.toPx() }
+		val stepsCount = (size.width / stepPx).roundToInt()
+		val actualStep = size.width / stepsCount
+		val dotSize = Size(width = actualStep / 2, height = size.height)
+		for (i in 0 until stepsCount) {
+			addRect(
+				Rect(
+					offset = Offset(x = i * actualStep, y = 0f),
+					size = dotSize
+				)
+			)
+		}
+		close()
+	})
 }

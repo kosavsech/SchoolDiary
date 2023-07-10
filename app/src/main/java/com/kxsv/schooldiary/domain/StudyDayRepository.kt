@@ -19,9 +19,9 @@ interface StudyDayRepository {
 	
 	suspend fun getDayAndSchedulesWithSubjectsByDate(date: LocalDate): StudyDayWithSchedulesAndSubjects?
 	
-	suspend fun createStudyDay(studyDay: StudyDay): Long
+	suspend fun create(studyDay: StudyDay): Long
 	
-	suspend fun updateStudyDay(studyDay: StudyDay)
+	suspend fun update(studyDay: StudyDay)
 	
 	suspend fun deleteAllStudyDays()
 	

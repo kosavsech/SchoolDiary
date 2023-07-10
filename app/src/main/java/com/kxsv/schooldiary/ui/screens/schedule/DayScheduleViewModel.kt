@@ -11,6 +11,7 @@ import com.kxsv.schooldiary.DELETE_RESULT_OK
 import com.kxsv.schooldiary.EDIT_RESULT_OK
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.SELECTED_CUSTOM_PATTERN_OK
+import com.kxsv.schooldiary.data.features.schedule.Schedule
 import com.kxsv.schooldiary.data.features.schedule.ScheduleWithSubject
 import com.kxsv.schooldiary.data.features.study_day.StudyDay
 import com.kxsv.schooldiary.data.features.time_pattern.pattern_stroke.PatternStroke
@@ -37,8 +38,10 @@ data class DayScheduleUiState(
 	val classes: List<ScheduleWithSubject> = emptyList(),
 	val currentTimings: List<PatternStroke> = emptyList(),
 	val classDetailed: ScheduleWithSubject? = null,
-	val selectedDate: LocalDate = LocalDate.now(),
-	val selectedCalendarDay: CalendarDay? = null,
+	val selectedDate: LocalDate = LocalDate.now(), // unique for DayScheduleScreen
+	val selectedCalendarDay: CalendarDay? = null, // unique for DayScheduleCopyScreen
+	val startDate: LocalDate? = null,
+	val endDate: LocalDate? = null,
 	val userMessage: Int? = null,
 	val isLoading: Boolean = false,
 )
@@ -119,7 +122,7 @@ class DayScheduleViewModel @Inject constructor(
 		}
 		if (calendarDay != null) {
 			Log.d(TAG, "updateCalendarDay() downloading classes from $calendarDay.")
-			downloadClassesFromDate(calendarDay.date)
+			downloadClassesOnDate(calendarDay.date)
 		} else {
 			Log.d(TAG, "updateCalendarDay: couldn't download classes because calendar day is null.")
 		}
@@ -136,30 +139,79 @@ class DayScheduleViewModel @Inject constructor(
 				classes = emptyList()
 			)
 		}
-		downloadClassesFromDate(date)
+		downloadClassesOnDate(date)
 	}
 	
-	private fun downloadClassesFromDate(date: LocalDate) = viewModelScope.launch {
+	fun copySchedule(toCopyPattern: Boolean) {
+		if (uiState.value.selectedCalendarDay == null)
+			throw RuntimeException("copySchedule() was called but selectedCalendarDay is null.")
+		
+		copyScheduleFromDate(
+			fromDate = uiState.value.selectedCalendarDay!!.date,
+			toDate = uiState.value.selectedDate,
+			toCopyPattern = toCopyPattern
+		)
+	}
+	
+	fun copyScheduleFromRange(toCopyPattern: Boolean) {
+		if (uiState.value.selectedCalendarDay == null)
+			throw RuntimeException("copySchedule() was called but selectedCalendarDay is null.")
+		
+		copyScheduleFromDate(
+			fromDate = uiState.value.selectedCalendarDay!!.date,
+			toDate = uiState.value.selectedDate,
+			toCopyPattern = toCopyPattern
+		)
+	}
+	
+	private fun copyScheduleFromDate(
+		fromDate: LocalDate, toDate: LocalDate, toCopyPattern: Boolean,
+	) = viewModelScope.launch {
+		val refStudyDay = studyDayRepository.getStudyDayByDate(fromDate)
+			?: throw NoSuchElementException("Reference StudyDay (date $fromDate) to copy from not found.")
+		val toStudyDay = studyDayRepository.getStudyDayByDate(toDate)
+		
+		val idOfDestinationDay = if (toStudyDay != null) {
+			if (toCopyPattern) {
+				studyDayRepository.update(
+					toStudyDay.copy(appliedPatternId = refStudyDay.appliedPatternId)
+				)
+			}
+			toStudyDay.studyDayId
+		} else {
+			var copyDay = refStudyDay.copy(date = toDate, studyDayId = 0)
+			if (!toCopyPattern) {
+				copyDay = copyDay.copy(appliedPatternId = null)
+			}
+			studyDayRepository.create(copyDay)
+		}
+		
+		toStudyDay?.studyDayId?.let { scheduleRepository.deleteAllByDayId(it) }
+		val copyOfSchedules: MutableList<Schedule> = mutableListOf()
+		
+		scheduleRepository.getAllByMasterId(refStudyDay.studyDayId).forEach {
+			copyOfSchedules.add(it.copy(studyDayMasterId = idOfDestinationDay, scheduleId = 0))
+		}
+		scheduleRepository.upsertAll(copyOfSchedules)
+		
+		downloadClassesOnDate(toDate)
+	}
+	
+	private fun downloadClassesOnDate(date: LocalDate) = viewModelScope.launch {
 		studyDayRepository.getDayAndSchedulesWithSubjectsByDate(date).let { dayWithClasses ->
-//			Log.d(TAG, "downloadClassesFromDate(): dayWithClasses = $dayWithClasses")
+//			Log.d(TAG, "downloadClassesOnDate(): dayWithClasses = $dayWithClasses")
 			if (dayWithClasses != null) {
 				_uiState.update {
-					it.copy(
-						studyDay = dayWithClasses.studyDay,
-						classes = dayWithClasses.classes,
-					)
+					it.copy(studyDay = dayWithClasses.studyDay, classes = dayWithClasses.classes)
 				}
 			}
 			val appliedPatternId = dayWithClasses?.studyDay?.appliedPatternId
 				?: appDefaultsRepository.getPatternId()
 			
 			strokeRepository.getStrokesByPatternId(appliedPatternId).let { strokes ->
-//				Log.d(TAG, "downloadClassesFromDate(): strokes = $strokes")
+//				Log.d(TAG, "downloadClassesOnDate(): strokes = $strokes")
 				_uiState.update {
-					it.copy(
-						currentTimings = strokes,
-						isLoading = false
-					)
+					it.copy(currentTimings = strokes, isLoading = false)
 				}
 			}
 		}

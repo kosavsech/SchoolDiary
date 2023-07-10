@@ -2,6 +2,7 @@ package com.kxsv.schooldiary
 
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import com.kxsv.schooldiary.AppDestinations.COPY_DATE_RANGE_SCHEDULE_ROUTE
 import com.kxsv.schooldiary.AppDestinations.COPY_DAY_SCHEDULE_ROUTE
 import com.kxsv.schooldiary.AppDestinations.TEACHERS_ROUTE
 import com.kxsv.schooldiary.AppDestinationsArgs.CUSTOM_PATTERN_SET_ARG
@@ -16,6 +17,7 @@ import com.kxsv.schooldiary.AppDestinationsArgs.USER_MESSAGE_ARG
 import com.kxsv.schooldiary.AppScreens.ADD_EDIT_PATTERN_SCREEN
 import com.kxsv.schooldiary.AppScreens.ADD_EDIT_SCHEDULE_SCREEN
 import com.kxsv.schooldiary.AppScreens.ADD_EDIT_SUBJECT_SCREEN
+import com.kxsv.schooldiary.AppScreens.COPY_DATE_RANGE_SCHEDULE_SCREEN
 import com.kxsv.schooldiary.AppScreens.COPY_DAY_SCHEDULE_SCREEN
 import com.kxsv.schooldiary.AppScreens.DAY_SCHEDULE_SCREEN
 import com.kxsv.schooldiary.AppScreens.PATTERNS_SCREEN
@@ -37,6 +39,7 @@ object AppScreens {
 	const val TEACHERS_SCREEN = "teachers"
 	const val DAY_SCHEDULE_SCREEN = "daySchedule"
 	const val COPY_DAY_SCHEDULE_SCREEN = "copyDaySchedule"
+	const val COPY_DATE_RANGE_SCHEDULE_SCREEN = "copyDateRangeSchedule"
 	const val ADD_EDIT_PATTERN_SCREEN = "addEditPattern"
 	const val ADD_EDIT_SUBJECT_SCREEN = "addEditSubject"
 	const val ADD_EDIT_SCHEDULE_SCREEN = "addEditSchedule"
@@ -63,6 +66,7 @@ object AppDestinationsArgs {
  */
 object AppDestinations {
 	const val COPY_DAY_SCHEDULE_ROUTE = COPY_DAY_SCHEDULE_SCREEN
+	const val COPY_DATE_RANGE_SCHEDULE_ROUTE = COPY_DATE_RANGE_SCHEDULE_SCREEN
 	const val SCHEDULE_ROUTE = "schedule"
 	const val TEACHERS_ROUTE = TEACHERS_SCREEN
 	const val DAY_SCHEDULE_ROUTE =
@@ -202,6 +206,12 @@ class AppNavigationActions(private val navController: NavHostController) {
 	fun navigateToCopyOfDaySchedule() {
 		navController.navigate(
 			COPY_DAY_SCHEDULE_ROUTE
+		)
+	}
+	
+	fun navigateToCopyOfDateRangeSchedule() {
+		navController.navigate(
+			COPY_DATE_RANGE_SCHEDULE_ROUTE
 		)
 	}
 }

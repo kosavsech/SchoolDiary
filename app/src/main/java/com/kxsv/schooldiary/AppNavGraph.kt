@@ -19,6 +19,7 @@ import androidx.navigation.navigation
 import com.kxsv.schooldiary.AppDestinations.ADD_EDIT_PATTERN_ROUTE
 import com.kxsv.schooldiary.AppDestinations.ADD_EDIT_SCHEDULE_ROUTE
 import com.kxsv.schooldiary.AppDestinations.ADD_EDIT_SUBJECT_ROUTE
+import com.kxsv.schooldiary.AppDestinations.COPY_DATE_RANGE_SCHEDULE_ROUTE
 import com.kxsv.schooldiary.AppDestinations.COPY_DAY_SCHEDULE_ROUTE
 import com.kxsv.schooldiary.AppDestinations.DAY_SCHEDULE_ROUTE
 import com.kxsv.schooldiary.AppDestinations.PATTERNS_ROUTE
@@ -39,6 +40,7 @@ import com.kxsv.schooldiary.AppDestinationsArgs.USER_MESSAGE_ARG
 import com.kxsv.schooldiary.ui.screens.patterns.PatternSelectionScreen
 import com.kxsv.schooldiary.ui.screens.patterns.PatternsScreen
 import com.kxsv.schooldiary.ui.screens.patterns.add_edit_pattern.AddEditTimePatternScreen
+import com.kxsv.schooldiary.ui.screens.schedule.DateRangeScheduleCopyScreen
 import com.kxsv.schooldiary.ui.screens.schedule.DayScheduleCopyScreen
 import com.kxsv.schooldiary.ui.screens.schedule.DayScheduleScreen
 import com.kxsv.schooldiary.ui.screens.schedule.DayScheduleViewModel
@@ -113,8 +115,11 @@ fun AppNavGraph(
 						onChangePattern = { studyDayId ->
 							navActions.navigateToPatternsSelection(studyDayId = studyDayId)
 						},
-						onChangeDaySchedule = {
+						onCopyDaySchedule = {
 							navActions.navigateToCopyOfDaySchedule()
+						},
+						onCopyDateRangeSchedule = {
+							navActions.navigateToCopyOfDateRangeSchedule()
 						},
 						viewModel = sharedScheduleViewModel,
 						openDrawer = { coroutineScope.launch { drawerState.open() } }
@@ -127,7 +132,20 @@ fun AppNavGraph(
 			) { entry ->
 				val sharedScheduleViewModel =
 					entry.sharedViewModel<DayScheduleViewModel>(navController)
-				DayScheduleCopyScreen(viewModel = sharedScheduleViewModel)
+				DayScheduleCopyScreen(
+					viewModel = sharedScheduleViewModel,
+					onBack = { navController.popBackStack() }
+				)
+			}
+			composable(
+				COPY_DATE_RANGE_SCHEDULE_ROUTE,
+			) { entry ->
+				val sharedScheduleViewModel =
+					entry.sharedViewModel<DayScheduleViewModel>(navController)
+				DateRangeScheduleCopyScreen(
+					viewModel = sharedScheduleViewModel,
+					onBack = { navController.popBackStack() }
+				)
 			}
 		}
 		composable(

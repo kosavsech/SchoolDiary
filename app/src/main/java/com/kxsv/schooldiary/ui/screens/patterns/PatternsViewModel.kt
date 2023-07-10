@@ -136,7 +136,7 @@ class PatternsViewModel @Inject constructor(
 			val studyDayToUpdate =
 				studyDayRepository.getStudyDay(studyDayId)?.copy(appliedPatternId = patternId)
 			if (studyDayToUpdate != null) {
-				studyDayRepository.updateStudyDay(studyDayToUpdate)
+				studyDayRepository.update(studyDayToUpdate)
 			} else {
 				throw NoSuchElementException("Not found StudyDay(id = $studyDayId) to change its patternId.")
 			}

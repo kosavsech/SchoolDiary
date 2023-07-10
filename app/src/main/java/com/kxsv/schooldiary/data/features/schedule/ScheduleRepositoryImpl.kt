@@ -27,6 +27,10 @@ class ScheduleRepositoryImpl @Inject constructor(
 		return scheduleDataSource.getAll()
 	}
 	
+	override suspend fun getAllByMasterId(studyDayId: Long): List<Schedule> {
+		return scheduleDataSource.getAllByMasterId(studyDayId)
+	}
+	
 	override suspend fun getSchedule(scheduleId: Long): Schedule? {
 		return scheduleDataSource.getById(scheduleId)
 	}
@@ -37,6 +41,10 @@ class ScheduleRepositoryImpl @Inject constructor(
 	
 	override suspend fun getScheduleWithStudyDay(scheduleId: Long): ScheduleWithStudyDay? {
 		return scheduleDataSource.getByIdWithStudyDay(scheduleId)
+	}
+	
+	override suspend fun upsertAll(schedules: List<Schedule>) {
+		return scheduleDataSource.upsertAll(schedules)
 	}
 	
 	override suspend fun createSchedule(schedule: Schedule, date: LocalDate) {
@@ -63,21 +71,30 @@ class ScheduleRepositoryImpl @Inject constructor(
 	
 	override suspend fun copyScheduleFromDate(fromDate: LocalDate, toDate: LocalDate) {
 		val refStudyDay = studyDayDataSource.getByDate(fromDate)
-			?: throw Exception("StudyDay (date $fromDate) not found")
+			?: throw NoSuchElementException("StudyDay (date $fromDate) not found")
+		val toStudyDay = studyDayDataSource.getByDate(toDate)
 		
-		val copyOfStudyDay = refStudyDay.copy(date = toDate, studyDayId = 0)
+		val idOfDestinationDay = if (toStudyDay != null) {
+			studyDayDataSource.upsert(toStudyDay.copy(appliedPatternId = refStudyDay.appliedPatternId))
+			toStudyDay.studyDayId
+		} else {
+			studyDayDataSource.upsert(refStudyDay.copy(date = toDate, studyDayId = 0))
+		}
+		
+		toStudyDay?.studyDayId?.let {
+			scheduleDataSource.deleteAllByDayId(it)
+		}
+		
 		val copyOfSchedules: MutableList<Schedule> = mutableListOf()
-		val idOfStudyDayCopy = studyDayDataSource.upsert(copyOfStudyDay)
-		
 		scheduleDataSource.getAllByMasterId(refStudyDay.studyDayId).forEach {
-			copyOfSchedules.add(it.copy(studyDayMasterId = idOfStudyDayCopy))
+			copyOfSchedules.add(it.copy(studyDayMasterId = idOfDestinationDay, scheduleId = 0))
 		}
 		scheduleDataSource.upsertAll(copyOfSchedules)
 	}
 	
 	override suspend fun copyScheduleFromId(refStudyDayId: Long, toDate: LocalDate) {
 		val refStudyDay = studyDayDataSource.getById(refStudyDayId)
-			?: throw Exception("StudyDay (id $refStudyDayId) not found")
+			?: throw NoSuchElementException("StudyDay (id $refStudyDayId) not found")
 		
 		val copyOfStudyDay = refStudyDay.copy(date = toDate, studyDayId = 0)
 		val copyOfSchedules: MutableList<Schedule> = mutableListOf()
@@ -91,9 +108,9 @@ class ScheduleRepositoryImpl @Inject constructor(
 	
 	override suspend fun copyScheduleFromDateToId(fromDate: LocalDate, toStudyDayId: Long) {
 		val refStudyDay = studyDayDataSource.getByDate(fromDate)
-			?: throw Exception("Reference StudyDay (date $fromDate) not found")
+			?: throw NoSuchElementException("Reference StudyDay (date $fromDate) not found")
 		val toStudyDay = studyDayDataSource.getById(toStudyDayId)
-			?: throw Exception("Destination StudyDay (id $toStudyDayId) not found")
+			?: throw NoSuchElementException("Destination StudyDay (id $toStudyDayId) not found")
 		
 		val updatedStudyDay = toStudyDay.copy(appliedPatternId = refStudyDay.appliedPatternId)
 		studyDayDataSource.upsert(updatedStudyDay)
@@ -111,9 +128,9 @@ class ScheduleRepositoryImpl @Inject constructor(
 		toStudyDayId: Long,
 	) {
 		val refStudyDay = studyDayDataSource.getById(refStudyDayId)
-			?: throw Exception("Reference StudyDay (id $refStudyDayId) not found")
+			?: throw NoSuchElementException("Reference StudyDay (id $refStudyDayId) not found")
 		val toStudyDay = studyDayDataSource.getById(toStudyDayId)
-			?: throw Exception("Destination StudyDay (id $toStudyDayId) not found")
+			?: throw NoSuchElementException("Destination StudyDay (id $toStudyDayId) not found")
 		
 		val updatedStudyDay = toStudyDay.copy(appliedPatternId = refStudyDay.appliedPatternId)
 		studyDayDataSource.upsert(updatedStudyDay)
@@ -128,6 +145,10 @@ class ScheduleRepositoryImpl @Inject constructor(
 	
 	override suspend fun deleteAllSchedules() {
 		scheduleDataSource.deleteAll()
+	}
+	
+	override suspend fun deleteAllByDayId(studyDayMasterId: Long) {
+		scheduleDataSource.deleteAllByDayId(studyDayMasterId)
 	}
 	
 	override suspend fun deleteSchedule(scheduleId: Long) {
