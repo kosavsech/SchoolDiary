@@ -18,14 +18,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalTime
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 data class AddEditPatternUiState(
 	val name: String = "",
 	val strokes: MutableList<PatternStroke> = mutableListOf(),
-	val startTime: LocalTime = LocalTime.now(),
+	val startTime: LocalTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES),
 	// TODO: configure this behaviour
-	val endTime: LocalTime = LocalTime.now().plusMinutes(45),
+	val endTime: LocalTime = startTime.plusMinutes(45),
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
 	val isPatternSaved: Boolean = false,

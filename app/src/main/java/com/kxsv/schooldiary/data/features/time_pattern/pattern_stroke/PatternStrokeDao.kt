@@ -6,13 +6,13 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface PatternStrokeDao {
 
-    @Query("SELECT * FROM PatternStroke")
+    @Query("SELECT * FROM PatternStroke ORDER BY startTime ASC")
     fun observeAll(): Flow<List<PatternStroke>>
-
-    @Query("SELECT * FROM PatternStroke WHERE patternMasterId = :patternId")
+    
+    @Query("SELECT * FROM PatternStroke WHERE patternMasterId = :patternId ORDER BY startTime ASC")
     fun observeAllByPatternId(patternId: Long): Flow<List<PatternStroke>>
-
-    @Query("SELECT * FROM PatternStroke WHERE strokeId = :id")
+    
+    @Query("SELECT * FROM PatternStroke WHERE strokeId = :id ORDER BY startTime ASC")
     fun observeById(id: Int): Flow<PatternStroke>
 
     @Query("SELECT * FROM PatternStroke ORDER BY startTime ASC")
