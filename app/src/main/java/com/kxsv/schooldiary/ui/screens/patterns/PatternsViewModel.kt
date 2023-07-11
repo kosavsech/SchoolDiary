@@ -48,7 +48,7 @@ class PatternsViewModel @Inject constructor(
 		patternRepository.getPatternsWithStrokesStream()
 			.map { Async.Success(it) }
 			.catch<Async<List<PatternWithStrokes>>> { emit(Async.Error(R.string.loading_patterns_error)) }
-	private val _defaultPatternId = appDefaultsRepository.getPatternIdStream()
+	private val _defaultPatternId = appDefaultsRepository.observePatternId()
 		.map { Async.Success(it) }
 		.catch<Async<Long>> { emit(Async.Error(R.string.loading_default_pattern_id_error)) }
 	

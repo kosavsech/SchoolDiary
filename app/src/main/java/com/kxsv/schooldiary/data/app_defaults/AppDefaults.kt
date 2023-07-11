@@ -12,6 +12,8 @@ import java.io.OutputStream
 @Serializable
 data class AppDefaults(
 	val defaultPatternId: Long = 0L,
+	val scheduleRefRangeStartId: Long = 0L,
+	val scheduleRefRangeEndId: Long = 0L,
 )
 
 object AppDefaultsSerializer : Serializer<AppDefaults> {

@@ -108,7 +108,7 @@ class DayScheduleViewModel @Inject constructor(
 		_uiState.update { it.copy(refRange = startDate..endDate) }
 	}
 	
-	private fun selectDestRange(startDate: LocalDate, endDate: LocalDate) {
+	fun selectDestRange(startDate: LocalDate, endDate: LocalDate) {
 		_uiState.update { it.copy(destRange = startDate..endDate) }
 	}
 	
@@ -176,10 +176,9 @@ class DayScheduleViewModel @Inject constructor(
 		return dates
 	}
 	
-	fun copyScheduleToRange(startDate: LocalDate, endDate: LocalDate) {
+	fun copyScheduleToRange(toCopyPattern: Boolean) {
 		if (uiState.value.refRange == null)
 			throw RuntimeException("copyScheduleToRange() was called but refRange is null.")
-		selectDestRange(startDate, endDate)
 		
 		val copyFromDays = uiState.value.refRange!!.rangeToList()
 		val copyToDays = uiState.value.destRange!!.rangeToList(copyFromDays.size.toLong())
@@ -193,7 +192,7 @@ class DayScheduleViewModel @Inject constructor(
 				copyScheduleFromDate(
 					fromDate = copyFromDays[index],
 					toDate = dateCopyTo,
-					toCopyPattern = true
+					toCopyPattern = toCopyPattern
 				)
 			}
 		}
@@ -245,8 +244,13 @@ class DayScheduleViewModel @Inject constructor(
 		studyDayRepository.getDayAndSchedulesWithSubjectsByDate(date).let { dayWithClasses ->
 //			Log.d(TAG, "downloadClassesOnDate(): dayWithClasses = $dayWithClasses")
 			if (dayWithClasses != null) {
-				_uiState.update {
-					it.copy(studyDay = dayWithClasses.studyDay, classes = dayWithClasses.classes)
+				_uiState.update { it ->
+					it.copy(
+						studyDay = dayWithClasses.studyDay,
+						classes = dayWithClasses.classes.sortedBy { scheduleWithSubject ->
+							scheduleWithSubject.schedule.index
+						}
+					)
 				}
 			}
 			val appliedPatternId = dayWithClasses?.studyDay?.appliedPatternId

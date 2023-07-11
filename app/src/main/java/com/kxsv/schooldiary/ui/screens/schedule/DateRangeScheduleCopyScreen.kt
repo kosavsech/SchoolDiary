@@ -60,6 +60,11 @@ import com.kxsv.schooldiary.util.ui.DateSelection
 import com.kxsv.schooldiary.util.ui.backgroundHighlight
 import com.kxsv.schooldiary.util.ui.displayText
 import com.kxsv.schooldiary.util.ui.rememberFirstCompletelyVisibleMonth
+import com.vanpra.composematerialdialogs.MaterialDialog
+import com.vanpra.composematerialdialogs.MaterialDialogState
+import com.vanpra.composematerialdialogs.message
+import com.vanpra.composematerialdialogs.rememberMaterialDialogState
+import com.vanpra.composematerialdialogs.title
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -77,6 +82,7 @@ fun DateRangeScheduleCopyScreen(
 	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
+	val dialogState = rememberMaterialDialogState()
 	
 	Scaffold(
 		topBar = {
@@ -97,14 +103,19 @@ fun DateRangeScheduleCopyScreen(
 				if (uiState.refRange == null) {
 					viewModel.selectRefRange(startDate, endDate)
 				} else {
-					viewModel.copyScheduleToRange(startDate, endDate)
-					onBack()
+					viewModel.selectDestRange(startDate, endDate)
+					dialogState.show()
 				}
 			},
 			isSelectingReference = uiState.refRange == null,
 			selectedDay = LocalDate.now()
 		)
 		
+		DateRangeScheduleCopyDialog(
+			dialogState = dialogState,
+			copyScheduleToRange = viewModel::copyScheduleToRange,
+			onScheduleCopied = onBack
+		)
 		
 		uiState.userMessage?.let { userMessage ->
 			val snackbarText = stringResource(userMessage)
@@ -113,6 +124,24 @@ fun DateRangeScheduleCopyScreen(
 				viewModel.snackbarMessageShown()
 			}
 		}
+	}
+}
+
+@Composable
+fun DateRangeScheduleCopyDialog(
+	dialogState: MaterialDialogState,
+	copyScheduleToRange: (Boolean) -> Unit,
+	onScheduleCopied: () -> Unit,
+) {
+	MaterialDialog(
+		dialogState = dialogState,
+		buttons = {
+			positiveButton("Yes", onClick = { copyScheduleToRange(true); onScheduleCopied() })
+			negativeButton("No", onClick = { copyScheduleToRange(false); onScheduleCopied() })
+		}
+	) {
+		title(text = "Copy time pattern too?") // TODO create string resource
+		message(text = "Should we also copy bell timings from that dates ?")
 	}
 }
 

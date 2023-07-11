@@ -13,9 +13,21 @@ class AppDefaultsRepositoryImpl @Inject constructor(
 	private val dataStore: DataStore<AppDefaults>,
 ) : AppDefaultsRepository {
 	
-	override fun getPatternIdStream(): Flow<Long> {
+	override fun observePatternId(): Flow<Long> {
 		return dataStore.data.map {
 			it.defaultPatternId
+		}
+	}
+	
+	override fun observeScheduleRefRangeStartId(): Flow<Long> {
+		return dataStore.data.map {
+			it.scheduleRefRangeStartId
+		}
+	}
+	
+	override fun observeScheduleRefRangeEndId(): Flow<Long> {
+		return dataStore.data.map {
+			it.scheduleRefRangeEndId
 		}
 	}
 	
@@ -26,6 +38,26 @@ class AppDefaultsRepositoryImpl @Inject constructor(
 	override suspend fun setPatternId(id: Long) {
 		dataStore.updateData {
 			it.copy(defaultPatternId = id)
+		}
+	}
+	
+	override suspend fun getScheduleRefRangeStartId(): Long {
+		return dataStore.data.first().scheduleRefRangeStartId
+	}
+	
+	override suspend fun setScheduleRefRangeStartId(id: Long) {
+		dataStore.updateData {
+			it.copy(scheduleRefRangeStartId = id)
+		}
+	}
+	
+	override suspend fun getScheduleRefRangeEndId(): Long {
+		return dataStore.data.first().scheduleRefRangeEndId
+	}
+	
+	override suspend fun setScheduleRefRangeEndId(id: Long) {
+		dataStore.updateData {
+			it.copy(scheduleRefRangeEndId = id)
 		}
 	}
 }
