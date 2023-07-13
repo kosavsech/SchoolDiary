@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.data.features.teachers
+package com.kxsv.schooldiary.data.features.teacher
 
 import androidx.room.Embedded
 import androidx.room.Entity
@@ -6,7 +6,7 @@ import androidx.room.Junction
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.kxsv.schooldiary.data.features.associative_tables.subject_teacher.SubjectTeacher
-import com.kxsv.schooldiary.data.features.subjects.Subject
+import com.kxsv.schooldiary.data.features.subject.Subject
 
 @Entity
 data class Teacher(

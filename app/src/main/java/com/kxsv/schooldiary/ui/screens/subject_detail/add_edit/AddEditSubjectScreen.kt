@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Divider
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -32,7 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.features.teachers.Teacher
+import com.kxsv.schooldiary.data.features.teacher.Teacher
 import com.kxsv.schooldiary.util.ui.AddEditSubjectTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.vanpra.composematerialdialogs.MaterialDialog
@@ -50,7 +51,7 @@ fun AddEditSubjectScreen(
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
 	
-	androidx.compose.material3.Scaffold(
+	Scaffold(
 		modifier = modifier.fillMaxSize(),
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		topBar = { AddEditSubjectTopAppBar(onBack) },
@@ -114,9 +115,9 @@ private fun AddEditSubjectContent(
 		emptyContent = { Text(text = "Empty") },
 		onRefresh = {}) {
 		Column(
-            modifier
-                .fillMaxWidth()
-                .padding(dimensionResource(id = R.dimen.horizontal_margin))
+			modifier
+				.fillMaxWidth()
+				.padding(dimensionResource(id = R.dimen.horizontal_margin))
 		) {
 			val textFieldColors = TextFieldDefaults.outlinedTextFieldColors(
 				focusedBorderColor = Color.Transparent,
@@ -139,9 +140,9 @@ private fun AddEditSubjectContent(
 			)
 			
 			Divider(
-                Modifier
-                    .fillMaxWidth()
-                    .align(CenterHorizontally)
+				Modifier
+					.fillMaxWidth()
+					.align(CenterHorizontally)
 			)
 			
 			OutlinedTextField(
@@ -161,11 +162,11 @@ private fun AddEditSubjectContent(
 			
 			val teacherDialog = rememberMaterialDialogState(false)
 			Row(modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    onAddTeacher()
-                    teacherDialog.show()
-                }
+				.fillMaxWidth()
+				.clickable {
+					onAddTeacher()
+					teacherDialog.show()
+				}
 			) {
 				Icon(Icons.Default.Person, stringResource(R.string.teacher_icon))
 				Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.horizontal_margin)))

@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.data.features.teachers
+package com.kxsv.schooldiary.data.features.teacher
 
 import com.kxsv.schooldiary.domain.TeacherRepository
 import kotlinx.coroutines.flow.Flow

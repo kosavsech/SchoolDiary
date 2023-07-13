@@ -16,12 +16,14 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import com.kxsv.schooldiary.AppDestinations.ADD_EDIT_GRADE_ROUTE
 import com.kxsv.schooldiary.AppDestinations.ADD_EDIT_PATTERN_ROUTE
 import com.kxsv.schooldiary.AppDestinations.ADD_EDIT_SCHEDULE_ROUTE
 import com.kxsv.schooldiary.AppDestinations.ADD_EDIT_SUBJECT_ROUTE
 import com.kxsv.schooldiary.AppDestinations.COPY_DATE_RANGE_SCHEDULE_ROUTE
 import com.kxsv.schooldiary.AppDestinations.COPY_DAY_SCHEDULE_ROUTE
 import com.kxsv.schooldiary.AppDestinations.DAY_SCHEDULE_ROUTE
+import com.kxsv.schooldiary.AppDestinations.GRADES_ROUTE
 import com.kxsv.schooldiary.AppDestinations.PATTERNS_ROUTE
 import com.kxsv.schooldiary.AppDestinations.PATTERNS_SELECTION_ROUTE
 import com.kxsv.schooldiary.AppDestinations.SCHEDULE_ROUTE
@@ -30,6 +32,7 @@ import com.kxsv.schooldiary.AppDestinations.SUBJECT_DETAIL_ROUTE
 import com.kxsv.schooldiary.AppDestinations.TEACHERS_ROUTE
 import com.kxsv.schooldiary.AppDestinationsArgs.CUSTOM_PATTERN_SET_ARG
 import com.kxsv.schooldiary.AppDestinationsArgs.DATESTAMP_ARG
+import com.kxsv.schooldiary.AppDestinationsArgs.GRADE_ID_ARG
 import com.kxsv.schooldiary.AppDestinationsArgs.PATTERN_ID_ARG
 import com.kxsv.schooldiary.AppDestinationsArgs.SCHEDULE_ID_ARG
 import com.kxsv.schooldiary.AppDestinationsArgs.SELECTED_PATTERN_ARG
@@ -37,6 +40,8 @@ import com.kxsv.schooldiary.AppDestinationsArgs.STUDY_DAY_ID_ARG
 import com.kxsv.schooldiary.AppDestinationsArgs.SUBJECT_ID_ARG
 import com.kxsv.schooldiary.AppDestinationsArgs.TITLE_ARG
 import com.kxsv.schooldiary.AppDestinationsArgs.USER_MESSAGE_ARG
+import com.kxsv.schooldiary.ui.screens.grade_list.GradesScreen
+import com.kxsv.schooldiary.ui.screens.grade_list.add_edit.AddEditGradeScreen
 import com.kxsv.schooldiary.ui.screens.patterns.PatternSelectionScreen
 import com.kxsv.schooldiary.ui.screens.patterns.PatternsScreen
 import com.kxsv.schooldiary.ui.screens.patterns.add_edit_pattern.AddEditTimePatternScreen
@@ -159,11 +164,27 @@ fun AppNavGraph(
 					userMessage = entry.arguments?.getInt(USER_MESSAGE_ARG)!!,
 					onUserMessageDisplayed = { entry.arguments?.putInt(USER_MESSAGE_ARG, 0) },
 					onAddSubject = { navActions.navigateToAddEditSubject(null) },
-					onSubjectClick = { subject -> navActions.navigateToSubjectDetail(subject.subjectId) },
+					onSubjectClick = { subject -> navActions.navigateToSubjectDetail(subjectId = subject.subjectId) },
 					openDrawer = { coroutineScope.launch { drawerState.open() } }
 				)
 			}
 			
+		}
+		composable(
+			GRADES_ROUTE,
+			arguments = listOf(
+				navArgument(USER_MESSAGE_ARG) { type = NavType.IntType; defaultValue = 0 }
+			)
+		) { entry ->
+			AppModalDrawer(drawerState, currentRoute, navActions) {
+				GradesScreen(
+					userMessage = entry.arguments?.getInt(USER_MESSAGE_ARG)!!,
+					onUserMessageDisplayed = { entry.arguments?.putInt(USER_MESSAGE_ARG, 0) },
+					onAddGrade = { navActions.navigateToAddEditGrade(null) },
+					onGradeClick = { grade -> navActions.navigateToAddEditGrade(grade.gradeId) },
+					openDrawer = { coroutineScope.launch { drawerState.open() } }
+				)
+			}
 		}
 		composable(
 			PATTERNS_ROUTE,
@@ -177,14 +198,14 @@ fun AppNavGraph(
 					userMessage = entry.arguments?.getInt(USER_MESSAGE_ARG)!!,
 					onAddPattern = {
 						navActions.navigateToAddEditPattern(
-							R.string.add_pattern,
-							null
+							title = R.string.add_pattern,
+							timePatternId = null
 						)
 					},
 					onEditPattern = {
 						navActions.navigateToAddEditPattern(
-							R.string.edit_pattern,
-							it.timePattern.patternId
+							title = R.string.edit_pattern,
+							timePatternId = it.timePattern.patternId
 						)
 					},
 					onDeletePattern = { navActions.navigateToPatterns(DELETE_RESULT_OK) },
@@ -203,14 +224,14 @@ fun AppNavGraph(
 				userMessage = entry.arguments?.getInt(USER_MESSAGE_ARG)!!,
 				onAddPattern = {
 					navActions.navigateToAddEditPattern(
-						R.string.add_pattern,
-						null
+						title = R.string.add_pattern,
+						timePatternId = null
 					)
 				},
 				onEditPattern = {
 					navActions.navigateToAddEditPattern(
-						R.string.edit_pattern,
-						it.timePattern.patternId
+						title = R.string.edit_pattern,
+						timePatternId = it.timePattern.patternId
 					)
 				},
 				onUserMessageDisplayed = { entry.arguments?.putInt(USER_MESSAGE_ARG, 0) },
@@ -231,10 +252,9 @@ fun AppNavGraph(
 			AddEditTimePatternScreen(
 				topBarTitle = entry.arguments?.getInt(TITLE_ARG)!!,
 				onPatternUpdate = {
-					navController.popBackStack()
-					/*navActions.navigateToPatterns(
+					navActions.navigateToPatterns(
 						if (patternId == 0L) ADD_EDIT_RESULT_OK else EDIT_RESULT_OK
-					)*/
+					)
 				},
 				onBack = { navController.popBackStack() }
 			)
@@ -250,9 +270,28 @@ fun AppNavGraph(
 			val subjectId = entry.arguments?.getLong(SUBJECT_ID_ARG)
 			AddEditSubjectScreen(
 				onSubjectUpdate = {
+					// TODO: go to detail if update and to list if creation
+//					val userMessage = if (subjectId == 0L) ADD_EDIT_RESULT_OK else EDIT_RESULT_OK
 					navActions.navigateToSubjects(
 						if (subjectId == 0L) ADD_EDIT_RESULT_OK else EDIT_RESULT_OK
 					)
+				},
+				onBack = { navController.popBackStack() }
+			)
+		}
+		composable(
+			route = ADD_EDIT_GRADE_ROUTE,
+			arguments = listOf(
+				navArgument(GRADE_ID_ARG) {
+					type = NavType.LongType; nullable = false; defaultValue = 0
+				},
+			)
+		) { entry ->
+			val gradeId = entry.arguments?.getLong(GRADE_ID_ARG)
+			AddEditGradeScreen(
+				onGradeUpdate = {
+					val userMessage = if (gradeId == 0L) ADD_EDIT_RESULT_OK else EDIT_RESULT_OK
+					navActions.returnAfterGradeEditing(userMessage)
 				},
 				onBack = { navController.popBackStack() }
 			)
@@ -285,12 +324,13 @@ fun AppNavGraph(
 				navArgument(SUBJECT_ID_ARG) {
 					type = NavType.LongType; nullable = false; defaultValue = 0
 				},
+				navArgument(USER_MESSAGE_ARG) { type = NavType.IntType; defaultValue = 0 },
 			)
-		) {
+		) { entry ->
 			SubjectDetailScreen(
-				onEditSubject = { subjectId ->
-					navActions.navigateToAddEditSubject(subjectId)
-				},
+				userMessage = entry.savedStateHandle.get<Int>(USER_MESSAGE_ARG),
+				onGradeClick = { gradeId -> navActions.navigateToAddEditGrade(gradeId) },
+				onEditSubject = { subjectId -> navActions.navigateToAddEditSubject(subjectId) },
 				onBack = { navController.popBackStack() },
 				onDeleteSubject = { navActions.navigateToSubjects(DELETE_RESULT_OK) }
 			)

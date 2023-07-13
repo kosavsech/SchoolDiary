@@ -54,7 +54,7 @@ import com.kizitonwose.calendar.compose.weekcalendar.rememberWeekCalendarState
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.features.schedule.Schedule
 import com.kxsv.schooldiary.data.features.schedule.ScheduleWithSubject
-import com.kxsv.schooldiary.data.features.subjects.Subject
+import com.kxsv.schooldiary.data.features.subject.Subject
 import com.kxsv.schooldiary.data.features.time_pattern.pattern_stroke.PatternStroke
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.kxsv.schooldiary.util.ui.ScheduleTopAppBar

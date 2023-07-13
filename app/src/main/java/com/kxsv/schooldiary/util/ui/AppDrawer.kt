@@ -44,6 +44,7 @@ fun AppModalDrawer(
 							dateStamp = localDateToTimestamp(LocalDate.now())
 						)
 					},
+					navigateToGrades = { navigationActions.navigateToGrades() },
 					closeDrawer = { coroutineScope.launch { drawerState.close() } }
 				)
 			}
@@ -63,10 +64,10 @@ private fun AppDrawer(
 	navigateToTeachers: () -> Unit,
 	navigateToSubjects: () -> Unit,
 	navigateToSchedule: () -> Unit,
+	navigateToGrades: () -> Unit,
 	closeDrawer: () -> Unit,
 	modifier: Modifier = Modifier,
 ) {
-	
 	Column(modifier = modifier.fillMaxSize()) {
 		NavigationDrawerItem(
 			label = {
@@ -124,7 +125,20 @@ private fun AppDrawer(
 				closeDrawer()
 			}
 		)
-		
+		NavigationDrawerItem(
+			label = {
+				Text(
+					text = stringResource(R.string.grades_title),
+					style = MaterialTheme.typography.body2,
+					//color = tintColor,
+				)
+			},
+			selected = currentRoute == AppDestinations.GRADES_ROUTE,
+			onClick = {
+				navigateToGrades()
+				closeDrawer()
+			}
+		)
 	}
 }
 
@@ -139,6 +153,7 @@ fun PreviewAppDrawer() {
 			navigateToTeachers = {},
 			navigateToSubjects = {},
 			navigateToSchedule = {},
+			navigateToGrades = {},
 			closeDrawer = {}
 		)
 	}

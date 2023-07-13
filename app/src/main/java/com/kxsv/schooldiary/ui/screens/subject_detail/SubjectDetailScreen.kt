@@ -1,9 +1,15 @@
 package com.kxsv.schooldiary.ui.screens.subject_detail
 
+import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
@@ -15,17 +21,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.features.subjects.Subject
+import com.kxsv.schooldiary.data.features.grade.Grade
+import com.kxsv.schooldiary.data.features.subject.Subject
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.kxsv.schooldiary.util.ui.SubjectDetailTopAppBar
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun SubjectDetailScreen(
+	@StringRes userMessage: Int?,
+	onGradeClick: (Long) -> Unit,
 	onEditSubject: (Long) -> Unit,
 	onBack: () -> Unit,
 	onDeleteSubject: () -> Unit,
@@ -39,16 +50,18 @@ fun SubjectDetailScreen(
 		modifier = modifier.fillMaxSize(),
 		topBar = {
 			SubjectDetailTopAppBar(
-				uiState.subject?.name,
-				onBack,
-				viewModel::deleteSubject
+				title = uiState.subject?.name,
+				onBack = onBack,
+				onDelete = viewModel::deleteSubject
 			)
 		},
 	) { paddingValues ->
 		SubjectContent(
 			loading = uiState.isLoading,
-			empty = uiState.subject == null && !uiState.isLoading,
+			empty = (uiState.subject == null && uiState.grades.isEmpty()) && !uiState.isLoading,
 			subject = uiState.subject,
+			grades = uiState.grades,
+			onGradeClick = onGradeClick,
 			onEditSubject = onEditSubject,
 			modifier = Modifier.padding(paddingValues)
 		)
@@ -66,6 +79,12 @@ fun SubjectDetailScreen(
 				onDeleteSubject()
 			}
 		}
+		
+		if (userMessage != null) {
+			LaunchedEffect(userMessage != 0) {
+				viewModel.showEditResultMessage(userMessage)
+			}
+		}
 	}
 }
 
@@ -74,6 +93,8 @@ private fun SubjectContent(
 	loading: Boolean,
 	empty: Boolean,
 	subject: Subject?,
+	grades: List<Grade>,
+	onGradeClick: (Long) -> Unit,
 	onEditSubject: (Long) -> Unit,
 	modifier: Modifier,
 ) {
@@ -87,6 +108,7 @@ private fun SubjectContent(
 	
 	LoadingContent(
 		loading = loading,
+		isContentScrollable = true,
 		empty = empty,
 		emptyContent = { Text(text = stringResource(R.string.no_data), modifier = commonModifier) },
 		onRefresh = {}
@@ -96,29 +118,68 @@ private fun SubjectContent(
 				modifier = commonModifier
 			) {
 				// TODO: make noContent cover
-				Column(
-					modifier = Modifier.padding(dimensionResource(R.dimen.vertical_margin))
-				) {
-					if (!loading) {
+				if (subject != null) {
+					Column(
+						modifier = Modifier.padding(dimensionResource(R.dimen.vertical_margin))
+					) {
 						Text(
-							text = subject!!.name,
+							text = subject.name,
 							style = MaterialTheme.typography.titleMedium,
 						)
 						Text(
 							text = subject.cabinet,
 							style = MaterialTheme.typography.titleMedium,
 						)
+						Button(onClick = { onEditSubject(subject.subjectId) }) {
+							Text(
+								text = stringResource(R.string.edit_subject),
+								style = MaterialTheme.typography.labelMedium
+							)
+						}
 					}
-					Button(onClick = { onEditSubject(subject?.subjectId!!) }) {
+				}
+			}
+			ElevatedCard(
+				modifier = commonModifier
+			) {
+				// TODO: make noContent cover
+				if (subject != null) {
+					Column(
+						modifier = Modifier.padding(dimensionResource(R.dimen.vertical_margin))
+					) {
+						Row {
+							Text(
+								text = "Average mark:",
+								style = MaterialTheme.typography.titleMedium,
+							)
+						}
+					}
+				}
+			}
+			LazyColumn {
+				items(grades) { grade ->
+					Row(
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.SpaceBetween,
+						modifier = Modifier
+							.fillMaxWidth()
+							.clickable { onGradeClick(grade.gradeId) }
+							.padding(
+								horizontal = dimensionResource(R.dimen.horizontal_margin),
+								vertical = dimensionResource(R.dimen.vertical_margin)
+							)
+					) {
 						Text(
-							text = stringResource(R.string.edit_subject),
-							style = MaterialTheme.typography.labelMedium
+							text = grade.mark.getValue(),
+							style = MaterialTheme.typography.titleMedium,
+						)
+						Text(
+							text = grade.date.format(DateTimeFormatter.ISO_LOCAL_DATE),
+							style = MaterialTheme.typography.titleMedium,
 						)
 					}
 				}
-				
 			}
-			
 		}
 	}
 }

@@ -82,4 +82,15 @@
     <string name="more_actions">More actions</string>
     <string name="copy_schedule_day">Copy schedule for day</string>
     <string name="copy_schedule_date_range">Copy schedule for date range</string>
+    <string name="loading_grades_error">Error while loading grades</string>
+    <string name="successfully_deleted_grade_message">Grade was deleted</string>
+    <string name="successfully_saved_grade_message">Grade was saved</string>
+    <string name="successfully_added_grade_message">Grade was added</string>
+    <string name="add_grade">Add a grade</string>
+    <string name="save_grade">Save grade</string>
+    <string name="grades_title">Grades</string>
+    <string name="mark_hint">Mark</string>
+    <string name="type_of_work_hint">Type of work</string>
+    <string name="mark_value">Mark value</string>
+    <string name="type_of_work_mark">Type of task being evaluated</string>
 </resources>

@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.data.features.subjects
+package com.kxsv.schooldiary.data.features.subject
 
 import androidx.room.Embedded
 import androidx.room.Entity
@@ -6,8 +6,9 @@ import androidx.room.Junction
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.kxsv.schooldiary.data.features.associative_tables.subject_teacher.SubjectTeacher
+import com.kxsv.schooldiary.data.features.grade.Grade
 import com.kxsv.schooldiary.data.features.schedule.Schedule
-import com.kxsv.schooldiary.data.features.teachers.Teacher
+import com.kxsv.schooldiary.data.features.teacher.Teacher
 
 @Entity
 data class Subject(
@@ -39,4 +40,15 @@ data class SubjectWithTeachers(
         associateBy = Junction(SubjectTeacher::class)
     )
     val teachers: Set<Teacher>,
+)
+
+data class SubjectWithGrades(
+	@Embedded
+	val subject: Subject,
+	@Relation(
+		entity = Grade::class,
+		parentColumn = "subjectId",
+		entityColumn = "subjectMasterId",
+	)
+	val schedules: List<Grade>,
 )

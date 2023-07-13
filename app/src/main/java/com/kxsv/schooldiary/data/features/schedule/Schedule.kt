@@ -7,7 +7,7 @@ import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.kxsv.schooldiary.data.features.study_day.StudyDay
-import com.kxsv.schooldiary.data.features.subjects.Subject
+import com.kxsv.schooldiary.data.features.subject.Subject
 
 @Entity(
 	foreignKeys = [

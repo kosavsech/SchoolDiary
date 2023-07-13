@@ -11,19 +11,22 @@ import com.kxsv.schooldiary.data.app_defaults.AppDefaults
 import com.kxsv.schooldiary.data.app_defaults.AppDefaultsRepositoryImpl
 import com.kxsv.schooldiary.data.app_defaults.AppDefaultsSerializer
 import com.kxsv.schooldiary.data.features.associative_tables.subject_teacher.SubjectTeacherDao
+import com.kxsv.schooldiary.data.features.grade.GradeDao
+import com.kxsv.schooldiary.data.features.grade.GradeRepositoryImpl
 import com.kxsv.schooldiary.data.features.schedule.ScheduleDao
 import com.kxsv.schooldiary.data.features.schedule.ScheduleRepositoryImpl
 import com.kxsv.schooldiary.data.features.study_day.StudyDayDao
 import com.kxsv.schooldiary.data.features.study_day.StudyDayRepositoryImpl
-import com.kxsv.schooldiary.data.features.subjects.SubjectDao
-import com.kxsv.schooldiary.data.features.subjects.SubjectRepositoryImpl
-import com.kxsv.schooldiary.data.features.teachers.TeacherDao
-import com.kxsv.schooldiary.data.features.teachers.TeacherRepositoryImpl
+import com.kxsv.schooldiary.data.features.subject.SubjectDao
+import com.kxsv.schooldiary.data.features.subject.SubjectRepositoryImpl
+import com.kxsv.schooldiary.data.features.teacher.TeacherDao
+import com.kxsv.schooldiary.data.features.teacher.TeacherRepositoryImpl
 import com.kxsv.schooldiary.data.features.time_pattern.TimePatternDao
 import com.kxsv.schooldiary.data.features.time_pattern.TimePatternRepositoryImpl
 import com.kxsv.schooldiary.data.features.time_pattern.pattern_stroke.PatternStrokeDao
 import com.kxsv.schooldiary.data.features.time_pattern.pattern_stroke.PatternStrokeRepositoryImpl
 import com.kxsv.schooldiary.domain.AppDefaultsRepository
+import com.kxsv.schooldiary.domain.GradeRepository
 import com.kxsv.schooldiary.domain.PatternStrokeRepository
 import com.kxsv.schooldiary.domain.ScheduleRepository
 import com.kxsv.schooldiary.domain.StudyDayRepository
@@ -76,6 +79,10 @@ abstract class RepositoryModule {
 	@Binds
 	@Singleton
 	abstract fun bindStudyDayRepository(repository: StudyDayRepositoryImpl): StudyDayRepository
+	
+	@Binds
+	@Singleton
+	abstract fun bindGradeRepository(repository: GradeRepositoryImpl): GradeRepository
 }
 
 @Module
@@ -112,6 +119,9 @@ object DatabaseModule {
 	
 	@Provides
 	fun provideStudyDayDao(db: AppDatabase): StudyDayDao = db.studyDayDao()
+	
+	@Provides
+	fun provideGradeDao(db: AppDatabase): GradeDao = db.gradeDao()
 }
 
 @InstallIn(SingletonComponent::class)

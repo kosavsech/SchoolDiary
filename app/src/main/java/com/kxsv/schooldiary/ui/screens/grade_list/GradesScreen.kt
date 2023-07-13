@@ -1,7 +1,8 @@
-package com.kxsv.schooldiary.ui.screens.subject_list
+package com.kxsv.schooldiary.ui.screens.grade_list
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,38 +32,41 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.features.subject.Subject
+import com.kxsv.schooldiary.data.features.grade.Grade
+import com.kxsv.schooldiary.util.Mark
+import com.kxsv.schooldiary.util.ui.GradesTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
-import com.kxsv.schooldiary.util.ui.SubjectsTopAppBar
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @Composable
-fun SubjectsScreen(
+fun GradesScreen(
 	@StringRes userMessage: Int,
 	onUserMessageDisplayed: () -> Unit,
-	onAddSubject: () -> Unit,
-	onSubjectClick: (Subject) -> Unit,
+	onAddGrade: () -> Unit,
+	onGradeClick: (Grade) -> Unit,
 	openDrawer: () -> Unit,
 	modifier: Modifier = Modifier,
-	viewModel: SubjectsViewModel = hiltViewModel(),
+	viewModel: GradesViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-		topBar = { SubjectsTopAppBar(openDrawer = openDrawer) },
+		topBar = { GradesTopAppBar(openDrawer = openDrawer) },
 		modifier = modifier.fillMaxSize(),
 		floatingActionButton = {
-			FloatingActionButton(onClick = onAddSubject) {
-				Icon(Icons.Default.Add, stringResource(R.string.add_subject))
+			FloatingActionButton(onClick = onAddGrade) {
+				Icon(Icons.Default.Add, stringResource(R.string.add_grade))
 			}
 		}
 	) { paddingValues ->
 		val uiState = viewModel.uiState.collectAsState().value
 		
-		SubjectsContent(
+		GradesContent(
 			loading = uiState.isLoading,
-			subjects = uiState.subjects,
+			grades = uiState.grades,
 			//noSubjectsLabel = 0,
-			onSubjectClick = onSubjectClick,
+			onGradeClick = onGradeClick,
 			modifier = Modifier.padding(paddingValues),
 		)
 		
@@ -87,19 +91,19 @@ fun SubjectsScreen(
 }
 
 @Composable
-private fun SubjectsContent(
+private fun GradesContent(
 	loading: Boolean,
-	subjects: List<Subject>,
+	grades: List<Grade>,
 	// TODO
 	//  @StringRes noSubjectsLabel: Int,
 	//  onRefresh: () -> Unit,
-	onSubjectClick: (Subject) -> Unit,
+	onGradeClick: (Grade) -> Unit,
 	modifier: Modifier,
 ) {
 	LoadingContent(
 		loading = loading,
 		isContentScrollable = true,
-		empty = subjects.isEmpty(),
+		empty = grades.isEmpty(),
 		emptyContent = { Text(text = "No subjects for yet") },
 		onRefresh = { /*TODO*/ }
 	) {
@@ -107,10 +111,10 @@ private fun SubjectsContent(
 			modifier = modifier
 				.padding(vertical = dimensionResource(R.dimen.list_item_padding)),
 		) {
-			items(subjects) { subject ->
-				SubjectItem(
-					subject = subject,
-					onSubjectClick = onSubjectClick,
+			items(grades) { grade ->
+				GradeItem(
+					grade = grade,
+					onGradeClick = onGradeClick,
 				)
 			}
 		}
@@ -118,41 +122,49 @@ private fun SubjectsContent(
 }
 
 @Composable
-private fun SubjectItem(
-	subject: Subject,
-	onSubjectClick: (Subject) -> Unit,
+private fun GradeItem(
+	grade: Grade,
+	onGradeClick: (Grade) -> Unit,
 ) {
 	Row(
 		verticalAlignment = Alignment.CenterVertically,
+		horizontalArrangement = Arrangement.SpaceBetween,
 		modifier = Modifier
 			.fillMaxWidth()
-			.clickable { onSubjectClick(subject) }
+			.clickable { onGradeClick(grade) }
 			.padding(
 				horizontal = dimensionResource(R.dimen.horizontal_margin),
 				vertical = dimensionResource(R.dimen.vertical_margin)
 			)
 	) {
 		Text(
-			text = subject.name,
+			text = grade.mark.getValue(),
 			style = MaterialTheme.typography.titleMedium,
 		)
+		Text(
+			text = grade.date.format(DateTimeFormatter.ISO_LOCAL_DATE),
+			style = MaterialTheme.typography.titleMedium,
+		)
+		
 	}
-	
 }
+
 
 @Preview
 @Composable
 private fun SubjectsContentPreview() {
 	Surface {
-		SubjectsContent(
+		GradesContent(
 			loading = false,
-			subjects = listOf(
-				Subject("Algebra", cabinet = "52"),
-				Subject("Algebra", cabinet = "48"),
-				Subject("Algebra", cabinet = "62"),
-				Subject("Algebra", cabinet = "75"),
+			grades = listOf(
+				Grade(
+					mark = Mark.FIVE,
+					date = LocalDate.now(),
+					typeOfWork = "Самостоятельная работа",
+					subjectMasterId = 0,
+				)
 			),
-			onSubjectClick = {},
+			onGradeClick = {},
 			modifier = Modifier
 		)
 	}
@@ -162,6 +174,11 @@ private fun SubjectsContentPreview() {
 @Composable
 private fun SubjectItemPreview() {
 	Surface {
-		SubjectItem(subject = Subject("Algebra", cabinet = "850"), onSubjectClick = {})
+		GradeItem(grade = Grade(
+			mark = Mark.FIVE,
+			date = LocalDate.now(),
+			typeOfWork = "Самостоятельная работа",
+			subjectMasterId = 0,
+		), onGradeClick = {})
 	}
 }

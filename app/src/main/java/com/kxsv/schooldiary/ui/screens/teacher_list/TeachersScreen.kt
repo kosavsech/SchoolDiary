@@ -37,7 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.features.teachers.Teacher
+import com.kxsv.schooldiary.data.features.teacher.Teacher
 import com.kxsv.schooldiary.util.ui.TeachersTopAppBar
 
 
@@ -187,8 +187,8 @@ private fun TeacherItem(
 ) {
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onTeacherClick() }
+	        .fillMaxWidth()
+	        .clickable { onTeacherClick() }
     ) {
         Column(
             modifier = Modifier.weight(1f)

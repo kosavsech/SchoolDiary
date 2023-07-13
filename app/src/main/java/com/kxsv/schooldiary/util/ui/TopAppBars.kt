@@ -64,6 +64,19 @@ fun AddEditSubjectTopAppBar(onBack: () -> Unit) {
 }
 
 @Composable
+fun AddEditGradeTopAppBar(onBack: () -> Unit) {
+	TopAppBar(
+		title = {},
+		navigationIcon = {
+			IconButton(onClick = onBack) {
+				Icon(Icons.Filled.ArrowBack, stringResource(id = R.string.menu_back))
+			}
+		},
+		modifier = Modifier.fillMaxWidth()
+	)
+}
+
+@Composable
 fun PatternSelectionTopAppBar(onBack: () -> Unit) {
 	TopAppBar(
 		title = { Text(text = stringResource(id = R.string.pattern_selection_title)) },
@@ -106,6 +119,19 @@ fun TeachersTopAppBar(openDrawer: () -> Unit) {
 fun SubjectsTopAppBar(openDrawer: () -> Unit) {
 	TopAppBar(
 		title = { Text(text = stringResource(id = R.string.subjects_title)) },
+		navigationIcon = {
+			IconButton(onClick = openDrawer) {
+				Icon(Icons.Filled.Menu, stringResource(id = R.string.open_drawer))
+			}
+		},
+		modifier = Modifier.fillMaxWidth(),
+	)
+}
+
+@Composable
+fun GradesTopAppBar(openDrawer: () -> Unit) {
+	TopAppBar(
+		title = { Text(text = stringResource(id = R.string.grades_title)) },
 		navigationIcon = {
 			IconButton(onClick = openDrawer) {
 				Icon(Icons.Filled.Menu, stringResource(id = R.string.open_drawer))

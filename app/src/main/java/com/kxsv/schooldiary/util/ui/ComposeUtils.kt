@@ -28,6 +28,7 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -85,7 +86,7 @@ fun LoadingContent(
 	loading: Boolean,
 	isContentScrollable: Boolean = false,
 	empty: Boolean,
-	emptyContent: @Composable () -> Unit,
+	emptyContent: @Composable () -> Unit = { Text(text = "Empty") },
 	onRefresh: () -> Unit,
 	modifier: Modifier = Modifier,
 	content: @Composable () -> Unit,

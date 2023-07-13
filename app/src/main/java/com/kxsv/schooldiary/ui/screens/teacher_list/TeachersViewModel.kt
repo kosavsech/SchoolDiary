@@ -3,7 +3,7 @@ package com.kxsv.schooldiary.ui.screens.teacher_list
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.features.teachers.Teacher
+import com.kxsv.schooldiary.data.features.teacher.Teacher
 import com.kxsv.schooldiary.domain.TeacherRepository
 import com.kxsv.schooldiary.util.Async
 import com.kxsv.schooldiary.util.WhileUiSubscribed

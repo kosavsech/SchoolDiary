@@ -7,7 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.AppDestinationsArgs
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.features.schedule.Schedule
-import com.kxsv.schooldiary.data.features.subjects.Subject
+import com.kxsv.schooldiary.data.features.subject.Subject
 import com.kxsv.schooldiary.domain.ScheduleRepository
 import com.kxsv.schooldiary.domain.SubjectRepository
 import dagger.hilt.android.lifecycle.HiltViewModel

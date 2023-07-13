@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.data.features.teachers
+package com.kxsv.schooldiary.data.features.teacher
 
 import androidx.room.Dao
 import androidx.room.Query
