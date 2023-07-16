@@ -229,7 +229,13 @@ class DayScheduleViewModel @Inject constructor(
 	}
 	
 	suspend fun getIdForClassFromNet(): Long {
-		copyScheduleFromNet(uiState.value.selectedDate)
+		if (uiState.value.studyDay == null) {
+			_uiState.update {
+				it.copy(studyDay = studyDayRepository.getById(createEmptyStudyDay()))
+			}
+		}
+		localiseNetSchedule()
+		
 		val indexOfClassDetailed = uiState.value.classDetailed!!.schedule.index
 		val studyDayMasterId = uiState.value.studyDay!!.studyDayId
 		return scheduleRepository.getByIdAndIndex(
@@ -313,7 +319,7 @@ class DayScheduleViewModel @Inject constructor(
 			val schedules = classes.map { it.schedule }
 			var schedulesWithMasterDay = schedules
 			val foundNullMasterDay = schedules.find { it.studyDayMasterId == null } != null
-			
+
 			if (foundNullMasterDay) {
 				schedulesWithMasterDay =
 					schedules.map { it.copy(studyDayMasterId = studyDay.studyDayId) }
@@ -337,17 +343,13 @@ class DayScheduleViewModel @Inject constructor(
 			val (studyDay, studyDayExisted) = getStudyDayOnDate(date)
 			scheduleRepository.deleteAllByDayId(studyDay.studyDayId)
 			
-			var schedule = mutableListOf<Schedule>()
 			val localizedNetClasses = scheduleRepository.loadFromNetworkByDate(date).toLocal()
-			if (studyDayExisted) {
-				schedule = localizedNetClasses as MutableList<Schedule>
-			} else {
+			
+			if (!studyDayExisted) {
 				_uiState.update { it.copy(studyDay = studyDay) }
-				localizedNetClasses.forEach {
-					schedule.add(it.copy(studyDayMasterId = studyDay.studyDayId))
-				}
+				localizedNetClasses.map { it.copy(studyDayMasterId = studyDay.studyDayId) }
 			}
-			scheduleRepository.upsertAll(schedule)
+			scheduleRepository.upsertAll(localizedNetClasses)
 			
 		} catch (e: Exception) {
 			Log.e(TAG, "copyScheduleFromNet: caught", e)
