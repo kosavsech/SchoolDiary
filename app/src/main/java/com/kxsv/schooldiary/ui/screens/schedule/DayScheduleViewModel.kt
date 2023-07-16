@@ -24,10 +24,12 @@ import com.kxsv.schooldiary.domain.SubjectRepository
 import com.kxsv.schooldiary.domain.TimePatternRepository
 import com.kxsv.schooldiary.util.copyExclusively
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
@@ -353,61 +355,62 @@ class DayScheduleViewModel @Inject constructor(
 	}
 	
 	private fun initializeNetworkClassesOnDate(date: LocalDate) = viewModelScope.launch {
-		scheduleRepository.loadFromNetworkByDate(date).let { classes ->
-			var newClasses = emptyList<ScheduleWithSubject>()
-			try {
-				newClasses = classes.map {
-					it.toLocalWithSubject()
-				}
-			} catch (e: RuntimeException) {
-				Log.e(TAG, "initializeNetworkClassesOnDate: classes are empty because of", e)
-			}
-			_uiState.update {
-				it.copy(
-					classes = newClasses,
-					isLoading = false
-				)
-			}
-			Log.d(TAG, "initializeNetworkClassesOnDate() returned with: classes = $classes")
+		val classes = measurePerformanceInMS(logger = { time, result ->
+			Log.d(
+				TAG,
+				"initializeNetworkClassesOnDate() performance is $time ms\nreturned: classes $result"
+			)
+		}) {
+			scheduleRepository.loadFromNetworkByDate(date).toLocalWithSubject()
+		}
+		_uiState.update {
+			it.copy(
+				classes = classes,
+				isLoading = false
+			)
 		}
 	}
 	
-	private fun loadStudyDayWithClassesOnDate(date: LocalDate) = viewModelScope.launch {
-		studyDayRepository.getDayAndSchedulesWithSubjectsByDate(date).let { dayWithClasses ->
-			if (dayWithClasses != null) {
-				_uiState.update { it.copy(studyDay = dayWithClasses.studyDay) }
-				if (dayWithClasses.classes.isNotEmpty()) {
-					Log.i(TAG, "loadStudyDayWithClassesOnDate: found local classes")
-					_uiState.update { dayScheduleUiState ->
-						dayScheduleUiState.copy(
-							classes = dayWithClasses.classes.sortedBy { it.schedule.index },
-							isLoading = false
-						)
+	private fun loadStudyDayWithClassesOnDate(date: LocalDate) {
+		viewModelScope.coroutineContext.job.cancelChildren()
+		viewModelScope.launch {
+			studyDayRepository.getDayAndSchedulesWithSubjectsByDate(date).let { dayWithClasses ->
+				if (dayWithClasses != null) {
+					_uiState.update { it.copy(studyDay = dayWithClasses.studyDay) }
+					if (dayWithClasses.classes.isNotEmpty()) {
+						Log.i(TAG, "loadStudyDayWithClassesOnDate: found local classes")
+						_uiState.update { dayScheduleUiState ->
+							dayScheduleUiState.copy(
+								classes = dayWithClasses.classes.sortedBy { it.schedule.index },
+								isLoading = false
+							)
+						}
+					} else {
+						// INFO: loads classes from network to UI with studyDayMasterId
+						Log.i(TAG, "loadStudyDayWithClassesOnDate: searching for schedule in Net")
+						initializeNetworkClassesOnDate(date)
 					}
 				} else {
-					// INFO: loads classes from network to UI with studyDayMasterId
-					Log.i(TAG, "loadStudyDayWithClassesOnDate: searching for schedule in Net")
+					// INFO: loads classes from network to UI without studyDayMasterId
+					Log.i(
+						TAG,
+						"loadStudyDayWithClassesOnDate: study day is null, searching for schedule in Net"
+					)
 					initializeNetworkClassesOnDate(date)
 				}
-			} else {
-				// INFO: loads classes from network to UI without studyDayMasterId
-				Log.i(
-					TAG,
-					"loadStudyDayWithClassesOnDate: study day is null, searching for schedule in Net"
-				)
-				initializeNetworkClassesOnDate(date)
-			}
-			
-			val appliedPatternId =
-				dayWithClasses?.studyDay?.appliedPatternId ?: appDefaultsRepository.getPatternId()
-			
-			strokeRepository.getStrokesByPatternId(appliedPatternId).let { strokes ->
-				Log.d(
-					TAG, "loadStudyDayWithClassesOnDate(): loaded strokes from pattern" +
-							" with id($appliedPatternId)"
-				)
-				_uiState.update {
-					it.copy(currentTimings = strokes)
+				
+				val appliedPatternId =
+					dayWithClasses?.studyDay?.appliedPatternId
+						?: appDefaultsRepository.getPatternId()
+				
+				strokeRepository.getStrokesByPatternId(appliedPatternId).let { strokes ->
+					Log.d(
+						TAG, "loadStudyDayWithClassesOnDate(): loaded strokes from pattern" +
+								" with id($appliedPatternId)"
+					)
+					_uiState.update {
+						it.copy(currentTimings = strokes)
+					}
 				}
 			}
 		}
@@ -470,21 +473,16 @@ class DayScheduleViewModel @Inject constructor(
 		}
 	}
 	
-	/*
-		private suspend fun List<NetworkSchedule>.toLocalWithSubject(): List<ScheduleWithSubject> {
-			val newClasses = mutableListOf<ScheduleWithSubject>()
-			return try {
-				this.forEach { newClasses.add(it.toLocalWithSubject()) }
-				newClasses
-			} catch (e: RuntimeException) {
-				Log.d(
-					TAG,
-					"List<NetworkSchedule>.toLocalWithSubject() caught exception so classes are empty"
-				)
-				emptyList()
-			}
+	private suspend fun List<NetworkSchedule>.toLocalWithSubject(): List<ScheduleWithSubject> {
+		val newClasses = mutableListOf<ScheduleWithSubject>()
+		return try {
+			this.forEach { newClasses.add(it.toLocalWithSubject()) }
+			newClasses
+		} catch (e: RuntimeException) {
+			Log.e(TAG, "List<NetworkSchedule>.toLocalWithSubject: classes are empty because", e)
+			emptyList()
 		}
-	*/
+	}
 	
 	private suspend fun NetworkSchedule.toLocal(): Schedule {
 		try {
@@ -539,4 +537,16 @@ class DayScheduleViewModel @Inject constructor(
 	
 	private fun localDateToTimestamp(date: LocalDate): Long =
 		date.atStartOfDay(ZoneId.systemDefault()).toEpochSecond()
+	
+	//the inline performance measurement method
+	private inline fun <T> measurePerformanceInMS(
+		logger: (Long, T) -> Unit,
+		function: () -> T,
+	): T {
+		val startTime = System.currentTimeMillis()
+		val result: T = function.invoke()
+		val endTime = System.currentTimeMillis()
+		logger.invoke(endTime - startTime, result)
+		return result
+	}
 }
