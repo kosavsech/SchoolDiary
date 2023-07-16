@@ -54,11 +54,11 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun AddEditScheduleScreen(
+fun AddEditLessonScreen(
 	onScheduleUpdate: (Long) -> Unit,
 	onBack: () -> Unit,
 	modifier: Modifier = Modifier,
-	viewModel: AddEditScheduleViewModel = hiltViewModel(),
+	viewModel: AddEditLessonViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
@@ -75,7 +75,7 @@ fun AddEditScheduleScreen(
 		}
 	) { paddingValues ->
 		
-		AddEditScheduleContent(
+		AddEditLessonContent(
 			isLoading = uiState.isLoading,
 			pickedSubject = uiState.pickedSubject,
 			classIndex = uiState.classIndex,
@@ -109,7 +109,7 @@ private fun localDateToTimestamp(date: LocalDate): Long =
 	date.atStartOfDay(ZoneId.systemDefault()).toEpochSecond()
 
 @Composable
-private fun AddEditScheduleContent(
+private fun AddEditLessonContent(
 	isLoading: Boolean,
 	pickedSubject: Subject?,
 	classIndex: String,
@@ -331,7 +331,7 @@ private fun SubjectPickerDialog(
 @Composable
 private fun AddEditScheduleContentPreview() {
 	Surface {
-		AddEditScheduleContent(
+		AddEditLessonContent(
 			isLoading = false,
 //			date = null,
 			pickedSubject = Subject("Русский язык", "210"),

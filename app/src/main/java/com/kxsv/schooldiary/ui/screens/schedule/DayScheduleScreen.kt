@@ -67,16 +67,19 @@ import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
+private fun localDateToTimestamp(date: LocalDate): Long =
+	date.atStartOfDay(ZoneId.systemDefault()).toEpochSecond()
 
 @Composable
 fun DayScheduleScreen(
 	@StringRes userMessage: Int,
 	onUserMessageDisplayed: () -> Unit,
 	isCustomPatternWasSet: Boolean?,
-	onAddSchedule: (Long) -> Unit,
+	onAddClass: (Long) -> Unit,
 	onEditClass: (Long) -> Unit,
 	onChangePattern: (Long) -> Unit,
 	onCopyDaySchedule: () -> Unit,
@@ -93,12 +96,8 @@ fun DayScheduleScreen(
 		topBar = {
 			ScheduleTopAppBar(
 				onChangePattern = {
-					if (uiState.studyDay != null) {
-						onChangePattern(uiState.studyDay.studyDayId)
-					} else {
-						coroutineScope.launch {
-							onChangePattern(viewModel.createEmptyStudyDay())
-						}
+					coroutineScope.launch {
+						onChangePattern(viewModel.getCurrentStudyDayForced().studyDayId)
 					}
 				},
 				onCopyDaySchedule = onCopyDaySchedule,
@@ -111,7 +110,10 @@ fun DayScheduleScreen(
 		floatingActionButton = {
 			FloatingActionButton(
 				onClick = {
-					coroutineScope.launch { onAddSchedule(viewModel.getDateStampForSchedule()) }
+					coroutineScope.launch {
+						if (viewModel.isScheduleRemote()) viewModel.localiseCurrentNetSchedule()
+						onAddClass(localDateToTimestamp(uiState.selectedDate))
+					}
 				}
 			) {
 				Icon(Icons.Default.Add, stringResource(R.string.add_schedule_item))

@@ -33,7 +33,7 @@ data class AddEditScheduleUiState(
 )
 
 @HiltViewModel
-class AddEditScheduleViewModel @Inject constructor(
+class AddEditLessonViewModel @Inject constructor(
 	private val scheduleRepository: ScheduleRepository,
 	private val subjectRepository: SubjectRepository,
 	savedStateHandle: SavedStateHandle,
