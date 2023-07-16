@@ -163,7 +163,7 @@ class DayScheduleViewModel @Inject constructor(
 		if (uiState.value.selectedCalendarDay == null)
 			throw RuntimeException("copySchedule() was called but selectedCalendarDay is null.")
 		viewModelScope.launch {
-			copyScheduleFromDate(
+			copyLocalScheduleFromDate(
 				fromDate = uiState.value.selectedCalendarDay!!.date,
 				toDate = uiState.value.selectedDate,
 				toCopyPattern = toCopyPattern
@@ -184,7 +184,7 @@ class DayScheduleViewModel @Inject constructor(
 					TAG,
 					"copyScheduleToRange() called with: dateCopyFrom = ${copyFromDays[index]}, dateCopyTo = $dateCopyTo"
 				)
-				copyScheduleFromDate(
+				copyLocalScheduleFromDate(
 					fromDate = copyFromDays[index],
 					toDate = dateCopyTo,
 					toCopyPattern = toCopyPattern
@@ -206,7 +206,7 @@ class DayScheduleViewModel @Inject constructor(
 		}
 		if (calendarDay != null) {
 			Log.d(TAG, "updateOnCalendarDayChange() loading classes from $calendarDay.")
-			loadStudyDayWithClassesOnDate(calendarDay.date)
+			loadScheduleOnDate(calendarDay.date)
 		} else {
 			Log.d(
 				TAG,
@@ -226,7 +226,7 @@ class DayScheduleViewModel @Inject constructor(
 				classes = emptyList()
 			)
 		}
-		loadStudyDayWithClassesOnDate(date)
+		loadScheduleOnDate(date)
 	}
 	
 	suspend fun getIdForClassFromNet(): Long {
@@ -250,46 +250,39 @@ class DayScheduleViewModel @Inject constructor(
 		return localDateToTimestamp(uiState.value.selectedDate)
 	}
 	
-	private suspend fun copyScheduleFromDate(
+	private suspend fun copyLocalScheduleFromDate(
 		fromDate: LocalDate, toDate: LocalDate, toCopyPattern: Boolean,
 	) {
 		_uiState.update { it.copy(isLoading = true) }
 		val refStudyDay = studyDayRepository.getByDate(fromDate)
-		if (refStudyDay == null) {
-			Log.d(
-				TAG,
-				"copyScheduleFromDate() called with: fromDate = $fromDate, toDate = $toDate, toCopyPattern = $toCopyPattern" +
-						"\nReference StudyDay (date $fromDate) to copy from not found."
-			)
-			return
-			/*throw NoSuchElementException("Reference StudyDay (date $fromDate) to copy from not found.")*/
-		}
+			?: throw NoSuchElementException("Reference StudyDay (date $fromDate) to copy from not found.")
 		val toStudyDay = studyDayRepository.getByDate(toDate)
 		
-		val idOfDestinationDay = if (toStudyDay != null) {
+		val cloneDayId = if (toStudyDay != null) {
+			// INFO: if copying schedule to existent study day, maybe with local schedules
 			if (toCopyPattern) {
 				studyDayRepository.update(
 					toStudyDay.copy(appliedPatternId = refStudyDay.appliedPatternId)
 				)
 			}
+			scheduleRepository.deleteAllByDayId(toStudyDay.studyDayId)
 			toStudyDay.studyDayId
 		} else {
-			var copyDay = refStudyDay.copy(date = toDate, studyDayId = 0)
-			if (!toCopyPattern) {
-				copyDay = copyDay.copy(appliedPatternId = null)
+			val cloneStudyDay: StudyDay = if (toCopyPattern) {
+				StudyDay(date = toDate, appliedPatternId = refStudyDay.appliedPatternId)
+			} else {
+				StudyDay(date = toDate)
 			}
-			studyDayRepository.create(copyDay)
+			studyDayRepository.create(cloneStudyDay)
 		}
 		
-		toStudyDay?.studyDayId?.let { scheduleRepository.deleteAllByDayId(it) }
 		val copyOfSchedules: MutableList<Schedule> = mutableListOf()
-		
 		scheduleRepository.getAllByMasterId(refStudyDay.studyDayId).forEach {
-			copyOfSchedules.add(it.copy(studyDayMasterId = idOfDestinationDay, scheduleId = 0))
+			copyOfSchedules.add(it.copy(studyDayMasterId = cloneDayId, scheduleId = 0))
 		}
 		scheduleRepository.upsertAll(copyOfSchedules)
 		
-		updateStudyDayWithClassesOnDate(toDate)
+		updateLocalScheduleOnDate(toDate)
 	}
 	
 	/*private suspend fun getStudyDayOnDate(date: LocalDate): Pair<StudyDay, Boolean> {
@@ -356,11 +349,11 @@ class DayScheduleViewModel @Inject constructor(
 		}
 	}*/
 	
-	private fun initializeNetworkClassesOnDate(date: LocalDate) = viewModelScope.launch {
+	private fun initializeNetworkScheduleOnDate(date: LocalDate) = viewModelScope.launch {
 		val classes = measurePerformanceInMS(logger = { time, result ->
 			Log.d(
 				TAG,
-				"initializeNetworkClassesOnDate() performance is $time ms\nreturned: classes $result"
+				"initializeNetworkScheduleOnDate() performance is $time ms\nreturned: classes $result"
 			)
 		}) {
 			scheduleRepository.loadFromNetworkByDate(date).toLocalWithSubject()
@@ -373,14 +366,14 @@ class DayScheduleViewModel @Inject constructor(
 		}
 	}
 	
-	private fun loadStudyDayWithClassesOnDate(date: LocalDate) {
+	private fun loadScheduleOnDate(date: LocalDate) {
 		viewModelScope.coroutineContext.job.cancelChildren()
 		viewModelScope.launch {
 			studyDayRepository.getDayAndSchedulesWithSubjectsByDate(date).let { dayWithClasses ->
 				if (dayWithClasses != null) {
 					_uiState.update { it.copy(studyDay = dayWithClasses.studyDay) }
 					if (dayWithClasses.classes.isNotEmpty()) {
-						Log.i(TAG, "loadStudyDayWithClassesOnDate: found local classes")
+						Log.i(TAG, "loadScheduleOnDate: found local classes")
 						_uiState.update { dayScheduleUiState ->
 							dayScheduleUiState.copy(
 								classes = dayWithClasses.classes.sortedBy { it.schedule.index },
@@ -389,36 +382,46 @@ class DayScheduleViewModel @Inject constructor(
 						}
 					} else {
 						// INFO: loads classes from network to UI with studyDayMasterId
-						Log.i(TAG, "loadStudyDayWithClassesOnDate: searching for schedule in Net")
-						initializeNetworkClassesOnDate(date)
+						Log.i(TAG, "loadScheduleOnDate: searching for schedule in Net")
+						initializeNetworkScheduleOnDate(date)
 					}
 				} else {
 					// INFO: loads classes from network to UI without studyDayMasterId
 					Log.i(
 						TAG,
-						"loadStudyDayWithClassesOnDate: study day is null, searching for schedule in Net"
+						"loadScheduleOnDate: study day is null, searching for schedule in Net"
 					)
-					initializeNetworkClassesOnDate(date)
+					initializeNetworkScheduleOnDate(date)
 				}
-				
-				val appliedPatternId =
-					dayWithClasses?.studyDay?.appliedPatternId
-						?: appDefaultsRepository.getPatternId()
-				
-				strokeRepository.getStrokesByPatternId(appliedPatternId).let { strokes ->
-					Log.d(
-						TAG, "loadStudyDayWithClassesOnDate(): loaded strokes from pattern" +
-								" with id($appliedPatternId)"
-					)
-					_uiState.update {
-						it.copy(currentTimings = strokes)
-					}
-				}
+				loadTimingsOnStudyDay(dayWithClasses?.studyDay)
 			}
 		}
 	}
 	
-	private fun updateStudyDayWithClassesOnDate(date: LocalDate) = viewModelScope.launch {
+	/**
+	 * Tries to load time pattern from passed [studyDay] if it's null or doesn't
+	 * have time pattern specified, loads default pattern from datastore
+	 * @see AppDefaultsRepository
+	 * @param studyDay
+	 */
+	private suspend fun loadTimingsOnStudyDay(studyDay: StudyDay?) {
+		val isFromDefaults = studyDay?.appliedPatternId == null
+		val appliedPatternId = studyDay?.appliedPatternId ?: appDefaultsRepository.getPatternId()
+		val strokes = measurePerformanceInMS(logger = { time, result ->
+			Log.i(
+				TAG, "loadTimingsOnStudyDay() performance is $time ms" +
+						"\nloaded timings from ${if (isFromDefaults) "default " else ""}pattern(id: $appliedPatternId) ${result[0]}..."
+			)
+		}) {
+			strokeRepository.getStrokesByPatternId(appliedPatternId)
+		}
+		
+		_uiState.update {
+			it.copy(currentTimings = strokes)
+		}
+	}
+	
+	private fun updateLocalScheduleOnDate(date: LocalDate) = viewModelScope.launch {
 		studyDayRepository.getDayAndSchedulesWithSubjectsByDate(date).let { dayWithClasses ->
 			if (dayWithClasses != null) {
 				_uiState.update { it.copy(studyDay = dayWithClasses.studyDay) }
@@ -433,15 +436,7 @@ class DayScheduleViewModel @Inject constructor(
 			} else {
 				throw NoSuchElementException("Didn't found day with classes for some reason")
 			}
-			val appliedPatternId = dayWithClasses.studyDay.appliedPatternId
-				?: appDefaultsRepository.getPatternId()
-			
-			strokeRepository.getStrokesByPatternId(appliedPatternId).let { strokes ->
-//				Log.d(TAG, "loadStudyDayWithClassesOnDate(): strokes = $strokes")
-				_uiState.update {
-					it.copy(currentTimings = strokes)
-				}
-			}
+			loadTimingsOnStudyDay(dayWithClasses.studyDay)
 		}
 	}
 	
