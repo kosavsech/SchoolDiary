@@ -1,7 +1,5 @@
 package com.kxsv.schooldiary.domain
 
-import com.kxsv.schooldiary.data.features.associative_tables.subject_teacher.SubjectTeacher
-
 /*
 interface SubjectTeacherRepository {
 

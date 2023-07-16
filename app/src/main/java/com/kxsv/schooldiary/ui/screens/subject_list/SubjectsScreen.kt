@@ -31,7 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.features.subject.Subject
+import com.kxsv.schooldiary.data.local.features.subject.Subject
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.kxsv.schooldiary.util.ui.SubjectsTopAppBar
 
@@ -133,7 +133,7 @@ private fun SubjectItem(
 			)
 	) {
 		Text(
-			text = subject.name,
+			text = subject.getName(),
 			style = MaterialTheme.typography.titleMedium,
 		)
 	}

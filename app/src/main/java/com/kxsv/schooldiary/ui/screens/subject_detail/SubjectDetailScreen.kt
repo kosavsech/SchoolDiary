@@ -27,8 +27,8 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.features.grade.Grade
-import com.kxsv.schooldiary.data.features.subject.Subject
+import com.kxsv.schooldiary.data.local.features.grade.Grade
+import com.kxsv.schooldiary.data.local.features.subject.Subject
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.kxsv.schooldiary.util.ui.SubjectDetailTopAppBar
 import java.time.format.DateTimeFormatter
@@ -50,7 +50,7 @@ fun SubjectDetailScreen(
 		modifier = modifier.fillMaxSize(),
 		topBar = {
 			SubjectDetailTopAppBar(
-				title = uiState.subject?.name,
+				title = uiState.subject?.getName(),
 				onBack = onBack,
 				onDelete = viewModel::deleteSubject
 			)
@@ -123,11 +123,11 @@ private fun SubjectContent(
 						modifier = Modifier.padding(dimensionResource(R.dimen.vertical_margin))
 					) {
 						Text(
-							text = subject.name,
+							text = subject.getName(),
 							style = MaterialTheme.typography.titleMedium,
 						)
 						Text(
-							text = subject.cabinet,
+							text = subject.getCabinetString(),
 							style = MaterialTheme.typography.titleMedium,
 						)
 						Button(onClick = { onEditSubject(subject.subjectId) }) {

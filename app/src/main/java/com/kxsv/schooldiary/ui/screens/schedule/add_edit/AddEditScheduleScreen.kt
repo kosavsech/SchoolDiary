@@ -40,7 +40,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.features.subject.Subject
+import com.kxsv.schooldiary.data.local.features.subject.Subject
 import com.kxsv.schooldiary.util.ui.AddEditScheduleTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.vanpra.composematerialdialogs.MaterialDialog
@@ -106,7 +106,7 @@ fun AddEditScheduleScreen(
 }
 
 private fun localDateToTimestamp(date: LocalDate): Long =
-	date.atStartOfDay(ZoneId.of("UTC")).toEpochSecond()
+	date.atStartOfDay(ZoneId.systemDefault()).toEpochSecond()
 
 @Composable
 private fun AddEditScheduleContent(
@@ -260,14 +260,14 @@ private fun SubjectRow(
 		)
 		Spacer(modifier = Modifier.padding(horizontal = 8.dp))
 		Text(
-			text = subject?.name ?: stringResource(R.string.pick_subject_hint),
+			text = subject?.getName() ?: stringResource(R.string.pick_subject_hint),
 			style = MaterialTheme.typography.titleMedium,
 		)
 	}
 	SubjectPickerDialog(
 		isLoading = isLoading,
 		dialogState = subjectDialog,
-		subjects = subjects.map { listSubject -> listSubject.name },
+		subjects = subjects.map { listSubject -> listSubject.getName() },
 		initialSelection = initialSubjectSelection,
 		onChoiceChange = onSubjectChanged
 	)

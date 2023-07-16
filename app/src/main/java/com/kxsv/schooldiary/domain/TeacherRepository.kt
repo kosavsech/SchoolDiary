@@ -1,7 +1,7 @@
 package com.kxsv.schooldiary.domain
 
-import com.kxsv.schooldiary.data.features.teacher.Teacher
-import com.kxsv.schooldiary.data.features.teacher.TeacherWithSubjects
+import com.kxsv.schooldiary.data.local.features.teacher.Teacher
+import com.kxsv.schooldiary.data.local.features.teacher.TeacherWithSubjects
 import kotlinx.coroutines.flow.Flow
 
 interface TeacherRepository {

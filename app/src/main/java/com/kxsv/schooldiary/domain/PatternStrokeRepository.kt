@@ -1,6 +1,6 @@
 package com.kxsv.schooldiary.domain
 
-import com.kxsv.schooldiary.data.features.time_pattern.pattern_stroke.PatternStroke
+import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStroke
 import kotlinx.coroutines.flow.Flow
 
 interface PatternStrokeRepository {

@@ -1,9 +1,9 @@
 package com.kxsv.schooldiary.domain
 
-import com.kxsv.schooldiary.data.features.subject.Subject
-import com.kxsv.schooldiary.data.features.subject.SubjectWithGrades
-import com.kxsv.schooldiary.data.features.subject.SubjectWithTeachers
-import com.kxsv.schooldiary.data.features.teacher.Teacher
+import com.kxsv.schooldiary.data.local.features.subject.Subject
+import com.kxsv.schooldiary.data.local.features.subject.SubjectWithGrades
+import com.kxsv.schooldiary.data.local.features.subject.SubjectWithTeachers
+import com.kxsv.schooldiary.data.local.features.teacher.Teacher
 import kotlinx.coroutines.flow.Flow
 
 interface SubjectRepository {
@@ -18,13 +18,15 @@ interface SubjectRepository {
 	
 	suspend fun getSubject(subjectId: Long): Subject?
 	
+	suspend fun getSubjectByName(subjectName: String): Subject?
+	
 	suspend fun getSubjectWithTeachers(subjectId: Long): SubjectWithTeachers?
 	
 	suspend fun createSubject(subject: Subject, teachers: Set<Teacher>)
 	
 	suspend fun updateSubject(subject: Subject, teachers: Set<Teacher>)
-
-    suspend fun deleteAllSubjects()
-
-    suspend fun deleteSubject(subjectId: Long)
+	
+	suspend fun deleteAllSubjects()
+	
+	suspend fun deleteSubject(subjectId: Long)
 }

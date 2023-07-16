@@ -6,8 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.AppDestinationsArgs
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.features.schedule.Schedule
-import com.kxsv.schooldiary.data.features.subject.Subject
+import com.kxsv.schooldiary.data.local.features.schedule.Schedule
+import com.kxsv.schooldiary.data.local.features.subject.Subject
 import com.kxsv.schooldiary.domain.ScheduleRepository
 import com.kxsv.schooldiary.domain.SubjectRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -55,8 +55,7 @@ class AddEditScheduleViewModel @Inject constructor(
 	}
 	
 	private fun fromTimestamp(value: Long): LocalDate =
-		Instant.ofEpochSecond(value).atZone(ZoneId.of("UTC")).toLocalDate()
-	
+		Instant.ofEpochSecond(value).atZone(ZoneId.systemDefault()).toLocalDate()
 	
 	fun saveSchedule() {
 		if (uiState.value.pickedSubject == null
@@ -168,7 +167,7 @@ class AddEditScheduleViewModel @Inject constructor(
 				_uiState.update {
 					it.copy(
 						pickedSubject = scheduleWithSubject.subject,
-						classIndex = scheduleWithSubject.schedule.index.toString(),
+						classIndex = (scheduleWithSubject.schedule.index + 1).toString(),
 					)
 				}
 			}

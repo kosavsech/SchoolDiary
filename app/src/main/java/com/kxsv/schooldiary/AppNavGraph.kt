@@ -217,6 +217,7 @@ fun AppNavGraph(
 		composable(
 			PATTERNS_SELECTION_ROUTE,
 			arguments = listOf(
+				navArgument(USER_MESSAGE_ARG) { type = NavType.IntType; defaultValue = 0 },
 				navArgument(STUDY_DAY_ID_ARG) { type = NavType.LongType; defaultValue = 0 }
 			)
 		) { entry ->

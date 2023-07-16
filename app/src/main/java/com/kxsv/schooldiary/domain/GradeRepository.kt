@@ -1,6 +1,6 @@
 package com.kxsv.schooldiary.domain
 
-import com.kxsv.schooldiary.data.features.grade.Grade
+import com.kxsv.schooldiary.data.local.features.grade.Grade
 import kotlinx.coroutines.flow.Flow
 
 interface GradeRepository {

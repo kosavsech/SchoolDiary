@@ -5,7 +5,7 @@
     <string name="empty_pattern_message">Time pattern cannot be empty</string>
     <string name="menu_back">Go back</string>
     <string name="add_pattern_stroke">Add stroke</string>
-    <string name="name_hint">Name</string>
+    <string name="full_name_hint">Name</string>
     <string name="delete_pattern_stroke">Delete stroke</string>
     <string name="save_pattern">Save pattern</string>
     <string name="loading_patterns_error">Error while loading patterns</string>
@@ -54,6 +54,7 @@
     <string name="timetable">Timetable</string>
     <string name="lesson_room">Lesson room</string>
     <string name="lessons_quantity_label">You have %1$d lessons</string>
+    <string name="lessons_zero_quantity_label">You have no lessons</string>
     <string name="loading_schedule_error">Error while loading schedule</string>
     <string name="btn_edit">Edit</string>
     <string name="btn_delete">Delete</string>
@@ -71,14 +72,13 @@
     <string name="picked_class_number">Picked class number</string>
     <string name="set_pattern_as_default">Set pattern as default</string>
     <string name="loading_default_pattern_id_error">Error while loading default pattern id</string>
-    <string name="default_pattern_absent_hint">Choose default time pattern first</string>
+    <string name="default_pattern_absent_message">Please, choose default time pattern first</string>
     <string name="successfully_set_default_pattern">Pattern was set as a default</string>
     <string name="change_pattern">Change time pattern</string>
     <string name="successfully_set_custom_pattern">Pattern for this day was changed</string>
-    <string name="class_out_of_strokes_bounds_message">You don\'t have time pattern stroke for %1$s class to be shown</string>
+    <string name="class_out_of_strokes_bounds_message">You don\'t have pattern stroke for %1$s class</string>
     <string name="pattern_selection_title">Select custom pattern</string>
     <string name="no_schedule_for_custom_pattern_message">Create schedule first</string>
-    <string name="no_lessons_label">You have no lessons</string>
     <string name="more_actions">More actions</string>
     <string name="copy_schedule_day">Copy schedule for day</string>
     <string name="copy_schedule_date_range">Copy schedule for date range</string>
@@ -93,4 +93,6 @@
     <string name="type_of_work_hint">Type of work</string>
     <string name="mark_value">Mark value</string>
     <string name="type_of_work_mark">Type of task being evaluated</string>
+    <string name="display_name_hint">Display name</string>
+    <string name="no_classes_label">No classes for this day</string>
 </resources>

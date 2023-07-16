@@ -55,7 +55,7 @@ fun AppModalDrawer(
 }
 
 private fun localDateToTimestamp(date: LocalDate): Long =
-	date.atStartOfDay(ZoneId.of("UTC")).toEpochSecond()
+	date.atStartOfDay(ZoneId.systemDefault()).toEpochSecond()
 
 @Composable
 private fun AppDrawer(

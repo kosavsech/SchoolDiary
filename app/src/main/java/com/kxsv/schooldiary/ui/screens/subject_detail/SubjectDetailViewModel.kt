@@ -8,8 +8,8 @@ import com.kxsv.schooldiary.AppDestinationsArgs
 import com.kxsv.schooldiary.DELETE_RESULT_OK
 import com.kxsv.schooldiary.EDIT_RESULT_OK
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.features.grade.Grade
-import com.kxsv.schooldiary.data.features.subject.Subject
+import com.kxsv.schooldiary.data.local.features.grade.Grade
+import com.kxsv.schooldiary.data.local.features.subject.Subject
 import com.kxsv.schooldiary.domain.GradeRepository
 import com.kxsv.schooldiary.domain.SubjectRepository
 import com.kxsv.schooldiary.util.Async

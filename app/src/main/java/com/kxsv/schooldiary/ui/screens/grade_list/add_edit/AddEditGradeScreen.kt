@@ -39,7 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.features.subject.Subject
+import com.kxsv.schooldiary.data.local.features.subject.Subject
 import com.kxsv.schooldiary.util.ui.AddEditGradeTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.vanpra.composematerialdialogs.MaterialDialog
@@ -336,14 +336,14 @@ private fun SubjectRow(
 		)
 		Spacer(modifier = Modifier.padding(horizontal = 8.dp))
 		Text(
-			text = subject?.name ?: stringResource(R.string.pick_subject_hint),
+			text = subject?.getName() ?: stringResource(R.string.pick_subject_hint),
 			style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
 		)
 	}
 	SubjectPickerDialog(
 		isLoading = isLoading,
 		dialogState = subjectDialog,
-		subjects = subjects.map { listSubject -> listSubject.name },
+		subjects = subjects.map { listSubject -> listSubject.getName() },
 		initialSelection = initialSubjectSelection,
 		onChoiceChange = onSubjectChanged
 	)

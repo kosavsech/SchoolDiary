@@ -33,7 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.features.teacher.Teacher
+import com.kxsv.schooldiary.data.local.features.teacher.Teacher
 import com.kxsv.schooldiary.util.ui.AddEditSubjectTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.vanpra.composematerialdialogs.MaterialDialog
@@ -66,14 +66,16 @@ fun AddEditSubjectScreen(
 		
 		AddEditSubjectContent(
 			loading = uiState.isLoading,
-			name = uiState.name,
+			fullName = uiState.fullName,
+			displayName = uiState.displayName,
 			cabinet = uiState.cabinet,
 			selectedTeachers = uiState.selectedTeachers,
 			teachers = uiState.availableTeachers,
 			initialSelection = uiState.initialSelection,
 			onAddTeacher = viewModel::loadAvailableTeachers,
 			onTeacherChanged = viewModel::saveSelectedTeachers,
-			onNameChanged = viewModel::updateName,
+			onFullNameChanged = viewModel::updateFullName,
+			onDisplayNameChanged = viewModel::updateDisplayName,
 			onCabinetChanged = viewModel::updateCabinet,
 			modifier = Modifier.padding(paddingValues)
 		)
@@ -98,14 +100,16 @@ fun AddEditSubjectScreen(
 @Composable
 private fun AddEditSubjectContent(
 	loading: Boolean,
-	name: String,
+	fullName: String,
+	displayName: String?,
 	cabinet: String,
 	selectedTeachers: Set<Teacher>,
 	teachers: List<Teacher>,
 	initialSelection: Set<Int>,
 	onAddTeacher: () -> Unit,
 	onTeacherChanged: (Set<Int>) -> Unit,
-	onNameChanged: (String) -> Unit,
+	onFullNameChanged: (String) -> Unit,
+	onDisplayNameChanged: (String) -> Unit,
 	onCabinetChanged: (String) -> Unit,
 	modifier: Modifier = Modifier,
 ) {
@@ -125,12 +129,33 @@ private fun AddEditSubjectContent(
 				cursorColor = MaterialTheme.colors.secondary.copy(alpha = ContentAlpha.high)
 			)
 			OutlinedTextField(
-				value = name,
+				value = fullName,
 				modifier = Modifier.fillMaxWidth(),
-				onValueChange = onNameChanged,
+				onValueChange = onFullNameChanged,
 				placeholder = {
 					Text(
-						text = stringResource(id = R.string.name_hint),
+						text = stringResource(id = R.string.full_name_hint),
+						style = MaterialTheme.typography.h6
+					)
+				},
+				textStyle = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Bold),
+				maxLines = 1,
+				colors = textFieldColors
+			)
+			
+			Divider(
+				Modifier
+					.fillMaxWidth()
+					.align(CenterHorizontally)
+			)
+			
+			OutlinedTextField(
+				value = displayName ?: "",
+				modifier = Modifier.fillMaxWidth(),
+				onValueChange = onDisplayNameChanged,
+				placeholder = {
+					Text(
+						text = stringResource(id = R.string.display_name_hint),
 						style = MaterialTheme.typography.h6
 					)
 				},
