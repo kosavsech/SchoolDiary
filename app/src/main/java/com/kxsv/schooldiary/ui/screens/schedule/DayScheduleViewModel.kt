@@ -111,9 +111,7 @@ class DayScheduleViewModel @Inject constructor(
 				if (lesson.schedule.scheduleId == 0L) {
 					Log.i(TAG, "deleteClass: tried to delete class w/o scheduleId")
 					if (uiState.value.studyDay == null) {
-						_uiState.update {
-							it.copy(studyDay = studyDayRepository.getById(createEmptyStudyDay()))
-						}
+						createEmptyStudyDay()
 					}
 					localiseNetSchedule()
 				}
@@ -155,6 +153,9 @@ class DayScheduleViewModel @Inject constructor(
 		)
 		val newStudyDayId = studyDayRepository.create(newStudyDay)
 		if (newStudyDayId == 0L) throw RuntimeException("StudyDay wasn't created for some reason")
+		_uiState.update {
+			it.copy(studyDay = newStudyDay.copy(studyDayId = newStudyDayId))
+		}
 		return newStudyDayId
 	}
 	
@@ -230,9 +231,7 @@ class DayScheduleViewModel @Inject constructor(
 	
 	suspend fun getIdForClassFromNet(): Long {
 		if (uiState.value.studyDay == null) {
-			_uiState.update {
-				it.copy(studyDay = studyDayRepository.getById(createEmptyStudyDay()))
-			}
+			createEmptyStudyDay()
 		}
 		localiseNetSchedule()
 		
@@ -246,13 +245,9 @@ class DayScheduleViewModel @Inject constructor(
 	}
 	
 	suspend fun getDateStampForSchedule(): Long {
-		val selectedDate = uiState.value.selectedDate
-		if (uiState.value.studyDay != null) {
-			if (uiState.value.classes.isNotEmpty()) localiseNetSchedule()
-		} else {
-			copyScheduleFromNet(selectedDate)
-		}
-		return localDateToTimestamp(selectedDate)
+		if (uiState.value.studyDay == null) createEmptyStudyDay()
+		localiseNetSchedule()
+		return localDateToTimestamp(uiState.value.selectedDate)
 	}
 	
 	private suspend fun copyScheduleFromDate(
@@ -297,12 +292,17 @@ class DayScheduleViewModel @Inject constructor(
 		updateStudyDayWithClassesOnDate(toDate)
 	}
 	
-	private suspend fun getStudyDayOnDate(date: LocalDate): Pair<StudyDay, Boolean> {
+	/*private suspend fun getStudyDayOnDate(date: LocalDate): Pair<StudyDay, Boolean> {
 		val existingStudyDay = studyDayRepository.getByDate(date)
-		val studyDay = existingStudyDay ?: studyDayRepository.getById(createEmptyStudyDay())
-		?: throw IllegalStateException("StudyDay is still null somehow")
+		val studyDay = (if (existingStudyDay != null) {
+			existingStudyDay
+		} else {
+			createEmptyStudyDay()
+			uiState.value.studyDay
+		})
+			?: throw IllegalStateException("StudyDay is still null somehow")
 		return Pair(studyDay, (existingStudyDay != null))
-	}
+	}*/
 	
 	private suspend fun localiseNetSchedule() {
 		try {
@@ -319,7 +319,7 @@ class DayScheduleViewModel @Inject constructor(
 			val schedules = classes.map { it.schedule }
 			var schedulesWithMasterDay = schedules
 			val foundNullMasterDay = schedules.find { it.studyDayMasterId == null } != null
-
+			
 			if (foundNullMasterDay) {
 				schedulesWithMasterDay =
 					schedules.map { it.copy(studyDayMasterId = studyDay.studyDayId) }
@@ -338,7 +338,7 @@ class DayScheduleViewModel @Inject constructor(
 		}
 	}
 	
-	private suspend fun copyScheduleFromNet(date: LocalDate) {
+	/*private suspend fun copyScheduleFromNet(date: LocalDate) {
 		try {
 			val (studyDay, studyDayExisted) = getStudyDayOnDate(date)
 			scheduleRepository.deleteAllByDayId(studyDay.studyDayId)
@@ -354,7 +354,7 @@ class DayScheduleViewModel @Inject constructor(
 		} catch (e: Exception) {
 			Log.e(TAG, "copyScheduleFromNet: caught", e)
 		}
-	}
+	}*/
 	
 	private fun initializeNetworkClassesOnDate(date: LocalDate) = viewModelScope.launch {
 		val classes = measurePerformanceInMS(logger = { time, result ->
@@ -486,7 +486,7 @@ class DayScheduleViewModel @Inject constructor(
 		}
 	}
 	
-	private suspend fun NetworkSchedule.toLocal(): Schedule {
+	/*private suspend fun NetworkSchedule.toLocal(): Schedule {
 		try {
 			val subject =
 				subjectRepository.getSubjectByName(subjectAncestorName)
@@ -519,7 +519,7 @@ class DayScheduleViewModel @Inject constructor(
 			Log.e(TAG, "List<NetworkSchedule>.toLocal: classes are empty because", e)
 			emptyList()
 		}
-	}
+	}*/
 	
 	private fun ClosedRange<LocalDate>.rangeToList(limiter: Long? = null): List<LocalDate> {
 		val dates = mutableListOf(this.start)
