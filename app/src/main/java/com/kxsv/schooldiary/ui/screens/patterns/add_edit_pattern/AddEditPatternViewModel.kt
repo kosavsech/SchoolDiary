@@ -5,8 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.AppDestinationsArgs
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.features.time_pattern.TimePattern
-import com.kxsv.schooldiary.data.features.time_pattern.pattern_stroke.PatternStroke
+import com.kxsv.schooldiary.data.local.features.time_pattern.TimePattern
+import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStroke
 import com.kxsv.schooldiary.domain.PatternStrokeRepository
 import com.kxsv.schooldiary.domain.TimePatternRepository
 import com.kxsv.schooldiary.util.copyExclusively

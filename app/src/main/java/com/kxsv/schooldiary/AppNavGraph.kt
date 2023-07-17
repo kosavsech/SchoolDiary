@@ -49,7 +49,7 @@ import com.kxsv.schooldiary.ui.screens.schedule.DateRangeScheduleCopyScreen
 import com.kxsv.schooldiary.ui.screens.schedule.DayScheduleCopyScreen
 import com.kxsv.schooldiary.ui.screens.schedule.DayScheduleScreen
 import com.kxsv.schooldiary.ui.screens.schedule.DayScheduleViewModel
-import com.kxsv.schooldiary.ui.screens.schedule.add_edit.AddEditScheduleScreen
+import com.kxsv.schooldiary.ui.screens.schedule.add_edit.AddEditLessonScreen
 import com.kxsv.schooldiary.ui.screens.subject_detail.SubjectDetailScreen
 import com.kxsv.schooldiary.ui.screens.subject_detail.add_edit.AddEditSubjectScreen
 import com.kxsv.schooldiary.ui.screens.subject_list.SubjectsScreen
@@ -108,7 +108,7 @@ fun AppNavGraph(
 						isCustomPatternWasSet = entry.savedStateHandle.get<Boolean>(
 							CUSTOM_PATTERN_SET_ARG
 						),
-						onAddSchedule = { dateStamp ->
+						onAddClass = { dateStamp ->
 							navActions.navigateToAddEditSchedule(
 								scheduleId = null,
 								dateStamp = dateStamp
@@ -217,6 +217,7 @@ fun AppNavGraph(
 		composable(
 			PATTERNS_SELECTION_ROUTE,
 			arguments = listOf(
+				navArgument(USER_MESSAGE_ARG) { type = NavType.IntType; defaultValue = 0 },
 				navArgument(STUDY_DAY_ID_ARG) { type = NavType.LongType; defaultValue = 0 }
 			)
 		) { entry ->
@@ -308,7 +309,7 @@ fun AppNavGraph(
 			)
 		) { entry ->
 			val scheduleId = entry.arguments?.getLong(SCHEDULE_ID_ARG)
-			AddEditScheduleScreen(
+			AddEditLessonScreen(
 				onScheduleUpdate = {
 					navActions.navigateToDaySchedule(
 						userMessage = if (scheduleId == 0L) ADD_EDIT_RESULT_OK else EDIT_RESULT_OK,

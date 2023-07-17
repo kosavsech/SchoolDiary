@@ -3,7 +3,7 @@ package com.kxsv.schooldiary.ui.screens.teacher_list
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.features.teacher.Teacher
+import com.kxsv.schooldiary.data.local.features.teacher.Teacher
 import com.kxsv.schooldiary.domain.TeacherRepository
 import com.kxsv.schooldiary.util.Async
 import com.kxsv.schooldiary.util.WhileUiSubscribed
@@ -19,15 +19,15 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class TeachersUiState(
-    val teachers: List<Teacher> = emptyList(),
-    val teacher: Teacher? = null,
-    val firstName: String = "",
-    val lastName: String = "",
-    val patronymic: String = "",
-    val phoneNumber: String = "",
-    val isTeacherDialogShown: Boolean = false,
-    val isLoading: Boolean = false,
-    val userMessage: Int? = null,
+	val teachers: List<Teacher> = emptyList(),
+	val teacher: Teacher? = null,
+	val firstName: String = "",
+	val lastName: String = "",
+	val patronymic: String = "",
+	val phoneNumber: String = "",
+	val isTeacherDialogShown: Boolean = false,
+	val isLoading: Boolean = false,
+	val userMessage: Int? = null,
 )
 
 @HiltViewModel

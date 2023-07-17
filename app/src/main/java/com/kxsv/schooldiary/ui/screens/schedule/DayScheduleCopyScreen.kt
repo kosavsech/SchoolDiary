@@ -1,6 +1,5 @@
 package com.kxsv.schooldiary.ui.screens.schedule
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -65,7 +64,7 @@ import com.kizitonwose.calendar.core.daysOfWeek
 import com.kizitonwose.calendar.core.nextMonth
 import com.kizitonwose.calendar.core.previousMonth
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.features.schedule.ScheduleWithSubject
+import com.kxsv.schooldiary.data.local.features.schedule.ScheduleWithSubject
 import com.kxsv.schooldiary.util.ui.CopyScheduleForDayTopAppBar
 import com.kxsv.schooldiary.util.ui.displayText
 import com.kxsv.schooldiary.util.ui.rememberFirstCompletelyVisibleMonth
@@ -80,8 +79,6 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-
-private const val TAG = "DayScheduleCopyScreen"
 
 @Composable
 fun DayScheduleCopyScreen(
@@ -104,13 +101,10 @@ fun DayScheduleCopyScreen(
 		},
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		floatingActionButton = {
-			val showButton = remember(key1 = uiState.selectedCalendarDay, key2 = uiState.classes) {
-				Log.d(
-					TAG, "DayScheduleCopyScreen() selectedCalendarDay update of showButton to" +
-							" ${uiState.selectedCalendarDay != null && uiState.classes.isNotEmpty()}"
-				)
-				uiState.selectedCalendarDay != null && uiState.classes.isNotEmpty()
-			}
+			val showButton =
+				remember(key1 = uiState.selectedRefCalendarDay, key2 = uiState.classes) {
+					uiState.selectedRefCalendarDay != null && uiState.classes.isNotEmpty()
+				}
 			if (showButton) {
 				FloatingActionButton(
 					onClick = {
@@ -127,8 +121,8 @@ fun DayScheduleCopyScreen(
 		DayScheduleCopyContent(
 			selectedDate = uiState.selectedDate,
 			classes = uiState.classes,
-			selectedCalendarDay = uiState.selectedCalendarDay,
-			updateSelectedCalendarDay = viewModel::updateCalendarDay,
+			selectedCalendarDay = uiState.selectedRefCalendarDay,
+			updateSelectedCalendarDay = viewModel::updateOnCalendarDayChange,
 			modifier = Modifier.padding(paddingValues)
 		)
 		
@@ -166,6 +160,7 @@ fun DayScheduleCopyDialog(
 	}
 }
 
+// TODO: get rid of selectedCalendarDay field and instead send day on copy action?
 @Composable
 fun DayScheduleCopyContent(
 	selectedDate: LocalDate,
@@ -336,7 +331,7 @@ private fun LazyItemScope.ClassInformation(lesson: ScheduleWithSubject) {
 			.padding(vertical = dimensionResource(R.dimen.list_item_padding)),
 		horizontalArrangement = Arrangement.Center,
 	) {
-		Text(text = lesson.subject.name)
+		Text(text = lesson.subject.getName())
 	}
 	Divider(color = Color.White, thickness = 2.dp)
 }

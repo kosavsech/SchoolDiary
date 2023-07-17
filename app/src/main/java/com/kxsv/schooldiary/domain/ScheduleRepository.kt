@@ -1,8 +1,9 @@
 package com.kxsv.schooldiary.domain
 
-import com.kxsv.schooldiary.data.features.schedule.Schedule
-import com.kxsv.schooldiary.data.features.schedule.ScheduleWithStudyDay
-import com.kxsv.schooldiary.data.features.schedule.ScheduleWithSubject
+import com.kxsv.schooldiary.data.local.features.schedule.Schedule
+import com.kxsv.schooldiary.data.local.features.schedule.ScheduleWithStudyDay
+import com.kxsv.schooldiary.data.local.features.schedule.ScheduleWithSubject
+import com.kxsv.schooldiary.data.network.schedule.NetworkSchedule
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
@@ -12,11 +13,15 @@ interface ScheduleRepository {
 	
 	fun getScheduleStream(scheduleId: Long): Flow<Schedule>
 	
-	suspend fun getSchedules(): List<Schedule>
+	suspend fun loadFromNetworkByDate(localDate: LocalDate): List<NetworkSchedule>
+	
+	suspend fun getAll(): List<Schedule>
 	
 	suspend fun getAllByMasterId(studyDayId: Long): List<Schedule>
 	
 	suspend fun getSchedule(scheduleId: Long): Schedule?
+	
+	suspend fun getByIdAndIndex(studyDayMasterId: Long, index: Int): Schedule?
 	
 	suspend fun getScheduleWithSubject(scheduleId: Long): ScheduleWithSubject?
 	
@@ -27,14 +32,6 @@ interface ScheduleRepository {
 	suspend fun createSchedule(schedule: Schedule, date: LocalDate)
 	
 	suspend fun updateSchedule(schedule: Schedule, date: LocalDate)
-	
-	suspend fun copyScheduleFromDate(fromDate: LocalDate, toDate: LocalDate)
-	
-	suspend fun copyScheduleFromId(refStudyDayId: Long, toDate: LocalDate)
-	
-	suspend fun copyScheduleFromDateToId(fromDate: LocalDate, toStudyDayId: Long)
-	
-	suspend fun copyScheduleFromIdToId(refStudyDayId: Long, toStudyDayId: Long)
 	
 	suspend fun deleteAllSchedules()
 	

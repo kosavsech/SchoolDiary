@@ -39,7 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.features.time_pattern.pattern_stroke.PatternStroke
+import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStroke
 import com.kxsv.schooldiary.util.ui.AddEditPatternTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.vanpra.composematerialdialogs.MaterialDialog
@@ -147,7 +147,7 @@ private fun AddEditPatternContent(
 				onValueChange = onNameChanged,
 				placeholder = {
 					Text(
-						text = stringResource(id = R.string.name_hint),
+						text = stringResource(id = R.string.full_name_hint),
 						style = MaterialTheme.typography.h6
 					)
 				},

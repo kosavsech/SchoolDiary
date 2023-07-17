@@ -10,21 +10,23 @@ import com.kxsv.schooldiary.data.AppDatabase
 import com.kxsv.schooldiary.data.app_defaults.AppDefaults
 import com.kxsv.schooldiary.data.app_defaults.AppDefaultsRepositoryImpl
 import com.kxsv.schooldiary.data.app_defaults.AppDefaultsSerializer
-import com.kxsv.schooldiary.data.features.associative_tables.subject_teacher.SubjectTeacherDao
-import com.kxsv.schooldiary.data.features.grade.GradeDao
-import com.kxsv.schooldiary.data.features.grade.GradeRepositoryImpl
-import com.kxsv.schooldiary.data.features.schedule.ScheduleDao
-import com.kxsv.schooldiary.data.features.schedule.ScheduleRepositoryImpl
-import com.kxsv.schooldiary.data.features.study_day.StudyDayDao
-import com.kxsv.schooldiary.data.features.study_day.StudyDayRepositoryImpl
-import com.kxsv.schooldiary.data.features.subject.SubjectDao
-import com.kxsv.schooldiary.data.features.subject.SubjectRepositoryImpl
-import com.kxsv.schooldiary.data.features.teacher.TeacherDao
-import com.kxsv.schooldiary.data.features.teacher.TeacherRepositoryImpl
-import com.kxsv.schooldiary.data.features.time_pattern.TimePatternDao
-import com.kxsv.schooldiary.data.features.time_pattern.TimePatternRepositoryImpl
-import com.kxsv.schooldiary.data.features.time_pattern.pattern_stroke.PatternStrokeDao
-import com.kxsv.schooldiary.data.features.time_pattern.pattern_stroke.PatternStrokeRepositoryImpl
+import com.kxsv.schooldiary.data.local.features.associative_tables.subject_teacher.SubjectTeacherDao
+import com.kxsv.schooldiary.data.local.features.grade.GradeDao
+import com.kxsv.schooldiary.data.local.features.grade.GradeRepositoryImpl
+import com.kxsv.schooldiary.data.local.features.schedule.ScheduleDao
+import com.kxsv.schooldiary.data.local.features.schedule.ScheduleRepositoryImpl
+import com.kxsv.schooldiary.data.local.features.study_day.StudyDayDao
+import com.kxsv.schooldiary.data.local.features.study_day.StudyDayRepositoryImpl
+import com.kxsv.schooldiary.data.local.features.subject.SubjectDao
+import com.kxsv.schooldiary.data.local.features.subject.SubjectRepositoryImpl
+import com.kxsv.schooldiary.data.local.features.teacher.TeacherDao
+import com.kxsv.schooldiary.data.local.features.teacher.TeacherRepositoryImpl
+import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternDao
+import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternRepositoryImpl
+import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeDao
+import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeRepositoryImpl
+import com.kxsv.schooldiary.data.network.ScheduleNetworkDataSource
+import com.kxsv.schooldiary.data.network.schedule.ScheduleNetworkDataSourceImpl
 import com.kxsv.schooldiary.domain.AppDefaultsRepository
 import com.kxsv.schooldiary.domain.GradeRepository
 import com.kxsv.schooldiary.domain.PatternStrokeRepository
@@ -140,4 +142,13 @@ class DataStoreModule {
 			produceFile = { appContext.dataStoreFile("app-defaults.json") }
 		)
 	}
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class DataSourceModule {
+	
+	@Singleton
+	@Binds
+	abstract fun bindScheduleNetworkDataSource(dataSource: ScheduleNetworkDataSourceImpl): ScheduleNetworkDataSource
 }

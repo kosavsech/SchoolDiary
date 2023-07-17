@@ -9,7 +9,7 @@ import com.kxsv.schooldiary.DELETE_RESULT_OK
 import com.kxsv.schooldiary.EDIT_RESULT_OK
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.SELECTED_DEFAULT_PATTERN_OK
-import com.kxsv.schooldiary.data.features.time_pattern.PatternWithStrokes
+import com.kxsv.schooldiary.data.local.features.time_pattern.PatternWithStrokes
 import com.kxsv.schooldiary.domain.AppDefaultsRepository
 import com.kxsv.schooldiary.domain.StudyDayRepository
 import com.kxsv.schooldiary.domain.TimePatternRepository
@@ -134,7 +134,7 @@ class PatternsViewModel @Inject constructor(
 		
 		viewModelScope.launch {
 			val studyDayToUpdate =
-				studyDayRepository.getStudyDay(studyDayId)?.copy(appliedPatternId = patternId)
+				studyDayRepository.getById(studyDayId)?.copy(appliedPatternId = patternId)
 			if (studyDayToUpdate != null) {
 				studyDayRepository.update(studyDayToUpdate)
 			} else {

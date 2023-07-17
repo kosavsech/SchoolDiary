@@ -32,7 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.features.grade.Grade
+import com.kxsv.schooldiary.data.local.features.grade.Grade
 import com.kxsv.schooldiary.util.Mark
 import com.kxsv.schooldiary.util.ui.GradesTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent

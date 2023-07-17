@@ -6,7 +6,7 @@ import com.kxsv.schooldiary.ADD_EDIT_RESULT_OK
 import com.kxsv.schooldiary.DELETE_RESULT_OK
 import com.kxsv.schooldiary.EDIT_RESULT_OK
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.features.grade.Grade
+import com.kxsv.schooldiary.data.local.features.grade.Grade
 import com.kxsv.schooldiary.domain.GradeRepository
 import com.kxsv.schooldiary.util.Async
 import com.kxsv.schooldiary.util.WhileUiSubscribed

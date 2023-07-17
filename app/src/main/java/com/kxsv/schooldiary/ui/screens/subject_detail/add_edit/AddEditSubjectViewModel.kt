@@ -5,8 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.AppDestinationsArgs
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.features.subject.Subject
-import com.kxsv.schooldiary.data.features.teacher.Teacher
+import com.kxsv.schooldiary.data.local.features.subject.Subject
+import com.kxsv.schooldiary.data.local.features.teacher.Teacher
 import com.kxsv.schooldiary.domain.SubjectRepository
 import com.kxsv.schooldiary.domain.TeacherRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,7 +18,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class AddEditSubjectUiState(
-	val name: String = "",
+	val fullName: String = "",
+	val displayName: String? = null,
 	val cabinet: String = "",
 	val initialSelection: Set<Int> = emptySet(),
 	val selectedTeachers: Set<Teacher> = emptySet(),
@@ -46,7 +47,7 @@ class AddEditSubjectViewModel @Inject constructor(
 	}
 	
 	fun saveSubject() {
-		if (uiState.value.name.isEmpty()) {
+		if (uiState.value.fullName.isEmpty()) {
 			_uiState.update {
 				it.copy(userMessage = R.string.empty_subject_message)
 			}
@@ -66,10 +67,18 @@ class AddEditSubjectViewModel @Inject constructor(
 		}
 	}
 	
-	fun updateName(name: String) {
+	fun updateFullName(name: String) {
 		_uiState.update {
 			it.copy(
-				name = name
+				fullName = name
+			)
+		}
+	}
+	
+	fun updateDisplayName(name: String) {
+		_uiState.update {
+			it.copy(
+				displayName = name
 			)
 		}
 	}
@@ -121,7 +130,7 @@ class AddEditSubjectViewModel @Inject constructor(
 	
 	private fun createNewSubject() = viewModelScope.launch {
 		subjectRepository.createSubject(
-			Subject(uiState.value.name, uiState.value.cabinet),
+			Subject(uiState.value.fullName, uiState.value.cabinet),
 			uiState.value.selectedTeachers
 		)
 		
@@ -135,8 +144,13 @@ class AddEditSubjectViewModel @Inject constructor(
 		
 		viewModelScope.launch {
 			subjectRepository.updateSubject(
-				Subject(uiState.value.name, uiState.value.cabinet, subjectId),
-				uiState.value.selectedTeachers
+				subject = Subject(
+					fullName = uiState.value.fullName,
+					cabinet = uiState.value.cabinet,
+					displayName = uiState.value.displayName,
+					subjectId = subjectId
+				),
+				teachers = uiState.value.selectedTeachers
 			)
 			_uiState.update {
 				it.copy(isSubjectSaved = true)
@@ -154,8 +168,8 @@ class AddEditSubjectViewModel @Inject constructor(
 				if (subjectWithTeachers != null) {
 					_uiState.update {
 						it.copy(
-							name = subjectWithTeachers.subject.name,
-							cabinet = subjectWithTeachers.subject.cabinet,
+							fullName = subjectWithTeachers.subject.getName(),
+							cabinet = subjectWithTeachers.subject.getCabinetString(),
 							selectedTeachers = subjectWithTeachers.teachers,
 							isLoading = false
 						)

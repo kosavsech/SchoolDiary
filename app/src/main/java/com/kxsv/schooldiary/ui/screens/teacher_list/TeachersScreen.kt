@@ -37,7 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.features.teacher.Teacher
+import com.kxsv.schooldiary.data.local.features.teacher.Teacher
 import com.kxsv.schooldiary.util.ui.TeachersTopAppBar
 
 
@@ -159,10 +159,10 @@ private fun AddEditTeacherDialog(
 
 @Composable
 private fun TeachersContent(
-    teachers: List<Teacher>,
-    onTeacherClick: (Teacher) -> Unit,
-    deleteTeacher: (Teacher) -> Unit,
-    modifier: Modifier = Modifier,
+	teachers: List<Teacher>,
+	onTeacherClick: (Teacher) -> Unit,
+	deleteTeacher: (Teacher) -> Unit,
+	modifier: Modifier = Modifier,
 ) {
     LazyColumn(
         modifier = modifier
@@ -181,9 +181,9 @@ private fun TeachersContent(
 
 @Composable
 private fun TeacherItem(
-    teacher: Teacher,
-    onTeacherClick: () -> Unit,
-    deleteTeacher: () -> Unit,
+	teacher: Teacher,
+	onTeacherClick: () -> Unit,
+	deleteTeacher: () -> Unit,
 ) {
     Row(
         modifier = Modifier

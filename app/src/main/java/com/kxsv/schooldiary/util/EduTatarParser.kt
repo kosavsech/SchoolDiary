@@ -31,7 +31,7 @@ class EduTatarParser {
                 .followRedirects(true)
                 .execute()
         }
-        //mapCookies = response.cookies()
+        mapCookies = response.cookies()
         return response
     }
 
@@ -63,11 +63,11 @@ class EduTatarParser {
             }
         return todayLocalDate.dayOfMonth
     }
-
-    private suspend fun GetDayPage(date: String = ""): Document {
-        val dayStamp = ConvertDateToEpoch(date)
-        return GetPage("user/diary/day?for=$dayStamp")
-    }
+	
+	private suspend fun getDayPage(date: String = ""): Document {
+		val dayStamp = ConvertDateToEpoch(date)
+		return GetPage("user/diary/day?for=$dayStamp")
+	}
 
     private suspend fun GetTermPage(termNumber: Int = 1): Document {
         return GetPage("user/diary/term?term=$termNumber")
@@ -138,17 +138,17 @@ class EduTatarParser {
     }*/
 
     suspend fun GetColumnFromDay(columnName: String, date: String = ""): MutableList<String> {
-        val output = mutableListOf<String>()
-        val dayPage = GetDayPage(date)
-        val column: Int =
-            when (columnName) {
-                "time" -> 1
-                "subject" -> 2
-                "task" -> 3
-                "comment" -> 4
-                "grade" -> 5
-                else -> 2 // throw exception
-            }
+	    val output = mutableListOf<String>()
+	    val dayPage = getDayPage(date)
+	    val column: Int =
+		    when (columnName) {
+			    "time" -> 1
+			    "subject" -> 2
+			    "task" -> 3
+			    "comment" -> 4
+			    "grade" -> 5
+			    else -> 2 // throw exception
+		    }
         val lines = dayPage.select("div.d-table > table > tbody > tr > td:nth-child($column)")
         lines.forEach {
             output.add(it.text())
@@ -157,9 +157,9 @@ class EduTatarParser {
     }
 
     suspend fun GetMarkDescription(date: String = ""): MutableList<String> {
-        val output = mutableListOf<String>()
-        val dayPage = GetDayPage(date)
-        val lines = dayPage.select("div.d-table > table > tbody > tr > td:nth-child(5)")
+	    val output = mutableListOf<String>()
+	    val dayPage = getDayPage(date)
+	    val lines = dayPage.select("div.d-table > table > tbody > tr > td:nth-child(5)")
         lines.forEach {
             if (it.childNodeSize() < 3) {
                 output.add("")

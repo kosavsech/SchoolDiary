@@ -44,9 +44,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.features.time_pattern.PatternWithStrokes
-import com.kxsv.schooldiary.data.features.time_pattern.TimePattern
-import com.kxsv.schooldiary.data.features.time_pattern.pattern_stroke.PatternStroke
+import com.kxsv.schooldiary.data.local.features.time_pattern.PatternWithStrokes
+import com.kxsv.schooldiary.data.local.features.time_pattern.TimePattern
+import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStroke
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.kxsv.schooldiary.util.ui.PatternSelectionTopAppBar
 import java.time.LocalTime
