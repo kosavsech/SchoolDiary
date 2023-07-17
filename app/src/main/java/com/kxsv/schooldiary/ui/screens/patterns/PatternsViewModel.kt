@@ -10,7 +10,7 @@ import com.kxsv.schooldiary.EDIT_RESULT_OK
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.SELECTED_DEFAULT_PATTERN_OK
 import com.kxsv.schooldiary.data.local.features.time_pattern.PatternWithStrokes
-import com.kxsv.schooldiary.domain.AppDefaultsRepository
+import com.kxsv.schooldiary.domain.AppSettingsRepository
 import com.kxsv.schooldiary.domain.StudyDayRepository
 import com.kxsv.schooldiary.domain.TimePatternRepository
 import com.kxsv.schooldiary.util.Async
@@ -37,7 +37,7 @@ data class PatternsUiState(
 @HiltViewModel
 class PatternsViewModel @Inject constructor(
 	private val patternRepository: TimePatternRepository,
-	private val appDefaultsRepository: AppDefaultsRepository,
+	private val appSettingsRepository: AppSettingsRepository,
 	private val studyDayRepository: StudyDayRepository,
 	savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -48,7 +48,7 @@ class PatternsViewModel @Inject constructor(
 		patternRepository.getPatternsWithStrokesStream()
 			.map { Async.Success(it) }
 			.catch<Async<List<PatternWithStrokes>>> { emit(Async.Error(R.string.loading_patterns_error)) }
-	private val _defaultPatternId = appDefaultsRepository.observePatternId()
+	private val _defaultPatternId = appSettingsRepository.observePatternId()
 		.map { Async.Success(it) }
 		.catch<Async<Long>> { emit(Async.Error(R.string.loading_default_pattern_id_error)) }
 	
@@ -120,7 +120,7 @@ class PatternsViewModel @Inject constructor(
 	}
 	
 	fun updateDefaultPatternId(patternId: Long) = viewModelScope.launch {
-		appDefaultsRepository.setPatternId(patternId)
+		appSettingsRepository.setPatternId(patternId)
 		_uiState.update { it.copy(defaultPatternId = patternId) }
 		showEditResultMessage(SELECTED_DEFAULT_PATTERN_OK)
 	}

@@ -16,7 +16,7 @@ import com.kxsv.schooldiary.data.local.features.schedule.ScheduleWithSubject
 import com.kxsv.schooldiary.data.local.features.study_day.StudyDay
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStroke
 import com.kxsv.schooldiary.data.network.schedule.NetworkSchedule
-import com.kxsv.schooldiary.domain.AppDefaultsRepository
+import com.kxsv.schooldiary.domain.AppSettingsRepository
 import com.kxsv.schooldiary.domain.PatternStrokeRepository
 import com.kxsv.schooldiary.domain.ScheduleRepository
 import com.kxsv.schooldiary.domain.StudyDayRepository
@@ -60,7 +60,7 @@ class DayScheduleViewModel @Inject constructor(
 	private val strokeRepository: PatternStrokeRepository,
 	private val studyDayRepository: StudyDayRepository,
 	private val patternRepository: TimePatternRepository,
-	private val appDefaultsRepository: AppDefaultsRepository,
+	private val appSettingsRepository: AppSettingsRepository,
 	savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 	
@@ -142,7 +142,7 @@ class DayScheduleViewModel @Inject constructor(
 		var appliedPatternId = predefinedPatternId
 		if (predefinedPatternId == null) {
 			// INFO: try to get default one, or will be filled with null
-			val defaultPatternId = appDefaultsRepository.getPatternId()
+			val defaultPatternId = appSettingsRepository.getPatternId()
 			val defaultPattern = patternRepository.getPattern(defaultPatternId)
 			
 			if (defaultPattern != null && defaultPatternId != 0L) {
@@ -566,13 +566,13 @@ class DayScheduleViewModel @Inject constructor(
 	
 	/**
 	 * Tries to load time pattern from passed [studyDay] if it's null or doesn't
-	 * have time pattern specified, loads default pattern from [datastore][com.kxsv.schooldiary.data.app_defaults.AppDefaults]
+	 * have time pattern specified, loads default pattern from [datastore][com.kxsv.schooldiary.data.app_settings.AppSettings]
 	 *
 	 * @param studyDay
 	 */
 	private suspend fun updateTimingsOnStudyDay(studyDay: StudyDay?) {
 		val isFromDefaults = studyDay?.appliedPatternId == null
-		val appliedPatternId = studyDay?.appliedPatternId ?: appDefaultsRepository.getPatternId()
+		val appliedPatternId = studyDay?.appliedPatternId ?: appSettingsRepository.getPatternId()
 		val strokes = measurePerformanceInMS(logger = { time, result ->
 			Log.i(
 				TAG, "updateTimingsOnStudyDay() performance is $time ms" +

@@ -1,7 +1,7 @@
-package com.kxsv.schooldiary.data.app_defaults
+package com.kxsv.schooldiary.data.app_settings
 
 import androidx.datastore.core.DataStore
-import com.kxsv.schooldiary.domain.AppDefaultsRepository
+import com.kxsv.schooldiary.domain.AppSettingsRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -9,9 +9,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class AppDefaultsRepositoryImpl @Inject constructor(
-	private val dataStore: DataStore<AppDefaults>,
-) : AppDefaultsRepository {
+class AppSettingsRepositoryImpl @Inject constructor(
+	private val dataStore: DataStore<AppSettings>,
+) : AppSettingsRepository {
 	
 	override fun observePatternId(): Flow<Long> {
 		return dataStore.data.map {
@@ -28,6 +28,18 @@ class AppDefaultsRepositoryImpl @Inject constructor(
 	override fun observeScheduleRefRangeEndId(): Flow<Long> {
 		return dataStore.data.map {
 			it.scheduleRefRangeEndId
+		}
+	}
+	
+	override fun observeEduLogin(): Flow<String?> {
+		return dataStore.data.map {
+			it.eduLogin
+		}
+	}
+	
+	override fun observeEduPassword(): Flow<String?> {
+		return dataStore.data.map {
+			it.eduPassword
 		}
 	}
 	
@@ -58,6 +70,26 @@ class AppDefaultsRepositoryImpl @Inject constructor(
 	override suspend fun setScheduleRefRangeEndId(id: Long) {
 		dataStore.updateData {
 			it.copy(scheduleRefRangeEndId = id)
+		}
+	}
+	
+	override suspend fun getEduLogin(): String? {
+		return dataStore.data.first().eduLogin
+	}
+	
+	override suspend fun setEduLogin(login: String?) {
+		dataStore.updateData {
+			it.copy(eduLogin = login)
+		}
+	}
+	
+	override suspend fun getEduPassword(): String? {
+		return dataStore.data.first().eduPassword
+	}
+	
+	override suspend fun setEduPassword(password: String?) {
+		dataStore.updateData {
+			it.copy(eduPassword = password)
 		}
 	}
 }

@@ -7,9 +7,9 @@ import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStoreFile
 import androidx.room.Room
 import com.kxsv.schooldiary.data.AppDatabase
-import com.kxsv.schooldiary.data.app_defaults.AppDefaults
-import com.kxsv.schooldiary.data.app_defaults.AppDefaultsRepositoryImpl
-import com.kxsv.schooldiary.data.app_defaults.AppDefaultsSerializer
+import com.kxsv.schooldiary.data.app_settings.AppDefaultsSerializer
+import com.kxsv.schooldiary.data.app_settings.AppSettings
+import com.kxsv.schooldiary.data.app_settings.AppSettingsRepositoryImpl
 import com.kxsv.schooldiary.data.local.features.associative_tables.subject_teacher.SubjectTeacherDao
 import com.kxsv.schooldiary.data.local.features.grade.GradeDao
 import com.kxsv.schooldiary.data.local.features.grade.GradeRepositoryImpl
@@ -27,7 +27,7 @@ import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.Patt
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeRepositoryImpl
 import com.kxsv.schooldiary.data.network.ScheduleNetworkDataSource
 import com.kxsv.schooldiary.data.network.schedule.ScheduleNetworkDataSourceImpl
-import com.kxsv.schooldiary.domain.AppDefaultsRepository
+import com.kxsv.schooldiary.domain.AppSettingsRepository
 import com.kxsv.schooldiary.domain.GradeRepository
 import com.kxsv.schooldiary.domain.PatternStrokeRepository
 import com.kxsv.schooldiary.domain.ScheduleRepository
@@ -76,7 +76,7 @@ abstract class RepositoryModule {
 	
 	@Binds
 	@Singleton
-	abstract fun bindAppDefaultsRepository(repository: AppDefaultsRepositoryImpl): AppDefaultsRepository
+	abstract fun bindAppDefaultsRepository(repository: AppSettingsRepositoryImpl): AppSettingsRepository
 	
 	@Binds
 	@Singleton
@@ -132,11 +132,11 @@ class DataStoreModule {
 	
 	@Singleton
 	@Provides
-	fun provideDataStore(@ApplicationContext appContext: Context): DataStore<AppDefaults> {
+	fun provideDataStore(@ApplicationContext appContext: Context): DataStore<AppSettings> {
 		return DataStoreFactory.create(
 			serializer = AppDefaultsSerializer,
 			corruptionHandler = ReplaceFileCorruptionHandler(
-				produceNewData = { AppDefaults() }
+				produceNewData = { AppSettings() }
 			),
 			scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
 			produceFile = { appContext.dataStoreFile("app-defaults.json") }
