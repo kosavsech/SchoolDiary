@@ -101,9 +101,10 @@ fun DayScheduleCopyScreen(
 		},
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		floatingActionButton = {
-			val showButton = remember(key1 = uiState.selectedCalendarDay, key2 = uiState.classes) {
-				uiState.selectedCalendarDay != null && uiState.classes.isNotEmpty()
-			}
+			val showButton =
+				remember(key1 = uiState.selectedRefCalendarDay, key2 = uiState.classes) {
+					uiState.selectedRefCalendarDay != null && uiState.classes.isNotEmpty()
+				}
 			if (showButton) {
 				FloatingActionButton(
 					onClick = {
@@ -120,7 +121,7 @@ fun DayScheduleCopyScreen(
 		DayScheduleCopyContent(
 			selectedDate = uiState.selectedDate,
 			classes = uiState.classes,
-			selectedCalendarDay = uiState.selectedCalendarDay,
+			selectedCalendarDay = uiState.selectedRefCalendarDay,
 			updateSelectedCalendarDay = viewModel::updateOnCalendarDayChange,
 			modifier = Modifier.padding(paddingValues)
 		)
@@ -159,6 +160,7 @@ fun DayScheduleCopyDialog(
 	}
 }
 
+// TODO: get rid of selectedCalendarDay field and instead send day on copy action?
 @Composable
 fun DayScheduleCopyContent(
 	selectedDate: LocalDate,

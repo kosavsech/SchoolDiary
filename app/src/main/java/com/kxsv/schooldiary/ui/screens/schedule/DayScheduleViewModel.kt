@@ -46,7 +46,7 @@ data class DayScheduleUiState(
 	val currentTimings: List<PatternStroke> = emptyList(),
 	val classDetailed: ScheduleWithSubject? = null,
 	val selectedDate: LocalDate = LocalDate.now(), // unique for DayScheduleScreen
-	val selectedCalendarDay: CalendarDay? = null, // unique for DayScheduleCopyScreen
+	val selectedRefCalendarDay: CalendarDay? = null, // unique for DayScheduleCopyScreen
 	val refRange: ClosedRange<LocalDate>? = null,
 	val destRange: ClosedRange<LocalDate>? = null,
 	val userMessage: Int? = null,
@@ -135,7 +135,10 @@ class DayScheduleViewModel @Inject constructor(
 		_uiState.update { it.copy(classDetailed = null) }
 	}
 	
-	private suspend fun createNewStudyDay(predefinedPatternId: Long? = null) {
+	private suspend fun createNewStudyDay(
+		date: LocalDate = uiState.value.selectedDate,
+		predefinedPatternId: Long? = null,
+	) {
 		var appliedPatternId = predefinedPatternId
 		if (predefinedPatternId == null) {
 			// INFO: try to get default one, or will be filled with null
@@ -148,7 +151,7 @@ class DayScheduleViewModel @Inject constructor(
 		}
 		
 		val newStudyDay = StudyDay(
-			date = uiState.value.selectedDate,
+			date = date,
 			appliedPatternId = appliedPatternId,
 		)
 		val newStudyDayId = studyDayRepository.create(newStudyDay)
@@ -158,16 +161,27 @@ class DayScheduleViewModel @Inject constructor(
 		}
 	}
 	
-	fun copySchedule(toCopyPattern: Boolean) {
-		if (uiState.value.selectedCalendarDay == null)
+	fun copySchedule(shouldCopyPattern: Boolean) {
+		if (uiState.value.selectedRefCalendarDay == null)
 			throw RuntimeException("copySchedule() was called but selectedCalendarDay is null.")
 		_uiState.update { it.copy(isLoading = true) }
+		val fromDate = uiState.value.selectedRefCalendarDay!!.date
+		val toDate = uiState.value.selectedDate
 		viewModelScope.launch {
-			copyLocalScheduleFromDate(
-				fromDate = uiState.value.selectedCalendarDay!!.date,
-				toDate = uiState.value.selectedDate,
-				toCopyPattern = toCopyPattern
-			)
+			if (isScheduleRemoteOnDate(fromDate)) {
+				Log.d(TAG, "copySchedule() isScheduleRemoteOnDate = true (fromDate = $fromDate)")
+				copyRemoteScheduleToCurrentDay(
+					fromDate = fromDate,
+					shouldCopyPattern = shouldCopyPattern
+				)
+			} else {
+				Log.d(TAG, "copySchedule() isScheduleRemoteOnDate = false (fromDate = $fromDate)")
+				copyLocalScheduleFromDate(
+					fromDate = fromDate,
+					toDate = toDate,
+					shouldCopyPattern = shouldCopyPattern
+				)
+			}
 		}
 	}
 	
@@ -188,7 +202,7 @@ class DayScheduleViewModel @Inject constructor(
 				copyLocalScheduleFromDate(
 					fromDate = copyFromDays[index],
 					toDate = dateCopyTo,
-					toCopyPattern = toCopyPattern
+					shouldCopyPattern = toCopyPattern
 				)
 			}
 		}
@@ -200,7 +214,7 @@ class DayScheduleViewModel @Inject constructor(
 			it.copy(
 				isLoading = true,
 				studyDay = null,
-				selectedCalendarDay = calendarDay,
+				selectedRefCalendarDay = calendarDay,
 				currentTimings = emptyList(),
 				classes = emptyList()
 			)
@@ -242,8 +256,19 @@ class DayScheduleViewModel @Inject constructor(
 			?: throw NoSuchElementException("Didn't find schedule with id($studyDayMasterId) and index($indexOfClassDetailed)")
 	}
 	
+	/**
+	 * Copies remote schedule from [specific day][fromDate] to [another day][toDate].
+	 * Does DB call, so should be time effective.
+	 *
+	 * @param fromDate
+	 * @param toDate
+	 * @param shouldCopyPattern determines whether the method will copy applied pattern id from
+	 * reference study day
+	 * @see copyRemoteScheduleToCurrentDay
+	 * @see copyRemoteSchedule
+	 */
 	private suspend fun copyLocalScheduleFromDate(
-		fromDate: LocalDate, toDate: LocalDate, toCopyPattern: Boolean,
+		fromDate: LocalDate, toDate: LocalDate, shouldCopyPattern: Boolean,
 	) {
 		try {
 			val refStudyDay = studyDayRepository.getByDate(fromDate)
@@ -251,8 +276,9 @@ class DayScheduleViewModel @Inject constructor(
 			val toStudyDay = studyDayRepository.getByDate(toDate)
 			
 			val cloneDayId = if (toStudyDay != null) {
-				// INFO: if copying schedule to existent study day, maybe with local schedules
-				if (toCopyPattern) {
+				// INFO: if copying schedule to existent study day,
+				//  maybe with local schedules which should be deleted first.
+				if (shouldCopyPattern) {
 					studyDayRepository.update(
 						toStudyDay.copy(appliedPatternId = refStudyDay.appliedPatternId)
 					)
@@ -260,14 +286,21 @@ class DayScheduleViewModel @Inject constructor(
 				scheduleRepository.deleteAllByDayId(toStudyDay.studyDayId)
 				toStudyDay.studyDayId
 			} else {
-				val newClonedStudyDay: StudyDay = if (toCopyPattern) {
-					StudyDay(date = toDate, appliedPatternId = refStudyDay.appliedPatternId)
+				if (shouldCopyPattern) {
+					createNewStudyDay(
+						date = toDate,
+						predefinedPatternId = refStudyDay.appliedPatternId
+					)
 				} else {
-					StudyDay(date = toDate)
+					createNewStudyDay(date = toDate)
 				}
-				studyDayRepository.create(newClonedStudyDay)
+				uiState.value.studyDay?.studyDayId
 			}
-			
+			Log.d(
+				TAG,
+				"copyLocalScheduleFromDate() called with toStudyDay $toStudyDay\n" +
+						"fromStudyDay $refStudyDay"
+			)
 			val copyOfSchedules: MutableList<Schedule> = mutableListOf()
 			scheduleRepository.getAllByMasterId(refStudyDay.studyDayId).forEach {
 				copyOfSchedules.add(it.copy(studyDayMasterId = cloneDayId, scheduleId = 0))
@@ -282,16 +315,27 @@ class DayScheduleViewModel @Inject constructor(
 		}
 	}
 	
-	private suspend fun copyScheduleFromNet(
-		fromDate: LocalDate, toDate: LocalDate, toCopyPattern: Boolean,
+	/**
+	 * Copies remote schedule from [specific day][fromDate] to [another day][toDate].
+	 * Does 1 network call, so costly in time.
+	 *
+	 * @param fromDate
+	 * @param toDate
+	 * @param shouldCopyPattern determines whether the method will copy applied pattern id from
+	 * reference study day
+	 * @see copyRemoteScheduleToCurrentDay
+	 */
+	private suspend fun copyRemoteSchedule(
+		fromDate: LocalDate, toDate: LocalDate, shouldCopyPattern: Boolean,
 	) {
 		try {
 			val refStudyDay = studyDayRepository.getByDate(fromDate)
 			val toStudyDay = studyDayRepository.getByDate(toDate)
 			
 			val cloneDayId = if (toStudyDay != null) {
-				// INFO: if copying schedule to existent study day, maybe with local schedules
-				if (toCopyPattern && refStudyDay != null) {
+				// INFO: if copying schedule to existent study day,
+				//  maybe with local schedules which should be deleted first.
+				if (shouldCopyPattern && refStudyDay != null) {
 					studyDayRepository.update(
 						toStudyDay.copy(appliedPatternId = refStudyDay.appliedPatternId)
 					)
@@ -299,20 +343,77 @@ class DayScheduleViewModel @Inject constructor(
 				scheduleRepository.deleteAllByDayId(toStudyDay.studyDayId)
 				toStudyDay.studyDayId
 			} else {
-				if (toCopyPattern && refStudyDay != null) {
-					createNewStudyDay(predefinedPatternId = refStudyDay.appliedPatternId)
+				if (shouldCopyPattern && refStudyDay != null) {
+					createNewStudyDay(
+						date = toDate,
+						predefinedPatternId = refStudyDay.appliedPatternId
+					)
 				} else {
-					createNewStudyDay()
+					createNewStudyDay(date = toDate)
 				}
 				uiState.value.studyDay?.studyDayId
-			}
+			} ?: throw RuntimeException("Couldn't retrieve studyDayId")
+			Log.w(
+				TAG,
+				"copyRemoteSchedule: uiState.value.classes = ${uiState.value.classes}"
+			)
 			val localizedNetClasses =
 				scheduleRepository.loadFromNetworkByDate(fromDate).toLocal(cloneDayId)
 			
 			scheduleRepository.upsertAll(localizedNetClasses)
 			
+			updateLocalScheduleOnDate(toDate)
 		} catch (e: Exception) {
-			Log.e(TAG, "copyScheduleFromNet: caught", e)
+			Log.e(TAG, "copyRemoteSchedule: caught", e)
+		}
+	}
+	
+	/**
+	 * Copies remote schedule from [specific day][fromDate] to [current day][com.kxsv.schooldiary.ui.screens.schedule.DayScheduleUiState.selectedDate].
+	 * Does not make network calls, so time efficient.
+	 *
+	 * @param fromDate
+	 * @param shouldCopyPattern determines whether the method will copy applied pattern id from
+	 * reference study day
+	 * @see copyRemoteSchedule
+	 */
+	private suspend fun copyRemoteScheduleToCurrentDay(
+		fromDate: LocalDate, shouldCopyPattern: Boolean,
+	) {
+		try {
+			val refStudyDay = studyDayRepository.getByDate(fromDate)
+			val toStudyDay = studyDayRepository.getByDate(uiState.value.selectedDate)
+			
+			val cloneDayId = if (toStudyDay != null) {
+				// INFO: if copying schedule to existent study day,
+				//  maybe with local schedules which should be deleted first.
+				if (shouldCopyPattern && refStudyDay != null) {
+					studyDayRepository.update(
+						toStudyDay.copy(appliedPatternId = refStudyDay.appliedPatternId)
+					)
+				}
+				scheduleRepository.deleteAllByDayId(toStudyDay.studyDayId)
+				toStudyDay.studyDayId
+			} else {
+				if (shouldCopyPattern && refStudyDay != null) {
+					createNewStudyDay(
+						date = uiState.value.selectedDate,
+						predefinedPatternId = refStudyDay.appliedPatternId
+					)
+				} else {
+					createNewStudyDay(date = uiState.value.selectedDate)
+				}
+				uiState.value.studyDay?.studyDayId
+			} ?: throw RuntimeException("Couldn't retrieve studyDayId")
+			
+			val localizedNetClasses =
+				uiState.value.classes.map { it.schedule.copy(studyDayMasterId = cloneDayId) }
+			
+			scheduleRepository.upsertAll(localizedNetClasses)
+			
+			updateLocalScheduleOnDate(uiState.value.selectedDate)
+		} catch (e: Exception) {
+			Log.e(TAG, "copyRemoteSchedule: caught", e)
 		}
 	}
 	
@@ -363,12 +464,18 @@ class DayScheduleViewModel @Inject constructor(
 		}
 	}
 	
-	fun isScheduleRemote(): Boolean {
-		val schedulesIds = uiState.value.classes.map { it.schedule.scheduleId }
+	fun isScheduleRemote(
+		classes: List<ScheduleWithSubject>? = null,
+		schedules: List<Schedule>? = null,
+	): Boolean {
+		val schedulesIds =
+			classes?.map { it.schedule.scheduleId }
+				?: (schedules?.map { it.scheduleId }
+					?: uiState.value.classes.map { it.schedule.scheduleId })
 		return schedulesIds.binarySearch(0L) != -1
 	}
 	
-	private fun isSchedulesHaveMasterId(): Boolean {
+	private fun currentClassesHasMasterId(): Boolean {
 		val schedulesMasterIds = uiState.value.classes.map { it.schedule.studyDayMasterId }
 		return schedulesMasterIds.binarySearch(null) == -1
 	}
@@ -394,7 +501,7 @@ class DayScheduleViewModel @Inject constructor(
 			Log.i(TAG, "localiseCurrentNetSchedule: in process for ${uiState.value.studyDay}")
 			val schedules = classes.map { it.schedule }
 			
-			if (isSchedulesHaveMasterId()) {
+			if (currentClassesHasMasterId()) {
 				scheduleRepository.upsertAll(schedules)
 			} else {
 				val schedulesWithMasterDay =
@@ -420,33 +527,41 @@ class DayScheduleViewModel @Inject constructor(
 	private fun loadScheduleOnDate(date: LocalDate) {
 		viewModelScope.coroutineContext.job.cancelChildren()
 		viewModelScope.launch {
-			studyDayRepository.getDayAndSchedulesWithSubjectsByDate(date).let { dayWithClasses ->
-				if (dayWithClasses != null) {
-					_uiState.update { it.copy(studyDay = dayWithClasses.studyDay) }
-					if (dayWithClasses.classes.isNotEmpty()) {
-						Log.i(TAG, "loadScheduleOnDate: found local schedule")
-						_uiState.update { dayScheduleUiState ->
-							dayScheduleUiState.copy(
-								classes = dayWithClasses.classes.sortedBy { it.schedule.index },
-								isLoading = false
-							)
-						}
-					} else {
-						// INFO: loads classes from network to UI with studyDayMasterId
-						Log.i(TAG, "loadScheduleOnDate: searching for schedule in Net")
-						initializeNetworkScheduleOnDate(date)
+			val dayWithClasses = measurePerformanceInMS(logger = { time, _ ->
+				Log.i(TAG, "getDayAndSchedulesWithSubjectsByDate() performance is $time ms")
+			}) {
+				studyDayRepository.getDayAndSchedulesWithSubjectsByDate(date)
+			}
+			if (dayWithClasses != null) {
+				_uiState.update { it.copy(studyDay = dayWithClasses.studyDay) }
+				if (dayWithClasses.classes.isNotEmpty()) {
+					Log.i(TAG, "loadScheduleOnDate: found local schedule")
+					_uiState.update { dayScheduleUiState ->
+						dayScheduleUiState.copy(
+							classes = dayWithClasses.classes.sortedBy { it.schedule.index },
+							isLoading = false
+						)
 					}
 				} else {
-					// INFO: loads classes from network to UI without studyDayMasterId
-					Log.i(
-						TAG,
-						"loadScheduleOnDate: studyDay is NULL, searching for schedule in Net"
-					)
+					// INFO: loads classes from network to UI with studyDayMasterId
+					Log.i(TAG, "loadScheduleOnDate: searching for schedule in Net")
 					initializeNetworkScheduleOnDate(date)
 				}
-				loadTimingsOnStudyDay(dayWithClasses?.studyDay)
+			} else {
+				// INFO: loads classes from network to UI without studyDayMasterId
+				Log.i(
+					TAG,
+					"loadScheduleOnDate: studyDay is NULL, searching for schedule in Net"
+				)
+				initializeNetworkScheduleOnDate(date)
 			}
+			updateTimingsOnStudyDay(dayWithClasses?.studyDay)
 		}
+	}
+	
+	private suspend fun isScheduleRemoteOnDate(date: LocalDate): Boolean {
+		val dayWithClasses = studyDayRepository.getDayAndSchedulesWithSubjectsByDate(date)
+		return dayWithClasses?.classes?.isEmpty() ?: true
 	}
 	
 	/**
@@ -455,12 +570,12 @@ class DayScheduleViewModel @Inject constructor(
 	 *
 	 * @param studyDay
 	 */
-	private suspend fun loadTimingsOnStudyDay(studyDay: StudyDay?) {
+	private suspend fun updateTimingsOnStudyDay(studyDay: StudyDay?) {
 		val isFromDefaults = studyDay?.appliedPatternId == null
 		val appliedPatternId = studyDay?.appliedPatternId ?: appDefaultsRepository.getPatternId()
 		val strokes = measurePerformanceInMS(logger = { time, result ->
 			Log.i(
-				TAG, "loadTimingsOnStudyDay() performance is $time ms" +
+				TAG, "updateTimingsOnStudyDay() performance is $time ms" +
 						"\nloaded timings from ${if (isFromDefaults) "default " else ""}pattern(id: $appliedPatternId) ${result[0]}..."
 			)
 		}) {
@@ -475,19 +590,17 @@ class DayScheduleViewModel @Inject constructor(
 	private fun updateLocalScheduleOnDate(date: LocalDate) = viewModelScope.launch {
 		studyDayRepository.getDayAndSchedulesWithSubjectsByDate(date).let { dayWithClasses ->
 			if (dayWithClasses != null) {
-				_uiState.update { it.copy(studyDay = dayWithClasses.studyDay) }
-				if (dayWithClasses.classes.isNotEmpty()) {
-					_uiState.update { dayScheduleUiState ->
-						dayScheduleUiState.copy(
-							classes = dayWithClasses.classes.sortedBy { it.schedule.index },
-							isLoading = false
-						)
-					}
+				_uiState.update { dayScheduleUiState ->
+					dayScheduleUiState.copy(
+						studyDay = dayWithClasses.studyDay,
+						classes = dayWithClasses.classes.sortedBy { it.schedule.index },
+						isLoading = false
+					)
 				}
 			} else {
 				throw NoSuchElementException("Didn't found day with classes for some reason")
 			}
-			loadTimingsOnStudyDay(dayWithClasses.studyDay)
+			updateTimingsOnStudyDay(dayWithClasses.studyDay)
 		}
 	}
 	
