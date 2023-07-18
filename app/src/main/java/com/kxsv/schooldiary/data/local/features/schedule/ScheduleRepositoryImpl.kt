@@ -2,13 +2,11 @@ package com.kxsv.schooldiary.data.local.features.schedule
 
 import com.kxsv.schooldiary.data.local.features.study_day.StudyDay
 import com.kxsv.schooldiary.data.local.features.study_day.StudyDayDao
-import com.kxsv.schooldiary.data.network.ScheduleNetworkDataSource
-import com.kxsv.schooldiary.data.network.schedule.NetworkSchedule
 import com.kxsv.schooldiary.di.IoDispatcher
+import com.kxsv.schooldiary.domain.ScheduleNetworkDataSource
 import com.kxsv.schooldiary.domain.ScheduleRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -27,12 +25,6 @@ class ScheduleRepositoryImpl @Inject constructor(
 	
 	override fun getScheduleStream(scheduleId: Long): Flow<Schedule> {
 		return scheduleDataSource.observeById(scheduleId)
-	}
-	
-	override suspend fun loadFromNetworkByDate(localDate: LocalDate): List<NetworkSchedule> {
-		return withContext(dispatcher) {
-			scheduleNetworkDataSource.loadScheduleForDate(localDate)
-		}
 	}
 	
 	override suspend fun getAll(): List<Schedule> {

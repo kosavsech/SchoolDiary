@@ -1,5 +1,6 @@
 package com.kxsv.schooldiary.util
 
+import android.annotation.SuppressLint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jsoup.Connection
@@ -155,20 +156,21 @@ class EduTatarParser {
         }
         return output
     }
-
-    suspend fun GetMarkDescription(date: String = ""): MutableList<String> {
-	    val output = mutableListOf<String>()
-	    val dayPage = getDayPage(date)
-	    val lines = dayPage.select("div.d-table > table > tbody > tr > td:nth-child(5)")
-        lines.forEach {
-            if (it.childNodeSize() < 3) {
-                output.add("")
-                return@forEach
-            }
-            output.add(it.select("table > tbody > tr > td").attr("title"))
-        }
-        return output
-    }
+	
+	@SuppressLint("SuspiciousIndentation")
+	suspend fun GetMarkDescription(date: String = ""): MutableList<String> {
+		val output = mutableListOf<String>()
+		val dayPage = getDayPage(date)
+		val lines = dayPage.select("div.d-table > table > tbody > tr > td:nth-child(5)")
+		lines.forEach {
+			if (it.childNodeSize() < 3) {
+				output.add("")
+				return@forEach
+			}
+			output.add(it.select("table > tbody > tr > td").attr("title"))
+		}
+		return output
+	}
 
     fun GetTypeOfWork(text: String = "Фамилия Имя Отчетство - Вид работ"): String {
         return text.split(" - ")[0]

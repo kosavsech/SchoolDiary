@@ -3,7 +3,6 @@ package com.kxsv.schooldiary.domain
 import com.kxsv.schooldiary.data.local.features.schedule.Schedule
 import com.kxsv.schooldiary.data.local.features.schedule.ScheduleWithStudyDay
 import com.kxsv.schooldiary.data.local.features.schedule.ScheduleWithSubject
-import com.kxsv.schooldiary.data.network.schedule.NetworkSchedule
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
@@ -12,8 +11,6 @@ interface ScheduleRepository {
 	fun getSchedulesStream(): Flow<List<Schedule>>
 	
 	fun getScheduleStream(scheduleId: Long): Flow<Schedule>
-	
-	suspend fun loadFromNetworkByDate(localDate: LocalDate): List<NetworkSchedule>
 	
 	suspend fun getAll(): List<Schedule>
 	

@@ -24,6 +24,7 @@ import com.kxsv.schooldiary.AppScreens.COPY_DATE_RANGE_SCHEDULE_SCREEN
 import com.kxsv.schooldiary.AppScreens.COPY_DAY_SCHEDULE_SCREEN
 import com.kxsv.schooldiary.AppScreens.DAY_SCHEDULE_SCREEN
 import com.kxsv.schooldiary.AppScreens.GRADES_SCREEN
+import com.kxsv.schooldiary.AppScreens.LOGIN_SCREEN
 import com.kxsv.schooldiary.AppScreens.PATTERNS_SCREEN
 import com.kxsv.schooldiary.AppScreens.PATTERNS_SELECTION_SCREEN
 import com.kxsv.schooldiary.AppScreens.SUBJECTS_SCREEN
@@ -49,6 +50,7 @@ object AppScreens {
 	const val COPY_DATE_RANGE_SCHEDULE_SCREEN = "copyDateRangeSchedule"
 	const val GRADES_SCREEN = "grades"
 	const val ADD_EDIT_GRADE_SCREEN = "addEditGrade"
+	const val LOGIN_SCREEN = "loginScreen"
 }
 
 /**
@@ -90,7 +92,7 @@ object AppDestinations {
 	const val COPY_DATE_RANGE_SCHEDULE_ROUTE = COPY_DATE_RANGE_SCHEDULE_SCREEN
 	const val GRADES_ROUTE = "$GRADES_SCREEN?$USER_MESSAGE_ARG={$USER_MESSAGE_ARG}"
 	const val ADD_EDIT_GRADE_ROUTE = "$ADD_EDIT_GRADE_SCREEN?$GRADE_ID_ARG={$GRADE_ID_ARG}"
-	
+	const val LOGIN_ROUTE = LOGIN_SCREEN
 }
 
 /**
@@ -230,6 +232,15 @@ class AppNavigationActions(private val navController: NavHostController) {
 	fun navigateToCopyOfDateRangeSchedule() {
 		navController.navigate(
 			COPY_DATE_RANGE_SCHEDULE_ROUTE
+		)
+	}
+	
+	fun navigateToLogin(userMessage: Int = 0) {
+		val navigatesFromDrawer = userMessage == 0
+		navController.navigate(
+			LOGIN_SCREEN.let {
+				if (userMessage != 0) "$it?$USER_MESSAGE_ARG=$userMessage" else it
+			}
 		)
 	}
 	
