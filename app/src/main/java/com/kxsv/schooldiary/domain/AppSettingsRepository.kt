@@ -14,6 +14,10 @@ interface AppSettingsRepository {
 	
 	fun observeEduPassword(): Flow<String?>
 	
+	fun observeAuthCookie(): Flow<String?>
+	
+	fun observeInitLoginSuppression(): Flow<Boolean>
+	
 	suspend fun getPatternId(): Long
 	
 	suspend fun setPatternId(id: Long)
@@ -34,4 +38,11 @@ interface AppSettingsRepository {
 	
 	suspend fun setEduPassword(password: String?)
 	
+	suspend fun getAuthCookie(): String?
+	
+	suspend fun setAuthCookie(cookie: String?)
+	
+	suspend fun getInitLoginSuppression(): Boolean
+	
+	suspend fun setInitLoginSuppression(value: Boolean)
 }

@@ -95,4 +95,9 @@
     <string name="type_of_work_mark">Type of task being evaluated</string>
     <string name="display_name_hint">Display name</string>
     <string name="no_classes_label">No classes for this day</string>
+    <string name="access_temporarily_blocked">Access to server is temporarily blocked</string>
+    <string name="blank_inupt">You haven\'t entered login or password</string>
+    <string name="auth_failure">Something unexpected has happened</string>
+    <string name="incorrect_auth_data">You\'ve entered wrong login or password</string>
+    <string name="not_logged_in">You\'re not logged to site</string>
 </resources>

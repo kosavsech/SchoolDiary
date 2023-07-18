@@ -24,6 +24,7 @@ import com.kxsv.schooldiary.AppDestinations.COPY_DATE_RANGE_SCHEDULE_ROUTE
 import com.kxsv.schooldiary.AppDestinations.COPY_DAY_SCHEDULE_ROUTE
 import com.kxsv.schooldiary.AppDestinations.DAY_SCHEDULE_ROUTE
 import com.kxsv.schooldiary.AppDestinations.GRADES_ROUTE
+import com.kxsv.schooldiary.AppDestinations.LOGIN_ROUTE
 import com.kxsv.schooldiary.AppDestinations.PATTERNS_ROUTE
 import com.kxsv.schooldiary.AppDestinations.PATTERNS_SELECTION_ROUTE
 import com.kxsv.schooldiary.AppDestinations.SCHEDULE_ROUTE
@@ -42,6 +43,7 @@ import com.kxsv.schooldiary.AppDestinationsArgs.TITLE_ARG
 import com.kxsv.schooldiary.AppDestinationsArgs.USER_MESSAGE_ARG
 import com.kxsv.schooldiary.ui.screens.grade_list.GradesScreen
 import com.kxsv.schooldiary.ui.screens.grade_list.add_edit.AddEditGradeScreen
+import com.kxsv.schooldiary.ui.screens.login.LoginScreen
 import com.kxsv.schooldiary.ui.screens.patterns.PatternSelectionScreen
 import com.kxsv.schooldiary.ui.screens.patterns.PatternsScreen
 import com.kxsv.schooldiary.ui.screens.patterns.add_edit_pattern.AddEditTimePatternScreen
@@ -58,6 +60,12 @@ import com.kxsv.schooldiary.util.ui.AppModalDrawer
 import com.kxsv.schooldiary.util.ui.sharedViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.ZoneId
+
+private fun localDateToTimestamp(date: LocalDate): Long =
+	date.atStartOfDay(ZoneId.systemDefault()).toEpochSecond()
+
 
 @Composable
 fun AppNavGraph(
@@ -65,7 +73,7 @@ fun AppNavGraph(
 	navController: NavHostController = rememberNavController(),
 	coroutineScope: CoroutineScope = rememberCoroutineScope(),
 	drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
-	startDestination: String = SCHEDULE_ROUTE,
+	startDestination: String = LOGIN_ROUTE,
 	navActions: AppNavigationActions = remember(navController) {
 		AppNavigationActions(navController)
 	},
@@ -84,6 +92,20 @@ fun AppNavGraph(
 					openDrawer = { coroutineScope.launch { drawerState.open() } }
 				)
 			}
+		}
+		composable(
+			LOGIN_ROUTE
+		) { entry ->
+			LoginScreen(
+//				userMessage = entry.arguments?.getInt(USER_MESSAGE_ARG)!!,
+//				onUserMessageDisplayed = { entry.arguments?.putInt(USER_MESSAGE_ARG, 0) },
+				onLogin = {
+					navActions.navigateToDaySchedule(
+						dateStamp = localDateToTimestamp(LocalDate.now())
+					)
+				}
+			)
+			
 		}
 		navigation(
 			startDestination = DAY_SCHEDULE_ROUTE,
@@ -131,7 +153,6 @@ fun AppNavGraph(
 					)
 				}
 			}
-			
 			composable(
 				COPY_DAY_SCHEDULE_ROUTE,
 			) { entry ->

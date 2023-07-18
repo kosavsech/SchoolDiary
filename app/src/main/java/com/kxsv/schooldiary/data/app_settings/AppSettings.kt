@@ -14,11 +14,13 @@ data class AppSettings(
 	val defaultPatternId: Long = 0L,
 	val scheduleRefRangeStartId: Long = 0L,
 	val scheduleRefRangeEndId: Long = 0L,
+	val suppressInitLogin: Boolean = false,
 	val eduLogin: String? = null,
 	val eduPassword: String? = null,
+	val authCookie: String? = null,
 )
 
-object AppDefaultsSerializer : Serializer<AppSettings> {
+object AppSettingsSerializer : Serializer<AppSettings> {
 	
 	override val defaultValue = AppSettings()
 	

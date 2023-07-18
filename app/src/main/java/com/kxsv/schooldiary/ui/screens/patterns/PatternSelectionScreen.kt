@@ -99,7 +99,7 @@ fun PatternSelectionScreen(
 		
 		/*		LaunchedEffect(uiState.isPatternDeleted) {
 					if (uiState.isPatternDeleted) {
-						viewModel.showEditResultMessage(DELETE_RESULT_OK)
+						viewModel.processAuthError(DELETE_RESULT_OK)
 					}
 				}*/
 		

@@ -111,7 +111,6 @@ dependencies {
 
     // Proto DataStore
     implementation 'androidx.datastore:datastore:1.1.0-alpha04'
-    implementation 'androidx.datastore:datastore-preferences-core:1.1.0-alpha04'
     implementation "org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.5"
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1'
 

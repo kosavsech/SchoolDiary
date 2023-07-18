@@ -7,9 +7,9 @@ import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStoreFile
 import androidx.room.Room
 import com.kxsv.schooldiary.data.AppDatabase
-import com.kxsv.schooldiary.data.app_settings.AppDefaultsSerializer
 import com.kxsv.schooldiary.data.app_settings.AppSettings
 import com.kxsv.schooldiary.data.app_settings.AppSettingsRepositoryImpl
+import com.kxsv.schooldiary.data.app_settings.AppSettingsSerializer
 import com.kxsv.schooldiary.data.local.features.associative_tables.subject_teacher.SubjectTeacherDao
 import com.kxsv.schooldiary.data.local.features.grade.GradeDao
 import com.kxsv.schooldiary.data.local.features.grade.GradeRepositoryImpl
@@ -25,11 +25,11 @@ import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternDao
 import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternRepositoryImpl
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeDao
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeRepositoryImpl
-import com.kxsv.schooldiary.data.network.ScheduleNetworkDataSource
 import com.kxsv.schooldiary.data.network.schedule.ScheduleNetworkDataSourceImpl
 import com.kxsv.schooldiary.domain.AppSettingsRepository
 import com.kxsv.schooldiary.domain.GradeRepository
 import com.kxsv.schooldiary.domain.PatternStrokeRepository
+import com.kxsv.schooldiary.domain.ScheduleNetworkDataSource
 import com.kxsv.schooldiary.domain.ScheduleRepository
 import com.kxsv.schooldiary.domain.StudyDayRepository
 import com.kxsv.schooldiary.domain.SubjectRepository
@@ -134,12 +134,12 @@ class DataStoreModule {
 	@Provides
 	fun provideDataStore(@ApplicationContext appContext: Context): DataStore<AppSettings> {
 		return DataStoreFactory.create(
-			serializer = AppDefaultsSerializer,
+			serializer = AppSettingsSerializer,
 			corruptionHandler = ReplaceFileCorruptionHandler(
 				produceNewData = { AppSettings() }
 			),
 			scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
-			produceFile = { appContext.dataStoreFile("app-defaults.json") }
+			produceFile = { appContext.dataStoreFile("app-settings.json") }
 		)
 	}
 }

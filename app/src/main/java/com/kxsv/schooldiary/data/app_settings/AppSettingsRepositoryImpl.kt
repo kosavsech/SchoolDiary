@@ -43,6 +43,18 @@ class AppSettingsRepositoryImpl @Inject constructor(
 		}
 	}
 	
+	override fun observeAuthCookie(): Flow<String?> {
+		return dataStore.data.map {
+			it.authCookie
+		}
+	}
+	
+	override fun observeInitLoginSuppression(): Flow<Boolean> {
+		return dataStore.data.map {
+			it.suppressInitLogin
+		}
+	}
+	
 	override suspend fun getPatternId(): Long {
 		return dataStore.data.first().defaultPatternId
 	}
@@ -91,5 +103,21 @@ class AppSettingsRepositoryImpl @Inject constructor(
 		dataStore.updateData {
 			it.copy(eduPassword = password)
 		}
+	}
+	
+	override suspend fun getAuthCookie(): String? {
+		return dataStore.data.first().authCookie
+	}
+	
+	override suspend fun setAuthCookie(cookie: String?) {
+		dataStore.updateData { it.copy(authCookie = cookie) }
+	}
+	
+	override suspend fun getInitLoginSuppression(): Boolean {
+		return dataStore.data.first().suppressInitLogin
+	}
+	
+	override suspend fun setInitLoginSuppression(value: Boolean) {
+		dataStore.updateData { it.copy(suppressInitLogin = value) }
 	}
 }
