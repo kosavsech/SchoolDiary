@@ -8,7 +8,5 @@ sealed class NetworkError {
 	data class GeneralError(
 		val message: String? = null,
 		val cause: Throwable? = null,
-	) : NetworkError() {
-		constructor(cause: Throwable) : this(null, cause)
-	}
+	) : NetworkError()
 }

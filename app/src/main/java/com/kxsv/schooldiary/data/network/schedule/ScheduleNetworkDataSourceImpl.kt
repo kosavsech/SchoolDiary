@@ -105,7 +105,7 @@ class ScheduleNetworkDataSourceImpl @Inject constructor(
 	 * try to authenticate and re-launch operation.
 	 *
 	 * @param targetSegment
-	 * @return [not parsed document for page][Document]
+	 * @return [not parsed document of page][Document]
 	 * @throws NetworkException.NotLoggedInException if cookie is not valid
 	 */
 	private suspend fun getPage(targetSegment: String): Document {
@@ -118,7 +118,10 @@ class ScheduleNetworkDataSourceImpl @Inject constructor(
 			val doc = withContext(ioDispatcher) {
 				Jsoup.connect("$BASE_URL$targetSegment").cookie(AUTH_COOKIE, cookie).get()
 			}
-			if (doc.location().contains("login")) throw NetworkException.NotLoggedInException
+			Log.d(TAG, doc.location())
+			if (doc.location().contains("login") or doc.location().contains("message")) {
+				throw NetworkException.NotLoggedInException
+			}
 			doc
 		} catch (e: NetworkException) {
 			eduTatarAuth(

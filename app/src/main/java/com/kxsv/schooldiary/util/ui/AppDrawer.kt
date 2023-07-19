@@ -19,8 +19,6 @@ import com.kxsv.schooldiary.AppNavigationActions
 import com.kxsv.schooldiary.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.time.ZoneId
 
 @Composable
 fun AppModalDrawer(
@@ -39,11 +37,7 @@ fun AppModalDrawer(
 					navigateToPatterns = { navigationActions.navigateToPatterns() },
 					navigateToTeachers = { navigationActions.navigateToTeachers() },
 					navigateToSubjects = { navigationActions.navigateToSubjects() },
-					navigateToSchedule = {
-						navigationActions.navigateToDaySchedule(
-							dateStamp = localDateToTimestamp(LocalDate.now())
-						)
-					},
+					navigateToSchedule = { navigationActions.navigateToDaySchedule() },
 					navigateToGrades = { navigationActions.navigateToGrades() },
 					closeDrawer = { coroutineScope.launch { drawerState.close() } }
 				)
@@ -53,9 +47,6 @@ fun AppModalDrawer(
 		content()
 	}
 }
-
-private fun localDateToTimestamp(date: LocalDate): Long =
-	date.atStartOfDay(ZoneId.systemDefault()).toEpochSecond()
 
 @Composable
 private fun AppDrawer(

@@ -100,9 +100,7 @@ fun AppNavGraph(
 //				userMessage = entry.arguments?.getInt(USER_MESSAGE_ARG)!!,
 //				onUserMessageDisplayed = { entry.arguments?.putInt(USER_MESSAGE_ARG, 0) },
 				onLogin = {
-					navActions.navigateToDaySchedule(
-						dateStamp = localDateToTimestamp(LocalDate.now())
-					)
+					navActions.navigateToDaySchedule()
 				}
 			)
 			
