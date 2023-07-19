@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.darkColors
 import androidx.compose.material.icons.Icons
@@ -164,7 +163,7 @@ fun DayScheduleCopyDialog(
 @Composable
 fun DayScheduleCopyContent(
 	selectedDate: LocalDate,
-	classes: List<ScheduleWithSubject>,
+	classes: Map<Int, ScheduleWithSubject>,
 	selectedCalendarDay: CalendarDay?,
 	updateSelectedCalendarDay: (CalendarDay?) -> Unit,
 	modifier: Modifier,
@@ -276,8 +275,9 @@ fun DayScheduleCopyContent(
 							)
 						}
 					}
-					items(items = classes) { lesson ->
-						ClassInformation(lesson)
+					val maxLines = classes.maxBy { it.key }.key + 1
+					items(maxLines) {
+						ClassInformation(classes[it])
 					}
 				}
 			} else {
@@ -323,7 +323,7 @@ private fun MonthHeader(
 }
 
 @Composable
-private fun LazyItemScope.ClassInformation(lesson: ScheduleWithSubject) {
+private fun LazyItemScope.ClassInformation(lesson: ScheduleWithSubject?) {
 	Row(
 		modifier = Modifier
 			.fillParentMaxWidth()
@@ -331,7 +331,8 @@ private fun LazyItemScope.ClassInformation(lesson: ScheduleWithSubject) {
 			.padding(vertical = dimensionResource(R.dimen.list_item_padding)),
 		horizontalArrangement = Arrangement.Center,
 	) {
-		Text(text = lesson.subject.getName())
+		val lessonName = lesson?.subject?.getName() ?: ""
+		Text(text = lessonName)
 	}
 	Divider(color = Color.White, thickness = 2.dp)
 }

@@ -105,7 +105,7 @@ class ScheduleNetworkDataSourceImpl @Inject constructor(
 	 * try to authenticate and re-launch operation.
 	 *
 	 * @param targetSegment
-	 * @return [not parsed document for page][Document]
+	 * @return [not parsed document of page][Document]
 	 * @throws NetworkException.NotLoggedInException if cookie is not valid
 	 */
 	private suspend fun getPage(targetSegment: String): Document {

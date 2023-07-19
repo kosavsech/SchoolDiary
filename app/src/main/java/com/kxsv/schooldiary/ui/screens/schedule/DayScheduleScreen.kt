@@ -1,6 +1,7 @@
 package com.kxsv.schooldiary.ui.screens.schedule
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,12 +12,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.darkColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -37,6 +43,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -48,8 +55,11 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.kizitonwose.calendar.compose.WeekCalendar
 import com.kizitonwose.calendar.compose.weekcalendar.rememberWeekCalendarState
 import com.kxsv.schooldiary.R
@@ -102,6 +112,7 @@ fun DayScheduleScreen(
 				},
 				onCopyDaySchedule = onCopyDaySchedule,
 				onCopyDateRangeSchedule = onCopyDateRangeSchedule,
+				onFetchSchedule = { viewModel.fetchSchedule() },
 				openDrawer = openDrawer
 			)
 		},
@@ -125,6 +136,7 @@ fun DayScheduleScreen(
 		DayScheduleContent(
 			loading = uiState.isLoading,
 			classes = uiState.classes,
+			fetchedClasses = uiState.fetchedClasses,
 			selectedDate = uiState.selectedDate,
 			currentPattern = uiState.currentTimings,
 			changeDate = viewModel::onDayChangeUpdate,
@@ -269,7 +281,8 @@ private fun LessonDialog(
 @Composable
 private fun DayScheduleContent(
 	loading: Boolean,
-	classes: List<ScheduleWithSubject>,
+	classes: Map<Int, ScheduleWithSubject>,
+	fetchedClasses: Map<Int, ScheduleWithSubject>?,
 	selectedDate: LocalDate,
 	currentPattern: List<PatternStroke>,
 	changeDate: (LocalDate) -> Unit,
@@ -280,36 +293,185 @@ private fun DayScheduleContent(
 ) {
 	Column(modifier = modifier) {
 		CalendarLine(changeDate = changeDate, selectedDate = selectedDate)
-		LoadingContent(
-			loading = loading,
-			isContentScrollable = true,
-			empty = classes.isEmpty(),
-			emptyContent = {
-				Column(
-					modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.horizontal_margin))
-				) {
-					Text(text = stringResource(noClassesLabel))
-				}
-			},
-			onRefresh = onRefresh
+		if (fetchedClasses != null) {
+			ScheduleComparisonTable(
+				loading = loading,
+				classes = classes,
+				fetchedClasses = fetchedClasses,
+				onRefresh = onRefresh,
+			)
+		} else {
+			ScheduleForDay(
+				loading = loading,
+				classes = classes,
+				selectedDate = selectedDate,
+				currentPattern = currentPattern,
+				noClassesLabel = noClassesLabel,
+				onRefresh = onRefresh,
+				onClassClick = onClassClick
+			)
+		}
+	}
+}
+
+@Composable
+fun ScheduleComparisonTable(
+	loading: Boolean,
+	classes: Map<Int, ScheduleWithSubject>,
+	fetchedClasses: Map<Int, ScheduleWithSubject>,
+	onRefresh: () -> Unit,
+) {
+	val maxLines = maxOf(classes.maxBy { it.key }.key, fetchedClasses.maxBy { it.key }.key)
+	
+	LoadingContent(
+		loading = loading,
+		isContentScrollable = true,
+		empty = false,
+		emptyContent = {},
+		onRefresh = onRefresh
+	) {
+		val cellWidth: (Int) -> Dp = { index ->
+			when (index) {
+				0 -> 25.dp
+				else -> 168.dp
+			}
+		}
+		val headerCellTitle: @Composable (Int) -> Unit = { index ->
+			val value = when (index) {
+				0 -> "#"
+				1 -> "Local"
+				2 -> "Network"
+				else -> ""
+			}
+			
+			Text(
+				text = value,
+				fontSize = 20.sp,
+				textAlign = TextAlign.Center,
+				modifier = Modifier.padding(8.dp),
+				maxLines = 1,
+				fontWeight = FontWeight.Black,
+			)
+		}
+		
+		val cellText: @Composable (Int, Int) -> Unit = { index, columnIndex ->
+			val value = when (columnIndex) {
+				0 -> (index).toString()
+				1 -> classes[index]?.subject?.getName() ?: ""
+				2 -> fetchedClasses[index]?.subject?.getName() ?: ""
+				else -> ""
+			}
+			
+			Text(
+				text = value,
+				textAlign = TextAlign.Justify,
+				modifier = Modifier
+					.padding(8.dp)
+					.height(40.dp),
+				maxLines = 2,
+			)
+		}
+		
+		Table(
+			columnCount = 3,
+			lineCount = maxLines,
+			cellWidth = cellWidth,
+			modifier = Modifier.verticalScroll(rememberScrollState()),
+			headerCellContent = headerCellTitle,
+			cellContent = cellText
+		)
+	}
+}
+
+/**
+ * The horizontally scrollable table with header and content.
+ * @param columnCount the count of columns in the table
+ * @param cellWidth the width of column, can be configured based on index of the column.
+ * @param modifier the modifier to apply to this layout node.
+ * @param headerCellContent a block which describes the header cell content.
+ * @param cellContent a block which describes the cell content.
+ */
+@Composable
+private fun Table(
+	columnCount: Int,
+	lineCount: Int,
+	cellWidth: (index: Int) -> Dp,
+	modifier: Modifier = Modifier,
+	headerCellContent: @Composable (columnIndex: Int) -> Unit,
+	cellContent: @Composable (lineCount: Int, columnIndex: Int) -> Unit,
+) {
+	Surface(
+		modifier = modifier
+	) {
+		LazyRow(
+			modifier = Modifier.padding(16.dp)
 		) {
-			LazyColumn(
-				Modifier.padding(horizontal = dimensionResource(R.dimen.horizontal_margin))
-			) {
-				item {
-					DayOfWeekHeader(date = selectedDate, lessonsAmount = classes.size)
-				}
-				classes.forEachIndexed { it, lesson ->
-					item(contentType = { lesson }) {
-						ClassItem(lesson, onClassClick, currentPattern)
-						if (it != classes.lastIndex) {
-							Divider(
-								modifier = Modifier
-									.padding(horizontal = dimensionResource(R.dimen.list_item_padding))
-									.fillMaxWidth(),
-							)
+			items((0 until columnCount).toList()) { columnIndex ->
+				Column {
+					(0..lineCount).forEach { index ->
+						Surface(
+							border = BorderStroke(1.dp, Color.Gray),
+							contentColor = Color.Black,
+							modifier = Modifier.width(cellWidth(columnIndex))
+						) {
+							if (index == 0) {
+								headerCellContent(columnIndex)
+							} else {
+								cellContent(index, columnIndex)
+							}
 						}
 					}
+				}
+			}
+		}
+	}
+}
+
+@Composable
+private fun ScheduleForDay(
+	loading: Boolean,
+	classes: Map<Int, ScheduleWithSubject>,
+	selectedDate: LocalDate,
+	currentPattern: List<PatternStroke>,
+	@StringRes noClassesLabel: Int,
+	onRefresh: () -> Unit,
+	onClassClick: (ScheduleWithSubject) -> Unit,
+) {
+	LoadingContent(
+		loading = loading,
+		isContentScrollable = true,
+		empty = classes.isEmpty(),
+		emptyContent = {
+			Column(
+				modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.horizontal_margin))
+			) {
+				Text(text = stringResource(noClassesLabel))
+			}
+		},
+		onRefresh = onRefresh
+	) {
+		LazyColumn(
+			Modifier.padding(horizontal = dimensionResource(R.dimen.horizontal_margin))
+		) {
+			val isFirst = mutableStateOf(true)
+			item {
+				DayOfWeekHeader(date = selectedDate, lessonsAmount = classes.size)
+			}
+			classes.forEach { (ordinalIndex, lesson) ->
+				item(contentType = { lesson }) {
+					if (!isFirst.value) {
+						Divider(
+							modifier = Modifier
+								.padding(horizontal = dimensionResource(R.dimen.list_item_padding))
+								.fillMaxWidth(),
+						)
+					} else isFirst.value = false
+					ClassItem(
+						index = (ordinalIndex - 1),
+						lesson = lesson,
+						onClassClick = onClassClick,
+						currentPattern = currentPattern
+					)
 				}
 			}
 		}
@@ -427,6 +589,7 @@ private fun DayOfWeekHeader(
 
 @Composable
 private fun ClassItem(
+	index: Int,
 	lesson: ScheduleWithSubject,
 	onClassClick: (ScheduleWithSubject) -> Unit,
 	currentPattern: List<PatternStroke>,
@@ -438,24 +601,20 @@ private fun ClassItem(
 			.clickable { onClassClick(lesson) }
 			.padding(vertical = dimensionResource(R.dimen.list_item_padding))
 	) {
-		val text: String =
-			if (lesson.schedule.index >= 0 && lesson.schedule.index <= currentPattern.lastIndex) {
-				currentPattern[lesson.schedule.index].startTime.format(
+		val timeText: String =
+			if (index <= currentPattern.lastIndex) {
+				currentPattern[index].startTime.format(
 					DateTimeFormatter.ofLocalizedTime(
 						FormatStyle.SHORT
 					)
-				) + " - " +
-						currentPattern[lesson.schedule.index].endTime.format(
-							DateTimeFormatter.ofLocalizedTime(
-								FormatStyle.SHORT
-							)
-						)
-			} else stringResource(
-				R.string.class_out_of_strokes_bounds_message,
-				lesson.schedule.index + 1
-			)
+				) + " - " + currentPattern[index].endTime.format(
+					DateTimeFormatter.ofLocalizedTime(
+						FormatStyle.SHORT
+					)
+				)
+			} else stringResource(R.string.class_out_of_strokes_bounds_message, (index + 1))
 		Text(
-			text = text,
+			text = timeText,
 			style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium)
 		)
 		Spacer(modifier = Modifier.padding(vertical = 2.dp))
@@ -468,9 +627,9 @@ private fun ClassItem(
 		Row {
 			Row(verticalAlignment = Alignment.Top) {
 				Icon(
-					Icons.Default.LocationOn,
-					stringResource(R.string.lesson_room),
-					Modifier.size(18.dp)
+					imageVector = Icons.Default.LocationOn,
+					contentDescription = stringResource(R.string.lesson_room),
+					modifier = Modifier.size(18.dp)
 				)
 				Spacer(modifier = Modifier.padding(horizontal = 4.dp))
 				Text(
@@ -492,10 +651,39 @@ private fun DayScheduleContentPreview() {
 	Surface {
 		DayScheduleContent(
 			loading = false,
-			classes = listOf(
-				ScheduleWithSubject(
-					Schedule(0, 0, 0),
-					Subject("Русский язык", "210")
+			classes = mapOf(
+				Pair(
+					1, ScheduleWithSubject(
+						Schedule(1, 0, 0),
+						Subject("Русский язык", "210")
+					)
+				),
+				Pair(
+					3, ScheduleWithSubject(
+						Schedule(3, 0, 0),
+						Subject("Английский языкАнглийский язык", "316")
+					)
+				),
+			),
+//			fetchedClasses = null,
+			fetchedClasses = mapOf(
+				Pair(
+					2, ScheduleWithSubject(
+						Schedule(0, 0, 0),
+						Subject("Английский языкАнглийский язык", "316")
+					)
+				),
+				Pair(
+					3, ScheduleWithSubject(
+						Schedule(1, 0, 0),
+						Subject("Английский язык", "316")
+					)
+				),
+				Pair(
+					4, ScheduleWithSubject(
+						Schedule(2, 0, 0),
+						Subject("Немецкий язык", "316")
+					)
 				),
 			),
 			selectedDate = LocalDate.now(),

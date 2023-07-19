@@ -49,7 +49,8 @@ private const val TAG = "DayScheduleViewModel"
 
 data class DayScheduleUiState(
 	val studyDay: StudyDay? = null,
-	val classes: List<ScheduleWithSubject> = emptyList(),
+	val classes: Map<Int, ScheduleWithSubject> = emptyMap(),
+	val fetchedClasses: Map<Int, ScheduleWithSubject>? = null,
 	val currentTimings: List<PatternStroke> = emptyList(),
 	val classDetailed: ScheduleWithSubject? = null,
 	val selectedDate: LocalDate = LocalDate.now(), // unique for DayScheduleScreen
@@ -108,7 +109,10 @@ class DayScheduleViewModel @Inject constructor(
 	}
 	
 	fun deleteClass(lesson: ScheduleWithSubject) {
-		val newClasses = copyExclusively(lesson, uiState.value.classes)
+		val newClasses = copyExclusively(
+			targetItemKey = lesson.schedule.index,
+			elements = uiState.value.classes
+		)
 		_uiState.update {
 			it.copy(
 				classDetailed = null, classes = newClasses
@@ -225,7 +229,7 @@ class DayScheduleViewModel @Inject constructor(
 				studyDay = null,
 				selectedRefCalendarDay = calendarDay,
 				currentTimings = emptyList(),
-				classes = emptyList()
+				classes = emptyMap()
 			)
 		}
 		if (calendarDay != null) {
@@ -247,7 +251,7 @@ class DayScheduleViewModel @Inject constructor(
 				studyDay = null,
 				selectedDate = date,
 				currentTimings = emptyList(),
-				classes = emptyList()
+				classes = emptyMap()
 			)
 		}
 		loadScheduleOnDate(date)
@@ -422,7 +426,7 @@ class DayScheduleViewModel @Inject constructor(
 			} ?: throw RuntimeException("Couldn't retrieve studyDayId")
 			
 			val localizedNetClasses =
-				uiState.value.classes.map { it.schedule.copy(studyDayMasterId = cloneDayId) }
+				uiState.value.classes.map { it.value.schedule.copy(studyDayMasterId = cloneDayId) }
 			
 			scheduleRepository.upsertAll(localizedNetClasses)
 			
@@ -468,7 +472,7 @@ class DayScheduleViewModel @Inject constructor(
 			try {
 				val classes = measurePerformanceInMS(logger = { time, result ->
 					Log.i(
-						TAG, "initializeNetworkScheduleOnDate() performance is $time ms" +
+						TAG, "loadScheduleForDate() performance is $time ms" +
 								"\nreturned: classes $result"
 					)
 				}) {
@@ -488,10 +492,11 @@ class DayScheduleViewModel @Inject constructor(
 				Log.e(TAG, "initializeNetworkScheduleOnDate: exception on response parse", e)
 			} catch (e: TimeoutCancellationException) {
 				Log.e(TAG, "initializeNetworkScheduleOnDate: connection timed-out", e)
-				_uiState.update { it.copy(isLoading = false) }
 				// TODO: show message that couldn't connect to site
 			} catch (e: Exception) {
 				Log.e(TAG, "initializeNetworkScheduleOnDate: exception", e)
+			} finally {
+				_uiState.update { it.copy(isLoading = false) }
 			}
 		}
 	
@@ -502,12 +507,12 @@ class DayScheduleViewModel @Inject constructor(
 		val schedulesIds =
 			classes?.map { it.schedule.scheduleId }
 				?: (schedules?.map { it.scheduleId }
-					?: uiState.value.classes.map { it.schedule.scheduleId })
+					?: uiState.value.classes.map { it.value.schedule.scheduleId })
 		return schedulesIds.binarySearch(0L) != -1
 	}
 	
 	private fun currentClassesHasMasterId(): Boolean {
-		val schedulesMasterIds = uiState.value.classes.map { it.schedule.studyDayMasterId }
+		val schedulesMasterIds = uiState.value.classes.map { it.value.schedule.studyDayMasterId }
 		return schedulesMasterIds.binarySearch(null) == -1
 	}
 	
@@ -530,7 +535,7 @@ class DayScheduleViewModel @Inject constructor(
 			if (localSchedule.isNotEmpty()) throw RuntimeException("Schedule already localized")
 			
 			Log.i(TAG, "localiseCurrentNetSchedule: in process for ${uiState.value.studyDay}")
-			val schedules = classes.map { it.schedule }
+			val schedules = classes.map { it.value.schedule }
 			
 			if (currentClassesHasMasterId()) {
 				scheduleRepository.upsertAll(schedules)
@@ -555,6 +560,38 @@ class DayScheduleViewModel @Inject constructor(
 		}
 	}
 	
+	fun fetchSchedule() {
+		_uiState.update { it.copy(isLoading = true) }
+		viewModelScope.coroutineContext.job.cancelChildren()
+		viewModelScope.launch(ioDispatcher) {
+			try {
+				val netClasses = measurePerformanceInMS(logger = { time, result ->
+					Log.i(
+						TAG, "loadScheduleForDate() performance is $time ms" +
+								"\nreturned: classes $result"
+					)
+				}) {
+					withTimeout(10000L) {
+						netScheduleDataSource.loadScheduleForDate(uiState.value.selectedDate)
+							.toLocalWithSubject()
+					}
+				}
+				_uiState.update { it.copy(fetchedClasses = netClasses) }
+			} catch (e: NetworkException) {
+				Log.e(TAG, "fetchSchedule: exception on login", e)
+			} catch (e: IOException) {
+				Log.e(TAG, "fetchSchedule: exception on response parse", e)
+			} catch (e: TimeoutCancellationException) {
+				Log.e(TAG, "fetchSchedule: connection timed-out", e)
+				// TODO: show message that couldn't connect to site
+			} catch (e: Exception) {
+				Log.e(TAG, "fetchSchedule: exception", e)
+			} finally {
+				_uiState.update { it.copy(isLoading = false) }
+			}
+		}
+	}
+	
 	private fun loadScheduleOnDate(date: LocalDate) {
 		viewModelScope.coroutineContext.job.cancelChildren()
 		viewModelScope.launch(ioDispatcher) {
@@ -568,8 +605,10 @@ class DayScheduleViewModel @Inject constructor(
 				if (dayWithClasses.classes.isNotEmpty()) {
 					Log.i(TAG, "loadScheduleOnDate: found local schedule")
 					_uiState.update { dayScheduleUiState ->
+						val mappedClasses: MutableMap<Int, ScheduleWithSubject> = mutableMapOf()
+						dayWithClasses.classes.forEach { mappedClasses[it.schedule.index] = it }
 						dayScheduleUiState.copy(
-							classes = dayWithClasses.classes.sortedBy { it.schedule.index },
+							classes = mappedClasses,
 							isLoading = false
 						)
 					}
@@ -603,7 +642,8 @@ class DayScheduleViewModel @Inject constructor(
 	 */
 	private suspend fun updateTimingsOnStudyDay(studyDay: StudyDay?) {
 		val isFromDefaults = studyDay?.appliedPatternId == null
-		val appliedPatternId = studyDay?.appliedPatternId ?: appSettingsRepository.getPatternId()
+		val appliedPatternId =
+			studyDay?.appliedPatternId ?: appSettingsRepository.getPatternId()
 		val strokes = measurePerformanceInMS(logger = { time, result ->
 			Log.i(
 				TAG, "updateTimingsOnStudyDay() performance is $time ms" +
@@ -622,9 +662,11 @@ class DayScheduleViewModel @Inject constructor(
 		studyDayRepository.getDayAndSchedulesWithSubjectsByDate(date).let { dayWithClasses ->
 			if (dayWithClasses != null) {
 				_uiState.update { dayScheduleUiState ->
+					val mappedClasses: MutableMap<Int, ScheduleWithSubject> = mutableMapOf()
+					dayWithClasses.classes.forEach { mappedClasses[it.schedule.index] = it }
 					dayScheduleUiState.copy(
 						studyDay = dayWithClasses.studyDay,
-						classes = dayWithClasses.classes.sortedBy { it.schedule.index },
+						classes = mappedClasses,
 						isLoading = false
 					)
 				}
@@ -660,12 +702,19 @@ class DayScheduleViewModel @Inject constructor(
 		}
 	}
 	
-	private suspend fun List<NetworkSchedule>.toLocalWithSubject(): List<ScheduleWithSubject> {
+	private suspend fun List<NetworkSchedule>.toLocalWithSubject(): Map<Int, ScheduleWithSubject> {
 		return try {
-			this.map { it.toLocalWithSubject() }
+			val newMap = mutableMapOf<Int, ScheduleWithSubject>()
+			this.forEach {
+				val localedClass = it.toLocalWithSubject()
+				newMap[it.index] = localedClass
+			}
+			newMap
 		} catch (e: RuntimeException) {
-			Log.e(TAG, "List<NetworkSchedule>.toLocalWithSubject: classes are empty because", e)
-			emptyList()
+			Log.e(
+				TAG, "List<NetworkSchedule>.toLocalWithSubject: classes are empty because", e
+			)
+			emptyMap()
 		}
 	}
 	
@@ -723,9 +772,10 @@ class DayScheduleViewModel @Inject constructor(
 		return dates
 	}
 	
-	private fun fromTimestamp(value: Long): LocalDate = if (value == 0L) LocalDate.now() else {
-		Instant.ofEpochSecond(value).atZone(ZoneId.systemDefault()).toLocalDate()
-	}
+	private fun fromTimestamp(value: Long): LocalDate =
+		if (value == 0L) LocalDate.now() else {
+			Instant.ofEpochSecond(value).atZone(ZoneId.systemDefault()).toLocalDate()
+		}
 	
 	private fun localDateToTimestamp(date: LocalDate): Long =
 		date.atStartOfDay(ZoneId.systemDefault()).toEpochSecond()
