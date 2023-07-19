@@ -122,7 +122,7 @@ fun DayScheduleScreen(
 			FloatingActionButton(
 				onClick = {
 					coroutineScope.launch {
-						if (viewModel.isScheduleRemote()) viewModel.localiseCurrentNetSchedule()
+						if (viewModel.isScheduleRemote()) viewModel.localiseNetSchedule()
 						onAddClass(localDateToTimestamp(uiState.selectedDate))
 					}
 				}
@@ -143,6 +143,7 @@ fun DayScheduleScreen(
 			onClassClick = { (viewModel::selectClass)(it); dialogState.show() },
 			noClassesLabel = R.string.no_classes_label,
 			onRefresh = { (viewModel::onDayChangeUpdate)(uiState.selectedDate) },
+			scheduleChoose = { (viewModel::scheduleChoose)(it) },
 			modifier = Modifier.padding(paddingValues),
 		)
 		
@@ -288,6 +289,7 @@ private fun DayScheduleContent(
 	changeDate: (LocalDate) -> Unit,
 	@StringRes noClassesLabel: Int,
 	onRefresh: () -> Unit,
+	scheduleChoose: (Int) -> Unit,
 	onClassClick: (ScheduleWithSubject) -> Unit,
 	modifier: Modifier,
 ) {
@@ -298,6 +300,7 @@ private fun DayScheduleContent(
 				loading = loading,
 				classes = classes,
 				fetchedClasses = fetchedClasses,
+				scheduleChoose = scheduleChoose,
 				onRefresh = onRefresh,
 			)
 		} else {
@@ -319,67 +322,71 @@ fun ScheduleComparisonTable(
 	loading: Boolean,
 	classes: Map<Int, ScheduleWithSubject>,
 	fetchedClasses: Map<Int, ScheduleWithSubject>,
+	scheduleChoose: (Int) -> Unit,
 	onRefresh: () -> Unit,
 ) {
-	val maxLines = maxOf(classes.maxBy { it.key }.key, fetchedClasses.maxBy { it.key }.key)
-	
-	LoadingContent(
-		loading = loading,
-		isContentScrollable = true,
-		empty = false,
-		emptyContent = {},
-		onRefresh = onRefresh
-	) {
-		val cellWidth: (Int) -> Dp = { index ->
-			when (index) {
-				0 -> 25.dp
-				else -> 168.dp
+	if (fetchedClasses.isNotEmpty()) {
+		val maxLines = maxOf(classes.maxBy { it.key }.key, fetchedClasses.maxBy { it.key }.key) + 1
+		
+		LoadingContent(
+			loading = loading,
+			isContentScrollable = true,
+			empty = false,
+			emptyContent = {},
+			onRefresh = onRefresh
+		) {
+			val cellWidth: (Int) -> Dp = { index ->
+				when (index) {
+					0 -> 25.dp
+					else -> 168.dp
+				}
 			}
-		}
-		val headerCellTitle: @Composable (Int) -> Unit = { index ->
-			val value = when (index) {
-				0 -> "#"
-				1 -> "Local"
-				2 -> "Network"
-				else -> ""
+			val headerCellTitle: @Composable (Int) -> Unit = { index ->
+				val value = when (index) {
+					0 -> "#"
+					1 -> "Local"
+					2 -> "Network"
+					else -> ""
+				}
+				
+				Text(
+					text = value,
+					fontSize = 20.sp,
+					textAlign = TextAlign.Center,
+					modifier = Modifier.padding(8.dp),
+					maxLines = 1,
+					fontWeight = FontWeight.Black,
+				)
 			}
 			
-			Text(
-				text = value,
-				fontSize = 20.sp,
-				textAlign = TextAlign.Center,
-				modifier = Modifier.padding(8.dp),
-				maxLines = 1,
-				fontWeight = FontWeight.Black,
-			)
-		}
-		
-		val cellText: @Composable (Int, Int) -> Unit = { index, columnIndex ->
-			val value = when (columnIndex) {
-				0 -> (index).toString()
-				1 -> classes[index]?.subject?.getName() ?: ""
-				2 -> fetchedClasses[index]?.subject?.getName() ?: ""
-				else -> ""
+			val cellText: @Composable (Int, Int) -> Unit = { index, columnIndex ->
+				val value = when (columnIndex) {
+					0 -> (index).toString()
+					1 -> classes[index - 1]?.subject?.getName() ?: ""
+					2 -> fetchedClasses[index - 1]?.subject?.getName() ?: ""
+					else -> ""
+				}
+				
+				Text(
+					text = value,
+					textAlign = TextAlign.Justify,
+					modifier = Modifier
+						.padding(8.dp)
+						.height(40.dp),
+					maxLines = 2,
+				)
 			}
 			
-			Text(
-				text = value,
-				textAlign = TextAlign.Justify,
-				modifier = Modifier
-					.padding(8.dp)
-					.height(40.dp),
-				maxLines = 2,
+			Table(
+				columnCount = 3,
+				lineCount = maxLines,
+				cellWidth = cellWidth,
+				scheduleChoose = scheduleChoose,
+				modifier = Modifier.verticalScroll(rememberScrollState()),
+				headerCellContent = headerCellTitle,
+				cellContent = cellText
 			)
 		}
-		
-		Table(
-			columnCount = 3,
-			lineCount = maxLines,
-			cellWidth = cellWidth,
-			modifier = Modifier.verticalScroll(rememberScrollState()),
-			headerCellContent = headerCellTitle,
-			cellContent = cellText
-		)
 	}
 }
 
@@ -397,6 +404,7 @@ private fun Table(
 	lineCount: Int,
 	cellWidth: (index: Int) -> Dp,
 	modifier: Modifier = Modifier,
+	scheduleChoose: (Int) -> Unit,
 	headerCellContent: @Composable (columnIndex: Int) -> Unit,
 	cellContent: @Composable (lineCount: Int, columnIndex: Int) -> Unit,
 ) {
@@ -407,7 +415,11 @@ private fun Table(
 			modifier = Modifier.padding(16.dp)
 		) {
 			items((0 until columnCount).toList()) { columnIndex ->
-				Column {
+				Column(modifier = Modifier.clickable {
+					if (columnIndex == 1 || columnIndex == 2) {
+						scheduleChoose(columnIndex)
+					}
+				}) {
 					(0..lineCount).forEach { index ->
 						Surface(
 							border = BorderStroke(1.dp, Color.Gray),
@@ -467,7 +479,7 @@ private fun ScheduleForDay(
 						)
 					} else isFirst.value = false
 					ClassItem(
-						index = (ordinalIndex - 1),
+						index = ordinalIndex,
 						lesson = lesson,
 						onClassClick = onClassClick,
 						currentPattern = currentPattern
@@ -695,6 +707,7 @@ private fun DayScheduleContentPreview() {
 			onClassClick = {},
 			noClassesLabel = R.string.no_classes_label,
 			onRefresh = {},
+			scheduleChoose = { },
 			modifier = Modifier
 		)
 	}

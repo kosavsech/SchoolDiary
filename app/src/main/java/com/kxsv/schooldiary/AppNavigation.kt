@@ -30,6 +30,8 @@ import com.kxsv.schooldiary.AppScreens.PATTERNS_SELECTION_SCREEN
 import com.kxsv.schooldiary.AppScreens.SUBJECTS_SCREEN
 import com.kxsv.schooldiary.AppScreens.SUBJECT_DETAIL_SCREEN
 import com.kxsv.schooldiary.AppScreens.TEACHERS_SCREEN
+import java.time.LocalDate
+import java.time.ZoneId
 
 private const val TAG = "AppNavigation"
 
@@ -155,7 +157,14 @@ class AppNavigationActions(private val navController: NavHostController) {
 		}
 	}
 	
-	fun navigateToDaySchedule(userMessage: Int = 0, dateStamp: Long, selectedPatternId: Long = 0) {
+	private fun localDateToTimestamp(date: LocalDate): Long =
+		date.atStartOfDay(ZoneId.systemDefault()).toEpochSecond()
+	
+	fun navigateToDaySchedule(
+		userMessage: Int = 0,
+		dateStamp: Long = localDateToTimestamp(LocalDate.now()),
+		selectedPatternId: Long = 0,
+	) {
 		val navigatesFromDrawer = userMessage == 0
 		navController.navigate(
 			"$DAY_SCHEDULE_SCREEN/$dateStamp".let {

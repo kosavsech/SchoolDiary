@@ -118,7 +118,10 @@ class ScheduleNetworkDataSourceImpl @Inject constructor(
 			val doc = withContext(ioDispatcher) {
 				Jsoup.connect("$BASE_URL$targetSegment").cookie(AUTH_COOKIE, cookie).get()
 			}
-			if (doc.location().contains("login")) throw NetworkException.NotLoggedInException
+			Log.d(TAG, doc.location())
+			if (doc.location().contains("login") or doc.location().contains("message")) {
+				throw NetworkException.NotLoggedInException
+			}
 			doc
 		} catch (e: NetworkException) {
 			eduTatarAuth(
