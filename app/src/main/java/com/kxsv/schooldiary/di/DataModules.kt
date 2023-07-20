@@ -25,11 +25,11 @@ import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternDao
 import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternRepositoryImpl
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeDao
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeRepositoryImpl
-import com.kxsv.schooldiary.data.network.schedule.ScheduleNetworkDataSourceImpl
+import com.kxsv.schooldiary.data.network.NetworkDataSourceImpl
 import com.kxsv.schooldiary.domain.AppSettingsRepository
 import com.kxsv.schooldiary.domain.GradeRepository
+import com.kxsv.schooldiary.domain.NetworkDataSource
 import com.kxsv.schooldiary.domain.PatternStrokeRepository
-import com.kxsv.schooldiary.domain.ScheduleNetworkDataSource
 import com.kxsv.schooldiary.domain.ScheduleRepository
 import com.kxsv.schooldiary.domain.StudyDayRepository
 import com.kxsv.schooldiary.domain.SubjectRepository
@@ -150,5 +150,5 @@ abstract class DataSourceModule {
 	
 	@Singleton
 	@Binds
-	abstract fun bindScheduleNetworkDataSource(dataSource: ScheduleNetworkDataSourceImpl): ScheduleNetworkDataSource
+	abstract fun bindScheduleNetworkDataSource(dataSource: NetworkDataSourceImpl): NetworkDataSource
 }

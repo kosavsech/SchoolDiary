@@ -1,6 +1,8 @@
 package com.kxsv.schooldiary.data.local.features.grade
 
+import com.kxsv.schooldiary.di.DefaultDispatcher
 import com.kxsv.schooldiary.domain.GradeRepository
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -8,6 +10,7 @@ import javax.inject.Singleton
 @Singleton
 class GradeRepositoryImpl @Inject constructor(
 	private val gradeDataSource: GradeDao,
+	@DefaultDispatcher private val dispatcher: CoroutineDispatcher,
 ) : GradeRepository {
 	
 	override fun getGradesStream(): Flow<List<Grade>> {
@@ -26,8 +29,16 @@ class GradeRepositoryImpl @Inject constructor(
 		return gradeDataSource.getAll()
 	}
 	
+	override suspend fun getGradesWithSubjects(): List<GradeWithSubject> {
+		return gradeDataSource.getAllWithSubjects()
+	}
+	
 	override suspend fun getGrade(gradeId: Long): Grade? {
 		return gradeDataSource.getById(gradeId)
+	}
+	
+	override suspend fun getGradeWithSubject(gradeId: Long): GradeWithSubject? {
+		return gradeDataSource.getByIdWithSubject(gradeId)
 	}
 	
 	override suspend fun createGrade(grade: Grade): Long {
@@ -36,6 +47,10 @@ class GradeRepositoryImpl @Inject constructor(
 	
 	override suspend fun updateGrade(grade: Grade) {
 		gradeDataSource.upsert(grade)
+	}
+	
+	override suspend fun upsertAll(grades: List<Grade>) {
+		gradeDataSource.upsertAll(grades)
 	}
 	
 	override suspend fun deleteAllGrades() {

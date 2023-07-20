@@ -73,7 +73,7 @@ fun AppNavGraph(
 	navController: NavHostController = rememberNavController(),
 	coroutineScope: CoroutineScope = rememberCoroutineScope(),
 	drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
-	startDestination: String = LOGIN_ROUTE,
+	startDestination: String,
 	navActions: AppNavigationActions = remember(navController) {
 		AppNavigationActions(navController)
 	},

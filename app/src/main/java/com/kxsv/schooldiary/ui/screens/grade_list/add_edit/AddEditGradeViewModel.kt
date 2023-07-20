@@ -138,26 +138,22 @@ class AddEditGradeViewModel @Inject constructor(
 	}
 	
 	private fun loadGrade(gradeId: Long) {
-		_uiState.update {
-			it.copy(isLoading = true)
-		}
+		_uiState.update { it.copy(isLoading = true) }
 		
 		viewModelScope.launch {
-			gradeRepository.getGrade(gradeId).let { grade ->
-				if (grade != null) {
+			gradeRepository.getGradeWithSubject(gradeId).let { gradeWithSubject ->
+				if (gradeWithSubject != null) {
 					_uiState.update {
 						it.copy(
-							mark = grade.mark.getValue(),
-							typeOfWork = grade.typeOfWork,
-							gradeDate = grade.date,
-							pickedSubject = subjectRepository.getSubject(grade.subjectMasterId),
+							mark = gradeWithSubject.grade.mark.getValue(),
+							typeOfWork = gradeWithSubject.grade.typeOfWork,
+							gradeDate = gradeWithSubject.grade.date,
+							pickedSubject = gradeWithSubject.subject,
 							isLoading = false
 						)
 					}
 				} else {
-					_uiState.update {
-						it.copy(isLoading = false)
-					}
+					_uiState.update { it.copy(isLoading = false) }
 				}
 			}
 		}

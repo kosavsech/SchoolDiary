@@ -121,7 +121,7 @@ fun DayScheduleCopyScreen(
 			selectedDate = uiState.selectedDate,
 			classes = uiState.classes,
 			selectedCalendarDay = uiState.selectedRefCalendarDay,
-			updateSelectedCalendarDay = viewModel::updateOnCalendarDayChange,
+			updateSelectedCalendarDay = viewModel::onCalendarDayChangeUpdate,
 			modifier = Modifier.padding(paddingValues)
 		)
 		

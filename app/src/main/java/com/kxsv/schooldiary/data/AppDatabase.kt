@@ -27,7 +27,7 @@ import com.kxsv.schooldiary.util.Converters
         Subject::class, SubjectTeacher::class, Schedule::class,
         StudyDay::class, Grade::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

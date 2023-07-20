@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.di.IoDispatcher
-import com.kxsv.schooldiary.domain.ScheduleNetworkDataSource
+import com.kxsv.schooldiary.domain.NetworkDataSource
 import com.kxsv.schooldiary.util.NetworkError
 import com.kxsv.schooldiary.util.NetworkException
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,7 +30,7 @@ data class LoginUiState(
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-	private val networkDataSource: ScheduleNetworkDataSource,
+	private val networkDataSource: NetworkDataSource,
 	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	

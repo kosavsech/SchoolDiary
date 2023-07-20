@@ -5,8 +5,8 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kxsv.schooldiary.AppDestinations.GRADES_ROUTE
 import com.kxsv.schooldiary.AppDestinations.LOGIN_ROUTE
-import com.kxsv.schooldiary.AppDestinations.SCHEDULE_ROUTE
 import com.kxsv.schooldiary.domain.AppSettingsRepository
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -18,7 +18,7 @@ class SplashViewModel @Inject constructor(
 	/*	private val _isLoading: MutableState<Boolean> = mutableStateOf(true)
 		val isLoading: State<Boolean> = _isLoading*/
 	
-	private val _startDestination: MutableState<String> = mutableStateOf(LOGIN_ROUTE)
+	private val _startDestination: MutableState<String> = mutableStateOf(GRADES_ROUTE)
 	val startDestination: State<String> = _startDestination
 	
 	init {
@@ -30,7 +30,7 @@ class SplashViewModel @Inject constructor(
 			if (firstTime) {
 				_startDestination.value = LOGIN_ROUTE
 			} else {
-				_startDestination.value = SCHEDULE_ROUTE
+				_startDestination.value = GRADES_ROUTE
 			}
 //			_isLoading.value = false
 		}

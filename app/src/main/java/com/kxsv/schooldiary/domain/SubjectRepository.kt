@@ -20,6 +20,8 @@ interface SubjectRepository {
 	
 	suspend fun getSubjectByName(subjectName: String): Subject?
 	
+	suspend fun getSubjectIdByName(subjectName: String): Long?
+	
 	suspend fun getSubjectWithTeachers(subjectId: Long): SubjectWithTeachers?
 	
 	suspend fun createSubject(subject: Subject, teachers: Set<Teacher>)

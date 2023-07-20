@@ -3,7 +3,6 @@ package com.kxsv.schooldiary.data.local.features.schedule
 import com.kxsv.schooldiary.data.local.features.study_day.StudyDay
 import com.kxsv.schooldiary.data.local.features.study_day.StudyDayDao
 import com.kxsv.schooldiary.di.IoDispatcher
-import com.kxsv.schooldiary.domain.ScheduleNetworkDataSource
 import com.kxsv.schooldiary.domain.ScheduleRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -14,7 +13,6 @@ import javax.inject.Singleton
 @Singleton
 class ScheduleRepositoryImpl @Inject constructor(
 	private val scheduleDataSource: ScheduleDao,
-	private val scheduleNetworkDataSource: ScheduleNetworkDataSource,
 	private val studyDayDataSource: StudyDayDao,
 	@IoDispatcher private val dispatcher: CoroutineDispatcher,
 ) : ScheduleRepository {

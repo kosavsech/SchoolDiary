@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +34,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.grade.Grade
+import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
+import com.kxsv.schooldiary.data.local.features.subject.Subject
 import com.kxsv.schooldiary.util.Mark
 import com.kxsv.schooldiary.util.ui.GradesTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
@@ -55,8 +58,13 @@ fun GradesScreen(
 		topBar = { GradesTopAppBar(openDrawer = openDrawer) },
 		modifier = modifier.fillMaxSize(),
 		floatingActionButton = {
-			FloatingActionButton(onClick = onAddGrade) {
-				Icon(Icons.Default.Add, stringResource(R.string.add_grade))
+			Row {
+				FloatingActionButton(onClick = { viewModel.fetchGrades() }) {
+					Icon(Icons.Default.CloudDownload, stringResource(R.string.fetch_grades))
+				}
+				FloatingActionButton(onClick = onAddGrade) {
+					Icon(Icons.Default.Add, stringResource(R.string.add_grade))
+				}
 			}
 		}
 	) { paddingValues ->
@@ -67,6 +75,7 @@ fun GradesScreen(
 			grades = uiState.grades,
 			//noSubjectsLabel = 0,
 			onGradeClick = onGradeClick,
+			onRefresh = viewModel::loadLocalGrades,
 			modifier = Modifier.padding(paddingValues),
 		)
 		
@@ -93,11 +102,12 @@ fun GradesScreen(
 @Composable
 private fun GradesContent(
 	loading: Boolean,
-	grades: List<Grade>,
+	grades: List<GradeWithSubject>,
 	// TODO
 	//  @StringRes noSubjectsLabel: Int,
 	//  onRefresh: () -> Unit,
 	onGradeClick: (Grade) -> Unit,
+	onRefresh: () -> Unit,
 	modifier: Modifier,
 ) {
 	LoadingContent(
@@ -105,7 +115,7 @@ private fun GradesContent(
 		isContentScrollable = true,
 		empty = grades.isEmpty(),
 		emptyContent = { Text(text = "No subjects for yet") },
-		onRefresh = { /*TODO*/ }
+		onRefresh = onRefresh
 	) {
 		LazyColumn(
 			modifier = modifier
@@ -113,7 +123,7 @@ private fun GradesContent(
 		) {
 			items(grades) { grade ->
 				GradeItem(
-					grade = grade,
+					gradeWithSubject = grade,
 					onGradeClick = onGradeClick,
 				)
 			}
@@ -123,7 +133,7 @@ private fun GradesContent(
 
 @Composable
 private fun GradeItem(
-	grade: Grade,
+	gradeWithSubject: GradeWithSubject,
 	onGradeClick: (Grade) -> Unit,
 ) {
 	Row(
@@ -131,18 +141,22 @@ private fun GradeItem(
 		horizontalArrangement = Arrangement.SpaceBetween,
 		modifier = Modifier
 			.fillMaxWidth()
-			.clickable { onGradeClick(grade) }
+			.clickable { onGradeClick(gradeWithSubject.grade) }
 			.padding(
 				horizontal = dimensionResource(R.dimen.horizontal_margin),
 				vertical = dimensionResource(R.dimen.vertical_margin)
 			)
 	) {
 		Text(
-			text = grade.mark.getValue(),
+			text = gradeWithSubject.grade.mark.getValue(),
 			style = MaterialTheme.typography.titleMedium,
 		)
 		Text(
-			text = grade.date.format(DateTimeFormatter.ISO_LOCAL_DATE),
+			text = gradeWithSubject.subject.getName(),
+			style = MaterialTheme.typography.titleMedium,
+		)
+		Text(
+			text = gradeWithSubject.grade.date.format(DateTimeFormatter.ISO_LOCAL_DATE),
 			style = MaterialTheme.typography.titleMedium,
 		)
 		
@@ -157,14 +171,18 @@ private fun SubjectsContentPreview() {
 		GradesContent(
 			loading = false,
 			grades = listOf(
-				Grade(
-					mark = Mark.FIVE,
-					date = LocalDate.now(),
-					typeOfWork = "Самостоятельная работа",
-					subjectMasterId = 0,
+				GradeWithSubject(
+					Grade(
+						mark = Mark.FIVE,
+						typeOfWork = "Самостоятельная работа",
+						date = LocalDate.now(),
+						subjectMasterId = 0,
+					),
+					Subject("Английский язык")
 				)
 			),
 			onGradeClick = {},
+			onRefresh = {},
 			modifier = Modifier
 		)
 	}
@@ -174,11 +192,17 @@ private fun SubjectsContentPreview() {
 @Composable
 private fun SubjectItemPreview() {
 	Surface {
-		GradeItem(grade = Grade(
-			mark = Mark.FIVE,
-			date = LocalDate.now(),
-			typeOfWork = "Самостоятельная работа",
-			subjectMasterId = 0,
-		), onGradeClick = {})
+		GradeItem(
+			gradeWithSubject = GradeWithSubject(
+				Grade(
+					mark = Mark.FIVE,
+					typeOfWork = "Самостоятельная работа",
+					date = LocalDate.now(),
+					subjectMasterId = 0,
+				),
+				Subject("Английский язык")
+			),
+			onGradeClick = {}
+		)
 	}
 }

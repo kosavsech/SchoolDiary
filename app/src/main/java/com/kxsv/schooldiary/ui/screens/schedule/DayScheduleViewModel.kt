@@ -18,8 +18,8 @@ import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.Patt
 import com.kxsv.schooldiary.data.network.schedule.NetworkSchedule
 import com.kxsv.schooldiary.di.IoDispatcher
 import com.kxsv.schooldiary.domain.AppSettingsRepository
+import com.kxsv.schooldiary.domain.NetworkDataSource
 import com.kxsv.schooldiary.domain.PatternStrokeRepository
-import com.kxsv.schooldiary.domain.ScheduleNetworkDataSource
 import com.kxsv.schooldiary.domain.ScheduleRepository
 import com.kxsv.schooldiary.domain.StudyDayRepository
 import com.kxsv.schooldiary.domain.SubjectRepository
@@ -64,7 +64,7 @@ data class DayScheduleUiState(
 @HiltViewModel
 class DayScheduleViewModel @Inject constructor(
 	private val scheduleRepository: ScheduleRepository,
-	private val netScheduleDataSource: ScheduleNetworkDataSource,
+	private val networkDataSource: NetworkDataSource,
 	private val subjectRepository: SubjectRepository,
 	private val strokeRepository: PatternStrokeRepository,
 	private val studyDayRepository: StudyDayRepository,
@@ -229,7 +229,7 @@ class DayScheduleViewModel @Inject constructor(
 		_uiState.update { it.copy(refRange = null, destRange = null) }
 	}
 	
-	fun updateOnCalendarDayChange(calendarDay: CalendarDay?) {
+	fun onCalendarDayChangeUpdate(calendarDay: CalendarDay?) {
 		_uiState.update {
 			it.copy(
 				isLoading = true,
@@ -241,12 +241,12 @@ class DayScheduleViewModel @Inject constructor(
 			)
 		}
 		if (calendarDay != null) {
-			Log.i(TAG, "updateOnCalendarDayChange() loading classes from $calendarDay.")
+			Log.i(TAG, "onCalendarDayChangeUpdate() loading classes from $calendarDay.")
 			retrieveScheduleOnDate(calendarDay.date)
 		} else {
 			Log.d(
 				TAG,
-				"updateOnCalendarDayChange: couldn't load classes because calendar day is null."
+				"onCalendarDayChangeUpdate: couldn't load classes because calendar day is null."
 			)
 		}
 	}
@@ -380,7 +380,7 @@ class DayScheduleViewModel @Inject constructor(
 				"copyRemoteSchedule: uiState.value.classes = ${uiState.value.classes}"
 			)
 			val localizedNetClasses =
-				netScheduleDataSource.loadScheduleForDate(fromDate).toLocal(cloneDayId)
+				networkDataSource.loadScheduleForDate(fromDate).toLocal(cloneDayId)
 			
 			scheduleRepository.upsertAll(localizedNetClasses)
 			
@@ -488,7 +488,7 @@ class DayScheduleViewModel @Inject constructor(
 					)
 				}) {
 					withTimeout(10000L) {
-						netScheduleDataSource.loadScheduleForDate(date).toLocalWithSubject()
+						networkDataSource.loadScheduleForDate(date).toLocalWithSubject()
 					}
 				}
 				_uiState.update {
@@ -512,8 +512,8 @@ class DayScheduleViewModel @Inject constructor(
 		}
 	
 	/**
-	 * Check if schedule is remote. Can check [mapOfClasses], [listOfClasses], [schedules].
 	 * If no parameters passed than checks current shown [classes][com.kxsv.schooldiary.ui.screens.schedule.DayScheduleUiState.classes]
+	 * Can check [mapOfClasses], [listOfClasses], [schedules].
 	 *
 	 * @param mapOfClasses specific map of [ScheduleWithSubject] to be checked
 	 * @param listOfClasses specific list of [ScheduleWithSubject] to be checked
@@ -547,37 +547,42 @@ class DayScheduleViewModel @Inject constructor(
 	 * @throws IllegalArgumentException when current classes are empty
 	 */
 	suspend fun localiseNetSchedule(isFetched: Boolean? = false) {
-		try {
-			val studyDay = getCurrentStudyDayForced()
-			
-			val classes = if (isFetched!!) uiState.value.fetchedClasses else uiState.value.classes
-			if (classes.isNullOrEmpty()) throw IllegalArgumentException("Shouldn't be called with empty classes")
-			
-			scheduleRepository.deleteAllByDayId(studyDay.studyDayId)
-			
-			Log.i(TAG, "localiseNetSchedule: in process for ${uiState.value.studyDay}")
-			val schedules = classes.map { it.value.schedule }
-			
-			if (currentClassesHasMasterId()) {
-				scheduleRepository.upsertAll(schedules)
-			} else {
-				val schedulesWithMasterDay =
-					schedules.map { it.copy(studyDayMasterId = studyDay.studyDayId) }
-				scheduleRepository.upsertAll(schedulesWithMasterDay)
+		measurePerformanceInMS(logger = { time, _ ->
+			Log.i(TAG, "localiseNetSchedule: performance is $time ms")
+		}) {
+			try {
+				val studyDay = getCurrentStudyDayForced()
+				
+				val classes =
+					if (isFetched!!) uiState.value.fetchedClasses else uiState.value.classes
+				if (classes.isNullOrEmpty()) throw IllegalArgumentException("Shouldn't be called with empty classes")
+				
+				scheduleRepository.deleteAllByDayId(studyDay.studyDayId)
+				
+				Log.i(TAG, "localiseNetSchedule: in process for ${uiState.value.studyDay}")
+				val schedules = classes.map { it.value.schedule }
+				
+				if (currentClassesHasMasterId()) {
+					scheduleRepository.upsertAll(schedules)
+				} else {
+					val schedulesWithMasterDay =
+						schedules.map { it.copy(studyDayMasterId = studyDay.studyDayId) }
+					scheduleRepository.upsertAll(schedulesWithMasterDay)
+				}
+				loadLocalScheduleOnDate(studyDay.date)
+			} catch (e: IllegalStateException) {
+				Log.e(
+					TAG, "localiseNetSchedule: couldn't localise" +
+							" because cannot check if schedule is localised", e
+				)
+			} catch (e: IllegalArgumentException) {
+				Log.e(
+					TAG,
+					"localiseNetSchedule: couldn't localise because nothing to localise", e
+				)
+			} catch (e: RuntimeException) {
+				Log.e(TAG, "localiseNetSchedule: failed to localise net schedule", e)
 			}
-			loadLocalScheduleOnDate(studyDay.date)
-		} catch (e: IllegalStateException) {
-			Log.e(
-				TAG, "localiseNetSchedule: couldn't localise" +
-						" because cannot check if schedule is localised", e
-			)
-		} catch (e: IllegalArgumentException) {
-			Log.e(
-				TAG,
-				"localiseNetSchedule: couldn't localise because nothing to localise", e
-			)
-		} catch (e: RuntimeException) {
-			Log.e(TAG, "localiseNetSchedule: failed to localise net schedule", e)
 		}
 	}
 	
@@ -616,7 +621,7 @@ class DayScheduleViewModel @Inject constructor(
 						)
 					}) {
 						withTimeout(10000L) {
-							netScheduleDataSource.loadScheduleForDate(uiState.value.selectedDate)
+							networkDataSource.loadScheduleForDate(uiState.value.selectedDate)
 								.toLocalWithSubject()
 						}
 					}
@@ -726,36 +731,11 @@ class DayScheduleViewModel @Inject constructor(
 		}
 	}
 	
-	private suspend fun NetworkSchedule.toLocalWithSubject(): ScheduleWithSubject {
-		try {
-			val subject =
-				subjectRepository.getSubjectByName(subjectAncestorName)
-					?: throw NoSuchElementException("Not found subject with name $subjectAncestorName")
-			// TODO: add prompt to create subject with such name, or create it forcibly
-			
-			val studyDay = studyDayRepository.getByDate(date)
-			val localizedClass = ScheduleWithSubject(
-				schedule = Schedule(
-					index = index,
-					subjectAncestorId = subject.subjectId,
-				),
-				subject = subject,
-			)
-			return if (studyDay != null) {
-				localizedClass.copy(schedule = localizedClass.schedule.copy(studyDayMasterId = studyDay.studyDayId))
-			} else {
-				localizedClass
-			}
-		} catch (e: NoSuchElementException) {
-			throw RuntimeException("Failed to convert lesson toLocalWithSubject", e)
-		}
-	}
-	
 	private suspend fun List<NetworkSchedule>.toLocalWithSubject(): Map<Int, ScheduleWithSubject> {
 		return try {
 			val newMap = mutableMapOf<Int, ScheduleWithSubject>()
 			this.forEach {
-				val localedClass = it.toLocalWithSubject()
+				val localedClass = it.toLocalWithSubject(subjectRepository, studyDayRepository)
 				newMap[it.index] = localedClass
 			}
 			newMap
@@ -764,30 +744,6 @@ class DayScheduleViewModel @Inject constructor(
 				TAG, "List<NetworkSchedule>.toLocalWithSubject: classes are empty because", e
 			)
 			emptyMap()
-		}
-	}
-	
-	private suspend fun NetworkSchedule.toLocal(studyDayMasterId: Long?): Schedule {
-		try {
-			val subject =
-				subjectRepository.getSubjectByName(subjectAncestorName)
-					?: throw NoSuchElementException("Not found subject with name $subjectAncestorName")
-			// TODO: add prompt to create subject with such name, or create it forcibly
-			
-			val studyDay = studyDayRepository.getByDate(date)
-			val localizedClass = Schedule(
-				index = index,
-				subjectAncestorId = subject.subjectId,
-			)
-			return if (studyDayMasterId != null) {
-				localizedClass.copy(studyDayMasterId = studyDayMasterId)
-			} else if (studyDay != null) {
-				localizedClass.copy(studyDayMasterId = studyDay.studyDayId)
-			} else {
-				localizedClass
-			}
-		} catch (e: NoSuchElementException) {
-			throw RuntimeException("Failed to convert class toLocal", e)
 		}
 	}
 	
@@ -802,7 +758,7 @@ class DayScheduleViewModel @Inject constructor(
 	 */
 	private suspend fun List<NetworkSchedule>.toLocal(studyDayMasterId: Long? = null): List<Schedule> {
 		return try {
-			this.map { it.toLocal(studyDayMasterId) }
+			this.map { it.toLocal(studyDayMasterId, subjectRepository, studyDayRepository) }
 		} catch (e: RuntimeException) {
 			Log.e(TAG, "List<NetworkSchedule>.toLocal: classes are empty because", e)
 			emptyList()
@@ -830,12 +786,9 @@ class DayScheduleViewModel @Inject constructor(
 		date.atStartOfDay(ZoneId.systemDefault()).toEpochSecond()
 	
 	//the inline performance measurement method
-	private inline fun <T> measurePerformanceInMS(
-		logger: (Long, T) -> Unit,
-		function: () -> T,
-	): T {
+	private inline fun <T> measurePerformanceInMS(logger: (Long, T) -> Unit, func: () -> T): T {
 		val startTime = System.currentTimeMillis()
-		val result: T = function.invoke()
+		val result: T = func.invoke()
 		val endTime = System.currentTimeMillis()
 		logger.invoke(endTime - startTime, result)
 		return result

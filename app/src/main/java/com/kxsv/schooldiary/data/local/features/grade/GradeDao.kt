@@ -15,11 +15,19 @@ interface GradeDao {
 	@Query("SELECT * FROM Grade WHERE gradeId = :gradeId")
 	fun observeById(gradeId: Long): Flow<Grade>
 	
-	@Query("SELECT * FROM Grade")
+	@Query("SELECT * FROM Grade ORDER BY date DESC")
 	suspend fun getAll(): List<Grade>
+	
+	@Transaction
+	@Query("SELECT * FROM Grade ORDER BY date DESC")
+	suspend fun getAllWithSubjects(): List<GradeWithSubject>
 	
 	@Query("SELECT * FROM Grade WHERE gradeId = :gradeId")
 	suspend fun getById(gradeId: Long): Grade?
+	
+	@Transaction
+	@Query("SELECT * FROM Grade WHERE gradeId = :gradeId")
+	suspend fun getByIdWithSubject(gradeId: Long): GradeWithSubject?
 	
 	@Upsert
 	suspend fun upsertAll(grades: List<Grade>)

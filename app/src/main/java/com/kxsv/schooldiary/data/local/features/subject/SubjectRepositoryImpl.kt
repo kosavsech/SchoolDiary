@@ -39,6 +39,10 @@ class SubjectRepositoryImpl @Inject constructor(
 		return subjectDataSource.getByName(subjectName)
 	}
 	
+	override suspend fun getSubjectIdByName(subjectName: String): Long? {
+		return subjectDataSource.getByName(subjectName)?.subjectId
+	}
+	
 	override suspend fun getSubjectWithTeachers(subjectId: Long): SubjectWithTeachers? {
 		return subjectDataSource.getByIdWithTeachers(subjectId)
 	}

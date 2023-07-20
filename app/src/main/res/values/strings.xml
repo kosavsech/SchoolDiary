@@ -102,4 +102,5 @@
     <string name="not_logged_in">You\'re not logged to site</string>
     <string name="fetch_schedule">Fetch schedule from net and compare it with local</string>
     <string name="absent_net_schedule">"Remote schedule for this day is empty "</string>
+    <string name="fetch_grades">Load grades from site</string>
 </resources>

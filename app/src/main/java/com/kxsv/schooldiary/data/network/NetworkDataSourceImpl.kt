@@ -1,12 +1,15 @@
-package com.kxsv.schooldiary.data.network.schedule
+package com.kxsv.schooldiary.data.network
 
 import android.util.Log
+import com.kxsv.schooldiary.data.network.grade.NetworkGrade
+import com.kxsv.schooldiary.data.network.schedule.NetworkSchedule
 import com.kxsv.schooldiary.di.IoDispatcher
 import com.kxsv.schooldiary.domain.AppSettingsRepository
-import com.kxsv.schooldiary.domain.ScheduleNetworkDataSource
+import com.kxsv.schooldiary.domain.NetworkDataSource
+import com.kxsv.schooldiary.util.Mark
+import com.kxsv.schooldiary.util.NetLessonColumn
 import com.kxsv.schooldiary.util.NetworkException
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import org.jsoup.Connection
 import org.jsoup.Jsoup
@@ -15,16 +18,14 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
-private const val TAG = "ScheduleNetworkDataSour"
+private const val TAG = "NetworkDataSourceImpl"
 private const val AUTH_COOKIE = "DNSID"
 private const val BASE_URL = "https://edu.tatar.ru"
 
-class ScheduleNetworkDataSourceImpl @Inject constructor(
+class NetworkDataSourceImpl @Inject constructor(
 	private val appSettingsRepository: AppSettingsRepository,
 	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
-) : ScheduleNetworkDataSource {
-	// A mutex is used to ensure that reads and writes are thread-safe.
-	private val accessMutex = Mutex()
+) : NetworkDataSource {
 	
 	private fun handleErrorResponse(result: String) {
 		if (result.contains(
@@ -78,26 +79,70 @@ class ScheduleNetworkDataSourceImpl @Inject constructor(
 	/**
 	 * Load schedule for date
 	 *
-	 * @param date
+	 * @param localDate
 	 * @return List<[NetworkSchedule]>
 	 */
-	override suspend fun loadScheduleForDate(date: LocalDate): List<NetworkSchedule> {
+	override suspend fun loadScheduleForDate(localDate: LocalDate): List<NetworkSchedule> {
 		val schedule = mutableListOf<NetworkSchedule>()
-		val dayPage = getDayPage(date)
+		val dayPage = getDayPage(localDate)
 		val lessons = dayPage.select("div.d-table > table > tbody > tr")
-		val lessonsAmount = lessons.size
-		for (i in 0 until lessonsAmount) {
-			val subjectAncestorName =
-				lessons.select("tr:nth-child(${i + 1}) > td:nth-child(2)").text()
-			schedule.add(
-				NetworkSchedule(
-					index = i,
-					date = date,
-					subjectAncestorName = subjectAncestorName
+		lessons.forEachIndexed { index, lesson ->
+			val subjectAncestorName = lesson.child(NetLessonColumn.SUBJECT.ordinal).text()
+			if (subjectAncestorName.isNotBlank()) {
+				schedule.add(
+					NetworkSchedule(
+						index = index,
+						date = localDate,
+						subjectAncestorName = subjectAncestorName
+					)
 				)
-			)
+			}
 		}
 		return schedule
+	}
+	
+	/**
+	 * Load grades for date
+	 *
+	 * @param localDate
+	 * @return
+	 */
+	override suspend fun loadGradesForDate(localDate: LocalDate): List<NetworkGrade> {
+		val grades = mutableListOf<NetworkGrade>()
+		val dayPage = getDayPage(localDate)
+		val lessons = dayPage.select("div.d-table > table > tbody > tr")
+		lessons.forEachIndexed { lessonIndex, lesson ->
+			val lessonGradeItems = mutableListOf<GradeItem>()
+			val marks =
+				lesson.child(NetLessonColumn.GRADE.ordinal).children().select("tbody > tr > td")
+			if (marks.size != 0) {
+				marks.forEachIndexed { index, mark ->
+					val value = mark.select("td").text()
+					val typeOfWork = mark.select("td").attr("title").split(" - ")[1]
+					lessonGradeItems.add(
+						GradeItem(value = value, typeOfWork = typeOfWork, index = index)
+					)
+				}
+			} else {
+				lesson.child(NetLessonColumn.COMMENT.ordinal).text().let { comment ->
+					if (comment.isNotBlank()) lessonGradeItems.add(GradeItem(value = comment))
+				}
+			}
+			val subjectAncestorName = lesson.child(NetLessonColumn.SUBJECT.ordinal).text()
+			lessonGradeItems.forEach { gradeItem ->
+				grades.add(
+					NetworkGrade(
+						mark = Mark.fromInput(gradeItem.value),
+						typeOfWork = gradeItem.typeOfWork,
+						date = localDate,
+						subjectAncestorName = subjectAncestorName,
+						index = gradeItem.index,
+						lessonIndex = lessonIndex
+					)
+				)
+			}
+		}
+		return grades
 	}
 	
 	/**
@@ -137,4 +182,10 @@ class ScheduleNetworkDataSourceImpl @Inject constructor(
 		val dateFormat = localDate.format(DateTimeFormatter.ISO_LOCAL_DATE)
 		return getPage("/user/diary/day?for=$dateFormat")
 	}
+	
+	private data class GradeItem(
+		val value: String,
+		val typeOfWork: String = "",
+		val index: Int = 0,
+	)
 }
