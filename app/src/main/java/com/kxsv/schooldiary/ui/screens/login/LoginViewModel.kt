@@ -4,10 +4,10 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
+import com.kxsv.schooldiary.data.remote.WebService
 import com.kxsv.schooldiary.di.IoDispatcher
-import com.kxsv.schooldiary.domain.NetworkDataSource
-import com.kxsv.schooldiary.util.NetworkError
-import com.kxsv.schooldiary.util.NetworkException
+import com.kxsv.schooldiary.util.remote.NetworkError
+import com.kxsv.schooldiary.util.remote.NetworkException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,7 +30,7 @@ data class LoginUiState(
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-	private val networkDataSource: NetworkDataSource,
+	private val webService: WebService,
 	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
@@ -73,7 +73,7 @@ class LoginViewModel @Inject constructor(
 		}
 		viewModelScope.launch(ioDispatcher) {
 			try {
-				networkDataSource.eduTatarAuth(uiState.value.eduLogin, uiState.value.eduPassword)
+				webService.eduTatarAuth(uiState.value.eduLogin, uiState.value.eduPassword)
 				_uiState.update { it.copy(loggedIn = true) }
 			} catch (e: NetworkException) {
 				_uiState.update { it.copy(authError = e.mapToNetworkError()) }

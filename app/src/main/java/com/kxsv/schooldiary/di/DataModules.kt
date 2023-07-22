@@ -7,34 +7,34 @@ import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStoreFile
 import androidx.room.Room
 import com.kxsv.schooldiary.data.AppDatabase
-import com.kxsv.schooldiary.data.app_settings.AppSettings
-import com.kxsv.schooldiary.data.app_settings.AppSettingsRepositoryImpl
-import com.kxsv.schooldiary.data.app_settings.AppSettingsSerializer
 import com.kxsv.schooldiary.data.local.features.associative_tables.subject_teacher.SubjectTeacherDao
 import com.kxsv.schooldiary.data.local.features.grade.GradeDao
-import com.kxsv.schooldiary.data.local.features.grade.GradeRepositoryImpl
-import com.kxsv.schooldiary.data.local.features.schedule.ScheduleDao
-import com.kxsv.schooldiary.data.local.features.schedule.ScheduleRepositoryImpl
+import com.kxsv.schooldiary.data.local.features.lesson.LessonDao
 import com.kxsv.schooldiary.data.local.features.study_day.StudyDayDao
-import com.kxsv.schooldiary.data.local.features.study_day.StudyDayRepositoryImpl
 import com.kxsv.schooldiary.data.local.features.subject.SubjectDao
-import com.kxsv.schooldiary.data.local.features.subject.SubjectRepositoryImpl
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherDao
-import com.kxsv.schooldiary.data.local.features.teacher.TeacherRepositoryImpl
 import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternDao
-import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternRepositoryImpl
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeDao
-import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeRepositoryImpl
-import com.kxsv.schooldiary.data.network.NetworkDataSourceImpl
-import com.kxsv.schooldiary.domain.AppSettingsRepository
-import com.kxsv.schooldiary.domain.GradeRepository
-import com.kxsv.schooldiary.domain.NetworkDataSource
-import com.kxsv.schooldiary.domain.PatternStrokeRepository
-import com.kxsv.schooldiary.domain.ScheduleRepository
-import com.kxsv.schooldiary.domain.StudyDayRepository
-import com.kxsv.schooldiary.domain.SubjectRepository
-import com.kxsv.schooldiary.domain.TeacherRepository
-import com.kxsv.schooldiary.domain.TimePatternRepository
+import com.kxsv.schooldiary.data.local.user_preferences.UserPreferences
+import com.kxsv.schooldiary.data.local.user_preferences.UserPreferencesSerializer
+import com.kxsv.schooldiary.data.remote.WebService
+import com.kxsv.schooldiary.data.remote.WebServiceImpl
+import com.kxsv.schooldiary.data.repository.GradeRepository
+import com.kxsv.schooldiary.data.repository.GradeRepositoryImpl
+import com.kxsv.schooldiary.data.repository.LessonRepository
+import com.kxsv.schooldiary.data.repository.LessonRepositoryImpl
+import com.kxsv.schooldiary.data.repository.PatternStrokeRepository
+import com.kxsv.schooldiary.data.repository.PatternStrokeRepositoryImpl
+import com.kxsv.schooldiary.data.repository.StudyDayRepository
+import com.kxsv.schooldiary.data.repository.StudyDayRepositoryImpl
+import com.kxsv.schooldiary.data.repository.SubjectRepository
+import com.kxsv.schooldiary.data.repository.SubjectRepositoryImpl
+import com.kxsv.schooldiary.data.repository.TeacherRepository
+import com.kxsv.schooldiary.data.repository.TeacherRepositoryImpl
+import com.kxsv.schooldiary.data.repository.TimePatternRepository
+import com.kxsv.schooldiary.data.repository.TimePatternRepositoryImpl
+import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
+import com.kxsv.schooldiary.data.repository.UserPreferencesRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -66,17 +66,13 @@ abstract class RepositoryModule {
 	@Singleton
 	abstract fun bindSubjectRepository(repository: SubjectRepositoryImpl): SubjectRepository
 	
-	/*@Binds
+	@Binds
 	@Singleton
-	abstract fun bindSubjectTeacherRepository(repository: SubjectTeacherRepositoryImpl): SubjectTeacherRepository*/
+	abstract fun bindScheduleRepository(repository: LessonRepositoryImpl): LessonRepository
 	
 	@Binds
 	@Singleton
-	abstract fun bindScheduleRepository(repository: ScheduleRepositoryImpl): ScheduleRepository
-	
-	@Binds
-	@Singleton
-	abstract fun bindAppDefaultsRepository(repository: AppSettingsRepositoryImpl): AppSettingsRepository
+	abstract fun bindAppDefaultsRepository(repository: UserPreferencesRepositoryImpl): UserPreferencesRepository
 	
 	@Binds
 	@Singleton
@@ -117,7 +113,7 @@ object DatabaseModule {
 	fun provideSubjectTeacherDao(db: AppDatabase): SubjectTeacherDao = db.subjectTeacherDao()
 	
 	@Provides
-	fun provideScheduleDao(db: AppDatabase): ScheduleDao = db.scheduleDao()
+	fun provideScheduleDao(db: AppDatabase): LessonDao = db.scheduleDao()
 	
 	@Provides
 	fun provideStudyDayDao(db: AppDatabase): StudyDayDao = db.studyDayDao()
@@ -132,11 +128,11 @@ class DataStoreModule {
 	
 	@Singleton
 	@Provides
-	fun provideDataStore(@ApplicationContext appContext: Context): DataStore<AppSettings> {
+	fun provideDataStore(@ApplicationContext appContext: Context): DataStore<UserPreferences> {
 		return DataStoreFactory.create(
-			serializer = AppSettingsSerializer,
+			serializer = UserPreferencesSerializer,
 			corruptionHandler = ReplaceFileCorruptionHandler(
-				produceNewData = { AppSettings() }
+				produceNewData = { UserPreferences() }
 			),
 			scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
 			produceFile = { appContext.dataStoreFile("app-settings.json") }
@@ -150,5 +146,5 @@ abstract class DataSourceModule {
 	
 	@Singleton
 	@Binds
-	abstract fun bindScheduleNetworkDataSource(dataSource: NetworkDataSourceImpl): NetworkDataSource
+	abstract fun bindScheduleNetworkDataSource(dataSource: WebServiceImpl): WebService
 }

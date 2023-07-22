@@ -6,38 +6,38 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface GradeDao {
 	
-	@Query("SELECT * FROM Grade")
-	fun observeAll(): Flow<List<Grade>>
+	@Query("SELECT * FROM GradeEntity")
+	fun observeAll(): Flow<List<GradeEntity>>
 	
-	@Query("SELECT * FROM Grade WHERE subjectMasterId = :subjectId")
-	fun observeAllBySubjectId(subjectId: Long): Flow<List<Grade>>
+	@Query("SELECT * FROM GradeEntity WHERE subjectMasterId = :subjectId")
+	fun observeAllBySubjectId(subjectId: Long): Flow<List<GradeEntity>>
 	
-	@Query("SELECT * FROM Grade WHERE gradeId = :gradeId")
-	fun observeById(gradeId: Long): Flow<Grade>
+	@Query("SELECT * FROM GradeEntity WHERE gradeId = :gradeId")
+	fun observeById(gradeId: String): Flow<GradeEntity>
 	
-	@Query("SELECT * FROM Grade ORDER BY date DESC")
-	suspend fun getAll(): List<Grade>
+	@Query("SELECT * FROM GradeEntity ORDER BY date DESC")
+	suspend fun getAll(): List<GradeEntity>
 	
 	@Transaction
-	@Query("SELECT * FROM Grade ORDER BY date DESC")
+	@Query("SELECT * FROM GradeEntity ORDER BY date DESC")
 	suspend fun getAllWithSubjects(): List<GradeWithSubject>
 	
-	@Query("SELECT * FROM Grade WHERE gradeId = :gradeId")
-	suspend fun getById(gradeId: Long): Grade?
+	@Query("SELECT * FROM GradeEntity WHERE gradeId = :gradeId")
+	suspend fun getById(gradeId: String): GradeEntity?
 	
 	@Transaction
-	@Query("SELECT * FROM Grade WHERE gradeId = :gradeId")
-	suspend fun getByIdWithSubject(gradeId: Long): GradeWithSubject?
+	@Query("SELECT * FROM GradeEntity WHERE gradeId = :gradeId")
+	suspend fun getByIdWithSubject(gradeId: String): GradeWithSubject?
 	
 	@Upsert
-	suspend fun upsertAll(grades: List<Grade>)
+	suspend fun upsertAll(grades: List<GradeEntity>)
 	
 	@Upsert
-	suspend fun upsert(grade: Grade): Long
+	suspend fun upsert(grade: GradeEntity)
 	
-	@Query("DELETE FROM Grade")
+	@Query("DELETE FROM GradeEntity")
 	suspend fun deleteAll()
 	
-	@Query("DELETE FROM Grade WHERE gradeId = :gradeId")
-	suspend fun deleteById(gradeId: Long)
+	@Query("DELETE FROM GradeEntity WHERE gradeId = :gradeId")
+	suspend fun deleteById(gradeId: String)
 }

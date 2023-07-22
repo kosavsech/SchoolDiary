@@ -3,14 +3,14 @@ package com.kxsv.schooldiary.ui.screens.patterns.add_edit_pattern
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kxsv.schooldiary.AppDestinationsArgs
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.local.features.time_pattern.TimePattern
-import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStroke
-import com.kxsv.schooldiary.domain.PatternStrokeRepository
-import com.kxsv.schooldiary.domain.TimePatternRepository
-import com.kxsv.schooldiary.util.copyExclusively
-import com.kxsv.schooldiary.util.copyInclusively
+import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternEntity
+import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
+import com.kxsv.schooldiary.data.repository.PatternStrokeRepository
+import com.kxsv.schooldiary.data.repository.TimePatternRepository
+import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs
+import com.kxsv.schooldiary.util.ListExtensionFunctions.copyExclusively
+import com.kxsv.schooldiary.util.ListExtensionFunctions.copyInclusively
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,7 +23,7 @@ import javax.inject.Inject
 
 data class AddEditPatternUiState(
 	val name: String = "",
-	val strokes: MutableList<PatternStroke> = mutableListOf(),
+	val strokes: MutableList<PatternStrokeEntity> = mutableListOf(),
 	val startTime: LocalTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES),
 	// TODO: configure this behaviour
 	val endTime: LocalTime = startTime.plusMinutes(45),
@@ -31,7 +31,7 @@ data class AddEditPatternUiState(
 	val userMessage: Int? = null,
 	val isPatternSaved: Boolean = false,
 	val isStrokeDialogShown: Boolean = false,
-	val stroke: PatternStroke? = null,
+	val stroke: PatternStrokeEntity? = null,
 )
 
 @HiltViewModel
@@ -51,7 +51,7 @@ class AddEditPatternViewModel @Inject constructor(
 	}
 	
 	fun saveStroke() = viewModelScope.launch {
-		val newStrokes: MutableList<PatternStroke>
+		val newStrokes: MutableList<PatternStrokeEntity>
 		if (uiState.value.stroke != null) {
 			newStrokes = copyExclusively(
 				targetItem = uiState.value.stroke!!,
@@ -64,7 +64,7 @@ class AddEditPatternViewModel @Inject constructor(
 			newStrokes.add(updatedStroke)
 		} else {
 			val stroke =
-				PatternStroke(
+				PatternStrokeEntity(
 					startTime = uiState.value.startTime,
 					endTime = uiState.value.endTime
 				)
@@ -82,7 +82,7 @@ class AddEditPatternViewModel @Inject constructor(
 		}
 	}
 	
-	fun deleteStroke(stroke: PatternStroke) = viewModelScope.launch {
+	fun deleteStroke(stroke: PatternStrokeEntity) = viewModelScope.launch {
 		if (stroke.strokeId != 0) strokeRepository.deleteStrokeById(stroke.strokeId)
 		
 		val newStrokes = copyExclusively(stroke, uiState.value.strokes)
@@ -158,7 +158,7 @@ class AddEditPatternViewModel @Inject constructor(
 		}
 	}
 	
-	fun onStrokeClick(stroke: PatternStroke) {
+	fun onStrokeClick(stroke: PatternStrokeEntity) {
 		_uiState.update {
 			it.copy(
 				isStrokeDialogShown = true,
@@ -187,7 +187,7 @@ class AddEditPatternViewModel @Inject constructor(
 		
 		viewModelScope.launch {
 			patternRepository.updatePatternWithStrokes(
-				TimePattern(
+				TimePatternEntity(
 					name = uiState.value.name,
 					patternId = patternId,
 				),
@@ -210,7 +210,7 @@ class AddEditPatternViewModel @Inject constructor(
 					_uiState.update {
 						it.copy(
 							name = timePattern.timePattern.name,
-							strokes = timePattern.strokes as MutableList<PatternStroke>,
+							strokes = timePattern.strokes as MutableList<PatternStrokeEntity>,
 							isLoading = false
 						)
 					}

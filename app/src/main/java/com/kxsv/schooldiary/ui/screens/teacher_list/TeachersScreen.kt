@@ -37,8 +37,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.local.features.teacher.Teacher
-import com.kxsv.schooldiary.util.ui.TeachersTopAppBar
+import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
+import com.kxsv.schooldiary.ui.main.topbar.TeachersTopAppBar
 
 
 @Composable
@@ -159,9 +159,9 @@ private fun AddEditTeacherDialog(
 
 @Composable
 private fun TeachersContent(
-	teachers: List<Teacher>,
-	onTeacherClick: (Teacher) -> Unit,
-	deleteTeacher: (Teacher) -> Unit,
+	teachers: List<TeacherEntity>,
+	onTeacherClick: (TeacherEntity) -> Unit,
+	deleteTeacher: (TeacherEntity) -> Unit,
 	modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -181,7 +181,7 @@ private fun TeachersContent(
 
 @Composable
 private fun TeacherItem(
-	teacher: Teacher,
+	teacher: TeacherEntity,
 	onTeacherClick: () -> Unit,
 	deleteTeacher: () -> Unit,
 ) {
@@ -215,30 +215,30 @@ private fun TeachersContentPreview() {
     Surface {
         TeachersContent(
             teachers = listOf(
-                Teacher(
-                    firstName = "Ivan",
-                    lastName = "Stepanov",
-                    patronymic = "Petrovich",
-                    phoneNumber = "+756248932572"
-                ),
-                Teacher(
-                    firstName = "Stepan",
-                    lastName = "Ivanov",
-                    patronymic = "Vasilievich",
-                    phoneNumber = "+756248932572"
-                ),
-                Teacher(
-                    firstName = "Oleg",
-                    lastName = "Kostilev",
-                    patronymic = "Sergeevich",
-                    phoneNumber = "+756248932572"
-                ),
-                Teacher(
-                    firstName = "Alex",
-                    lastName = "Simonov",
-                    patronymic = "Yegorovich",
-                    phoneNumber = "+756248932572"
-                ),
+	            TeacherEntity(
+		            firstName = "Ivan",
+		            lastName = "Stepanov",
+		            patronymic = "Petrovich",
+		            phoneNumber = "+756248932572"
+	            ),
+	            TeacherEntity(
+		            firstName = "Stepan",
+		            lastName = "Ivanov",
+		            patronymic = "Vasilievich",
+		            phoneNumber = "+756248932572"
+	            ),
+	            TeacherEntity(
+		            firstName = "Oleg",
+		            lastName = "Kostilev",
+		            patronymic = "Sergeevich",
+		            phoneNumber = "+756248932572"
+	            ),
+	            TeacherEntity(
+		            firstName = "Alex",
+		            lastName = "Simonov",
+		            patronymic = "Yegorovich",
+		            phoneNumber = "+756248932572"
+	            ),
             ), onTeacherClick = {}, deleteTeacher = {}
         )
     }
@@ -249,12 +249,12 @@ private fun TeachersContentPreview() {
 private fun TeacherItemPreview() {
     Surface {
         TeacherItem(
-            teacher = Teacher(
-                firstName = "Ivan",
-                lastName = "Stepanov",
-                patronymic = "Yegorovich",
-                phoneNumber = "+756248932572"
-            ),
+	        teacher = TeacherEntity(
+		        firstName = "Ivan",
+		        lastName = "Stepanov",
+		        patronymic = "Yegorovich",
+		        phoneNumber = "+756248932572"
+	        ),
             onTeacherClick = {}, deleteTeacher = {}
         )
     }

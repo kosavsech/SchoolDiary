@@ -33,8 +33,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.local.features.teacher.Teacher
-import com.kxsv.schooldiary.util.ui.AddEditSubjectTopAppBar
+import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
+import com.kxsv.schooldiary.ui.main.topbar.AddEditSubjectTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.listItemsMultiChoice
@@ -103,8 +103,8 @@ private fun AddEditSubjectContent(
 	fullName: String,
 	displayName: String?,
 	cabinet: String,
-	selectedTeachers: Set<Teacher>,
-	teachers: List<Teacher>,
+	selectedTeachers: Set<TeacherEntity>,
+	teachers: List<TeacherEntity>,
 	initialSelection: Set<Int>,
 	onAddTeacher: () -> Unit,
 	onTeacherChanged: (Set<Int>) -> Unit,

@@ -9,11 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CloudDownload
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -33,11 +28,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.local.features.grade.Grade
+import com.kxsv.schooldiary.data.local.features.grade.GradeEntity
 import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
-import com.kxsv.schooldiary.data.local.features.subject.Subject
+import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
+import com.kxsv.schooldiary.ui.main.topbar.GradesTopAppBar
 import com.kxsv.schooldiary.util.Mark
-import com.kxsv.schooldiary.util.ui.GradesTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -46,8 +41,7 @@ import java.time.format.DateTimeFormatter
 fun GradesScreen(
 	@StringRes userMessage: Int,
 	onUserMessageDisplayed: () -> Unit,
-	onAddGrade: () -> Unit,
-	onGradeClick: (Grade) -> Unit,
+	onGradeClick: (GradeEntity) -> Unit,
 	openDrawer: () -> Unit,
 	modifier: Modifier = Modifier,
 	viewModel: GradesViewModel = hiltViewModel(),
@@ -57,16 +51,6 @@ fun GradesScreen(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		topBar = { GradesTopAppBar(openDrawer = openDrawer) },
 		modifier = modifier.fillMaxSize(),
-		floatingActionButton = {
-			Row {
-				FloatingActionButton(onClick = { viewModel.fetchGrades() }) {
-					Icon(Icons.Default.CloudDownload, stringResource(R.string.fetch_grades))
-				}
-				FloatingActionButton(onClick = onAddGrade) {
-					Icon(Icons.Default.Add, stringResource(R.string.add_grade))
-				}
-			}
-		}
 	) { paddingValues ->
 		val uiState = viewModel.uiState.collectAsState().value
 		
@@ -75,7 +59,7 @@ fun GradesScreen(
 			grades = uiState.grades,
 			//noSubjectsLabel = 0,
 			onGradeClick = onGradeClick,
-			onRefresh = viewModel::loadLocalGrades,
+			onRefresh = viewModel::fetchGrades,
 			modifier = Modifier.padding(paddingValues),
 		)
 		
@@ -106,7 +90,7 @@ private fun GradesContent(
 	// TODO
 	//  @StringRes noSubjectsLabel: Int,
 	//  onRefresh: () -> Unit,
-	onGradeClick: (Grade) -> Unit,
+	onGradeClick: (GradeEntity) -> Unit,
 	onRefresh: () -> Unit,
 	modifier: Modifier,
 ) {
@@ -134,7 +118,7 @@ private fun GradesContent(
 @Composable
 private fun GradeItem(
 	gradeWithSubject: GradeWithSubject,
-	onGradeClick: (Grade) -> Unit,
+	onGradeClick: (GradeEntity) -> Unit,
 ) {
 	Row(
 		verticalAlignment = Alignment.CenterVertically,
@@ -172,13 +156,13 @@ private fun SubjectsContentPreview() {
 			loading = false,
 			grades = listOf(
 				GradeWithSubject(
-					Grade(
+					GradeEntity(
 						mark = Mark.FIVE,
 						typeOfWork = "Самостоятельная работа",
 						date = LocalDate.now(),
 						subjectMasterId = 0,
 					),
-					Subject("Английский язык")
+					SubjectEntity("Английский язык")
 				)
 			),
 			onGradeClick = {},
@@ -194,13 +178,13 @@ private fun SubjectItemPreview() {
 	Surface {
 		GradeItem(
 			gradeWithSubject = GradeWithSubject(
-				Grade(
+				GradeEntity(
 					mark = Mark.FIVE,
 					typeOfWork = "Самостоятельная работа",
 					date = LocalDate.now(),
 					subjectMasterId = 0,
 				),
-				Subject("Английский язык")
+				SubjectEntity("Английский язык")
 			),
 			onGradeClick = {}
 		)

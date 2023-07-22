@@ -3,12 +3,12 @@ package com.kxsv.schooldiary.ui.screens.subject_detail.add_edit
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kxsv.schooldiary.AppDestinationsArgs
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.local.features.subject.Subject
-import com.kxsv.schooldiary.data.local.features.teacher.Teacher
-import com.kxsv.schooldiary.domain.SubjectRepository
-import com.kxsv.schooldiary.domain.TeacherRepository
+import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
+import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
+import com.kxsv.schooldiary.data.repository.SubjectRepository
+import com.kxsv.schooldiary.data.repository.TeacherRepository
+import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,8 +22,8 @@ data class AddEditSubjectUiState(
 	val displayName: String? = null,
 	val cabinet: String = "",
 	val initialSelection: Set<Int> = emptySet(),
-	val selectedTeachers: Set<Teacher> = emptySet(),
-	val availableTeachers: List<Teacher> = emptyList(),
+	val selectedTeachers: Set<TeacherEntity> = emptySet(),
+	val availableTeachers: List<TeacherEntity> = emptyList(),
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
 	val isSubjectSaved: Boolean = false,
@@ -92,7 +92,7 @@ class AddEditSubjectViewModel @Inject constructor(
 	}
 	
 	fun saveSelectedTeachers(newIndices: Set<Int>) {
-		val newSelectedTeachers: MutableSet<Teacher> = mutableSetOf()
+		val newSelectedTeachers: MutableSet<TeacherEntity> = mutableSetOf()
 		newIndices.forEach { index ->
 			newSelectedTeachers.add(uiState.value.availableTeachers[index])
 		}
@@ -130,7 +130,7 @@ class AddEditSubjectViewModel @Inject constructor(
 	
 	private fun createNewSubject() = viewModelScope.launch {
 		subjectRepository.createSubject(
-			Subject(uiState.value.fullName, uiState.value.cabinet),
+			SubjectEntity(uiState.value.fullName, uiState.value.cabinet),
 			uiState.value.selectedTeachers
 		)
 		
@@ -144,7 +144,7 @@ class AddEditSubjectViewModel @Inject constructor(
 		
 		viewModelScope.launch {
 			subjectRepository.updateSubject(
-				subject = Subject(
+				subject = SubjectEntity(
 					fullName = uiState.value.fullName,
 					cabinet = uiState.value.cabinet,
 					displayName = uiState.value.displayName,

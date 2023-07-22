@@ -27,16 +27,16 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.local.features.grade.Grade
-import com.kxsv.schooldiary.data.local.features.subject.Subject
+import com.kxsv.schooldiary.data.local.features.grade.GradeEntity
+import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
+import com.kxsv.schooldiary.ui.main.topbar.SubjectDetailTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
-import com.kxsv.schooldiary.util.ui.SubjectDetailTopAppBar
 import java.time.format.DateTimeFormatter
 
 @Composable
 fun SubjectDetailScreen(
 	@StringRes userMessage: Int?,
-	onGradeClick: (Long) -> Unit,
+	onGradeClick: (String) -> Unit,
 	onEditSubject: (Long) -> Unit,
 	onBack: () -> Unit,
 	onDeleteSubject: () -> Unit,
@@ -92,9 +92,9 @@ fun SubjectDetailScreen(
 private fun SubjectContent(
 	loading: Boolean,
 	empty: Boolean,
-	subject: Subject?,
-	grades: List<Grade>,
-	onGradeClick: (Long) -> Unit,
+	subject: SubjectEntity?,
+	grades: List<GradeEntity>,
+	onGradeClick: (String) -> Unit,
 	onEditSubject: (Long) -> Unit,
 	modifier: Modifier,
 ) {

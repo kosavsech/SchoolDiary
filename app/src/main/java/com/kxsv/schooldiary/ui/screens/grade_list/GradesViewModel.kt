@@ -3,27 +3,25 @@ package com.kxsv.schooldiary.ui.screens.grade_list
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kxsv.schooldiary.ADD_EDIT_RESULT_OK
-import com.kxsv.schooldiary.DELETE_RESULT_OK
-import com.kxsv.schooldiary.EDIT_RESULT_OK
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.local.features.grade.Grade
 import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
+import com.kxsv.schooldiary.data.mapper.toLocal
+import com.kxsv.schooldiary.data.repository.GradeRepository
+import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.di.IoDispatcher
-import com.kxsv.schooldiary.domain.GradeRepository
-import com.kxsv.schooldiary.domain.NetworkDataSource
-import com.kxsv.schooldiary.domain.SubjectRepository
-import com.kxsv.schooldiary.util.NetworkException
+import com.kxsv.schooldiary.ui.main.navigation.ADD_EDIT_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
+import com.kxsv.schooldiary.util.remote.NetworkException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import java.io.IOException
@@ -41,17 +39,17 @@ data class GradesUiState(
 @HiltViewModel
 class GradesViewModel @Inject constructor(
 	private val gradeRepository: GradeRepository,
-	private val networkDataSource: NetworkDataSource,
 	private val subjectRepository: SubjectRepository,
 	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
-	
 	private val _uiState = MutableStateFlow(GradesUiState())
 	val uiState: StateFlow<GradesUiState> = _uiState.asStateFlow()
 	
+	private var gradesFetchJob: Job? = null
+	
 	init {
-		loadLocalGrades()
+		fetchGrades()
 	}
 	
 	fun showEditResultMessage(result: Int) {
@@ -66,7 +64,7 @@ class GradesViewModel @Inject constructor(
 		_uiState.update { it.copy(userMessage = null) }
 	}
 	
-	fun loadLocalGrades() = viewModelScope.launch(ioDispatcher) {
+	private fun loadLocalGrades() = viewModelScope.launch(ioDispatcher) {
 		_uiState.update { it.copy(isLoading = true) }
 		val grades = measurePerformanceInMS(logger = { time, _ ->
 			Log.i(TAG, "loadLocalGrades: performance is $time ms")
@@ -76,20 +74,21 @@ class GradesViewModel @Inject constructor(
 	
 	fun fetchGrades() {
 		_uiState.update { it.copy(isLoading = true) }
-		viewModelScope.coroutineContext.job.cancelChildren()
-		viewModelScope.launch(ioDispatcher) {
+		gradesFetchJob?.cancel()
+		gradesFetchJob = viewModelScope.launch(ioDispatcher) {
 			try {
-				measurePerformanceInMS(logger = { time, _ ->
+				measurePerformanceInMS({ time, _ ->
 					Log.i(TAG, "fetchGrades: loadGradesForDate() performance is $time ms")
 				}) {
 					withTimeout(10000L) {
-						for (i in 0 until 70) {
+						for (i in 0 until 14) {
 							async {
-								val fetchedGradesLocalised: List<Grade> =
-									networkDataSource.loadGradesForDate(
-										LocalDate.of(2023, 2, 15).minusDays(i.toLong())
-									).map { it.toLocal(subjectRepository) }
-								gradeRepository.upsertAll(fetchedGradesLocalised)
+								val date = LocalDate.of(2023, 2, 21).minusDays(i.toLong())
+//								val date = LocalDate.now().minusDays(i.toLong())
+								val fetchedGradesLocalised =
+									gradeRepository.fetchGradeByDate(date)
+										.toLocal(subjectRepository)
+								fetchedGradesLocalised.forEach { gradeRepository.upsert(it) }
 							}
 						}
 					}

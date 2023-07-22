@@ -63,8 +63,8 @@ import com.kizitonwose.calendar.core.daysOfWeek
 import com.kizitonwose.calendar.core.nextMonth
 import com.kizitonwose.calendar.core.previousMonth
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.local.features.schedule.ScheduleWithSubject
-import com.kxsv.schooldiary.util.ui.CopyScheduleForDayTopAppBar
+import com.kxsv.schooldiary.data.local.features.lesson.LessonWithSubject
+import com.kxsv.schooldiary.ui.main.topbar.CopyScheduleForDayTopAppBar
 import com.kxsv.schooldiary.util.ui.displayText
 import com.kxsv.schooldiary.util.ui.rememberFirstCompletelyVisibleMonth
 import com.vanpra.composematerialdialogs.MaterialDialog
@@ -110,7 +110,7 @@ fun DayScheduleCopyScreen(
 						dialogState.show()
 					}
 				) {
-					Icon(Icons.Default.ContentCopy, "Copy schedule from selected calendar day")
+					Icon(Icons.Default.ContentCopy, "Copy lesson from selected calendar day")
 				}
 			}
 		},
@@ -163,7 +163,7 @@ fun DayScheduleCopyDialog(
 @Composable
 fun DayScheduleCopyContent(
 	selectedDate: LocalDate,
-	classes: Map<Int, ScheduleWithSubject>,
+	classes: Map<Int, LessonWithSubject>,
 	selectedCalendarDay: CalendarDay?,
 	updateSelectedCalendarDay: (CalendarDay?) -> Unit,
 	modifier: Modifier,
@@ -323,7 +323,7 @@ private fun MonthHeader(
 }
 
 @Composable
-private fun LazyItemScope.ClassInformation(lesson: ScheduleWithSubject?) {
+private fun LazyItemScope.ClassInformation(lesson: LessonWithSubject?) {
 	Row(
 		modifier = Modifier
 			.fillParentMaxWidth()
