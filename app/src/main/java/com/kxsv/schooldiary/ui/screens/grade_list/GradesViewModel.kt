@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
-import com.kxsv.schooldiary.data.mapper.toLocal
 import com.kxsv.schooldiary.data.repository.GradeRepository
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.di.IoDispatcher
@@ -17,15 +16,12 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
 import java.io.IOException
-import java.time.LocalDate
 import javax.inject.Inject
 
 private const val TAG = "GradesViewModel"
@@ -49,7 +45,7 @@ class GradesViewModel @Inject constructor(
 	private var gradesFetchJob: Job? = null
 	
 	init {
-		fetchGrades()
+		loadLocalGrades()
 	}
 	
 	fun showEditResultMessage(result: Int) {
@@ -80,18 +76,7 @@ class GradesViewModel @Inject constructor(
 				measurePerformanceInMS({ time, _ ->
 					Log.i(TAG, "fetchGrades: loadGradesForDate() performance is $time ms")
 				}) {
-					withTimeout(10000L) {
-						for (i in 0 until 14) {
-							async {
-								val date = LocalDate.of(2023, 2, 21).minusDays(i.toLong())
-//								val date = LocalDate.now().minusDays(i.toLong())
-								val fetchedGradesLocalised =
-									gradeRepository.fetchGradeByDate(date)
-										.toLocal(subjectRepository)
-								fetchedGradesLocalised.forEach { gradeRepository.upsert(it) }
-							}
-						}
-					}
+					// fetch all grades
 				}
 			} catch (e: NetworkException) {
 				Log.e(TAG, "fetchGrades: exception on login", e)
@@ -104,7 +89,6 @@ class GradesViewModel @Inject constructor(
 				Log.e(TAG, "fetchGrades: exception", e)
 			} finally {
 				loadLocalGrades()
-//				_uiState.update { it.copy(isLoading = false) }
 			}
 		}
 	}

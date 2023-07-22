@@ -10,7 +10,7 @@ import com.kxsv.schooldiary.data.local.features.lesson.LessonEntity
 import com.kxsv.schooldiary.data.local.features.lesson.LessonWithSubject
 import com.kxsv.schooldiary.data.local.features.study_day.StudyDayEntity
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
-import com.kxsv.schooldiary.data.mapper.toLocal
+import com.kxsv.schooldiary.data.mapper.toLessonEntities
 import com.kxsv.schooldiary.data.mapper.toLocalWithSubject
 import com.kxsv.schooldiary.data.repository.LessonRepository
 import com.kxsv.schooldiary.data.repository.PatternStrokeRepository
@@ -375,7 +375,7 @@ class DayScheduleViewModel @Inject constructor(
 			)
 			val localizedNetClasses =
 				lessonRepository.fetchLessonsByDate(fromDate)
-					.toLocal(cloneDayId, subjectRepository, studyDayRepository)
+					.toLessonEntities(cloneDayId, subjectRepository, studyDayRepository)
 			
 			lessonRepository.upsertAll(localizedNetClasses)
 			

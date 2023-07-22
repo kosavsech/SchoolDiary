@@ -9,7 +9,7 @@ import com.kxsv.schooldiary.data.repository.SubjectRepository
 
 private const val TAG = "ScheduleMappers"
 
-suspend fun LessonDto.toLocal(
+suspend fun LessonDto.toLessonEntity(
 	studyDayMasterId: Long?,
 	subjectRepository: SubjectRepository,
 	studyDayRepository: StudyDayRepository,
@@ -93,15 +93,15 @@ suspend fun List<LessonDto>.toLocalWithSubject(
  * @param studyDayMasterId value to assign to each class [studyDayMasterId][com.kxsv.schooldiary.data.local.features.lesson.LessonEntity.studyDayMasterId] field
  * @return List<[LessonEntity]>
  */
-suspend fun List<LessonDto>.toLocal(
+suspend fun List<LessonDto>.toLessonEntities(
 	studyDayMasterId: Long? = null,
 	subjectRepository: SubjectRepository,
 	studyDayRepository: StudyDayRepository,
 ): List<LessonEntity> {
 	return try {
-		this.map { it.toLocal(studyDayMasterId, subjectRepository, studyDayRepository) }
+		this.map { it.toLessonEntity(studyDayMasterId, subjectRepository, studyDayRepository) }
 	} catch (e: RuntimeException) {
-		Log.e(TAG, "List<LessonDto>.toLocal: classes are empty because", e)
+		Log.e(TAG, "List<LessonDto>.toGradeEntities: classes are empty because", e)
 		emptyList()
 	}
 }
