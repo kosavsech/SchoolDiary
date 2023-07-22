@@ -31,16 +31,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.local.features.subject.Subject
+import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
+import com.kxsv.schooldiary.ui.main.topbar.SubjectsTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
-import com.kxsv.schooldiary.util.ui.SubjectsTopAppBar
 
 @Composable
 fun SubjectsScreen(
 	@StringRes userMessage: Int,
 	onUserMessageDisplayed: () -> Unit,
 	onAddSubject: () -> Unit,
-	onSubjectClick: (Subject) -> Unit,
+	onSubjectClick: (SubjectEntity) -> Unit,
 	openDrawer: () -> Unit,
 	modifier: Modifier = Modifier,
 	viewModel: SubjectsViewModel = hiltViewModel(),
@@ -89,11 +89,11 @@ fun SubjectsScreen(
 @Composable
 private fun SubjectsContent(
 	loading: Boolean,
-	subjects: List<Subject>,
+	subjects: List<SubjectEntity>,
 	// TODO
 	//  @StringRes noSubjectsLabel: Int,
 	//  onRefresh: () -> Unit,
-	onSubjectClick: (Subject) -> Unit,
+	onSubjectClick: (SubjectEntity) -> Unit,
 	modifier: Modifier,
 ) {
 	LoadingContent(
@@ -119,8 +119,8 @@ private fun SubjectsContent(
 
 @Composable
 private fun SubjectItem(
-	subject: Subject,
-	onSubjectClick: (Subject) -> Unit,
+	subject: SubjectEntity,
+	onSubjectClick: (SubjectEntity) -> Unit,
 ) {
 	Row(
 		verticalAlignment = Alignment.CenterVertically,
@@ -147,10 +147,10 @@ private fun SubjectsContentPreview() {
 		SubjectsContent(
 			loading = false,
 			subjects = listOf(
-				Subject("Algebra", cabinet = "52"),
-				Subject("Algebra", cabinet = "48"),
-				Subject("Algebra", cabinet = "62"),
-				Subject("Algebra", cabinet = "75"),
+				SubjectEntity("Algebra", cabinet = "52"),
+				SubjectEntity("Algebra", cabinet = "48"),
+				SubjectEntity("Algebra", cabinet = "62"),
+				SubjectEntity("Algebra", cabinet = "75"),
 			),
 			onSubjectClick = {},
 			modifier = Modifier
@@ -162,6 +162,6 @@ private fun SubjectsContentPreview() {
 @Composable
 private fun SubjectItemPreview() {
 	Surface {
-		SubjectItem(subject = Subject("Algebra", cabinet = "850"), onSubjectClick = {})
+		SubjectItem(subject = SubjectEntity("Algebra", cabinet = "850"), onSubjectClick = {})
 	}
 }

@@ -40,8 +40,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.local.features.subject.Subject
-import com.kxsv.schooldiary.util.ui.AddEditScheduleTopAppBar
+import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
+import com.kxsv.schooldiary.ui.main.topbar.AddEditScheduleTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.MaterialDialogState
@@ -111,10 +111,10 @@ private fun localDateToTimestamp(date: LocalDate): Long =
 @Composable
 private fun AddEditLessonContent(
 	isLoading: Boolean,
-	pickedSubject: Subject?,
+	pickedSubject: SubjectEntity?,
 	classIndex: String,
 	classDate: LocalDate?,
-	subjects: List<Subject>,
+	subjects: List<SubjectEntity>,
 	initialSubjectSelection: Int?,
 	onSubjectDialogShown: () -> Unit,
 	onSubjectChanged: (Int) -> Unit,
@@ -236,10 +236,10 @@ private fun DateRow(
 @Composable
 private fun SubjectRow(
 	isLoading: Boolean,
-	subject: Subject?,
+	subject: SubjectEntity?,
 	initialSubjectSelection: Int?,
 	onSubjectChanged: (Int) -> Unit,
-	subjects: List<Subject>,
+	subjects: List<SubjectEntity>,
 	onSubjectDialogShown: () -> Unit,
 	subjectDialog: MaterialDialogState = rememberMaterialDialogState(false),
 ) {
@@ -334,17 +334,17 @@ private fun AddEditScheduleContentPreview() {
 		AddEditLessonContent(
 			isLoading = false,
 //			date = null,
-			pickedSubject = Subject("Русский язык", "210"),
+			pickedSubject = SubjectEntity("Русский язык", "210"),
 			classIndex = "",
 //			index = 0,
 			classDate = LocalDate.now(),
 //			lesson = null,
 			subjects = listOf(
-				Subject("Русский язык", "210"),
-				Subject("Геометрия", "310"),
-				Subject("Физика", "313"),
-				Subject("Иностранный язык (английский)", "316"),
-				Subject("Английский язык", "316"),
+				SubjectEntity("Русский язык", "210"),
+				SubjectEntity("Геометрия", "310"),
+				SubjectEntity("Физика", "313"),
+				SubjectEntity("Иностранный язык (английский)", "316"),
+				SubjectEntity("Английский язык", "316"),
 			),
 			initialSubjectSelection = null,
 			onSubjectDialogShown = {},

@@ -5,10 +5,6 @@ enum class Mark(val value: Int?, val letterValue: Char?) {
 	FOUR(4, null), FIVE(5, null),
 	ABSENT(null, 'Н'), ILL(null, 'Б');
 	
-	fun isNumeric(): Boolean = (this.value != null) && (this.letterValue == null)
-	
-	fun isLetter(): Boolean = (this.letterValue != null) && (this.value == null)
-	
 	fun getValue(): String = if (this.letterValue != null) {
 		this.letterValue.toString()
 	} else {
@@ -17,11 +13,17 @@ enum class Mark(val value: Int?, val letterValue: Char?) {
 	
 	
 	companion object {
-		fun fromInput(input: String): Mark = when (input) {
-			"5" -> FIVE; "4" -> FOUR; "3" -> THREE; "2" -> TWO; "1" -> ONE
-			"Н" -> ABSENT; "Б" -> ILL
+		fun fromInput(input: String) = when (input) {
+			"5" -> FIVE
+			"4" -> FOUR
+			"3" -> THREE
+			"2" -> TWO
+			"1" -> ONE
+			"Н" -> ABSENT
+			"Не был" -> ABSENT
+			"Б" -> ILL
+			"Болел" -> ILL
 			else -> throw IllegalArgumentException("Wrong mark input value($input)")
 		}
 	}
-	
 }

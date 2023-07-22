@@ -43,7 +43,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -63,12 +62,12 @@ import androidx.compose.ui.unit.sp
 import com.kizitonwose.calendar.compose.WeekCalendar
 import com.kizitonwose.calendar.compose.weekcalendar.rememberWeekCalendarState
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.local.features.schedule.Schedule
-import com.kxsv.schooldiary.data.local.features.schedule.ScheduleWithSubject
-import com.kxsv.schooldiary.data.local.features.subject.Subject
-import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStroke
+import com.kxsv.schooldiary.data.local.features.lesson.LessonEntity
+import com.kxsv.schooldiary.data.local.features.lesson.LessonWithSubject
+import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
+import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
+import com.kxsv.schooldiary.ui.main.topbar.ScheduleTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
-import com.kxsv.schooldiary.util.ui.ScheduleTopAppBar
 import com.kxsv.schooldiary.util.ui.displayText
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.MaterialDialogState
@@ -134,17 +133,17 @@ fun DayScheduleScreen(
 		
 		val dialogState: MaterialDialogState = rememberMaterialDialogState()
 		DayScheduleContent(
+			modifier = Modifier.padding(paddingValues),
 			loading = uiState.isLoading,
 			classes = uiState.classes,
+			noClassesLabel = R.string.no_classes_label,
 			fetchedClasses = uiState.fetchedClasses,
 			selectedDate = uiState.selectedDate,
 			currentPattern = uiState.currentTimings,
-			changeDate = viewModel::onDayChangeUpdate,
-			onClassClick = { (viewModel::selectClass)(it); dialogState.show() },
-			noClassesLabel = R.string.no_classes_label,
-			onRefresh = { (viewModel::onDayChangeUpdate)(uiState.selectedDate) },
-			scheduleChoose = { (viewModel::scheduleChoose)(it) },
-			modifier = Modifier.padding(paddingValues),
+			onRefresh = { viewModel.onDayChangeUpdate(uiState.selectedDate) },
+			changeDate = { viewModel.onDayChangeUpdate(it) },
+			scheduleChoose = { viewModel.scheduleChoose(it) },
+			onClassClick = { viewModel.selectClass(it); dialogState.show() }
 		)
 		
 		LessonDialog(
@@ -185,10 +184,10 @@ fun DayScheduleScreen(
 
 @Composable
 private fun LessonDialog(
-	classDetailed: ScheduleWithSubject?,
+	classDetailed: LessonWithSubject?,
 	selectedDate: LocalDate,
-	currentPattern: List<PatternStroke>,
-	onDeleteClass: (ScheduleWithSubject) -> Unit,
+	currentPattern: List<PatternStrokeEntity>,
+	onDeleteClass: (LessonWithSubject) -> Unit,
 	onEditClass: (Long) -> Unit,
 	unselectClass: () -> Unit,
 	getIdForClassFromNet: suspend () -> Long,
@@ -212,18 +211,18 @@ private fun LessonDialog(
 				Spacer(modifier = Modifier.padding(vertical = 2.dp))
 				
 				val text: String =
-					if (classDetailed.schedule.index >= 0 && classDetailed.schedule.index <= currentPattern.lastIndex) {
-						currentPattern[classDetailed.schedule.index].startTime.format(
+					if (classDetailed.lesson.index >= 0 && classDetailed.lesson.index <= currentPattern.lastIndex) {
+						currentPattern[classDetailed.lesson.index].startTime.format(
 							DateTimeFormatter.ofLocalizedTime(
 								FormatStyle.SHORT
 							)
 						) + " - " +
-								currentPattern[classDetailed.schedule.index].endTime.format(
+								currentPattern[classDetailed.lesson.index].endTime.format(
 									DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
 								)
 					} else stringResource(
 						R.string.class_out_of_strokes_bounds_message,
-						classDetailed.schedule.index + 1
+						classDetailed.lesson.index + 1
 					)
 				Text(
 					text,
@@ -238,10 +237,10 @@ private fun LessonDialog(
 					FilledTonalButton(
 						onClick = {
 							coroutineScope.launch {
-								if (classDetailed.schedule.scheduleId == 0L) {
+								if (classDetailed.lesson.lessonId == 0L) {
 									onEditClass(getIdForClassFromNet())
 								} else {
-									onEditClass(classDetailed.schedule.scheduleId)
+									onEditClass(classDetailed.lesson.lessonId)
 								}
 								
 								dialogState.hide()
@@ -281,17 +280,17 @@ private fun LessonDialog(
 
 @Composable
 private fun DayScheduleContent(
-	loading: Boolean,
-	classes: Map<Int, ScheduleWithSubject>,
-	fetchedClasses: Map<Int, ScheduleWithSubject>?,
-	selectedDate: LocalDate,
-	currentPattern: List<PatternStroke>,
-	changeDate: (LocalDate) -> Unit,
-	@StringRes noClassesLabel: Int,
-	onRefresh: () -> Unit,
-	scheduleChoose: (Int) -> Unit,
-	onClassClick: (ScheduleWithSubject) -> Unit,
 	modifier: Modifier,
+	loading: Boolean,
+	classes: Map<Int, LessonWithSubject>,
+	@StringRes noClassesLabel: Int,
+	fetchedClasses: Map<Int, LessonWithSubject>?,
+	selectedDate: LocalDate,
+	currentPattern: List<PatternStrokeEntity>,
+	onRefresh: () -> Unit,
+	changeDate: (LocalDate) -> Unit,
+	scheduleChoose: (Int) -> Unit,
+	onClassClick: (LessonWithSubject) -> Unit,
 ) {
 	Column(modifier = modifier) {
 		CalendarLine(changeDate = changeDate, selectedDate = selectedDate)
@@ -320,8 +319,8 @@ private fun DayScheduleContent(
 @Composable
 fun ScheduleComparisonTable(
 	loading: Boolean,
-	classes: Map<Int, ScheduleWithSubject>,
-	fetchedClasses: Map<Int, ScheduleWithSubject>,
+	classes: Map<Int, LessonWithSubject>,
+	fetchedClasses: Map<Int, LessonWithSubject>,
 	scheduleChoose: (Int) -> Unit,
 	onRefresh: () -> Unit,
 ) {
@@ -442,12 +441,12 @@ private fun Table(
 @Composable
 private fun ScheduleForDay(
 	loading: Boolean,
-	classes: Map<Int, ScheduleWithSubject>,
+	classes: Map<Int, LessonWithSubject>,
 	selectedDate: LocalDate,
-	currentPattern: List<PatternStroke>,
+	currentPattern: List<PatternStrokeEntity>,
 	@StringRes noClassesLabel: Int,
 	onRefresh: () -> Unit,
-	onClassClick: (ScheduleWithSubject) -> Unit,
+	onClassClick: (LessonWithSubject) -> Unit,
 ) {
 	LoadingContent(
 		loading = loading,
@@ -465,24 +464,21 @@ private fun ScheduleForDay(
 		LazyColumn(
 			Modifier.padding(horizontal = dimensionResource(R.dimen.horizontal_margin))
 		) {
-			val isFirst = mutableStateOf(true)
 			item {
 				DayOfWeekHeader(date = selectedDate, lessonsAmount = classes.size)
 			}
 			classes.forEach { (ordinalIndex, lesson) ->
 				item(contentType = { lesson }) {
-					if (!isFirst.value) {
-						Divider(
-							modifier = Modifier
-								.padding(horizontal = dimensionResource(R.dimen.list_item_padding))
-								.fillMaxWidth(),
-						)
-					} else isFirst.value = false
 					ClassItem(
 						index = ordinalIndex,
 						lesson = lesson,
 						onClassClick = onClassClick,
 						currentPattern = currentPattern
+					)
+					Divider(
+						modifier = Modifier
+							.padding(horizontal = dimensionResource(R.dimen.list_item_padding))
+							.fillMaxWidth()
 					)
 				}
 			}
@@ -602,9 +598,9 @@ private fun DayOfWeekHeader(
 @Composable
 private fun ClassItem(
 	index: Int,
-	lesson: ScheduleWithSubject,
-	onClassClick: (ScheduleWithSubject) -> Unit,
-	currentPattern: List<PatternStroke>,
+	lesson: LessonWithSubject,
+	onClassClick: (LessonWithSubject) -> Unit,
+	currentPattern: List<PatternStrokeEntity>,
 	modifier: Modifier = Modifier,
 ) {
 	Column(
@@ -662,54 +658,56 @@ private fun ClassItem(
 private fun DayScheduleContentPreview() {
 	Surface {
 		DayScheduleContent(
+			modifier = Modifier,
 			loading = false,
+//			fetchedClasses = null,
 			classes = mapOf(
 				Pair(
-					1, ScheduleWithSubject(
-						Schedule(1, 0, 0),
-						Subject("Русский язык", "210")
+					1, LessonWithSubject(
+						LessonEntity(1, 0, 0),
+						SubjectEntity("Русский язык", "210")
 					)
 				),
 				Pair(
-					3, ScheduleWithSubject(
-						Schedule(3, 0, 0),
-						Subject("Английский языкАнглийский язык", "316")
+					3, LessonWithSubject(
+						LessonEntity(3, 0, 0),
+						SubjectEntity("Английский языкАнглийский язык", "316")
 					)
 				),
 			),
-//			fetchedClasses = null,
+			noClassesLabel = R.string.no_classes_label,
 			fetchedClasses = mapOf(
 				Pair(
-					2, ScheduleWithSubject(
-						Schedule(0, 0, 0),
-						Subject("Английский языкАнглийский язык", "316")
+					2, LessonWithSubject(
+						LessonEntity(0, 0, 0),
+						SubjectEntity("Английский языкАнглийский язык", "316")
 					)
 				),
 				Pair(
-					3, ScheduleWithSubject(
-						Schedule(1, 0, 0),
-						Subject("Английский язык", "316")
+					3, LessonWithSubject(
+						LessonEntity(1, 0, 0),
+						SubjectEntity("Английский язык", "316")
 					)
 				),
 				Pair(
-					4, ScheduleWithSubject(
-						Schedule(2, 0, 0),
-						Subject("Немецкий язык", "316")
+					4, LessonWithSubject(
+						LessonEntity(2, 0, 0),
+						SubjectEntity("Немецкий язык", "316")
 					)
 				),
 			),
 			selectedDate = LocalDate.now(),
 			currentPattern = listOf(
-				PatternStroke(startTime = LocalTime.of(8, 30), endTime = LocalTime.of(9, 15)),
-				PatternStroke(startTime = LocalTime.of(9, 30), endTime = LocalTime.of(10, 15)),
+				PatternStrokeEntity(startTime = LocalTime.of(8, 30), endTime = LocalTime.of(9, 15)),
+				PatternStrokeEntity(
+					startTime = LocalTime.of(9, 30),
+					endTime = LocalTime.of(10, 15)
+				),
 			),
-			changeDate = {},
-			onClassClick = {},
-			noClassesLabel = R.string.no_classes_label,
 			onRefresh = {},
-			scheduleChoose = { },
-			modifier = Modifier
-		)
+			changeDate = {},
+			scheduleChoose = { }
+		) {}
 	}
 }
 
@@ -718,14 +716,17 @@ private fun DayScheduleContentPreview() {
 private fun LessonDialogPreview() {
 	Surface {
 		LessonDialog(
-			classDetailed = ScheduleWithSubject(
-				subject = Subject(fullName = "Английский язык", cabinet = "316"),
-				schedule = Schedule(index = 0)
+			classDetailed = LessonWithSubject(
+				subject = SubjectEntity(fullName = "Английский язык", cabinet = "316"),
+				lesson = LessonEntity(index = 0)
 			),
 			selectedDate = LocalDate.now(),
 			currentPattern = listOf(
-				PatternStroke(startTime = LocalTime.of(8, 30), endTime = LocalTime.of(9, 15)),
-				PatternStroke(startTime = LocalTime.of(9, 30), endTime = LocalTime.of(10, 15)),
+				PatternStrokeEntity(startTime = LocalTime.of(8, 30), endTime = LocalTime.of(9, 15)),
+				PatternStrokeEntity(
+					startTime = LocalTime.of(9, 30),
+					endTime = LocalTime.of(10, 15)
+				),
 			),
 			onDeleteClass = {},
 			onEditClass = {},

@@ -1,27 +1,33 @@
 package com.kxsv.schooldiary.ui.screens.grade_list
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kxsv.schooldiary.ADD_EDIT_RESULT_OK
-import com.kxsv.schooldiary.DELETE_RESULT_OK
-import com.kxsv.schooldiary.EDIT_RESULT_OK
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.local.features.grade.Grade
-import com.kxsv.schooldiary.domain.GradeRepository
-import com.kxsv.schooldiary.util.Async
-import com.kxsv.schooldiary.util.WhileUiSubscribed
+import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
+import com.kxsv.schooldiary.data.repository.GradeRepository
+import com.kxsv.schooldiary.data.repository.SubjectRepository
+import com.kxsv.schooldiary.di.IoDispatcher
+import com.kxsv.schooldiary.ui.main.navigation.ADD_EDIT_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
+import com.kxsv.schooldiary.util.remote.NetworkException
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.io.IOException
 import javax.inject.Inject
 
+private const val TAG = "GradesViewModel"
+
 data class GradesUiState(
-	val grades: List<Grade> = emptyList(),
+	val grades: List<GradeWithSubject> = emptyList(),
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
 )
@@ -29,37 +35,18 @@ data class GradesUiState(
 @HiltViewModel
 class GradesViewModel @Inject constructor(
 	private val gradeRepository: GradeRepository,
+	private val subjectRepository: SubjectRepository,
+	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
-	private val _gradesAsync =
-		gradeRepository.getGradesStream()
-			.map { Async.Success(it) }
-			.catch<Async<List<Grade>>> { emit(Async.Error(R.string.loading_grades_error)) }
-	
 	private val _uiState = MutableStateFlow(GradesUiState())
-	val uiState: StateFlow<GradesUiState> = combine(
-		_uiState, _gradesAsync
-	) { state, grades ->
-		when (grades) {
-			Async.Loading -> {
-				GradesUiState(isLoading = true)
-			}
-			
-			is Async.Error -> {
-				GradesUiState(
-					userMessage = grades.errorMessage
-				)
-			}
-			
-			is Async.Success -> {
-				GradesUiState(
-					grades = grades.data,
-					userMessage = state.userMessage,
-					isLoading = state.isLoading
-				)
-			}
-		}
-	}.stateIn(viewModelScope, WhileUiSubscribed, GradesUiState(isLoading = true))
+	val uiState: StateFlow<GradesUiState> = _uiState.asStateFlow()
+	
+	private var gradesFetchJob: Job? = null
+	
+	init {
+		loadLocalGrades()
+	}
 	
 	fun showEditResultMessage(result: Int) {
 		when (result) {
@@ -73,7 +60,49 @@ class GradesViewModel @Inject constructor(
 		_uiState.update { it.copy(userMessage = null) }
 	}
 	
+	private fun loadLocalGrades() = viewModelScope.launch(ioDispatcher) {
+		_uiState.update { it.copy(isLoading = true) }
+		val grades = measurePerformanceInMS(logger = { time, _ ->
+			Log.i(TAG, "loadLocalGrades: performance is $time ms")
+		}) { gradeRepository.getGradesWithSubjects() }
+		_uiState.update { it.copy(grades = grades, isLoading = false) }
+	}
+	
+	fun fetchGrades() {
+		_uiState.update { it.copy(isLoading = true) }
+		gradesFetchJob?.cancel()
+		gradesFetchJob = viewModelScope.launch(ioDispatcher) {
+			try {
+				measurePerformanceInMS({ time, _ ->
+					Log.i(TAG, "fetchGrades: loadGradesForDate() performance is $time ms")
+				}) {
+					// fetch all grades
+				}
+			} catch (e: NetworkException) {
+				Log.e(TAG, "fetchGrades: exception on login", e)
+			} catch (e: IOException) {
+				Log.e(TAG, "fetchGrades: exception on response parse", e)
+			} catch (e: TimeoutCancellationException) {
+				Log.e(TAG, "fetchGrades: connection timed-out", e)
+				// TODO: show message that couldn't connect to site
+			} catch (e: Exception) {
+				Log.e(TAG, "fetchGrades: exception", e)
+			} finally {
+				loadLocalGrades()
+			}
+		}
+	}
+	
 	private fun showSnackbarMessage(message: Int) {
 		_uiState.update { it.copy(userMessage = message) }
+	}
+	
+	//the inline performance measurement method
+	private inline fun <T> measurePerformanceInMS(logger: (Long, T) -> Unit, func: () -> T): T {
+		val startTime = System.currentTimeMillis()
+		val result: T = func.invoke()
+		val endTime = System.currentTimeMillis()
+		logger.invoke(endTime - startTime, result)
+		return result
 	}
 }

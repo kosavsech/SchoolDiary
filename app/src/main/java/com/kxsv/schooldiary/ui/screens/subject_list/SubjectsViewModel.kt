@@ -2,14 +2,14 @@ package com.kxsv.schooldiary.ui.screens.subject_list
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kxsv.schooldiary.ADD_EDIT_RESULT_OK
-import com.kxsv.schooldiary.DELETE_RESULT_OK
-import com.kxsv.schooldiary.EDIT_RESULT_OK
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.local.features.subject.Subject
-import com.kxsv.schooldiary.domain.SubjectRepository
-import com.kxsv.schooldiary.util.Async
-import com.kxsv.schooldiary.util.WhileUiSubscribed
+import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
+import com.kxsv.schooldiary.data.repository.SubjectRepository
+import com.kxsv.schooldiary.ui.main.navigation.ADD_EDIT_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
+import com.kxsv.schooldiary.util.ui.Async
+import com.kxsv.schooldiary.util.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 data class SubjectsUiState(
-	val subjects: List<Subject> = emptyList(),
+	val subjects: List<SubjectEntity> = emptyList(),
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
 )
@@ -34,7 +34,7 @@ class SubjectsViewModel @Inject constructor(
 	private val _subjectsAsync =
 		subjectRepository.getSubjectsStream()
 			.map { Async.Success(it) }
-			.catch<Async<List<Subject>>> { emit(Async.Error(R.string.loading_subjects_error)) }
+			.catch<Async<List<SubjectEntity>>> { emit(Async.Error(R.string.loading_subjects_error)) }
 	
 	private val _uiState = MutableStateFlow(SubjectsUiState())
 	val uiState: StateFlow<SubjectsUiState> = combine(

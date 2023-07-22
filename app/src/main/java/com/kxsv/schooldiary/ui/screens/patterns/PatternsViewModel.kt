@@ -3,18 +3,18 @@ package com.kxsv.schooldiary.ui.screens.patterns
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kxsv.schooldiary.ADD_EDIT_RESULT_OK
-import com.kxsv.schooldiary.AppDestinationsArgs
-import com.kxsv.schooldiary.DELETE_RESULT_OK
-import com.kxsv.schooldiary.EDIT_RESULT_OK
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.SELECTED_DEFAULT_PATTERN_OK
-import com.kxsv.schooldiary.data.local.features.time_pattern.PatternWithStrokes
-import com.kxsv.schooldiary.domain.AppSettingsRepository
-import com.kxsv.schooldiary.domain.StudyDayRepository
-import com.kxsv.schooldiary.domain.TimePatternRepository
-import com.kxsv.schooldiary.util.Async
-import com.kxsv.schooldiary.util.WhileUiSubscribed
+import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternWithStrokes
+import com.kxsv.schooldiary.data.repository.StudyDayRepository
+import com.kxsv.schooldiary.data.repository.TimePatternRepository
+import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
+import com.kxsv.schooldiary.ui.main.navigation.ADD_EDIT_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs
+import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.SELECTED_DEFAULT_PATTERN_OK
+import com.kxsv.schooldiary.util.ui.Async
+import com.kxsv.schooldiary.util.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class PatternsUiState(
-	val patterns: List<PatternWithStrokes> = emptyList(),
+	val patterns: List<TimePatternWithStrokes> = emptyList(),
 	val defaultPatternId: Long = 0L,
 	val userMessage: Int? = null,
 	val isLoading: Boolean = false,
@@ -37,7 +37,7 @@ data class PatternsUiState(
 @HiltViewModel
 class PatternsViewModel @Inject constructor(
 	private val patternRepository: TimePatternRepository,
-	private val appSettingsRepository: AppSettingsRepository,
+	private val userPreferencesRepository: UserPreferencesRepository,
 	private val studyDayRepository: StudyDayRepository,
 	savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -47,8 +47,8 @@ class PatternsViewModel @Inject constructor(
 	private val _patternsAsync =
 		patternRepository.getPatternsWithStrokesStream()
 			.map { Async.Success(it) }
-			.catch<Async<List<PatternWithStrokes>>> { emit(Async.Error(R.string.loading_patterns_error)) }
-	private val _defaultPatternId = appSettingsRepository.observePatternId()
+			.catch<Async<List<TimePatternWithStrokes>>> { emit(Async.Error(R.string.loading_patterns_error)) }
+	private val _defaultPatternId = userPreferencesRepository.observePatternId()
 		.map { Async.Success(it) }
 		.catch<Async<Long>> { emit(Async.Error(R.string.loading_default_pattern_id_error)) }
 	
@@ -120,7 +120,7 @@ class PatternsViewModel @Inject constructor(
 	}
 	
 	fun updateDefaultPatternId(patternId: Long) = viewModelScope.launch {
-		appSettingsRepository.setPatternId(patternId)
+		userPreferencesRepository.setPatternId(patternId)
 		_uiState.update { it.copy(defaultPatternId = patternId) }
 		showEditResultMessage(SELECTED_DEFAULT_PATTERN_OK)
 	}
@@ -138,7 +138,7 @@ class PatternsViewModel @Inject constructor(
 			if (studyDayToUpdate != null) {
 				studyDayRepository.update(studyDayToUpdate)
 			} else {
-				throw NoSuchElementException("Not found StudyDay(id = $studyDayId) to change its patternId.")
+				throw NoSuchElementException("Not found StudyDayEntity(id = $studyDayId) to change its patternId.")
 			}
 		}
 	}

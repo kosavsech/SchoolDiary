@@ -3,17 +3,17 @@ package com.kxsv.schooldiary.ui.screens.subject_detail
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kxsv.schooldiary.ADD_EDIT_RESULT_OK
-import com.kxsv.schooldiary.AppDestinationsArgs
-import com.kxsv.schooldiary.DELETE_RESULT_OK
-import com.kxsv.schooldiary.EDIT_RESULT_OK
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.local.features.grade.Grade
-import com.kxsv.schooldiary.data.local.features.subject.Subject
-import com.kxsv.schooldiary.domain.GradeRepository
-import com.kxsv.schooldiary.domain.SubjectRepository
-import com.kxsv.schooldiary.util.Async
-import com.kxsv.schooldiary.util.WhileUiSubscribed
+import com.kxsv.schooldiary.data.local.features.grade.GradeEntity
+import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
+import com.kxsv.schooldiary.data.repository.GradeRepository
+import com.kxsv.schooldiary.data.repository.SubjectRepository
+import com.kxsv.schooldiary.ui.main.navigation.ADD_EDIT_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs
+import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
+import com.kxsv.schooldiary.util.ui.Async
+import com.kxsv.schooldiary.util.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,8 +26,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class SubjectDetailUiState(
-	val subject: Subject? = null,
-	val grades: List<Grade> = emptyList(),
+	val subject: SubjectEntity? = null,
+	val grades: List<GradeEntity> = emptyList(),
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
 	val isSubjectDeleted: Boolean = false,
@@ -50,7 +50,7 @@ class SubjectDetailViewModel @Inject constructor(
 	private val _gradesAsync =
 		gradeRepository.getGradesBySubjectIdStream(subjectId)
 			.map { Async.Success(it) }
-			.catch<Async<List<Grade>>> { emit(Async.Error(R.string.loading_grades_error)) }
+			.catch<Async<List<GradeEntity>>> { emit(Async.Error(R.string.loading_grades_error)) }
 	
 	private val _uiState = MutableStateFlow(SubjectDetailUiState())
 	val uiState: StateFlow<SubjectDetailUiState> = combine(
@@ -112,7 +112,7 @@ class SubjectDetailViewModel @Inject constructor(
 		}
 	}
 	
-	private fun handleSubject(subject: Subject?): Async<Subject?> {
+	private fun handleSubject(subject: SubjectEntity?): Async<SubjectEntity?> {
 		if (subject == null) {
 			return Async.Error(R.string.subject_not_found)
 		}

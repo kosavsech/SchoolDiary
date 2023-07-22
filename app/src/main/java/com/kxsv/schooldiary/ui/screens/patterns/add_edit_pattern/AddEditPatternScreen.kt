@@ -39,8 +39,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStroke
-import com.kxsv.schooldiary.util.ui.AddEditPatternTopAppBar
+import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
+import com.kxsv.schooldiary.ui.main.topbar.AddEditPatternTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.MaterialDialogState
@@ -120,10 +120,10 @@ fun AddEditTimePatternScreen(
 private fun AddEditPatternContent(
 	loading: Boolean,
 	name: String,
-	strokes: List<PatternStroke>,
+	strokes: List<PatternStrokeEntity>,
 	onNameChanged: (String) -> Unit,
-	onStrokeClick: (PatternStroke) -> Unit,
-	onStrokeDelete: (PatternStroke) -> Job,
+	onStrokeClick: (PatternStrokeEntity) -> Unit,
+	onStrokeDelete: (PatternStrokeEntity) -> Job,
 	modifier: Modifier = Modifier,
 ) {
 	LoadingContent(

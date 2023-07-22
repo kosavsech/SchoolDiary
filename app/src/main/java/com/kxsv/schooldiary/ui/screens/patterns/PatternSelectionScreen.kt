@@ -44,11 +44,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.local.features.time_pattern.PatternWithStrokes
-import com.kxsv.schooldiary.data.local.features.time_pattern.TimePattern
-import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStroke
+import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternEntity
+import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternWithStrokes
+import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
+import com.kxsv.schooldiary.ui.main.topbar.PatternSelectionTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
-import com.kxsv.schooldiary.util.ui.PatternSelectionTopAppBar
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -58,7 +58,7 @@ fun PatternSelectionScreen(
 	modifier: Modifier = Modifier,
 	@StringRes userMessage: Int,
 	onAddPattern: () -> Unit,
-	onEditPattern: (PatternWithStrokes) -> Unit,
+	onEditPattern: (TimePatternWithStrokes) -> Unit,
 	onUserMessageDisplayed: () -> Unit,
 	onPatternSelected: () -> Unit,
 	onBack: () -> Unit,
@@ -115,11 +115,11 @@ fun PatternSelectionScreen(
 @Composable
 private fun PatternsSelectionContent(
 	loading: Boolean,
-	patterns: List<PatternWithStrokes>,
+	patterns: List<TimePatternWithStrokes>,
 	defaultPatternId: Long,
 	//@StringRes noPatternsLabel: Int,
 	//onRefresh: () -> Unit,
-	editPattern: (PatternWithStrokes) -> Unit,
+	editPattern: (TimePatternWithStrokes) -> Unit,
 	deletePattern: (Long) -> Unit,
 	setDefaultPattern: (Long) -> Unit,
 	selectCustomPattern: (Long) -> Unit,
@@ -153,9 +153,9 @@ private fun PatternsSelectionContent(
 
 @Composable
 private fun PatternItem(
-	pattern: PatternWithStrokes,
+	pattern: TimePatternWithStrokes,
 	defaultPatternId: Long,
-	editPattern: (PatternWithStrokes) -> Unit,
+	editPattern: (TimePatternWithStrokes) -> Unit,
 	deletePattern: (Long) -> Unit,
 	setDefaultPattern: (Long) -> Unit,
 	selectCustomPattern: (Long) -> Unit,
@@ -196,7 +196,7 @@ private fun PatternItem(
 @Composable
 private fun TimeStrokes(
 	modifier: Modifier = Modifier,
-	strokes: List<PatternStroke>,
+	strokes: List<PatternStrokeEntity>,
 	isPatternSetAsDefault: Boolean = false,
 ) {
 	val borderModifier = if (isPatternSetAsDefault) {
@@ -239,16 +239,37 @@ private fun PatternsSelectionPreview() {
 		PatternsSelectionContent(
 			loading = false,
 			patterns = listOf(
-				PatternWithStrokes(
-					TimePattern("Default", patternId = 5),
+				TimePatternWithStrokes(
+					TimePatternEntity("Default", patternId = 5),
 					listOf(
-						PatternStroke(startTime = LocalTime.of(8, 30), endTime = LocalTime.of(9, 15)),
-						PatternStroke(startTime = LocalTime.of(9, 30), endTime = LocalTime.of(10, 15)),
-						PatternStroke(startTime = LocalTime.of(10, 30), endTime = LocalTime.of(11, 15)),
-						PatternStroke(startTime = LocalTime.of(11, 25), endTime = LocalTime.of(12, 10)),
-						PatternStroke(startTime = LocalTime.of(12, 30), endTime = LocalTime.of(13, 15)),
-						PatternStroke(startTime = LocalTime.of(13, 30), endTime = LocalTime.of(14, 20)),
-						PatternStroke(startTime = LocalTime.of(14, 30), endTime = LocalTime.of(15, 15)),
+						PatternStrokeEntity(
+							startTime = LocalTime.of(8, 30),
+							endTime = LocalTime.of(9, 15)
+						),
+						PatternStrokeEntity(
+							startTime = LocalTime.of(9, 30),
+							endTime = LocalTime.of(10, 15)
+						),
+						PatternStrokeEntity(
+							startTime = LocalTime.of(10, 30),
+							endTime = LocalTime.of(11, 15)
+						),
+						PatternStrokeEntity(
+							startTime = LocalTime.of(11, 25),
+							endTime = LocalTime.of(12, 10)
+						),
+						PatternStrokeEntity(
+							startTime = LocalTime.of(12, 30),
+							endTime = LocalTime.of(13, 15)
+						),
+						PatternStrokeEntity(
+							startTime = LocalTime.of(13, 30),
+							endTime = LocalTime.of(14, 20)
+						),
+						PatternStrokeEntity(
+							startTime = LocalTime.of(14, 30),
+							endTime = LocalTime.of(15, 15)
+						),
 					)
 				),
 			),

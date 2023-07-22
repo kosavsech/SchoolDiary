@@ -4,27 +4,26 @@ package com.kxsv.schooldiary.ui.screens.schedule.add_edit
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kxsv.schooldiary.AppDestinationsArgs
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.local.features.schedule.Schedule
-import com.kxsv.schooldiary.data.local.features.subject.Subject
-import com.kxsv.schooldiary.domain.ScheduleRepository
-import com.kxsv.schooldiary.domain.SubjectRepository
+import com.kxsv.schooldiary.data.local.features.lesson.LessonEntity
+import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
+import com.kxsv.schooldiary.data.repository.LessonRepository
+import com.kxsv.schooldiary.data.repository.SubjectRepository
+import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs
+import com.kxsv.schooldiary.util.Utils.timestampToLocalDate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 import javax.inject.Inject
 
 data class AddEditScheduleUiState(
-	val availableSubjects: List<Subject> = emptyList(),
+	val availableSubjects: List<SubjectEntity> = emptyList(),
 	val initialSubjectSelection: Int? = null,
-	val pickedSubject: Subject? = null,
+	val pickedSubject: SubjectEntity? = null,
 	val classDate: LocalDate? = null,
 	val classIndex: String = "",
 	val isLoading: Boolean = false,
@@ -34,7 +33,7 @@ data class AddEditScheduleUiState(
 
 @HiltViewModel
 class AddEditLessonViewModel @Inject constructor(
-	private val scheduleRepository: ScheduleRepository,
+	private val lessonRepository: LessonRepository,
 	private val subjectRepository: SubjectRepository,
 	savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -49,13 +48,10 @@ class AddEditLessonViewModel @Inject constructor(
 		if (scheduleId != 0L) {
 			loadClass(scheduleId)
 		} else {
-			updateDate(fromTimestamp(dateStamp))
+			updateDate(timestampToLocalDate(dateStamp)!!)
 		}
 		
 	}
-	
-	private fun fromTimestamp(value: Long): LocalDate =
-		Instant.ofEpochSecond(value).atZone(ZoneId.systemDefault()).toLocalDate()
 	
 	fun saveSchedule() {
 		if (uiState.value.pickedSubject == null
@@ -98,7 +94,7 @@ class AddEditLessonViewModel @Inject constructor(
 	}
 	
 	fun saveSelectedSubject(newIndex: Int) {
-		val newPickedSubject: Subject = uiState.value.availableSubjects[newIndex]
+		val newPickedSubject: SubjectEntity = uiState.value.availableSubjects[newIndex]
 		_uiState.update {
 			it.copy(
 				pickedSubject = newPickedSubject,
@@ -129,8 +125,8 @@ class AddEditLessonViewModel @Inject constructor(
 	}
 	
 	private fun createNewClass() = viewModelScope.launch {
-		scheduleRepository.createSchedule(
-			schedule = Schedule(
+		lessonRepository.createLesson(
+			lesson = LessonEntity(
 				index = uiState.value.classIndex.toInt() - 1,
 				subjectAncestorId = uiState.value.pickedSubject!!.subjectId,
 			),
@@ -143,11 +139,11 @@ class AddEditLessonViewModel @Inject constructor(
 		if (scheduleId == 0L) throw RuntimeException("updateClass() was called but class is new.")
 		
 		viewModelScope.launch {
-			scheduleRepository.updateSchedule(
-				schedule = Schedule(
+			lessonRepository.updateLesson(
+				lesson = LessonEntity(
 					index = uiState.value.classIndex.toInt() - 1,
 					subjectAncestorId = uiState.value.pickedSubject!!.subjectId,
-					scheduleId = scheduleId
+					lessonId = scheduleId
 				),
 				date = uiState.value.classDate!!
 			)
@@ -163,15 +159,15 @@ class AddEditLessonViewModel @Inject constructor(
 		}
 		
 		viewModelScope.launch {
-			scheduleRepository.getScheduleWithSubject(subjectId)?.let { scheduleWithSubject ->
+			lessonRepository.getLessonWithSubject(subjectId)?.let { scheduleWithSubject ->
 				_uiState.update {
 					it.copy(
 						pickedSubject = scheduleWithSubject.subject,
-						classIndex = (scheduleWithSubject.schedule.index + 1).toString(),
+						classIndex = (scheduleWithSubject.lesson.index + 1).toString(),
 					)
 				}
 			}
-			scheduleRepository.getScheduleWithStudyDay(subjectId).let { scheduleWithStudyDay ->
+			lessonRepository.getLessonWithStudyDay(subjectId).let { scheduleWithStudyDay ->
 				if (scheduleWithStudyDay != null) {
 					_uiState.update {
 						it.copy(

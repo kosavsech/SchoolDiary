@@ -5,42 +5,41 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kizitonwose.calendar.core.CalendarDay
-import com.kxsv.schooldiary.ADD_EDIT_RESULT_OK
-import com.kxsv.schooldiary.AppDestinationsArgs
-import com.kxsv.schooldiary.DELETE_RESULT_OK
-import com.kxsv.schooldiary.EDIT_RESULT_OK
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.SELECTED_CUSTOM_PATTERN_OK
-import com.kxsv.schooldiary.data.local.features.schedule.Schedule
-import com.kxsv.schooldiary.data.local.features.schedule.ScheduleWithSubject
-import com.kxsv.schooldiary.data.local.features.study_day.StudyDay
-import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStroke
-import com.kxsv.schooldiary.data.network.schedule.NetworkSchedule
+import com.kxsv.schooldiary.data.local.features.lesson.LessonEntity
+import com.kxsv.schooldiary.data.local.features.lesson.LessonWithSubject
+import com.kxsv.schooldiary.data.local.features.study_day.StudyDayEntity
+import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
+import com.kxsv.schooldiary.data.mapper.toLessonEntities
+import com.kxsv.schooldiary.data.mapper.toLocalWithSubject
+import com.kxsv.schooldiary.data.repository.LessonRepository
+import com.kxsv.schooldiary.data.repository.PatternStrokeRepository
+import com.kxsv.schooldiary.data.repository.StudyDayRepository
+import com.kxsv.schooldiary.data.repository.SubjectRepository
+import com.kxsv.schooldiary.data.repository.TimePatternRepository
+import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
 import com.kxsv.schooldiary.di.IoDispatcher
-import com.kxsv.schooldiary.domain.AppSettingsRepository
-import com.kxsv.schooldiary.domain.PatternStrokeRepository
-import com.kxsv.schooldiary.domain.ScheduleNetworkDataSource
-import com.kxsv.schooldiary.domain.ScheduleRepository
-import com.kxsv.schooldiary.domain.StudyDayRepository
-import com.kxsv.schooldiary.domain.SubjectRepository
-import com.kxsv.schooldiary.domain.TimePatternRepository
-import com.kxsv.schooldiary.util.NetworkException
-import com.kxsv.schooldiary.util.copyExclusively
+import com.kxsv.schooldiary.ui.main.navigation.ADD_EDIT_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs
+import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.SELECTED_CUSTOM_PATTERN_OK
+import com.kxsv.schooldiary.util.ListExtensionFunctions.copyExclusively
+import com.kxsv.schooldiary.util.Utils.timestampToLocalDate
+import com.kxsv.schooldiary.util.remote.NetworkException
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import java.io.IOException
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
@@ -48,11 +47,11 @@ import javax.inject.Inject
 private const val TAG = "DayScheduleViewModel"
 
 data class DayScheduleUiState(
-	val studyDay: StudyDay? = null,
-	val classes: Map<Int, ScheduleWithSubject> = emptyMap(),
-	val fetchedClasses: Map<Int, ScheduleWithSubject>? = null,
-	val currentTimings: List<PatternStroke> = emptyList(),
-	val classDetailed: ScheduleWithSubject? = null,
+	val studyDay: StudyDayEntity? = null,
+	val classes: Map<Int, LessonWithSubject> = emptyMap(),
+	val fetchedClasses: Map<Int, LessonWithSubject>? = null,
+	val currentTimings: List<PatternStrokeEntity> = emptyList(),
+	val classDetailed: LessonWithSubject? = null,
 	val selectedDate: LocalDate = LocalDate.now(), // unique for DayScheduleScreen
 	val selectedRefCalendarDay: CalendarDay? = null, // unique for DayScheduleCopyScreen
 	val refRange: ClosedRange<LocalDate>? = null,
@@ -63,13 +62,12 @@ data class DayScheduleUiState(
 
 @HiltViewModel
 class DayScheduleViewModel @Inject constructor(
-	private val scheduleRepository: ScheduleRepository,
-	private val netScheduleDataSource: ScheduleNetworkDataSource,
+	private val lessonRepository: LessonRepository,
 	private val subjectRepository: SubjectRepository,
 	private val strokeRepository: PatternStrokeRepository,
 	private val studyDayRepository: StudyDayRepository,
 	private val patternRepository: TimePatternRepository,
-	private val appSettingsRepository: AppSettingsRepository,
+	private val userPreferencesRepository: UserPreferencesRepository,
 	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 	savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -79,14 +77,11 @@ class DayScheduleViewModel @Inject constructor(
 	private val _uiState = MutableStateFlow(DayScheduleUiState())
 	val uiState: StateFlow<DayScheduleUiState> = _uiState.asStateFlow()
 	
+	private var scheduleFetchJob: Job? = null
+	private var scheduleRetrieveJob: Job? = null
+	
 	init {
-		if (dateStamp != 0L && dateStamp != null) {
-			Log.i(TAG, "init() loading from dateStamp($dateStamp)")
-			onDayChangeUpdate(fromTimestamp(dateStamp))
-		} else {
-			Log.i(TAG, "init() loading from today")
-			onDayChangeUpdate()
-		}
+		onDayChangeUpdate(timestampToLocalDate(dateStamp) ?: LocalDate.now())
 	}
 	
 	fun snackbarMessageShown() {
@@ -108,9 +103,9 @@ class DayScheduleViewModel @Inject constructor(
 		_uiState.update { it.copy(userMessage = message) }
 	}
 	
-	fun deleteClass(lesson: ScheduleWithSubject) {
+	fun deleteClass(lesson: LessonWithSubject) {
 		val newClasses = copyExclusively(
-			targetItemKey = lesson.schedule.index,
+			targetItemKey = lesson.lesson.index,
 			elements = uiState.value.classes
 		)
 		_uiState.update {
@@ -120,11 +115,11 @@ class DayScheduleViewModel @Inject constructor(
 		}
 		try {
 			viewModelScope.launch(ioDispatcher) {
-				if (lesson.schedule.scheduleId == 0L) {
+				if (lesson.lesson.lessonId == 0L) {
 					Log.i(TAG, "deleteClass: tried to delete class w/o scheduleId.")
 					localiseNetSchedule()
 				}
-				scheduleRepository.deleteSchedule(lesson.schedule.scheduleId)
+				lessonRepository.deleteLesson(lesson.lesson.lessonId)
 				showEditResultMessage(DELETE_RESULT_OK)
 			}
 		} catch (e: Exception) {
@@ -140,7 +135,7 @@ class DayScheduleViewModel @Inject constructor(
 		_uiState.update { it.copy(destRange = startDate..endDate) }
 	}
 	
-	fun selectClass(lesson: ScheduleWithSubject) {
+	fun selectClass(lesson: LessonWithSubject) {
 		_uiState.update { it.copy(classDetailed = lesson) }
 	}
 	
@@ -162,7 +157,7 @@ class DayScheduleViewModel @Inject constructor(
 		var appliedPatternId = predefinedPatternId
 		if (predefinedPatternId == null) {
 			// INFO: try to get default one, or will be filled with null
-			val defaultPatternId = appSettingsRepository.getPatternId()
+			val defaultPatternId = userPreferencesRepository.getPatternId()
 			val defaultPattern = patternRepository.getPattern(defaultPatternId)
 			
 			if (defaultPattern != null && defaultPatternId != 0L) {
@@ -170,12 +165,12 @@ class DayScheduleViewModel @Inject constructor(
 			}
 		}
 		
-		val newStudyDay = StudyDay(
+		val newStudyDay = StudyDayEntity(
 			date = date,
 			appliedPatternId = appliedPatternId,
 		)
 		val newStudyDayId = studyDayRepository.create(newStudyDay)
-		if (newStudyDayId == 0L) throw RuntimeException("StudyDay wasn't created for some reason")
+		if (newStudyDayId == 0L) throw RuntimeException("StudyDayEntity wasn't created for some reason")
 		_uiState.update {
 			it.copy(studyDay = newStudyDay.copy(studyDayId = newStudyDayId))
 		}
@@ -229,7 +224,7 @@ class DayScheduleViewModel @Inject constructor(
 		_uiState.update { it.copy(refRange = null, destRange = null) }
 	}
 	
-	fun updateOnCalendarDayChange(calendarDay: CalendarDay?) {
+	fun onCalendarDayChangeUpdate(calendarDay: CalendarDay?) {
 		_uiState.update {
 			it.copy(
 				isLoading = true,
@@ -241,18 +236,17 @@ class DayScheduleViewModel @Inject constructor(
 			)
 		}
 		if (calendarDay != null) {
-			Log.i(TAG, "updateOnCalendarDayChange() loading classes from $calendarDay.")
+			Log.i(TAG, "onCalendarDayChangeUpdate() loading classes from $calendarDay.")
 			retrieveScheduleOnDate(calendarDay.date)
 		} else {
 			Log.d(
 				TAG,
-				"updateOnCalendarDayChange: couldn't load classes because calendar day is null."
+				"onCalendarDayChangeUpdate: couldn't load classes because calendar day is null."
 			)
 		}
 	}
 	
-	fun onDayChangeUpdate(date: LocalDate = LocalDate.now()) {
-		Log.i(TAG, "onDayChangeUpdate() loading from date($date, ${localDateToTimestamp(date)}).")
+	fun onDayChangeUpdate(date: LocalDate) {
 		_uiState.update {
 			it.copy(
 				isLoading = true,
@@ -269,17 +263,17 @@ class DayScheduleViewModel @Inject constructor(
 	suspend fun getIdForClassFromNet(): Long {
 		localiseNetSchedule()
 		
-		val indexOfClassDetailed = uiState.value.classDetailed!!.schedule.index
+		val indexOfClassDetailed = uiState.value.classDetailed!!.lesson.index
 		val studyDayMasterId = uiState.value.studyDay!!.studyDayId
-		return scheduleRepository.getByIdAndIndex(
+		return lessonRepository.getByIdAndIndex(
 			studyDayMasterId = studyDayMasterId,
 			index = indexOfClassDetailed
-		)?.scheduleId
-			?: throw NoSuchElementException("Didn't find schedule with id($studyDayMasterId) and index($indexOfClassDetailed)")
+		)?.lessonId
+			?: throw NoSuchElementException("Didn't find lesson with id($studyDayMasterId) and index($indexOfClassDetailed)")
 	}
 	
 	/**
-	 * Copies remote schedule from [specific day][fromDate] to [another day][toDate].
+	 * Copies remote lesson from [specific day][fromDate] to [another day][toDate].
 	 * Does DB call, so should be time effective.
 	 *
 	 * @param fromDate
@@ -294,18 +288,18 @@ class DayScheduleViewModel @Inject constructor(
 	) {
 		try {
 			val refStudyDay = studyDayRepository.getByDate(fromDate)
-				?: throw NoSuchElementException("Reference StudyDay (date $fromDate) to copy from not found.")
+				?: throw NoSuchElementException("Reference StudyDayEntity (date $fromDate) to copy from not found.")
 			val toStudyDay = studyDayRepository.getByDate(toDate)
 			
 			val cloneDayId = if (toStudyDay != null) {
-				// INFO: if copying schedule to existent study day,
-				//  maybe with local schedules which should be deleted first.
+				// INFO: if copying lesson to existent study day,
+				//  maybe with local lessons which should be deleted first.
 				if (shouldCopyPattern) {
 					studyDayRepository.update(
 						toStudyDay.copy(appliedPatternId = refStudyDay.appliedPatternId)
 					)
 				}
-				scheduleRepository.deleteAllByDayId(toStudyDay.studyDayId)
+				lessonRepository.deleteAllByDayId(toStudyDay.studyDayId)
 				toStudyDay.studyDayId
 			} else {
 				if (shouldCopyPattern) {
@@ -323,22 +317,22 @@ class DayScheduleViewModel @Inject constructor(
 				"copyLocalScheduleFromDate() called with toStudyDay $toStudyDay\n" +
 						"fromStudyDay $refStudyDay"
 			)
-			val copyOfSchedules: MutableList<Schedule> = mutableListOf()
-			scheduleRepository.getAllByMasterId(refStudyDay.studyDayId).forEach {
-				copyOfSchedules.add(it.copy(studyDayMasterId = cloneDayId, scheduleId = 0))
+			val copyOfLessons: MutableList<LessonEntity> = mutableListOf()
+			lessonRepository.getAllByMasterId(refStudyDay.studyDayId).forEach {
+				copyOfLessons.add(it.copy(studyDayMasterId = cloneDayId, lessonId = 0))
 			}
-			scheduleRepository.upsertAll(copyOfSchedules)
+			lessonRepository.upsertAll(copyOfLessons)
 			
 			loadLocalScheduleOnDate(toDate)
 		} catch (e: NoSuchElementException) {
 			Log.e(
-				TAG, "copyLocalScheduleFromDate: couldn't copy schedule because nowhere from to", e
+				TAG, "copyLocalScheduleFromDate: couldn't copy lesson because nowhere from to", e
 			)
 		}
 	}
 	
 	/**
-	 * Copies remote schedule from [specific day][fromDate] to [another day][toDate].
+	 * Copies remote lesson from [specific day][fromDate] to [another day][toDate].
 	 * Does 1 network call, so costly in time.
 	 *
 	 * @param fromDate
@@ -355,14 +349,14 @@ class DayScheduleViewModel @Inject constructor(
 			val toStudyDay = studyDayRepository.getByDate(toDate)
 			
 			val cloneDayId = if (toStudyDay != null) {
-				// INFO: if copying schedule to existent study day,
-				//  maybe with local schedules which should be deleted first.
+				// INFO: if copying lesson to existent study day,
+				//  maybe with local lessons which should be deleted first.
 				if (shouldCopyPattern && refStudyDay != null) {
 					studyDayRepository.update(
 						toStudyDay.copy(appliedPatternId = refStudyDay.appliedPatternId)
 					)
 				}
-				scheduleRepository.deleteAllByDayId(toStudyDay.studyDayId)
+				lessonRepository.deleteAllByDayId(toStudyDay.studyDayId)
 				toStudyDay.studyDayId
 			} else {
 				if (shouldCopyPattern && refStudyDay != null) {
@@ -380,9 +374,10 @@ class DayScheduleViewModel @Inject constructor(
 				"copyRemoteSchedule: uiState.value.classes = ${uiState.value.classes}"
 			)
 			val localizedNetClasses =
-				netScheduleDataSource.loadScheduleForDate(fromDate).toLocal(cloneDayId)
+				lessonRepository.fetchLessonsByDate(fromDate)
+					.toLessonEntities(cloneDayId, subjectRepository, studyDayRepository)
 			
-			scheduleRepository.upsertAll(localizedNetClasses)
+			lessonRepository.upsertAll(localizedNetClasses)
 			
 			loadLocalScheduleOnDate(toDate)
 		} catch (e: NetworkException) {
@@ -397,7 +392,7 @@ class DayScheduleViewModel @Inject constructor(
 	}
 	
 	/**
-	 * Copies remote schedule from [specific day][fromDate] to [current day][com.kxsv.schooldiary.ui.screens.schedule.DayScheduleUiState.selectedDate].
+	 * Copies remote lesson from [specific day][fromDate] to [current day][com.kxsv.schooldiary.ui.screens.schedule.DayScheduleUiState.selectedDate].
 	 * Does not make network calls, so time efficient.
 	 *
 	 * @param fromDate
@@ -413,14 +408,14 @@ class DayScheduleViewModel @Inject constructor(
 			val toStudyDay = studyDayRepository.getByDate(uiState.value.selectedDate)
 			
 			val cloneDayId = if (toStudyDay != null) {
-				// INFO: if copying schedule to existent study day,
-				//  maybe with local schedules which should be deleted first.
+				// INFO: if copying lesson to existent study day,
+				//  maybe with local lessons which should be deleted first.
 				if (shouldCopyPattern && refStudyDay != null) {
 					studyDayRepository.update(
 						toStudyDay.copy(appliedPatternId = refStudyDay.appliedPatternId)
 					)
 				}
-				scheduleRepository.deleteAllByDayId(toStudyDay.studyDayId)
+				lessonRepository.deleteAllByDayId(toStudyDay.studyDayId)
 				toStudyDay.studyDayId
 			} else {
 				if (shouldCopyPattern && refStudyDay != null) {
@@ -435,9 +430,9 @@ class DayScheduleViewModel @Inject constructor(
 			} ?: throw RuntimeException("Couldn't retrieve studyDayId")
 			
 			val localizedNetClasses =
-				uiState.value.classes.map { it.value.schedule.copy(studyDayMasterId = cloneDayId) }
+				uiState.value.classes.map { it.value.lesson.copy(studyDayMasterId = cloneDayId) }
 			
-			scheduleRepository.upsertAll(localizedNetClasses)
+			lessonRepository.upsertAll(localizedNetClasses)
 			
 			loadLocalScheduleOnDate(uiState.value.selectedDate)
 		} catch (e: Exception) {
@@ -449,9 +444,9 @@ class DayScheduleViewModel @Inject constructor(
 	 * Does whatever it takes to get study day by [date]. If doesn't exist, [creates new][createNewStudyDay].
 	 *
 	 * @param date
-	 * @return [StudyDay]
+	 * @return [StudyDayEntity]
 	 */
-	suspend fun getStudyDayForced(date: LocalDate): StudyDay {
+	suspend fun getStudyDayForced(date: LocalDate): StudyDayEntity {
 		val existingStudyDay = studyDayRepository.getByDate(date)
 		val studyDay = (if (existingStudyDay != null) {
 			existingStudyDay
@@ -459,7 +454,7 @@ class DayScheduleViewModel @Inject constructor(
 			createNewStudyDay()
 			uiState.value.studyDay
 		})
-			?: throw IllegalStateException("StudyDay is still null somehow")
+			?: throw IllegalStateException("StudyDayEntity is still null somehow")
 		return studyDay
 	}
 	
@@ -467,117 +462,119 @@ class DayScheduleViewModel @Inject constructor(
 	 * Does whatever it takes to get study day for current [date][com.kxsv.schooldiary.ui.screens.schedule.DayScheduleUiState.selectedDate].
 	 * If doesn't exist [creates new][createNewStudyDay].
 	 *
-	 * @return [StudyDay]
+	 * @return [StudyDayEntity]
 	 * @throws IllegalStateException if didn't succeed to create newStudyDay
 	 */
-	suspend fun getCurrentStudyDayForced(): StudyDay {
-//		appSettingsRepository.setAuthCookie(null)
+	suspend fun getCurrentStudyDayForced(): StudyDayEntity {
+//		userPreferencesRepository.setAuthCookie(null)
 		uiState.value.studyDay ?: createNewStudyDay()
 		return uiState.value.studyDay
-			?: throw IllegalStateException("StudyDay is still null somehow")
+			?: throw IllegalStateException("StudyDayEntity is still null somehow")
 	}
 	
-	private fun initializeNetworkScheduleOnDate(date: LocalDate) =
-		viewModelScope.launch(ioDispatcher) {
-			try {
-				val classes = measurePerformanceInMS(logger = { time, result ->
-					Log.i(
-						TAG,
-						"initializeNetworkScheduleOnDate: loadScheduleForDate() performance is $time ms" +
-								"\nreturned: classes $result"
-					)
-				}) {
-					withTimeout(10000L) {
-						netScheduleDataSource.loadScheduleForDate(date).toLocalWithSubject()
-					}
+	private suspend fun initializeNetworkScheduleOnDate(date: LocalDate) {
+		try {
+			val classes = measurePerformanceInMS(logger = { time, result ->
+				Log.i(
+					TAG,
+					"initializeNetworkScheduleOnDate: getScheduleForDate() performance is $time ms" +
+							"\nreturned: classes $result"
+				)
+			}) {
+				withTimeout(10000L) {
+					lessonRepository.fetchLessonsByDate(date)
+						.toLocalWithSubject(subjectRepository, studyDayRepository)
 				}
-				_uiState.update {
-					it.copy(
-						classes = classes,
-						isLoading = false
-					)
-				}
-			} catch (e: NetworkException) {
-				Log.e(TAG, "initializeNetworkScheduleOnDate: exception on login", e)
-			} catch (e: IOException) {
-				Log.e(TAG, "initializeNetworkScheduleOnDate: exception on response parse", e)
-			} catch (e: TimeoutCancellationException) {
-				Log.e(TAG, "initializeNetworkScheduleOnDate: connection timed-out", e)
-				// TODO: show message that couldn't connect to site
-			} catch (e: Exception) {
-				Log.e(TAG, "initializeNetworkScheduleOnDate: exception", e)
-			} finally {
-				_uiState.update { it.copy(isLoading = false) }
 			}
+			_uiState.update { it.copy(classes = classes) }
+		} catch (e: NetworkException) {
+			Log.e(TAG, "initializeNetworkScheduleOnDate: exception on login", e)
+		} catch (e: IOException) {
+			Log.e(TAG, "initializeNetworkScheduleOnDate: exception on response parse", e)
+		} catch (e: TimeoutCancellationException) {
+			// TODO: show message that couldn't connect to site
+			Log.e(TAG, "initializeNetworkScheduleOnDate: connection timed-out", e)
+		} catch (e: CancellationException) {
+			Log.w(TAG, "initializeNetworkScheduleOnDate: canceled", e)
+		} catch (e: Exception) {
+			Log.e(TAG, "initializeNetworkScheduleOnDate: exception", e)
+		} finally {
+			_uiState.update { it.copy(isLoading = false) }
 		}
+	}
 	
 	/**
-	 * Check if schedule is remote. Can check [mapOfClasses], [listOfClasses], [schedules].
 	 * If no parameters passed than checks current shown [classes][com.kxsv.schooldiary.ui.screens.schedule.DayScheduleUiState.classes]
+	 * Can check [mapOfClasses], [listOfClasses], [lessons].
 	 *
-	 * @param mapOfClasses specific map of [ScheduleWithSubject] to be checked
-	 * @param listOfClasses specific list of [ScheduleWithSubject] to be checked
-	 * @param schedules specific list of [Schedule] to be checked
-	 * @return true if schedule is remote
+	 * @param mapOfClasses specific map of [LessonWithSubject] to be checked
+	 * @param listOfClasses specific list of [LessonWithSubject] to be checked
+	 * @param lessons specific list of [LessonEntity] to be checked
+	 * @return true if lesson is remote
 	 */
 	fun isScheduleRemote(
-		mapOfClasses: Map<Int, ScheduleWithSubject>? = null,
-		listOfClasses: List<ScheduleWithSubject>? = null,
-		schedules: List<Schedule>? = null,
+		mapOfClasses: Map<Int, LessonWithSubject>? = null,
+		listOfClasses: List<LessonWithSubject>? = null,
+		lessons: List<LessonEntity>? = null,
 	): Boolean {
 		val schedulesIds =
-			listOfClasses?.map { it.schedule.scheduleId }
-				?: mapOfClasses?.map { it.value.schedule.scheduleId }
-				?: schedules?.map { it.scheduleId }
-				?: uiState.value.classes.map { it.value.schedule.scheduleId }
+			listOfClasses?.map { it.lesson.lessonId }
+				?: mapOfClasses?.map { it.value.lesson.lessonId }
+				?: lessons?.map { it.lessonId }
+				?: uiState.value.classes.map { it.value.lesson.lessonId }
 		return schedulesIds.binarySearch(0L) != -1
 	}
 	
 	private fun currentClassesHasMasterId(): Boolean {
-		val schedulesMasterIds = uiState.value.classes.map { it.value.schedule.studyDayMasterId }
+		val schedulesMasterIds = uiState.value.classes.map { it.value.lesson.studyDayMasterId }
 		return schedulesMasterIds.binarySearch(null) == -1
 	}
 	
 	/**
-	 * Used for adding network schedule to local DB. If classes don't have [studyDayMasterId][com.kxsv.schooldiary.data.local.features.schedule.Schedule.studyDayMasterId]
-	 * adds it for each class. Opportunity to determine if schedule should be localized
-	 * from [fetched schedule][com.kxsv.schooldiary.ui.screens.schedule.DayScheduleUiState.fetchedClasses]
+	 * Used for adding network lesson to local DB. If classes don't have [studyDayMasterId][com.kxsv.schooldiary.data.local.features.lesson.LessonEntity.studyDayMasterId]
+	 * adds it for each class. Opportunity to determine if lesson should be localized
+	 * from [fetched lesson][com.kxsv.schooldiary.ui.screens.schedule.DayScheduleUiState.fetchedClasses]
 	 *
 	 * @throws IllegalStateException when study day is null
 	 * @throws IllegalArgumentException when current classes are empty
 	 */
 	suspend fun localiseNetSchedule(isFetched: Boolean? = false) {
-		try {
-			val studyDay = getCurrentStudyDayForced()
-			
-			val classes = if (isFetched!!) uiState.value.fetchedClasses else uiState.value.classes
-			if (classes.isNullOrEmpty()) throw IllegalArgumentException("Shouldn't be called with empty classes")
-			
-			scheduleRepository.deleteAllByDayId(studyDay.studyDayId)
-			
-			Log.i(TAG, "localiseNetSchedule: in process for ${uiState.value.studyDay}")
-			val schedules = classes.map { it.value.schedule }
-			
-			if (currentClassesHasMasterId()) {
-				scheduleRepository.upsertAll(schedules)
-			} else {
-				val schedulesWithMasterDay =
-					schedules.map { it.copy(studyDayMasterId = studyDay.studyDayId) }
-				scheduleRepository.upsertAll(schedulesWithMasterDay)
+		measurePerformanceInMS(logger = { time, _ ->
+			Log.i(TAG, "localiseNetSchedule: performance is $time ms")
+		}) {
+			try {
+				val studyDay = getCurrentStudyDayForced()
+				
+				val classes =
+					if (isFetched!!) uiState.value.fetchedClasses else uiState.value.classes
+				if (classes.isNullOrEmpty()) throw IllegalArgumentException("Shouldn't be called with empty classes")
+				
+				lessonRepository.deleteAllByDayId(studyDay.studyDayId)
+				
+				Log.i(TAG, "localiseNetSchedule: in process for ${uiState.value.studyDay}")
+				val schedules = classes.map { it.value.lesson }
+				
+				if (currentClassesHasMasterId()) {
+					lessonRepository.upsertAll(schedules)
+				} else {
+					val schedulesWithMasterDay =
+						schedules.map { it.copy(studyDayMasterId = studyDay.studyDayId) }
+					lessonRepository.upsertAll(schedulesWithMasterDay)
+				}
+				loadLocalScheduleOnDate(studyDay.date)
+			} catch (e: IllegalStateException) {
+				Log.e(
+					TAG, "localiseNetSchedule: couldn't localise" +
+							" because cannot check if lesson is localised", e
+				)
+			} catch (e: IllegalArgumentException) {
+				Log.e(
+					TAG,
+					"localiseNetSchedule: couldn't localise because nothing to localise", e
+				)
+			} catch (e: RuntimeException) {
+				Log.e(TAG, "localiseNetSchedule: failed to localise net lesson", e)
 			}
-			loadLocalScheduleOnDate(studyDay.date)
-		} catch (e: IllegalStateException) {
-			Log.e(
-				TAG, "localiseNetSchedule: couldn't localise" +
-						" because cannot check if schedule is localised", e
-			)
-		} catch (e: IllegalArgumentException) {
-			Log.e(
-				TAG,
-				"localiseNetSchedule: couldn't localise because nothing to localise", e
-			)
-		} catch (e: RuntimeException) {
-			Log.e(TAG, "localiseNetSchedule: failed to localise net schedule", e)
 		}
 	}
 	
@@ -603,21 +600,21 @@ class DayScheduleViewModel @Inject constructor(
 	
 	fun fetchSchedule() {
 		_uiState.update { it.copy(isLoading = true) }
-		viewModelScope.coroutineContext.job.cancelChildren()
-		viewModelScope.launch(ioDispatcher) {
+		scheduleFetchJob?.cancel()
+		scheduleFetchJob = viewModelScope.launch(ioDispatcher) {
 			try {
 				if (isScheduleRemote()) {
 					localiseNetSchedule()
 				} else {
 					val fetchedClasses = measurePerformanceInMS(logger = { time, result ->
 						Log.i(
-							TAG, "fetchSchedule: loadScheduleForDate() performance is $time ms" +
+							TAG, "fetchSchedule: getScheduleForDate() performance is $time ms" +
 									"\nreturned: classes $result"
 						)
 					}) {
 						withTimeout(10000L) {
-							netScheduleDataSource.loadScheduleForDate(uiState.value.selectedDate)
-								.toLocalWithSubject()
+							lessonRepository.fetchLessonsByDate(uiState.value.selectedDate)
+								.toLocalWithSubject(subjectRepository, studyDayRepository)
 						}
 					}
 					if (fetchedClasses.isNotEmpty()) {
@@ -642,36 +639,28 @@ class DayScheduleViewModel @Inject constructor(
 	}
 	
 	private fun retrieveScheduleOnDate(date: LocalDate) {
-		viewModelScope.coroutineContext.job.cancelChildren()
-		viewModelScope.launch(ioDispatcher) {
+		scheduleRetrieveJob?.cancel()
+		scheduleRetrieveJob = viewModelScope.launch(ioDispatcher) {
 			val dayWithClasses = measurePerformanceInMS(logger = { time, _ ->
-				Log.i(TAG, "getDayAndSchedulesWithSubjectsByDate() performance is $time ms")
+				Log.i(TAG, "getLocalSchedule() performance is $time ms")
 			}) {
 				studyDayRepository.getDayAndSchedulesWithSubjectsByDate(date)
 			}
 			if (dayWithClasses != null) {
 				_uiState.update { it.copy(studyDay = dayWithClasses.studyDay) }
 				if (dayWithClasses.classes.isNotEmpty()) {
-					Log.i(TAG, "retrieveScheduleOnDate: found local schedule")
-					_uiState.update { dayScheduleUiState ->
-						val mappedClasses: MutableMap<Int, ScheduleWithSubject> = mutableMapOf()
-						dayWithClasses.classes.forEach { mappedClasses[it.schedule.index] = it }
-						dayScheduleUiState.copy(
-							classes = mappedClasses,
-							isLoading = false
-						)
+					Log.i(TAG, "retrieveScheduleOnDate: found local classes")
+					val mappedClasses = mutableMapOf<Int, LessonWithSubject>()
+					dayWithClasses.classes.forEach { mappedClasses[it.lesson.index] = it }
+					_uiState.update {
+						it.copy(classes = mappedClasses, isLoading = false)
 					}
 				} else {
-					// INFO: loads classes from network to UI with studyDayMasterId
-					Log.i(TAG, "retrieveScheduleOnDate: searching for schedule in Net")
+					Log.i(TAG, "retrieveSchedule: loaded studyDay, searching for lesson in Net")
 					initializeNetworkScheduleOnDate(date)
 				}
 			} else {
-				// INFO: loads classes from network to UI without studyDayMasterId
-				Log.i(
-					TAG,
-					"retrieveScheduleOnDate: studyDay is NULL, searching for schedule in Net"
-				)
+				Log.i(TAG, "retrieveSchedule: studyDay is NULL, searching for lesson in Net")
 				initializeNetworkScheduleOnDate(date)
 			}
 			updateTimingsOnStudyDay(dayWithClasses?.studyDay)
@@ -685,14 +674,14 @@ class DayScheduleViewModel @Inject constructor(
 	
 	/**
 	 * Tries to load time pattern from passed [studyDay] if it's null or doesn't
-	 * have time pattern specified, loads default pattern from [datastore][com.kxsv.schooldiary.data.app_settings.AppSettings]
+	 * have time pattern specified, loads default pattern from [user_preferences][com.kxsv.schooldiary.data.local.user_preferences.UserPreferences]
 	 *
 	 * @param studyDay
 	 */
-	private suspend fun updateTimingsOnStudyDay(studyDay: StudyDay?) {
+	private suspend fun updateTimingsOnStudyDay(studyDay: StudyDayEntity?) {
 		val isFromDefaults = studyDay?.appliedPatternId == null
 		val appliedPatternId =
-			studyDay?.appliedPatternId ?: appSettingsRepository.getPatternId()
+			studyDay?.appliedPatternId ?: userPreferencesRepository.getPatternId()
 		val strokes = measurePerformanceInMS(logger = { time, result ->
 			Log.i(
 				TAG, "updateTimingsOnStudyDay() performance is $time ms" +
@@ -711,8 +700,8 @@ class DayScheduleViewModel @Inject constructor(
 		studyDayRepository.getDayAndSchedulesWithSubjectsByDate(date).let { dayWithClasses ->
 			if (dayWithClasses != null) {
 				_uiState.update { dayScheduleUiState ->
-					val mappedClasses: MutableMap<Int, ScheduleWithSubject> = mutableMapOf()
-					dayWithClasses.classes.forEach { mappedClasses[it.schedule.index] = it }
+					val mappedClasses: MutableMap<Int, LessonWithSubject> = mutableMapOf()
+					dayWithClasses.classes.forEach { mappedClasses[it.lesson.index] = it }
 					dayScheduleUiState.copy(
 						studyDay = dayWithClasses.studyDay,
 						classes = mappedClasses,
@@ -723,89 +712,6 @@ class DayScheduleViewModel @Inject constructor(
 				throw NoSuchElementException("Didn't found day with classes for some reason")
 			}
 			updateTimingsOnStudyDay(dayWithClasses.studyDay)
-		}
-	}
-	
-	private suspend fun NetworkSchedule.toLocalWithSubject(): ScheduleWithSubject {
-		try {
-			val subject =
-				subjectRepository.getSubjectByName(subjectAncestorName)
-					?: throw NoSuchElementException("Not found subject with name $subjectAncestorName")
-			// TODO: add prompt to create subject with such name, or create it forcibly
-			
-			val studyDay = studyDayRepository.getByDate(date)
-			val localizedClass = ScheduleWithSubject(
-				schedule = Schedule(
-					index = index,
-					subjectAncestorId = subject.subjectId,
-				),
-				subject = subject,
-			)
-			return if (studyDay != null) {
-				localizedClass.copy(schedule = localizedClass.schedule.copy(studyDayMasterId = studyDay.studyDayId))
-			} else {
-				localizedClass
-			}
-		} catch (e: NoSuchElementException) {
-			throw RuntimeException("Failed to convert lesson toLocalWithSubject", e)
-		}
-	}
-	
-	private suspend fun List<NetworkSchedule>.toLocalWithSubject(): Map<Int, ScheduleWithSubject> {
-		return try {
-			val newMap = mutableMapOf<Int, ScheduleWithSubject>()
-			this.forEach {
-				val localedClass = it.toLocalWithSubject()
-				newMap[it.index] = localedClass
-			}
-			newMap
-		} catch (e: RuntimeException) {
-			Log.e(
-				TAG, "List<NetworkSchedule>.toLocalWithSubject: classes are empty because", e
-			)
-			emptyMap()
-		}
-	}
-	
-	private suspend fun NetworkSchedule.toLocal(studyDayMasterId: Long?): Schedule {
-		try {
-			val subject =
-				subjectRepository.getSubjectByName(subjectAncestorName)
-					?: throw NoSuchElementException("Not found subject with name $subjectAncestorName")
-			// TODO: add prompt to create subject with such name, or create it forcibly
-			
-			val studyDay = studyDayRepository.getByDate(date)
-			val localizedClass = Schedule(
-				index = index,
-				subjectAncestorId = subject.subjectId,
-			)
-			return if (studyDayMasterId != null) {
-				localizedClass.copy(studyDayMasterId = studyDayMasterId)
-			} else if (studyDay != null) {
-				localizedClass.copy(studyDayMasterId = studyDay.studyDayId)
-			} else {
-				localizedClass
-			}
-		} catch (e: NoSuchElementException) {
-			throw RuntimeException("Failed to convert class toLocal", e)
-		}
-	}
-	
-	/**
-	 * Convert [NetworkSchedule] to local, opportunity to push the [studyDayMasterId]
-	 * which will be assigned to each [Schedule] after conversion, which is by default
-	 * is [current studyDay][com.kxsv.schooldiary.ui.screens.schedule.DayScheduleUiState.studyDay]
-	 * id or is null.
-	 *
-	 * @param studyDayMasterId value to assign to each class [studyDayMasterId][com.kxsv.schooldiary.data.local.features.schedule.Schedule.studyDayMasterId] field
-	 * @return List<[Schedule]>
-	 */
-	private suspend fun List<NetworkSchedule>.toLocal(studyDayMasterId: Long? = null): List<Schedule> {
-		return try {
-			this.map { it.toLocal(studyDayMasterId) }
-		} catch (e: RuntimeException) {
-			Log.e(TAG, "List<NetworkSchedule>.toLocal: classes are empty because", e)
-			emptyList()
 		}
 	}
 	
@@ -821,21 +727,10 @@ class DayScheduleViewModel @Inject constructor(
 		return dates
 	}
 	
-	private fun fromTimestamp(value: Long): LocalDate =
-		if (value == 0L) LocalDate.now() else {
-			Instant.ofEpochSecond(value).atZone(ZoneId.systemDefault()).toLocalDate()
-		}
-	
-	private fun localDateToTimestamp(date: LocalDate): Long =
-		date.atStartOfDay(ZoneId.systemDefault()).toEpochSecond()
-	
 	//the inline performance measurement method
-	private inline fun <T> measurePerformanceInMS(
-		logger: (Long, T) -> Unit,
-		function: () -> T,
-	): T {
+	private inline fun <T> measurePerformanceInMS(logger: (Long, T) -> Unit, func: () -> T): T {
 		val startTime = System.currentTimeMillis()
-		val result: T = function.invoke()
+		val result: T = func.invoke()
 		val endTime = System.currentTimeMillis()
 		logger.invoke(endTime - startTime, result)
 		return result
