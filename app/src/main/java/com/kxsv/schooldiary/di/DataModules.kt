@@ -8,6 +8,7 @@ import androidx.datastore.dataStoreFile
 import androidx.room.Room
 import com.kxsv.schooldiary.data.AppDatabase
 import com.kxsv.schooldiary.data.local.features.associative_tables.subject_teacher.SubjectTeacherDao
+import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceDao
 import com.kxsv.schooldiary.data.local.features.grade.GradeDao
 import com.kxsv.schooldiary.data.local.features.lesson.LessonDao
 import com.kxsv.schooldiary.data.local.features.study_day.StudyDayDao
@@ -19,6 +20,8 @@ import com.kxsv.schooldiary.data.local.user_preferences.UserPreferences
 import com.kxsv.schooldiary.data.local.user_preferences.UserPreferencesSerializer
 import com.kxsv.schooldiary.data.remote.WebService
 import com.kxsv.schooldiary.data.remote.WebServiceImpl
+import com.kxsv.schooldiary.data.repository.EduPerformanceRepository
+import com.kxsv.schooldiary.data.repository.EduPerformanceRepositoryImpl
 import com.kxsv.schooldiary.data.repository.GradeRepository
 import com.kxsv.schooldiary.data.repository.GradeRepositoryImpl
 import com.kxsv.schooldiary.data.repository.LessonRepository
@@ -81,6 +84,10 @@ abstract class RepositoryModule {
 	@Binds
 	@Singleton
 	abstract fun bindGradeRepository(repository: GradeRepositoryImpl): GradeRepository
+	
+	@Binds
+	@Singleton
+	abstract fun bindEduPerformanceRepository(repository: EduPerformanceRepositoryImpl): EduPerformanceRepository
 }
 
 @Module
@@ -120,6 +127,9 @@ object DatabaseModule {
 	
 	@Provides
 	fun provideGradeDao(db: AppDatabase): GradeDao = db.gradeDao()
+	
+	@Provides
+	fun provideEduPerformanceDao(db: AppDatabase): EduPerformanceDao = db.eduPerformanceDao()
 }
 
 @InstallIn(SingletonComponent::class)

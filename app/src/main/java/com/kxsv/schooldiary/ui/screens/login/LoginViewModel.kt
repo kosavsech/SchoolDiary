@@ -80,7 +80,7 @@ class LoginViewModel @Inject constructor(
 				processAuthError()
 				Log.e(TAG, "login: exception on login", e)
 			} catch (e: IOException) {
-				Log.e(TAG, "login: exception on response parse", e)
+				Log.e(TAG, "login: exception on response parseTerm", e)
 			} catch (e: Exception) {
 				Log.e(TAG, "login: exception", e)
 			}

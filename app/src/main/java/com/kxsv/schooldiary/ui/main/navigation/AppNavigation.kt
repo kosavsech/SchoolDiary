@@ -22,6 +22,7 @@ import com.kxsv.schooldiary.ui.main.navigation.AppScreens.ADD_EDIT_SUBJECT_SCREE
 import com.kxsv.schooldiary.ui.main.navigation.AppScreens.COPY_DATE_RANGE_SCHEDULE_SCREEN
 import com.kxsv.schooldiary.ui.main.navigation.AppScreens.COPY_DAY_SCHEDULE_SCREEN
 import com.kxsv.schooldiary.ui.main.navigation.AppScreens.DAY_SCHEDULE_SCREEN
+import com.kxsv.schooldiary.ui.main.navigation.AppScreens.EDU_PERFORMANCE_SCREEN
 import com.kxsv.schooldiary.ui.main.navigation.AppScreens.GRADES_SCREEN
 import com.kxsv.schooldiary.ui.main.navigation.AppScreens.GRADE_DETAIL_SCREEN
 import com.kxsv.schooldiary.ui.main.navigation.AppScreens.LOGIN_SCREEN
@@ -52,7 +53,8 @@ object AppScreens {
 	const val COPY_DATE_RANGE_SCHEDULE_SCREEN = "copyDateRangeSchedule"
 	const val GRADES_SCREEN = "grades"
 	const val GRADE_DETAIL_SCREEN = "gradeDetail"
-	const val LOGIN_SCREEN = "loginScreen"
+	const val LOGIN_SCREEN = "login"
+	const val EDU_PERFORMANCE_SCREEN = "eduPerformance"
 }
 
 /**
@@ -95,6 +97,8 @@ object AppDestinations {
 	const val GRADES_ROUTE = "$GRADES_SCREEN?$USER_MESSAGE_ARG={$USER_MESSAGE_ARG}"
 	const val GRADE_DETAIL_ROUTE = "$GRADE_DETAIL_SCREEN?$GRADE_ID_ARG={$GRADE_ID_ARG}"
 	const val LOGIN_ROUTE = LOGIN_SCREEN
+	const val EDU_PERFORMANCE_ROUTE = EDU_PERFORMANCE_SCREEN
+	
 }
 
 /**
@@ -285,6 +289,20 @@ class AppNavigationActions(private val navController: NavHostController) {
 				navController.popBackStack()
 //				navigateToSubjectDetail(userMessage = userMessage, subjectId = it.getLong(SUBJECT_ID_ARG))
 			}
+		}
+	}
+	
+	fun navigateToEduPerformance(userMessage: Int = 0) {
+		val navigatesFromDrawer = userMessage == 0
+		navController.navigate(
+			EDU_PERFORMANCE_SCREEN
+		) {
+			popUpTo(navController.graph.findStartDestination().id) {
+				inclusive = !navigatesFromDrawer
+				saveState = navigatesFromDrawer
+			}
+			launchSingleTop = true
+			restoreState = navigatesFromDrawer
 		}
 	}
 }

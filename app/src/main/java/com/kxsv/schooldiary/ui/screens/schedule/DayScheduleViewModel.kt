@@ -383,7 +383,7 @@ class DayScheduleViewModel @Inject constructor(
 		} catch (e: NetworkException) {
 			Log.e(TAG, "copyRemoteSchedule: exception on login", e)
 		} catch (e: IOException) {
-			Log.e(TAG, "copyRemoteSchedule: exception on response parse", e)
+			Log.e(TAG, "copyRemoteSchedule: exception on response parseTerm", e)
 		} catch (e: Exception) {
 			Log.e(TAG, "copyRemoteSchedule: exception", e)
 		} catch (e: Exception) {
@@ -490,7 +490,7 @@ class DayScheduleViewModel @Inject constructor(
 		} catch (e: NetworkException) {
 			Log.e(TAG, "initializeNetworkScheduleOnDate: exception on login", e)
 		} catch (e: IOException) {
-			Log.e(TAG, "initializeNetworkScheduleOnDate: exception on response parse", e)
+			Log.e(TAG, "initializeNetworkScheduleOnDate: exception on response parseTerm", e)
 		} catch (e: TimeoutCancellationException) {
 			// TODO: show message that couldn't connect to site
 			Log.e(TAG, "initializeNetworkScheduleOnDate: connection timed-out", e)
@@ -626,7 +626,7 @@ class DayScheduleViewModel @Inject constructor(
 			} catch (e: NetworkException) {
 				Log.e(TAG, "fetchSchedule: exception on login", e)
 			} catch (e: IOException) {
-				Log.e(TAG, "fetchSchedule: exception on response parse", e)
+				Log.e(TAG, "fetchSchedule: exception on response parseTerm", e)
 			} catch (e: TimeoutCancellationException) {
 				Log.e(TAG, "fetchSchedule: connection timed-out", e)
 				// TODO: show message that couldn't connect to site

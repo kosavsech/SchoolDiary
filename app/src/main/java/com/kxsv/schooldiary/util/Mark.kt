@@ -23,6 +23,8 @@ enum class Mark(val value: Int?, val letterValue: Char?) {
 			"Не был" -> ABSENT
 			"Б" -> ILL
 			"Болел" -> ILL
+			"" -> null
+			"—" -> null
 			else -> throw IllegalArgumentException("Wrong mark input value($input)")
 		}
 	}

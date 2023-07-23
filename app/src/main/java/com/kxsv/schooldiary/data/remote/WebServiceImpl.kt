@@ -58,6 +58,11 @@ class WebServiceImpl @Inject constructor(
 		return dayPage.select("div.d-table > table > tbody > tr")
 	}
 	
+	override suspend fun getTermEduPerformance(term: Int): Elements {
+		val termPage = getTermPage(term)
+		return termPage.select("table > tbody > tr")
+	}
+	
 	/**
 	 * Get edu.tatar.ru page with [targetSegment] directory. If cookie is null or expired,
 	 * try to authenticate and re-launch operation.
@@ -103,6 +108,9 @@ class WebServiceImpl @Inject constructor(
 		return getPage("/user/diary/day?for=$dateFormat")
 	}
 	
+	private suspend fun getTermPage(term: Int): Document {
+		return getPage("/user/diary/term?term=$term")
+	}
 	
 	companion object {
 		const val AUTH_COOKIE = "DNSID"
