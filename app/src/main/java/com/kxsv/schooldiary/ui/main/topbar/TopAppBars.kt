@@ -6,12 +6,15 @@ import androidx.compose.material.Icon
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Cached
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -130,13 +133,23 @@ fun SubjectsTopAppBar(openDrawer: () -> Unit) {
 }
 
 @Composable
-fun GradesTopAppBar(openDrawer: () -> Unit) {
+fun GradesTopAppBar(
+	openDrawer: () -> Unit,
+	onSortByMarkDate: () -> Unit,
+	onSortByFetchDate: () -> Unit,
+) {
 	TopAppBar(
 		title = { Text(text = stringResource(id = R.string.grades_title)) },
 		navigationIcon = {
 			IconButton(onClick = openDrawer) {
 				Icon(Icons.Filled.Menu, stringResource(id = R.string.open_drawer))
 			}
+		},
+		actions = {
+			GradesMoreActions(
+				onSortByMarkDate = onSortByMarkDate,
+				onSortByFetchDate = onSortByFetchDate
+			)
 		},
 		modifier = Modifier.fillMaxWidth(),
 	)
@@ -162,7 +175,7 @@ fun ScheduleTopAppBar(
 			IconButton(onClick = onFetchSchedule) {
 				Icon(Icons.Filled.CloudDownload, stringResource(id = R.string.fetch_schedule))
 			}
-			MoreActions(
+			ScheduleMoreActions(
 				onChangePattern = onChangePattern,
 				onCopyDaySchedule = onCopyDaySchedule,
 				onCopyDateRangeSchedule = onCopyDateRangeSchedule,
@@ -173,7 +186,49 @@ fun ScheduleTopAppBar(
 }
 
 @Composable
-private fun MoreActions(
+private fun GradesMoreActions(
+	onSortByMarkDate: () -> Unit,
+	onSortByFetchDate: () -> Unit,
+) {
+	val expanded = remember { mutableStateOf(false) }
+	IconButton(onClick = { expanded.value = true }) {
+		Icon(
+			imageVector = Icons.Default.Sort,
+			contentDescription = stringResource(R.string.grades_sort_type),
+			tint = Color.White
+		)
+		DropdownMenu(
+			expanded = expanded.value,
+			onDismissRequest = { expanded.value = false },
+		) {
+			DropdownMenuItem(
+				text = { Text(text = stringResource(R.string.mark_date_sort_type)) },
+				onClick = { onSortByMarkDate(); expanded.value = false },
+				leadingIcon = {
+					Icon(
+						Icons.Default.Event,
+						stringResource(R.string.mark_date_sort),
+						tint = Color.Black
+					)
+				}
+			)
+			DropdownMenuItem(
+				text = { Text(text = stringResource(R.string.mark_fetch_date_sort_type)) },
+				onClick = { onSortByFetchDate(); expanded.value = false },
+				leadingIcon = {
+					Icon(
+						Icons.Default.Cached,
+						stringResource(R.string.mark_fetch_date_sort),
+						tint = Color.Black
+					)
+				}
+			)
+		}
+	}
+}
+
+@Composable
+private fun ScheduleMoreActions(
 	onChangePattern: () -> Unit,
 	onCopyDaySchedule: () -> Unit,
 	onCopyDateRangeSchedule: () -> Unit,

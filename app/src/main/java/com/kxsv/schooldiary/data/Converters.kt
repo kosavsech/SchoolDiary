@@ -3,6 +3,7 @@ package com.kxsv.schooldiary.data
 import androidx.room.TypeConverter
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 
@@ -27,6 +28,20 @@ class Converters {
 	@TypeConverter
 	fun localTimeToSecondOfDay(time: LocalTime?): Int? =
 		time?.toSecondOfDay()
+	
+	// LocalDateTime <-> Long
+	@TypeConverter
+	fun timestampToLocalDateTime(value: Long?): LocalDateTime? {
+		return value?.let {
+			LocalDateTime.ofInstant(
+				Instant.ofEpochMilli(it), ZoneId.systemDefault()
+			)
+		}
+	}
+	
+	@TypeConverter
+	fun localDateTimeToTimestamp(date: LocalDateTime?): Long? =
+		date?.atZone(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
 	
 	// Calendar <-> Long
 	/*@TypeConverter

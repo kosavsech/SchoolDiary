@@ -14,6 +14,8 @@ import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
+private const val TAG = "LessonRepositoryImpl"
+
 @Singleton
 class LessonRepositoryImpl @Inject constructor(
 	private val lessonDataSource: LessonDao,

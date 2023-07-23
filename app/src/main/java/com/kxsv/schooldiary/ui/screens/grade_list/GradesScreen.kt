@@ -33,8 +33,10 @@ import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.ui.main.topbar.GradesTopAppBar
 import com.kxsv.schooldiary.util.Mark
+import com.kxsv.schooldiary.util.ui.GradesSortType
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -49,7 +51,13 @@ fun GradesScreen(
 ) {
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-		topBar = { GradesTopAppBar(openDrawer = openDrawer) },
+		topBar = {
+			GradesTopAppBar(
+				openDrawer = openDrawer,
+				onSortByMarkDate = { viewModel.sortGrades(GradesSortType.MARK_DATE) },
+				onSortByFetchDate = { viewModel.sortGrades(GradesSortType.FETCH_DATE) }
+			)
+		},
 		modifier = modifier.fillMaxSize(),
 	) { paddingValues ->
 		val uiState = viewModel.uiState.collectAsState().value
@@ -59,7 +67,7 @@ fun GradesScreen(
 			grades = uiState.grades,
 			//noSubjectsLabel = 0,
 			onGradeClick = onGradeClick,
-			onRefresh = viewModel::fetchGrades,
+			onRefresh = { viewModel.fetchGrades() },
 			modifier = Modifier.padding(paddingValues),
 		)
 		
@@ -160,6 +168,7 @@ private fun SubjectsContentPreview() {
 						mark = Mark.FIVE,
 						typeOfWork = "Самостоятельная работа",
 						date = LocalDate.now(),
+						fetchDateTime = LocalDateTime.now(),
 						subjectMasterId = 0,
 					),
 					SubjectEntity("Английский язык")
@@ -182,6 +191,7 @@ private fun SubjectItemPreview() {
 					mark = Mark.FIVE,
 					typeOfWork = "Самостоятельная работа",
 					date = LocalDate.now(),
+					fetchDateTime = LocalDateTime.now(),
 					subjectMasterId = 0,
 				),
 				SubjectEntity("Английский язык")

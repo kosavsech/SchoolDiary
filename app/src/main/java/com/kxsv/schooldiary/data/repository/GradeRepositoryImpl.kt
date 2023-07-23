@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -36,8 +37,20 @@ class GradeRepositoryImpl @Inject constructor(
 ) : GradeRepository {
 	private var newGradesFound: Boolean = false
 	
-	override fun getGradesStream(): Flow<List<GradeEntity>> {
-		return gradeDataSource.observeAll()
+	override fun observeAllOrderedByMarkDate(): Flow<List<GradeEntity>> {
+		return gradeDataSource.observeAllOrderedByMarkDate()
+	}
+	
+	override fun observeAllWithSubjectOrderedByMarkDate(): Flow<List<GradeWithSubject>> {
+		return gradeDataSource.observeAlleWithSubjectOrderedByMarkDate()
+	}
+	
+	override fun observeAllOrderedByFetchDate(): Flow<List<GradeEntity>> {
+		return gradeDataSource.observeAllOrderedByFetchDate()
+	}
+	
+	override fun observeAllWithSubjectOrderedByFetchDate(): Flow<List<GradeWithSubject>> {
+		return gradeDataSource.observeAlleWithSubjectOrderedByFetchDate()
 	}
 	
 	override fun getGradesBySubjectIdStream(subjectId: Long): Flow<List<GradeEntity>> {
@@ -62,7 +75,7 @@ class GradeRepositoryImpl @Inject constructor(
 		var counter = 0
 		while (daysChecked != 14) {
 			// todo change to NOW
-			val date = LocalDate.of(2023, 2, 21).minusDays(counter.toLong())
+			val date = LocalDate.of(2023, 2, 19).minusDays(counter.toLong())
 			if (date.dayOfWeek != DayOfWeek.SUNDAY) {
 				async {
 					val gradesLocalised = fetchGradeByDate(date).toGradeEntities()
@@ -132,6 +145,7 @@ class GradeRepositoryImpl @Inject constructor(
 			return GradeEntity(
 				mark = mark,
 				date = date,
+				fetchDateTime = LocalDateTime.now(),
 				subjectMasterId = subjectMasterId,
 				typeOfWork = typeOfWork,
 				index = index,
@@ -149,7 +163,7 @@ class GradeRepositoryImpl @Inject constructor(
 	private fun generateGradeId(date: LocalDate, index: Int, lessonIndex: Int): String {
 		val dateStamp = date.atStartOfDay(ZoneId.of("Europe/Moscow")).toEpochSecond().toString()
 		val gradeIndex = index.toString()
-		val lessonIndex = lessonIndex.toString()
-		return (dateStamp + "_" + gradeIndex + "_" + lessonIndex)
+		val lessonIndexString = lessonIndex.toString()
+		return (dateStamp + "_" + gradeIndex + "_" + lessonIndexString)
 	}
 }

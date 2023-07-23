@@ -7,8 +7,19 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface GradeDao {
 	
-	@Query("SELECT * FROM $GRADE_TABLE_NAME")
-	fun observeAll(): Flow<List<GradeEntity>>
+	@Query("SELECT * FROM $GRADE_TABLE_NAME ORDER BY date DESC")
+	fun observeAllOrderedByMarkDate(): Flow<List<GradeEntity>>
+	
+	@Transaction
+	@Query("SELECT * FROM $GRADE_TABLE_NAME ORDER BY date DESC")
+	fun observeAlleWithSubjectOrderedByMarkDate(): Flow<List<GradeWithSubject>>
+	
+	@Query("SELECT * FROM $GRADE_TABLE_NAME ORDER BY fetchDateTime DESC")
+	fun observeAllOrderedByFetchDate(): Flow<List<GradeEntity>>
+	
+	@Transaction
+	@Query("SELECT * FROM $GRADE_TABLE_NAME ORDER BY fetchDateTime DESC")
+	fun observeAlleWithSubjectOrderedByFetchDate(): Flow<List<GradeWithSubject>>
 	
 	@Query("SELECT * FROM $GRADE_TABLE_NAME WHERE subjectMasterId = :subjectId")
 	fun observeAllBySubjectId(subjectId: Long): Flow<List<GradeEntity>>

@@ -103,4 +103,9 @@
     <string name="fetch_schedule">Fetch lesson from net and compare it with local</string>
     <string name="absent_net_schedule">"Remote lesson for this day is empty "</string>
     <string name="fetch_grades">Load grades from site</string>
+    <string name="grades_sort_type">Change grades sort type</string>
+    <string name="mark_date_sort">Sort by mark date descending</string>
+    <string name="mark_fetch_date_sort">Sort by mark fetch date and time descending</string>
+    <string name="mark_date_sort_type">Mark date</string>
+    <string name="mark_fetch_date_sort_type">Fetch date</string>
 </resources>
