@@ -8,7 +8,13 @@ import java.time.LocalDate
 
 interface GradeRepository {
 	
-	fun getGradesStream(): Flow<List<GradeEntity>>
+	fun observeAllOrderedByMarkDate(): Flow<List<GradeEntity>>
+	
+	fun observeAllWithSubjectOrderedByMarkDate(): Flow<List<GradeWithSubject>>
+	
+	fun observeAllOrderedByFetchDate(): Flow<List<GradeEntity>>
+	
+	fun observeAllWithSubjectOrderedByFetchDate(): Flow<List<GradeWithSubject>>
 	
 	fun getGradesBySubjectIdStream(subjectId: Long): Flow<List<GradeEntity>>
 	

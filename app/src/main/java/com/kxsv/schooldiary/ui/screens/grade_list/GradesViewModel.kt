@@ -6,19 +6,22 @@ import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
 import com.kxsv.schooldiary.data.repository.GradeRepository
-import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.di.IoDispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.util.remote.NetworkException
+import com.kxsv.schooldiary.util.ui.GradesSortType
+import com.kxsv.schooldiary.util.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.IOException
@@ -30,17 +33,34 @@ data class GradesUiState(
 	val grades: List<GradeWithSubject> = emptyList(),
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
+	val sortType: GradesSortType = GradesSortType.MARK_DATE,
 )
 
 @HiltViewModel
 class GradesViewModel @Inject constructor(
 	private val gradeRepository: GradeRepository,
-	private val subjectRepository: SubjectRepository,
 	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
+	private val _sortType = MutableStateFlow(GradesSortType.MARK_DATE)
+	
+	@OptIn(ExperimentalCoroutinesApi::class)
+	private val _gradesAsyncSorted = _sortType
+		.flatMapLatest { sortType ->
+			when (sortType) {
+				GradesSortType.MARK_DATE -> gradeRepository.observeAllWithSubjectOrderedByMarkDate()
+				GradesSortType.FETCH_DATE -> gradeRepository.observeAllWithSubjectOrderedByFetchDate()
+			}
+		}
+		.stateIn(viewModelScope, WhileUiSubscribed, emptyList())
+	
 	private val _uiState = MutableStateFlow(GradesUiState())
-	val uiState: StateFlow<GradesUiState> = _uiState.asStateFlow()
+	val uiState = combine(_uiState, _gradesAsyncSorted, _sortType) { state, gradesAsync, sortType ->
+		state.copy(
+			grades = gradesAsync,
+			sortType = sortType
+		)
+	}.stateIn(viewModelScope, WhileUiSubscribed, GradesUiState())
 	
 	private var gradesFetchJob: Job? = null
 	
@@ -54,6 +74,10 @@ class GradesViewModel @Inject constructor(
 			ADD_EDIT_RESULT_OK -> showSnackbarMessage(R.string.successfully_added_grade_message)
 			DELETE_RESULT_OK -> showSnackbarMessage(R.string.successfully_deleted_grade_message)
 		}
+	}
+	
+	fun sortGrades(sortType: GradesSortType) {
+		_sortType.update { sortType }
 	}
 	
 	fun snackbarMessageShown() {

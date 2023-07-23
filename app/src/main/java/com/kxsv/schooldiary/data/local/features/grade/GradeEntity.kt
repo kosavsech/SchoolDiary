@@ -8,6 +8,7 @@ import com.kxsv.schooldiary.data.local.features.DatabaseConstants
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.util.Mark
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 @Entity(
 	tableName = DatabaseConstants.GRADE_TABLE_NAME,
@@ -24,6 +25,7 @@ data class GradeEntity(
 	val mark: Mark,
 	val typeOfWork: String,
 	val date: LocalDate,
+	val fetchDateTime: LocalDateTime,
 	val subjectMasterId: Long,
 	val lessonIndex: Int = 0,
 	val index: Int = 0,
