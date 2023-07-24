@@ -108,4 +108,5 @@
     <string name="mark_fetch_date_sort">Sort by mark fetch date and time descending</string>
     <string name="mark_date_sort_type">Mark date</string>
     <string name="mark_fetch_date_sort_type">Fetch date</string>
+    <string name="report_card_title">Report card</string>
 </resources>

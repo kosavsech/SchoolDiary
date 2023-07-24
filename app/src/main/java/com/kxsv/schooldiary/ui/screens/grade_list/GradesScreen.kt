@@ -33,6 +33,7 @@ import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.ui.main.topbar.GradesTopAppBar
 import com.kxsv.schooldiary.util.Mark
+import com.kxsv.schooldiary.util.Mark.Companion.getStringValueFrom
 import com.kxsv.schooldiary.util.ui.GradesSortType
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import java.time.LocalDate
@@ -140,7 +141,7 @@ private fun GradeItem(
 			)
 	) {
 		Text(
-			text = gradeWithSubject.grade.mark.getValue(),
+			text = getStringValueFrom(gradeWithSubject.grade.mark),
 			style = MaterialTheme.typography.titleMedium,
 		)
 		Text(

@@ -39,7 +39,7 @@ class GradeParser {
 			lessonsGradeItems.forEach { gradeItem ->
 				grades.add(
 					DayGradeDto(
-						mark = Mark.fromInput(gradeItem.value),
+						mark = Mark.fromInput(gradeItem.value)!!,
 						typeOfWork = gradeItem.typeOfWork,
 						date = localDate,
 						subjectAncestorName = subjectAncestorName,

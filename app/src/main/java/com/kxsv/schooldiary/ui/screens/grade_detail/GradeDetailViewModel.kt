@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.repository.GradeRepository
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs
+import com.kxsv.schooldiary.util.Mark.Companion.getStringValueFrom
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -53,7 +54,7 @@ class GradeDetailViewModel @Inject constructor(
 				if (gradeWithSubject != null) {
 					_uiState.update {
 						it.copy(
-							mark = gradeWithSubject.grade.mark.getValue(),
+							mark = getStringValueFrom(gradeWithSubject.grade.mark),
 							typeOfWork = gradeWithSubject.grade.typeOfWork,
 							gradeDate = gradeWithSubject.grade.date,
 							subject = gradeWithSubject.subject,

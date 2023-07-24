@@ -5,6 +5,8 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.kxsv.schooldiary.data.local.features.associative_tables.subject_teacher.SubjectTeacher
 import com.kxsv.schooldiary.data.local.features.associative_tables.subject_teacher.SubjectTeacherDao
+import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceDao
+import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceEntity
 import com.kxsv.schooldiary.data.local.features.grade.GradeDao
 import com.kxsv.schooldiary.data.local.features.grade.GradeEntity
 import com.kxsv.schooldiary.data.local.features.lesson.LessonDao
@@ -24,9 +26,10 @@ import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.Patt
 	entities = [
 		TimePatternEntity::class, PatternStrokeEntity::class,
 		SubjectEntity::class, TeacherEntity::class, SubjectTeacher::class,
-		StudyDayEntity::class, LessonEntity::class, GradeEntity::class
+		StudyDayEntity::class, LessonEntity::class, GradeEntity::class,
+		EduPerformanceEntity::class
 	],
-	version = 1,
+	version = 2,
 	exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -40,6 +43,7 @@ abstract class AppDatabase : RoomDatabase() {
 	abstract fun scheduleDao(): LessonDao
 	abstract fun studyDayDao(): StudyDayDao
 	abstract fun gradeDao(): GradeDao
+	abstract fun eduPerformanceDao(): EduPerformanceDao
 	
 }
 

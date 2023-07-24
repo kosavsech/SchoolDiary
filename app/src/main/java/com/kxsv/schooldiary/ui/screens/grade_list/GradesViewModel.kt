@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
+import com.kxsv.schooldiary.data.repository.EduPerformanceRepository
 import com.kxsv.schooldiary.data.repository.GradeRepository
 import com.kxsv.schooldiary.di.IoDispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_EDIT_RESULT_OK
@@ -27,7 +28,7 @@ import kotlinx.coroutines.launch
 import java.io.IOException
 import javax.inject.Inject
 
-private const val TAG = "GradesViewModel"
+private const val TAG = "GradeTableViewModel"
 
 data class GradesUiState(
 	val grades: List<GradeWithSubject> = emptyList(),
@@ -39,6 +40,7 @@ data class GradesUiState(
 @HiltViewModel
 class GradesViewModel @Inject constructor(
 	private val gradeRepository: GradeRepository,
+	private val eduPerformanceRepository: EduPerformanceRepository,
 	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
@@ -105,7 +107,7 @@ class GradesViewModel @Inject constructor(
 			} catch (e: NetworkException) {
 				Log.e(TAG, "fetchGrades: exception on login", e)
 			} catch (e: IOException) {
-				Log.e(TAG, "fetchGrades: exception on response parse", e)
+				Log.e(TAG, "fetchGrades: exception on response parseTerm", e)
 			} catch (e: TimeoutCancellationException) {
 				Log.e(TAG, "fetchGrades: connection timed-out", e)
 				// TODO: show message that couldn't connect to site

@@ -9,4 +9,5 @@ interface WebService {
 	
 	suspend fun getScheduleForDate(localDate: LocalDate): Elements
 	
+	suspend fun getTermEduPerformance(term: String): Elements
 }

@@ -23,6 +23,7 @@ import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.ADD_EDIT_SUBJECT_
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.COPY_DATE_RANGE_SCHEDULE_ROUTE
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.COPY_DAY_SCHEDULE_ROUTE
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.DAY_SCHEDULE_ROUTE
+import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.EDU_PERFORMANCE_ROUTE
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.GRADES_ROUTE
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.GRADE_DETAIL_ROUTE
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.LOGIN_ROUTE
@@ -42,6 +43,7 @@ import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs.STUDY_DAY_ID_
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs.SUBJECT_ID_ARG
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs.TITLE_ARG
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs.USER_MESSAGE_ARG
+import com.kxsv.schooldiary.ui.screens.edu_performance.EduPerformanceScreen
 import com.kxsv.schooldiary.ui.screens.grade_detail.GradeDetailScreen
 import com.kxsv.schooldiary.ui.screens.grade_list.GradesScreen
 import com.kxsv.schooldiary.ui.screens.login.LoginScreen
@@ -98,6 +100,17 @@ fun NavGraph(
 				}
 			)
 			
+		}
+		composable(
+			route = EDU_PERFORMANCE_ROUTE
+		) {
+			AppModalDrawer(drawerState, currentRoute, navActions) {
+				EduPerformanceScreen(
+//				userMessage = entry.arguments?.getInt(USER_MESSAGE_ARG)!!,
+//				onUserMessageDisplayed = { entry.arguments?.putInt(USER_MESSAGE_ARG, 0) },
+					openDrawer = { coroutineScope.launch { drawerState.open() } }
+				)
+			}
 		}
 		navigation(
 			startDestination = DAY_SCHEDULE_ROUTE,
