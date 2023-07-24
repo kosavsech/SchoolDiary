@@ -24,6 +24,7 @@ data class EduPerformanceEntity(
 	val subjectMasterId: Long? = null,
 	val marks: List<Mark?>,
 	val finalMark: Mark?,
+	val examMark: Mark?,
 	val period: EduPerformancePeriod,
 	@PrimaryKey
 	val eduPerformanceId: String,

@@ -58,7 +58,7 @@ class WebServiceImpl @Inject constructor(
 		return dayPage.select("div.d-table > table > tbody > tr")
 	}
 	
-	override suspend fun getTermEduPerformance(term: Int): Elements {
+	override suspend fun getTermEduPerformance(term: String): Elements {
 		val termPage = getTermPage(term)
 		return termPage.select("table > tbody > tr")
 	}
@@ -108,7 +108,7 @@ class WebServiceImpl @Inject constructor(
 		return getPage("/user/diary/day?for=$dateFormat")
 	}
 	
-	private suspend fun getTermPage(term: Int): Document {
+	private suspend fun getTermPage(term: String): Document {
 		return getPage("/user/diary/term?term=$term")
 	}
 	

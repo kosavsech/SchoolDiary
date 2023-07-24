@@ -7,5 +7,6 @@ data class EduPerformanceDto(
 	val subjectAncestorName: String,
 	val marks: List<Mark?>,
 	val finalMark: Mark?,
+	val examMark: Mark? = null,
 	val period: EduPerformancePeriod,
 )

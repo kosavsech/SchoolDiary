@@ -18,7 +18,7 @@ interface EduPerformanceRepository {
 	
 	suspend fun getEduPerformances(): List<EduPerformanceEntity>
 	
-	suspend fun fetchEduPerformanceByTerm(term: Int): List<EduPerformanceDto>
+	suspend fun fetchEduPerformanceByTerm(term: String): List<EduPerformanceDto>
 	
 	suspend fun fetchEduPerformance()
 	

@@ -48,17 +48,23 @@ class EduPerformanceRepositoryImpl @Inject constructor(
 		return eduPerformanceDataSource.getAll()
 	}
 	
-	override suspend fun fetchEduPerformanceByTerm(term: Int): List<EduPerformanceDto> {
+	override suspend fun fetchEduPerformanceByTerm(term: String): List<EduPerformanceDto> {
 		val rows = webService.getTermEduPerformance(term)
-		return EduPerformanceParser().parseTerm(rows, term.toString())
+		return if (term != "year") EduPerformanceParser().parseTerm(rows, term)
+		else EduPerformanceParser().parseYear(rows)
 	}
 	
 	override suspend fun fetchEduPerformance(): Unit = withContext(ioDispatcher) {
-		for (i in 1..4) {
+		for (termIndex in 1..4) {
 			async {
-				val performanceEntities = fetchEduPerformanceByTerm(i).toEduPerformanceEntities()
+				val performanceEntities =
+					fetchEduPerformanceByTerm(termIndex.toString()).toEduPerformanceEntities()
 				updateDatabase(performanceEntities)
 			}
+		}
+		async {
+			val performanceEntities = fetchEduPerformanceByTerm("year").toEduPerformanceEntities()
+			updateDatabase(performanceEntities)
 		}
 	}
 	
@@ -99,6 +105,7 @@ class EduPerformanceRepositoryImpl @Inject constructor(
 				subjectMasterId = subjectMasterId,
 				marks = marks,
 				finalMark = finalMark,
+				examMark = examMark,
 				period = period,
 				eduPerformanceId = generateEduPerformanceId(subjectAncestorName, period)
 			)

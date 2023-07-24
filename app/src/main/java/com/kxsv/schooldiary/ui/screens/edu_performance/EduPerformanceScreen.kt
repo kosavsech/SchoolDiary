@@ -67,24 +67,45 @@ private fun EduPerformanceContent(
 	onRefresh: () -> Unit,
 	modifier: Modifier,
 ) {
+	data class PeriodButton(
+		val text: String,
+		val callbackPeriod: EduPerformancePeriod,
+	)
+	
+	val buttons = listOf(
+		PeriodButton("First term", EduPerformancePeriod.FIRST_TERM),
+		PeriodButton("Second term", EduPerformancePeriod.SECOND_TERM),
+		PeriodButton("Third term", EduPerformancePeriod.THIRD_TERM),
+		PeriodButton("Fourth term", EduPerformancePeriod.FOURTH_TERM),
+		PeriodButton("Year", EduPerformancePeriod.YEAR_PERIOD),
+	)
 	LoadingContent(
 		loading = loading,
 		isContentScrollable = true,
 		empty = eduPerformanceList.isEmpty(),
-		emptyContent = { Text(text = "No subjects for yet") },
+		emptyContent = {
+			Column {
+				LazyRow(
+					modifier = modifier
+						.padding(vertical = dimensionResource(R.dimen.list_item_padding)),
+				) {
+					items(buttons) {
+						OutlinedButton(
+							onClick = { onPeriodChange(it.callbackPeriod) },
+							modifier = Modifier.padding(
+								horizontal = dimensionResource(R.dimen.list_item_padding)
+							),
+							enabled = (currentEduPerformancePeriod != it.callbackPeriod)
+						) {
+							Text(text = it.text)
+						}
+					}
+				}
+				Text(text = "No subjects for yet")
+			}
+		},
 		onRefresh = onRefresh
 	) {
-		data class PeriodButton(
-			val text: String,
-			val callbackPeriod: EduPerformancePeriod,
-		)
-		
-		val buttons = listOf(
-			PeriodButton("First term", EduPerformancePeriod.FIRST_TERM),
-			PeriodButton("Second term", EduPerformancePeriod.SECOND_TERM),
-			PeriodButton("Third term", EduPerformancePeriod.THIRD_TERM),
-			PeriodButton("Fourth term", EduPerformancePeriod.FOURTH_TERM),
-		)
 		Column {
 			LazyRow(
 				modifier = modifier
@@ -132,7 +153,7 @@ private fun PerformanceRow(
 		)
 		Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.horizontal_margin)))
 		performanceWithSubject.eduPerformance.marks.forEach {
-			Text(text = it?.getValue() ?: "whyNull?")
+			Text(text = it?.getValue() ?: "—")
 		}
 	}
 }

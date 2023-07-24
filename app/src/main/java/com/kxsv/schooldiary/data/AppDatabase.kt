@@ -29,7 +29,7 @@ import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.Patt
 		StudyDayEntity::class, LessonEntity::class, GradeEntity::class,
 		EduPerformanceEntity::class
 	],
-	version = 1,
+	version = 2,
 	exportSchema = false
 )
 @TypeConverters(Converters::class)
