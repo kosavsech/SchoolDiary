@@ -49,9 +49,7 @@ class EduPerformanceViewModel @Inject constructor(
 	}.stateIn(viewModelScope, WhileUiSubscribed, EduPerformanceUiState())
 	
 	init {
-		viewModelScope.launch {
-			eduPerformanceRepository.fetchEduPerformance()
-		}
+//		refresh()
 	}
 	
 	fun snackbarMessageShown() {

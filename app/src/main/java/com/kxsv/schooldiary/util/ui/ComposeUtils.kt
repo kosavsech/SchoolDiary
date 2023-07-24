@@ -91,25 +91,21 @@ fun LoadingContent(
 	modifier: Modifier = Modifier,
 	content: @Composable () -> Unit,
 ) {
-	val scrollModifier = if (!isContentScrollable) {
+	val isEmpty = empty && !loading
+	val scrollModifier = if (!isContentScrollable || isEmpty) {
 		Modifier.verticalScroll(rememberScrollState())
-	} else {
-		Modifier
-	}
+	} else Modifier
 	val pullRefreshState = rememberPullRefreshState(loading, onRefresh)
-	if (empty && !loading) {
-		emptyContent()
-	} else {
-		Box(
-			modifier = modifier
-				.pullRefresh(pullRefreshState)
-				.fillMaxSize()
-				.then(scrollModifier),
-		) {
-			content()
-			PullRefreshIndicator(loading, pullRefreshState, Modifier.align(Alignment.TopCenter))
-		}
+	Box(
+		modifier = modifier
+			.pullRefresh(pullRefreshState)
+			.fillMaxSize()
+			.then(scrollModifier),
+	) {
+		if (isEmpty) emptyContent() else content()
+		PullRefreshIndicator(loading, pullRefreshState, Modifier.align(Alignment.TopCenter))
 	}
+	
 }
 
 @Composable
