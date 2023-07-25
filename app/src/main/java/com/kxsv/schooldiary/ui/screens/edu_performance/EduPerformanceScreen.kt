@@ -263,7 +263,6 @@ fun YearPerformanceRowItem(
 				text = getStringValueFrom(grade),
 				style = MaterialTheme.typography.labelMedium,
 			)
-			
 		}
 	}
 }

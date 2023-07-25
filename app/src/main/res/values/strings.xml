@@ -109,4 +109,9 @@
     <string name="mark_date_sort_type">Mark date</string>
     <string name="mark_fetch_date_sort_type">Fetch date</string>
     <string name="report_card_title">Report card</string>
+    <string name="loading_edu_performance_error">Error while loading edu performance</string>
+    <string name="edu_performance_not_found">Edu performance for subject not found</string>
+    <string name="grades_not_found">Grades for subject were not found</string>
+    <string name="loading_subject_details_error">Error while loading subject details data</string>
+    <string name="grade_history">Grade history</string>
 </resources>

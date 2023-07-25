@@ -30,27 +30,34 @@ class EduPerformanceRepositoryImpl @Inject constructor(
 	
 	override fun observeAll(): Flow<List<EduPerformanceEntity>> {
 		return eduPerformanceDataSource.observeAll()
-	}
-	
-	override fun observeAllWithSubject(): Flow<List<EduPerformanceWithSubject>> {
-		return eduPerformanceDataSource.observeAllWithSubject()
-	}
-	
-	override fun observeEduPerformance(eduPerformanceId: String): Flow<EduPerformanceEntity> {
-		return eduPerformanceDataSource.observeById(eduPerformanceId)
-	}
-	
-	override suspend fun observeAllWithSubjectForPeriod(period: EduPerformancePeriod): Flow<List<EduPerformanceWithSubject>> {
-		return eduPerformanceDataSource.observeAllWithSubjectByPeriod(period)
-	}
-	
-	override suspend fun getEduPerformances(): List<EduPerformanceEntity> {
-		return eduPerformanceDataSource.getAll()
-	}
-	
-	override suspend fun fetchEduPerformanceByTerm(term: String): List<EduPerformanceDto> {
-		val rows = webService.getTermEduPerformance(term)
-		return if (term != "year") EduPerformanceParser().parseTerm(rows, term)
+    }
+    
+    override fun observeAllWithSubject(): Flow<List<EduPerformanceWithSubject>> {
+        return eduPerformanceDataSource.observeAllWithSubject()
+    }
+    
+    override fun observeEduPerformance(eduPerformanceId: String): Flow<EduPerformanceEntity> {
+        return eduPerformanceDataSource.observeById(eduPerformanceId)
+    }
+    
+    override fun observeEduPerformanceBySubject(
+        subjectId: Long,
+        period: EduPerformancePeriod
+    ): Flow<EduPerformanceEntity> {
+        return eduPerformanceDataSource.observeBySubjectId(subjectId, period)
+    }
+    
+    override fun observeAllWithSubjectForPeriod(period: EduPerformancePeriod): Flow<List<EduPerformanceWithSubject>> {
+        return eduPerformanceDataSource.observeAllWithSubjectByPeriod(period)
+    }
+    
+    override suspend fun getEduPerformances(): List<EduPerformanceEntity> {
+        return eduPerformanceDataSource.getAll()
+    }
+    
+    override suspend fun fetchEduPerformanceByTerm(term: String): List<EduPerformanceDto> {
+        val rows = webService.getTermEduPerformance(term)
+        return if (term != "year") EduPerformanceParser().parseTerm(rows, term)
 		else EduPerformanceParser().parseYear(rows)
 	}
 	
