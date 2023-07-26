@@ -2,6 +2,7 @@ package com.kxsv.schooldiary.ui.screens.edu_performance
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,9 +37,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceWithSubject
+import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.ui.main.topbar.EduPerformanceTopAppBar
 import com.kxsv.schooldiary.util.Mark
 import com.kxsv.schooldiary.util.Mark.Companion.getStringValueFrom
+import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.stringRoundTo
 import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
 import com.kxsv.schooldiary.util.ui.LoadingContent
@@ -48,6 +51,7 @@ fun EduPerformanceScreen(
 //	onSubjectClick: (Long) -> Unit,
 	openDrawer: () -> Unit,
 	modifier: Modifier = Modifier,
+	onEduPerformanceClick: (SubjectEntity) -> Unit,
 	viewModel: EduPerformanceViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
@@ -64,6 +68,7 @@ fun EduPerformanceScreen(
 			loading = uiState.isLoading,
 			eduPerformanceList = uiState.eduPerformanceList,
 			onPeriodChange = { viewModel.changePeriod(it) },
+			onEduPerformanceClick = onEduPerformanceClick,
 			currentEduPerformancePeriod = uiState.period,
 			onRefresh = { viewModel.refresh() },
 			modifier = Modifier.padding(paddingValues)
@@ -76,22 +81,19 @@ private fun EduPerformanceContent(
 	loading: Boolean,
 	eduPerformanceList: List<EduPerformanceWithSubject>,
 	onPeriodChange: (EduPerformancePeriod) -> Unit,
-	currentEduPerformancePeriod: EduPerformancePeriod,
+	onEduPerformanceClick: (SubjectEntity) -> Unit,
 	//	onSubjectClick: (Long) -> Unit,
+	currentEduPerformancePeriod: EduPerformancePeriod,
 	onRefresh: () -> Unit,
 	modifier: Modifier,
 ) {
-	data class PeriodButton(
-		val text: String,
-		val callbackPeriod: EduPerformancePeriod,
-	)
 	
 	val buttons = listOf(
-		PeriodButton("First term", EduPerformancePeriod.FIRST_TERM),
-		PeriodButton("Second term", EduPerformancePeriod.SECOND_TERM),
-		PeriodButton("Third term", EduPerformancePeriod.THIRD_TERM),
-		PeriodButton("Fourth term", EduPerformancePeriod.FOURTH_TERM),
-		PeriodButton("Year", EduPerformancePeriod.YEAR_PERIOD),
+		Utils.PeriodButton("First term", EduPerformancePeriod.FIRST_TERM),
+		Utils.PeriodButton("Second term", EduPerformancePeriod.SECOND_TERM),
+		Utils.PeriodButton("Third term", EduPerformancePeriod.THIRD_TERM),
+		Utils.PeriodButton("Fourth term", EduPerformancePeriod.FOURTH_TERM),
+		Utils.PeriodButton("Year", EduPerformancePeriod.YEAR_PERIOD),
 	)
 	LoadingContent(
 		loading = loading,
@@ -141,7 +143,7 @@ private fun EduPerformanceContent(
 			}
 			LazyColumn {
 				items(eduPerformanceList) { performanceWithSubject ->
-					PerformanceRow(performanceWithSubject)
+					PerformanceRow(performanceWithSubject, onEduPerformanceClick)
 				}
 			}
 		}
@@ -151,7 +153,7 @@ private fun EduPerformanceContent(
 @Composable
 private fun PerformanceRow(
 	performanceWithSubject: EduPerformanceWithSubject,
-//	onGradeClick: (GradeEntity) -> Unit,
+	onEduPerformanceClick: (SubjectEntity) -> Unit,
 ) {
 	if (performanceWithSubject.eduPerformance.period != EduPerformancePeriod.YEAR_PERIOD) {
 		Row(
@@ -159,6 +161,7 @@ private fun PerformanceRow(
 			horizontalArrangement = Arrangement.SpaceBetween,
 			modifier = Modifier
 				.fillMaxWidth()
+				.clickable { onEduPerformanceClick(performanceWithSubject.subject) }
 				.padding(
 					horizontal = dimensionResource(R.dimen.horizontal_margin),
 					vertical = dimensionResource(R.dimen.vertical_margin)
@@ -263,7 +266,6 @@ fun YearPerformanceRowItem(
 				text = getStringValueFrom(grade),
 				style = MaterialTheme.typography.labelMedium,
 			)
-			
 		}
 	}
 }

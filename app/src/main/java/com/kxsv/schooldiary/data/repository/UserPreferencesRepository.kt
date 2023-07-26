@@ -4,6 +4,8 @@ import kotlinx.coroutines.flow.Flow
 
 interface UserPreferencesRepository {
 	
+	fun observeTargetMark(): Flow<Double>
+	
 	fun observePatternId(): Flow<Long>
 	
 	fun observeScheduleRefRangeStartId(): Flow<Long>
@@ -17,6 +19,10 @@ interface UserPreferencesRepository {
 	fun observeAuthCookie(): Flow<String?>
 	
 	fun observeInitLoginSuppression(): Flow<Boolean>
+	
+	suspend fun getTargetMark(): Double
+	
+	suspend fun setTargetMark(targetMark: Double)
 	
 	suspend fun getPatternId(): Long
 	

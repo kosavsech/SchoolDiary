@@ -13,6 +13,12 @@ class UserPreferencesRepositoryImpl @Inject constructor(
 	private val dataStore: DataStore<UserPreferences>,
 ) : UserPreferencesRepository {
 	
+	override fun observeTargetMark(): Flow<Double> {
+		return dataStore.data.map {
+			it.defaultTargetMark
+		}
+	}
+	
 	override fun observePatternId(): Flow<Long> {
 		return dataStore.data.map {
 			it.defaultPatternId
@@ -52,6 +58,16 @@ class UserPreferencesRepositoryImpl @Inject constructor(
 	override fun observeInitLoginSuppression(): Flow<Boolean> {
 		return dataStore.data.map {
 			it.suppressInitLogin
+		}
+	}
+	
+	override suspend fun getTargetMark(): Double {
+		return dataStore.data.first().defaultTargetMark
+	}
+	
+	override suspend fun setTargetMark(targetMark: Double) {
+		dataStore.updateData {
+			it.copy(defaultTargetMark = targetMark)
 		}
 	}
 	
