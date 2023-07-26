@@ -12,6 +12,8 @@ interface SubjectRepository {
 	
 	fun getSubjectStream(subjectId: Long): Flow<SubjectEntity>
 	
+	fun observeSubjectWithTeachers(subjectId: Long): Flow<SubjectWithTeachers>
+	
 	fun getSubjectWithGradesStream(subjectId: Long): Flow<SubjectWithGrades>
 	
 	suspend fun getSubjects(): List<SubjectEntity>
@@ -26,9 +28,8 @@ interface SubjectRepository {
 	
 	suspend fun createSubject(subject: SubjectEntity, teachers: Set<TeacherEntity>)
 	
-	suspend fun updateSubject(subject: SubjectEntity, teachers: Set<TeacherEntity>)
+	suspend fun updateSubject(subject: SubjectEntity, teachers: Set<TeacherEntity>? = null)
 	
 	suspend fun deleteAllSubjects()
-	
 	suspend fun deleteSubject(subjectId: Long)
 }

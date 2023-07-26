@@ -130,7 +130,7 @@ class AddEditSubjectViewModel @Inject constructor(
 	
 	private fun createNewSubject() = viewModelScope.launch {
 		subjectRepository.createSubject(
-			SubjectEntity(uiState.value.fullName, uiState.value.cabinet),
+			SubjectEntity(uiState.value.fullName, uiState.value.displayName, uiState.value.cabinet),
 			uiState.value.selectedTeachers
 		)
 		
@@ -168,7 +168,8 @@ class AddEditSubjectViewModel @Inject constructor(
 				if (subjectWithTeachers != null) {
 					_uiState.update {
 						it.copy(
-							fullName = subjectWithTeachers.subject.getName(),
+							fullName = subjectWithTeachers.subject.fullName,
+							displayName = subjectWithTeachers.subject.displayName,
 							cabinet = subjectWithTeachers.subject.getCabinetString(),
 							selectedTeachers = subjectWithTeachers.teachers,
 							isLoading = false

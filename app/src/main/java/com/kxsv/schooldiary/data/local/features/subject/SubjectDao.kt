@@ -15,6 +15,10 @@ interface SubjectDao {
 	
 	@Transaction
 	@Query("SELECT * FROM $SUBJECT_TABLE_NAME WHERE subjectId = :subjectId")
+	fun observeByIdWithTeachers(subjectId: Long): Flow<SubjectWithTeachers>
+	
+	@Transaction
+	@Query("SELECT * FROM $SUBJECT_TABLE_NAME WHERE subjectId = :subjectId")
 	fun observeByIdWithGrades(subjectId: Long): Flow<SubjectWithGrades>
 	
 	@Query("SELECT * FROM $SUBJECT_TABLE_NAME")

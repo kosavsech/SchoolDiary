@@ -11,6 +11,7 @@ data class SubjectEntity(
 	val fullName: String,
 	val cabinet: String? = null,
 	val displayName: String? = null,
+	val targetMark: Double? = null,
 //    val tags: List<Tag>,
 	@PrimaryKey(autoGenerate = true)
 	val subjectId: Long = 0,

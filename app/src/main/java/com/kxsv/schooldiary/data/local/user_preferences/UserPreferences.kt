@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UserPreferences(
+	val defaultTargetMark: Double = 4.6,
 	val defaultPatternId: Long = 0L,
 	val scheduleRefRangeStartId: Long = 0L,
 	val scheduleRefRangeEndId: Long = 0L,

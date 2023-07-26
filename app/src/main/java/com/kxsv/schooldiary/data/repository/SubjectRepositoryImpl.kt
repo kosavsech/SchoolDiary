@@ -26,6 +26,10 @@ class SubjectRepositoryImpl @Inject constructor(
 		return subjectDataSource.observeById(subjectId)
 	}
 	
+	override fun observeSubjectWithTeachers(subjectId: Long): Flow<SubjectWithTeachers> {
+		return subjectDataSource.observeByIdWithTeachers(subjectId)
+	}
+	
 	override fun getSubjectWithGradesStream(subjectId: Long): Flow<SubjectWithGrades> {
 		return subjectDataSource.observeByIdWithGrades(subjectId)
 	}
@@ -55,22 +59,21 @@ class SubjectRepositoryImpl @Inject constructor(
 		
 		teachers.forEach {
 			subjectTeacherDataSource.upsert(
-				SubjectTeacher(
-					subjectId = subjectId,
-					teacherId = it.teacherId
-				)
+				SubjectTeacher(subjectId = subjectId, teacherId = it.teacherId)
 			)
 		}
 	}
 	
-	override suspend fun updateSubject(subject: SubjectEntity, teachers: Set<TeacherEntity>) {
+	override suspend fun updateSubject(subject: SubjectEntity, teachers: Set<TeacherEntity>?) {
 		subjectDataSource.upsert(subject)
 		
-		subjectTeacherDataSource.deleteBySubjectId(subject.subjectId)
-		teachers.forEach { teacher ->
-			subjectTeacherDataSource.upsert(
-				SubjectTeacher(subject.subjectId, teacher.teacherId)
-			)
+		if (teachers != null) {
+			subjectTeacherDataSource.deleteBySubjectId(subject.subjectId) // TODO: is it excess?
+			teachers.forEach { teacher ->
+				subjectTeacherDataSource.upsert(
+					SubjectTeacher(subject.subjectId, teacher.teacherId)
+				)
+			}
 		}
 	}
 	

@@ -114,4 +114,6 @@
     <string name="grades_not_found">Grades for subject were not found</string>
     <string name="loading_subject_details_error">Error while loading subject details data</string>
     <string name="grade_history">Grade history</string>
+    <string name="edit_target_mark">Edit target mark</string>
+    <string name="enter_target_mark_dialog_title">Enter target mark:</string>
 </resources>

@@ -35,6 +35,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
 import com.kxsv.schooldiary.ui.main.topbar.AddEditSubjectTopAppBar
+import com.kxsv.schooldiary.util.Utils.fullNameOf
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.listItemsMultiChoice
@@ -198,14 +199,8 @@ private fun AddEditSubjectContent(
 				var text = ""
 				if (selectedTeachers.isNotEmpty()) {
 					selectedTeachers.forEachIndexed { index, teacher ->
-						text += (if (index != 0) ", " else "") + if (teacher.lastName.isNotEmpty()) {
-							teacher.firstName[0] + "." + teacher.lastName[0] + ". " +
-									teacher.patronymic
-						} else if (teacher.firstName.isNotEmpty()) {
-							teacher.firstName[0] + "." + teacher.patronymic
-						} else {
-							teacher.patronymic
-						}
+						text += (if (index != 0) ", " else "")
+						text += fullNameOf(teacher)
 					}
 				} else {
 					text = stringResource(R.string.add_teacher_hint)

@@ -108,6 +108,11 @@ fun NavGraph(
 				EduPerformanceScreen(
 //				userMessage = entry.arguments?.getInt(USER_MESSAGE_ARG)!!,
 //				onUserMessageDisplayed = { entry.arguments?.putInt(USER_MESSAGE_ARG, 0) },
+					onEduPerformanceClick = { subject ->
+						navActions.navigateToSubjectDetail(
+							subjectId = subject.subjectId
+						)
+					},
 					openDrawer = { coroutineScope.launch { drawerState.open() } }
 				)
 			}
