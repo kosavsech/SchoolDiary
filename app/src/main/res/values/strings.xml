@@ -116,4 +116,7 @@
     <string name="grade_history">Grade history</string>
     <string name="edit_target_mark">Edit target mark</string>
     <string name="enter_target_mark_dialog_title">Enter target mark:</string>
+    <string name="agenda_title">Agenda</string>
+    <string name="add_task">Add task</string>
+    <string name="loading_tasks_error">Error while loading tasks</string>
 </resources>

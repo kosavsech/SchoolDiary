@@ -32,6 +32,7 @@ import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.PATTERNS_SELECTIO
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.SCHEDULE_ROUTE
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.SUBJECTS_ROUTE
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.SUBJECT_DETAIL_ROUTE
+import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.TASKS_ROUTE
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.TEACHERS_ROUTE
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs.CUSTOM_PATTERN_SET_ARG
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs.DATESTAMP_ARG
@@ -58,6 +59,7 @@ import com.kxsv.schooldiary.ui.screens.schedule.add_edit.AddEditLessonScreen
 import com.kxsv.schooldiary.ui.screens.subject_detail.SubjectDetailScreen
 import com.kxsv.schooldiary.ui.screens.subject_detail.add_edit.AddEditSubjectScreen
 import com.kxsv.schooldiary.ui.screens.subject_list.SubjectsScreen
+import com.kxsv.schooldiary.ui.screens.task_list.TasksScreen
 import com.kxsv.schooldiary.ui.screens.teacher_list.TeachersScreen
 import com.kxsv.schooldiary.util.ui.sharedViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -100,6 +102,17 @@ fun NavGraph(
 				}
 			)
 			
+		}
+		composable(
+			route = TASKS_ROUTE
+		) {
+			AppModalDrawer(drawerState, currentRoute, navActions) {
+				TasksScreen(
+					onAddTask = {},
+					onTaskClick = {},
+					openDrawer = { coroutineScope.launch { drawerState.open() } }
+				)
+			}
 		}
 		composable(
 			route = EDU_PERFORMANCE_ROUTE

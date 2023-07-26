@@ -30,6 +30,7 @@ import com.kxsv.schooldiary.ui.main.navigation.AppScreens.PATTERNS_SCREEN
 import com.kxsv.schooldiary.ui.main.navigation.AppScreens.PATTERNS_SELECTION_SCREEN
 import com.kxsv.schooldiary.ui.main.navigation.AppScreens.SUBJECTS_SCREEN
 import com.kxsv.schooldiary.ui.main.navigation.AppScreens.SUBJECT_DETAIL_SCREEN
+import com.kxsv.schooldiary.ui.main.navigation.AppScreens.TASKS_SCREEN
 import com.kxsv.schooldiary.ui.main.navigation.AppScreens.TEACHERS_SCREEN
 import java.time.LocalDate
 import java.time.ZoneId
@@ -55,6 +56,8 @@ object AppScreens {
 	const val GRADE_DETAIL_SCREEN = "gradeDetail"
 	const val LOGIN_SCREEN = "login"
 	const val EDU_PERFORMANCE_SCREEN = "eduPerformance"
+	const val TASKS_SCREEN = "tasks"
+	
 }
 
 /**
@@ -98,7 +101,7 @@ object AppDestinations {
 	const val GRADE_DETAIL_ROUTE = "$GRADE_DETAIL_SCREEN?$GRADE_ID_ARG={$GRADE_ID_ARG}"
 	const val LOGIN_ROUTE = LOGIN_SCREEN
 	const val EDU_PERFORMANCE_ROUTE = EDU_PERFORMANCE_SCREEN
-	
+	const val TASKS_ROUTE = TASKS_SCREEN
 }
 
 /**

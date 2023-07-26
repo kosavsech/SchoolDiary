@@ -133,6 +133,19 @@ fun SubjectsTopAppBar(openDrawer: () -> Unit) {
 }
 
 @Composable
+fun TasksTopAppBar(openDrawer: () -> Unit) {
+	TopAppBar(
+		title = { Text(text = stringResource(id = R.string.agenda_title)) },
+		navigationIcon = {
+			IconButton(onClick = openDrawer) {
+				Icon(Icons.Filled.Menu, stringResource(id = R.string.open_drawer))
+			}
+		},
+		modifier = Modifier.fillMaxWidth(),
+	)
+}
+
+@Composable
 fun GradesTopAppBar(
 	openDrawer: () -> Unit,
 	onSortByMarkDate: () -> Unit,
