@@ -1,9 +1,9 @@
 package com.kxsv.ychart_mod.chartcontainer.gestures
 
-import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculateCentroidSize
 import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.positionChanged
 import kotlin.math.abs
@@ -18,7 +18,7 @@ internal suspend fun PointerInputScope.detectZoomGesture(
 	onZoom: (zoom: Float) -> Unit,
 ) {
 	if (isZoomAllowed) {
-		awaitEachGesture {
+		forEachGesture {
 			awaitPointerEventScope {
 				awaitFirstDown(requireUnconsumed = false)
 			}
