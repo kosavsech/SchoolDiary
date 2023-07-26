@@ -9,4 +9,5 @@ object DatabaseConstants {
 	const val TIME_PATTERN_TABLE_NAME = "timePattern"
 	const val PATTERN_STROKE_TABLE_NAME = "patternStroke"
 	const val EDU_PERFORMANCE_TABLE_NAME = "eduPerformance"
+	const val TASK_TABLE_NAME = "task"
 }

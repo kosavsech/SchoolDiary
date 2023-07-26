@@ -13,6 +13,7 @@ import com.kxsv.schooldiary.data.local.features.grade.GradeDao
 import com.kxsv.schooldiary.data.local.features.lesson.LessonDao
 import com.kxsv.schooldiary.data.local.features.study_day.StudyDayDao
 import com.kxsv.schooldiary.data.local.features.subject.SubjectDao
+import com.kxsv.schooldiary.data.local.features.task.TaskDao
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherDao
 import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternDao
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeDao
@@ -32,6 +33,8 @@ import com.kxsv.schooldiary.data.repository.StudyDayRepository
 import com.kxsv.schooldiary.data.repository.StudyDayRepositoryImpl
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.data.repository.SubjectRepositoryImpl
+import com.kxsv.schooldiary.data.repository.TaskRepository
+import com.kxsv.schooldiary.data.repository.TaskRepositoryImpl
 import com.kxsv.schooldiary.data.repository.TeacherRepository
 import com.kxsv.schooldiary.data.repository.TeacherRepositoryImpl
 import com.kxsv.schooldiary.data.repository.TimePatternRepository
@@ -88,6 +91,10 @@ abstract class RepositoryModule {
 	@Binds
 	@Singleton
 	abstract fun bindEduPerformanceRepository(repository: EduPerformanceRepositoryImpl): EduPerformanceRepository
+	
+	@Binds
+	@Singleton
+	abstract fun bindTaskRepository(repository: TaskRepositoryImpl): TaskRepository
 }
 
 @Module
@@ -130,6 +137,9 @@ object DatabaseModule {
 	
 	@Provides
 	fun provideEduPerformanceDao(db: AppDatabase): EduPerformanceDao = db.eduPerformanceDao()
+	
+	@Provides
+	fun provideTaskDao(db: AppDatabase): TaskDao = db.taskDao()
 }
 
 @InstallIn(SingletonComponent::class)
