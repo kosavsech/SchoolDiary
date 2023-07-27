@@ -37,8 +37,8 @@ class LessonRepositoryImpl @Inject constructor(
 	}
 	
 	override suspend fun fetchLessonsByDate(localDate: LocalDate): List<LessonDto> {
-		val lessons = webService.getScheduleForDate(localDate)
-		return ScheduleParser().parse(lessons, localDate)
+		val dayInfo = webService.getDayInfo(localDate)
+		return ScheduleParser().parse(dayInfo, localDate)
 	}
 	
 	override suspend fun getAllByMasterId(studyDayId: Long): List<LessonEntity> {

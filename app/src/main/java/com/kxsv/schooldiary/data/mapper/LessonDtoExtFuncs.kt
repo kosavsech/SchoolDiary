@@ -7,7 +7,7 @@ import com.kxsv.schooldiary.data.remote.lesson.LessonDto
 import com.kxsv.schooldiary.data.repository.StudyDayRepository
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 
-private const val TAG = "ScheduleMappers"
+private const val TAG = "LessonMapper"
 
 suspend fun LessonDto.toLessonEntity(
 	studyDayMasterId: Long?,

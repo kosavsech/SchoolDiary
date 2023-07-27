@@ -53,7 +53,7 @@ class WebServiceImpl @Inject constructor(
 	 * @param localDate
 	 * @return
 	 */
-	override suspend fun getScheduleForDate(localDate: LocalDate): Elements {
+	override suspend fun getDayInfo(localDate: LocalDate): Elements {
 		val dayPage = getDayPage(localDate)
 		return dayPage.select("div.d-table > table > tbody > tr")
 	}

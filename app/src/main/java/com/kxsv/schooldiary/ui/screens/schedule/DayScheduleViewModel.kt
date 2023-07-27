@@ -477,7 +477,7 @@ class DayScheduleViewModel @Inject constructor(
 			val classes = measurePerformanceInMS(logger = { time, result ->
 				Log.i(
 					TAG,
-					"initializeNetworkScheduleOnDate: getScheduleForDate() performance is $time ms" +
+					"initializeNetworkScheduleOnDate: getDayInfo() performance is $time ms" +
 							"\nreturned: classes $result"
 				)
 			}) {
@@ -608,7 +608,7 @@ class DayScheduleViewModel @Inject constructor(
 				} else {
 					val fetchedClasses = measurePerformanceInMS(logger = { time, result ->
 						Log.i(
-							TAG, "fetchSchedule: getScheduleForDate() performance is $time ms" +
+							TAG, "fetchSchedule: getDayInfo() performance is $time ms" +
 									"\nreturned: classes $result"
 						)
 					}) {

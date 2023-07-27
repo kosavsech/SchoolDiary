@@ -2,6 +2,7 @@ package com.kxsv.schooldiary.ui.screens.subject_list
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -97,6 +98,7 @@ private fun SubjectsContent(
 	modifier: Modifier,
 ) {
 	LoadingContent(
+		modifier = modifier,
 		loading = loading,
 		isContentScrollable = true,
 		empty = subjects.isEmpty(),
@@ -104,8 +106,7 @@ private fun SubjectsContent(
 		onRefresh = { /*TODO*/ }
 	) {
 		LazyColumn(
-			modifier = modifier
-				.padding(vertical = dimensionResource(R.dimen.list_item_padding)),
+			contentPadding = PaddingValues(vertical = dimensionResource(R.dimen.list_item_padding)),
 		) {
 			items(subjects) { subject ->
 				SubjectItem(

@@ -8,11 +8,11 @@ import kotlinx.coroutines.flow.Flow
 
 interface SubjectRepository {
 	
-	fun getSubjectsStream(): Flow<List<SubjectEntity>>
+	fun observeAll(): Flow<List<SubjectEntity>>
 	
 	fun getSubjectStream(subjectId: Long): Flow<SubjectEntity>
 	
-	fun observeSubjectWithTeachers(subjectId: Long): Flow<SubjectWithTeachers>
+	fun observeSubjectWithTeachers(subjectId: Long): Flow<SubjectWithTeachers?>
 	
 	fun getSubjectWithGradesStream(subjectId: Long): Flow<SubjectWithGrades>
 	
@@ -31,5 +31,6 @@ interface SubjectRepository {
 	suspend fun updateSubject(subject: SubjectEntity, teachers: Set<TeacherEntity>? = null)
 	
 	suspend fun deleteAllSubjects()
+	
 	suspend fun deleteSubject(subjectId: Long)
 }

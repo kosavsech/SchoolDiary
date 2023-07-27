@@ -20,6 +20,7 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.ADD_EDIT_PATTERN_ROUTE
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.ADD_EDIT_SCHEDULE_ROUTE
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.ADD_EDIT_SUBJECT_ROUTE
+import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.ADD_EDIT_TASK_ROUTE
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.COPY_DATE_RANGE_SCHEDULE_ROUTE
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.COPY_DAY_SCHEDULE_ROUTE
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.DAY_SCHEDULE_ROUTE
@@ -32,6 +33,8 @@ import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.PATTERNS_SELECTIO
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.SCHEDULE_ROUTE
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.SUBJECTS_ROUTE
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.SUBJECT_DETAIL_ROUTE
+import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.TASKS_ROUTE
+import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.TASK_DETAIL_ROUTE
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinations.TEACHERS_ROUTE
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs.CUSTOM_PATTERN_SET_ARG
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs.DATESTAMP_ARG
@@ -41,6 +44,7 @@ import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs.SCHEDULE_ID_A
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs.SELECTED_PATTERN_ARG
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs.STUDY_DAY_ID_ARG
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs.SUBJECT_ID_ARG
+import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs.TASK_ID_ARG
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs.TITLE_ARG
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs.USER_MESSAGE_ARG
 import com.kxsv.schooldiary.ui.screens.edu_performance.EduPerformanceScreen
@@ -58,6 +62,9 @@ import com.kxsv.schooldiary.ui.screens.schedule.add_edit.AddEditLessonScreen
 import com.kxsv.schooldiary.ui.screens.subject_detail.SubjectDetailScreen
 import com.kxsv.schooldiary.ui.screens.subject_detail.add_edit.AddEditSubjectScreen
 import com.kxsv.schooldiary.ui.screens.subject_list.SubjectsScreen
+import com.kxsv.schooldiary.ui.screens.task_detail.TaskDetailScreen
+import com.kxsv.schooldiary.ui.screens.task_detail.add_edit.AddEditTaskScreen
+import com.kxsv.schooldiary.ui.screens.task_list.TasksScreen
 import com.kxsv.schooldiary.ui.screens.teacher_list.TeachersScreen
 import com.kxsv.schooldiary.util.ui.sharedViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -100,6 +107,47 @@ fun NavGraph(
 				}
 			)
 			
+		}
+		composable(
+			route = TASKS_ROUTE
+		) {
+			AppModalDrawer(drawerState, currentRoute, navActions) {
+				TasksScreen(
+					onAddTask = { navActions.navigateToAddEditTask(null) },
+					onTaskClick = { navActions.navigateToTaskDetail(taskId = it.taskId) },
+					openDrawer = { coroutineScope.launch { drawerState.open() } }
+				)
+			}
+		}
+		composable(
+			route = TASK_DETAIL_ROUTE,
+			arguments = listOf(
+				navArgument(TASK_ID_ARG) {
+					type = NavType.LongType; nullable = false; defaultValue = 0
+				},
+//				navArgument(USER_MESSAGE_ARG) { type = NavType.IntType; defaultValue = 0 },
+			)
+		) { entry ->
+			val taskId = entry.arguments?.getLong(TASK_ID_ARG)
+			TaskDetailScreen(
+				onEditTask = { navActions.navigateToAddEditTask(taskId) },
+				onBack = { navController.popBackStack() }
+			)
+		}
+		composable(
+			route = ADD_EDIT_TASK_ROUTE,
+			arguments = listOf(
+				navArgument(TASK_ID_ARG) {
+					type = NavType.LongType; nullable = false; defaultValue = 0
+				},
+			)
+		) { entry ->
+			val taskId = entry.arguments?.getLong(TASK_ID_ARG)
+			AddEditTaskScreen(
+				// to task detail on update to list on add
+				onTaskSave = { navController.popBackStack() },
+				onBack = { navController.popBackStack() }
+			)
 		}
 		composable(
 			route = EDU_PERFORMANCE_ROUTE

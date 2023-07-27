@@ -66,8 +66,8 @@ class GradeRepositoryImpl @Inject constructor(
 	}
 	
 	override suspend fun fetchGradeByDate(localDate: LocalDate): List<DayGradeDto> {
-		val classes = webService.getScheduleForDate(localDate)
-		return GradeParser().parse(classes, localDate)
+		val dayInfo = webService.getDayInfo(localDate)
+		return GradeParser().parse(dayInfo, localDate)
 	}
 	
 	override suspend fun fetchRecentGrades(): Unit = withContext(ioDispatcher) {

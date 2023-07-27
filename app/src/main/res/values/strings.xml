@@ -116,4 +116,23 @@
     <string name="grade_history">Grade history</string>
     <string name="edit_target_mark">Edit target mark</string>
     <string name="enter_target_mark_dialog_title">Enter target mark:</string>
+    <string name="agenda_title">Agenda</string>
+    <string name="add_task">Add task</string>
+    <string name="edit_task">Edit task</string>
+    <string name="task_not_found">Task not found</string>
+    <string name="loading_task_error">Error while loading task</string>
+    <string name="due_date">Due date</string>
+    <string name="mark_task_done">Mark task done</string>
+    <string name="task_topbar_close">Close task details screen</string>
+    <string name="save_task">Save task</string>
+    <string name="empty_task_title_message">Task title cannot be empty</string>
+    <string name="task_title">Title of task</string>
+    <string name="tasks_title">Agenda</string>
+    <string name="select_due_date">Select due date</string>
+    <string name="task_description">Task detailed description</string>
+    <string name="description_hint">Description</string>
+    <string name="loading_tasks_error">Error while loading tasks\n %1$s</string>
+    <string name="fetch_task">Try to fetch task for this day and subject from net</string>
+    <string name="pick_task_title_hint">Pick task title from Network</string>
+    <string name="successfully_fetched_task">Successfully fetched task from Network</string>
 </resources>

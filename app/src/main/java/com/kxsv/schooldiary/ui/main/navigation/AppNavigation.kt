@@ -14,11 +14,13 @@ import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs.SCHEDULE_ID_A
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs.SELECTED_PATTERN_ARG
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs.STUDY_DAY_ID_ARG
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs.SUBJECT_ID_ARG
+import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs.TASK_ID_ARG
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs.TITLE_ARG
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs.USER_MESSAGE_ARG
 import com.kxsv.schooldiary.ui.main.navigation.AppScreens.ADD_EDIT_PATTERN_SCREEN
 import com.kxsv.schooldiary.ui.main.navigation.AppScreens.ADD_EDIT_SCHEDULE_SCREEN
 import com.kxsv.schooldiary.ui.main.navigation.AppScreens.ADD_EDIT_SUBJECT_SCREEN
+import com.kxsv.schooldiary.ui.main.navigation.AppScreens.ADD_EDIT_TASK_SCREEN
 import com.kxsv.schooldiary.ui.main.navigation.AppScreens.COPY_DATE_RANGE_SCHEDULE_SCREEN
 import com.kxsv.schooldiary.ui.main.navigation.AppScreens.COPY_DAY_SCHEDULE_SCREEN
 import com.kxsv.schooldiary.ui.main.navigation.AppScreens.DAY_SCHEDULE_SCREEN
@@ -30,6 +32,8 @@ import com.kxsv.schooldiary.ui.main.navigation.AppScreens.PATTERNS_SCREEN
 import com.kxsv.schooldiary.ui.main.navigation.AppScreens.PATTERNS_SELECTION_SCREEN
 import com.kxsv.schooldiary.ui.main.navigation.AppScreens.SUBJECTS_SCREEN
 import com.kxsv.schooldiary.ui.main.navigation.AppScreens.SUBJECT_DETAIL_SCREEN
+import com.kxsv.schooldiary.ui.main.navigation.AppScreens.TASKS_SCREEN
+import com.kxsv.schooldiary.ui.main.navigation.AppScreens.TASK_DETAIL_SCREEN
 import com.kxsv.schooldiary.ui.main.navigation.AppScreens.TEACHERS_SCREEN
 import java.time.LocalDate
 import java.time.ZoneId
@@ -44,7 +48,7 @@ object AppScreens {
 	const val PATTERNS_SELECTION_SCREEN = "patternsSelection"
 	const val ADD_EDIT_PATTERN_SCREEN = "addEditPattern"
 	const val SUBJECTS_SCREEN = "subjects"
-	const val SUBJECT_DETAIL_SCREEN = "subject"
+	const val SUBJECT_DETAIL_SCREEN = "subjectDetail"
 	const val ADD_EDIT_SUBJECT_SCREEN = "addEditSubject"
 	const val TEACHERS_SCREEN = "teachers"
 	const val DAY_SCHEDULE_SCREEN = "daySchedule"
@@ -55,6 +59,10 @@ object AppScreens {
 	const val GRADE_DETAIL_SCREEN = "gradeDetail"
 	const val LOGIN_SCREEN = "login"
 	const val EDU_PERFORMANCE_SCREEN = "eduPerformance"
+	const val TASKS_SCREEN = "tasks"
+	const val TASK_DETAIL_SCREEN = "taskDetail"
+	const val ADD_EDIT_TASK_SCREEN = "addEditTask"
+	
 }
 
 /**
@@ -71,6 +79,7 @@ object AppDestinationsArgs {
 	const val STUDY_DAY_ID_ARG = "studyDayId"
 	const val SELECTED_PATTERN_ARG = "selectedPattern"
 	const val CUSTOM_PATTERN_SET_ARG = "customPatternSet"
+	const val TASK_ID_ARG = "taskId"
 }
 
 /**
@@ -98,6 +107,9 @@ object AppDestinations {
 	const val GRADE_DETAIL_ROUTE = "$GRADE_DETAIL_SCREEN?$GRADE_ID_ARG={$GRADE_ID_ARG}"
 	const val LOGIN_ROUTE = LOGIN_SCREEN
 	const val EDU_PERFORMANCE_ROUTE = EDU_PERFORMANCE_SCREEN
+	const val TASKS_ROUTE = TASKS_SCREEN
+	const val TASK_DETAIL_ROUTE = "$TASK_DETAIL_SCREEN/{$TASK_ID_ARG}"
+	const val ADD_EDIT_TASK_ROUTE = "$ADD_EDIT_TASK_SCREEN?$TASK_ID_ARG={$TASK_ID_ARG}"
 	
 }
 
@@ -161,6 +173,47 @@ class AppNavigationActions(private val navController: NavHostController) {
 		}
 	}
 	
+	fun navigateToSubjectDetail(userMessage: Int = 0, subjectId: Long) {
+		navController.navigate("$SUBJECT_DETAIL_SCREEN/$subjectId?$USER_MESSAGE_ARG=$userMessage")
+	}
+	
+	fun navigateToAddEditSubject(subjectId: Long?) {
+		navController.navigate(
+			ADD_EDIT_SUBJECT_SCREEN.let {
+				if (subjectId != null) "$it?$SUBJECT_ID_ARG=$subjectId" else it
+			}
+		)
+	}
+	
+	fun navigateToTasks(userMessage: Int = 0) {
+		val navigatesFromDrawer = userMessage == 0
+		navController.navigate(
+			TASKS_SCREEN.let {
+				it
+//				if (navigatesFromDrawer) it else "$it?$USER_MESSAGE_ARG=$userMessage"
+			}
+		) {
+			popUpTo(navController.graph.findStartDestination().id) {
+				inclusive = !navigatesFromDrawer
+				saveState = navigatesFromDrawer
+			}
+			launchSingleTop = true
+			restoreState = navigatesFromDrawer
+		}
+	}
+	
+	fun navigateToTaskDetail(userMessage: Int = 0, taskId: Long) {
+		navController.navigate("$TASK_DETAIL_SCREEN/$taskId")
+	}
+	
+	fun navigateToAddEditTask(taskId: Long?) {
+		navController.navigate(
+			ADD_EDIT_TASK_SCREEN.let {
+				if (taskId != null) "$it?$TASK_ID_ARG=$taskId" else it
+			}
+		)
+	}
+	
 	private fun localDateToTimestamp(date: LocalDate): Long =
 		date.atStartOfDay(ZoneId.systemDefault()).toEpochSecond()
 	
@@ -191,22 +244,10 @@ class AppNavigationActions(private val navController: NavHostController) {
 		}
 	}
 	
-	fun navigateToSubjectDetail(userMessage: Int = 0, subjectId: Long) {
-		navController.navigate("$SUBJECT_DETAIL_SCREEN/$subjectId?$USER_MESSAGE_ARG=$userMessage")
-	}
-	
 	fun navigateToAddEditPattern(title: Int, timePatternId: Long?) {
 		navController.navigate(
 			"$ADD_EDIT_PATTERN_SCREEN/$title".let {
 				if (timePatternId != null) "$it?$PATTERN_ID_ARG=$timePatternId" else it
-			}
-		)
-	}
-	
-	fun navigateToAddEditSubject(subjectId: Long?) {
-		navController.navigate(
-			ADD_EDIT_SUBJECT_SCREEN.let {
-				if (subjectId != null) "$it?$SUBJECT_ID_ARG=$subjectId" else it
 			}
 		)
 	}
@@ -305,4 +346,6 @@ class AppNavigationActions(private val navController: NavHostController) {
 			restoreState = navigatesFromDrawer
 		}
 	}
+	
+	
 }
