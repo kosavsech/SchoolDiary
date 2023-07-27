@@ -28,8 +28,9 @@ import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.Patt
 	entities = [
 		TimePatternEntity::class, PatternStrokeEntity::class,
 		SubjectEntity::class, TeacherEntity::class, SubjectTeacher::class,
-		StudyDayEntity::class, LessonEntity::class, GradeEntity::class,
-		EduPerformanceEntity::class, TaskEntity::class
+		StudyDayEntity::class, LessonEntity::class,
+		GradeEntity::class, EduPerformanceEntity::class,
+		TaskEntity::class
 	],
 	version = 2,
 	exportSchema = false

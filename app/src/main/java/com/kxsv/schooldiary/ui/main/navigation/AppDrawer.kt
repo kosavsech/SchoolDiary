@@ -38,6 +38,7 @@ fun AppModalDrawer(
 					navigateToSchedule = { navigationActions.navigateToDaySchedule() },
 					navigateToGrades = { navigationActions.navigateToGrades() },
 					navigateToEduPerformance = { navigationActions.navigateToEduPerformance() },
+					navigateToTasks = { navigationActions.navigateToTasks() },
 					closeDrawer = { coroutineScope.launch { drawerState.close() } }
 				)
 			}
@@ -56,6 +57,7 @@ private fun AppDrawer(
 	navigateToSchedule: () -> Unit,
 	navigateToGrades: () -> Unit,
 	navigateToEduPerformance: () -> Unit,
+	navigateToTasks: () -> Unit,
 	closeDrawer: () -> Unit,
 	modifier: Modifier = Modifier,
 ) {
@@ -144,6 +146,20 @@ private fun AppDrawer(
 				closeDrawer()
 			}
 		)
+		NavigationDrawerItem(
+			label = {
+				Text(
+					text = stringResource(R.string.tasks_title),
+					style = MaterialTheme.typography.body2,
+					//color = tintColor,
+				)
+			},
+			selected = currentRoute == AppDestinations.TASKS_ROUTE,
+			onClick = {
+				navigateToTasks()
+				closeDrawer()
+			}
+		)
 	}
 }
 
@@ -160,6 +176,7 @@ fun PreviewAppDrawer() {
 			navigateToSchedule = {},
 			navigateToGrades = {},
 			navigateToEduPerformance = {},
+			navigateToTasks = {},
 			closeDrawer = {}
 		)
 	}

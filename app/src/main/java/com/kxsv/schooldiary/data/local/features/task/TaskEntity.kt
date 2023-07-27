@@ -15,15 +15,17 @@ import java.time.LocalDate
 			entity = SubjectEntity::class,
 			parentColumns = ["subjectId"],
 			childColumns = ["subjectMasterId"],
+			onDelete = ForeignKey.SET_DEFAULT
 		),
 	],
 	indices = [Index(value = ["subjectMasterId"])]
 )
 data class TaskEntity(
-	val name: String,
+	val title: String,
 	val description: String,
 	val dueDate: LocalDate,
-	val subjectMasterId: Long,
+	val subjectMasterId: Long?,
+	val isDone: Boolean = false,
 	@PrimaryKey(autoGenerate = true)
 	val taskId: Long = 0,
 )

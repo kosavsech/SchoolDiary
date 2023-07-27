@@ -7,7 +7,8 @@ interface WebService {
 	
 	suspend fun eduTatarAuth(login: String, password: String)
 	
-	suspend fun getScheduleForDate(localDate: LocalDate): Elements
+	suspend fun getDayInfo(localDate: LocalDate): Elements
 	
 	suspend fun getTermEduPerformance(term: String): Elements
+	
 }

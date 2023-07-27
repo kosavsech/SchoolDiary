@@ -72,7 +72,7 @@ class SubjectDetailViewModel @Inject constructor(
 	@OptIn(ExperimentalCoroutinesApi::class)
 	private val _targetMark = _subjectWithTeachersAsync
 		.flatMapLatest {
-			if (it.subject.targetMark != null) {
+			if (it?.subject?.targetMark != null) {
 				flowOf(it.subject.targetMark)
 			} else {
 				userPreferencesRepository.observeTargetMark()
@@ -112,7 +112,7 @@ class SubjectDetailViewModel @Inject constructor(
 		
 	}.stateIn(viewModelScope, WhileUiSubscribed, SubjectDetailUiState(isLoading = true))
 	
-	fun deleteSubject() = viewModelScope.launch {
+	fun deleteSubject() = viewModelScope.launch(ioDispatcher) {
 		subjectRepository.deleteSubject(subjectId)
 		_uiState.update {
 			it.copy(isSubjectDeleted = true)

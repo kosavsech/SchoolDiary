@@ -7,9 +7,11 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Cached
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
@@ -61,6 +63,31 @@ fun AddEditSubjectTopAppBar(onBack: () -> Unit) {
 		navigationIcon = {
 			IconButton(onClick = onBack) {
 				Icon(Icons.Filled.ArrowBack, stringResource(id = R.string.menu_back))
+			}
+		},
+		modifier = Modifier.fillMaxWidth()
+	)
+}
+
+@Composable
+fun AddEditTaskTopAppBar(
+	onBack: () -> Unit,
+	fetchNet: () -> Unit,
+	fetchEnabled: Boolean,
+) {
+	TopAppBar(
+		title = {},
+		navigationIcon = {
+			IconButton(onClick = onBack) {
+				Icon(Icons.Filled.ArrowBack, stringResource(id = R.string.menu_back))
+			}
+		},
+		actions = {
+			IconButton(
+				onClick = fetchNet,
+				enabled = fetchEnabled
+			) {
+				Icon(Icons.Filled.CloudDownload, stringResource(id = R.string.fetch_task))
 			}
 		},
 		modifier = Modifier.fillMaxWidth()
@@ -332,6 +359,30 @@ fun SubjectDetailTopAppBar(title: String? = "", onBack: () -> Unit, onDelete: ()
 			}
 		},
 		actions = {
+			IconButton(onClick = onDelete) {
+				Icon(Icons.Filled.Delete, stringResource(id = R.string.menu_back))
+			}
+		},
+		modifier = Modifier.fillMaxWidth()
+	)
+}
+
+@Composable
+fun TaskDetailTopAppBar(onBack: () -> Unit, onDelete: () -> Unit, onEdit: () -> Unit) {
+	TopAppBar(
+		title = {},
+		navigationIcon = {
+			IconButton(onClick = onBack) {
+				Icon(
+					imageVector = Icons.Filled.Close,
+					contentDescription = stringResource(id = R.string.task_topbar_close)
+				)
+			}
+		},
+		actions = {
+			IconButton(onClick = onEdit) {
+				Icon(Icons.Filled.Edit, stringResource(id = R.string.edit_task))
+			}
 			IconButton(onClick = onDelete) {
 				Icon(Icons.Filled.Delete, stringResource(id = R.string.menu_back))
 			}

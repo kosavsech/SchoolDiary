@@ -10,14 +10,26 @@ interface TaskDao {
 	@Query("SELECT * FROM ${DatabaseConstants.TASK_TABLE_NAME}")
 	fun observeAll(): Flow<List<TaskEntity>>
 	
+	@Transaction
+	@Query("SELECT * FROM ${DatabaseConstants.TASK_TABLE_NAME}")
+	fun observeAllWithSubject(): Flow<List<TaskWithSubject>>
+	
 	@Query("SELECT * FROM ${DatabaseConstants.TASK_TABLE_NAME} WHERE taskId = :taskId")
 	fun observeById(taskId: Long): Flow<TaskEntity>
+	
+	@Transaction
+	@Query("SELECT * FROM ${DatabaseConstants.TASK_TABLE_NAME} WHERE taskId = :taskId")
+	fun observeByIdWithSubject(taskId: Long): Flow<TaskWithSubject>
 	
 	@Query("SELECT * FROM ${DatabaseConstants.TASK_TABLE_NAME}")
 	suspend fun getAll(): List<TaskEntity>
 	
 	@Query("SELECT * FROM ${DatabaseConstants.TASK_TABLE_NAME} WHERE taskId = :taskId")
 	suspend fun getById(taskId: Long): TaskEntity?
+	
+	@Transaction
+	@Query("SELECT * FROM ${DatabaseConstants.TASK_TABLE_NAME} WHERE taskId = :taskId")
+	suspend fun getByIdWithSubject(taskId: Long): TaskWithSubject?
 	
 	@Upsert
 	suspend fun upsertAll(tasks: List<TaskEntity>)

@@ -3,6 +3,7 @@ package com.kxsv.schooldiary.ui.screens.grade_list
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -111,8 +112,7 @@ private fun GradesContent(
 		onRefresh = onRefresh
 	) {
 		LazyColumn(
-			modifier = modifier
-				.padding(vertical = dimensionResource(R.dimen.list_item_padding)),
+			contentPadding = PaddingValues(vertical = dimensionResource(R.dimen.list_item_padding)),
 		) {
 			items(grades) { grade ->
 				GradeItem(

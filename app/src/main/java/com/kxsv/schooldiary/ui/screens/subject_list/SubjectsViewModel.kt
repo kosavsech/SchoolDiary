@@ -32,7 +32,7 @@ class SubjectsViewModel @Inject constructor(
 ) : ViewModel() {
 	
 	private val _subjectsAsync =
-		subjectRepository.getSubjectsStream()
+		subjectRepository.observeAll()
 			.map { Async.Success(it) }
 			.catch<Async<List<SubjectEntity>>> { emit(Async.Error(R.string.loading_subjects_error)) }
 	

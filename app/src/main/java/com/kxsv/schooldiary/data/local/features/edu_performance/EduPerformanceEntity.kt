@@ -16,6 +16,7 @@ import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
 			entity = SubjectEntity::class,
 			parentColumns = ["subjectId"],
 			childColumns = ["subjectMasterId"],
+			onDelete = ForeignKey.SET_DEFAULT
 		),
 	],
 	indices = [Index(value = ["subjectMasterId"])]

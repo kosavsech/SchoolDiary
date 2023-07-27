@@ -15,7 +15,7 @@ import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 			entity = SubjectEntity::class,
 			parentColumns = ["subjectId"],
 			childColumns = ["subjectAncestorId"],
-			onDelete = ForeignKey.NO_ACTION, // TODO: fix of behaviour so we first memorise name at least
+			onDelete = ForeignKey.SET_DEFAULT, // TODO: fix of behaviour so we first memorise name at least
 			onUpdate = ForeignKey.CASCADE
 		),
 		ForeignKey(

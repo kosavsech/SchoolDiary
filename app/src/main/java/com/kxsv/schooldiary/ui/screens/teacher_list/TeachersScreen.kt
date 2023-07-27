@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -165,9 +166,8 @@ private fun TeachersContent(
 	modifier: Modifier = Modifier,
 ) {
     LazyColumn(
-        modifier = modifier
-            .padding(vertical = dimensionResource(R.dimen.vertical_margin)),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.list_item_padding))
+	    contentPadding = PaddingValues(vertical = dimensionResource(R.dimen.vertical_margin)),
+	    verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.list_item_padding))
     ) {
         items(teachers) { teacher ->
             TeacherItem(

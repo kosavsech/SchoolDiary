@@ -18,7 +18,7 @@ class SubjectRepositoryImpl @Inject constructor(
 	//@DefaultDispatcher private val dispatcher: CoroutineDispatcher,
 ) : SubjectRepository {
 	
-	override fun getSubjectsStream(): Flow<List<SubjectEntity>> {
+	override fun observeAll(): Flow<List<SubjectEntity>> {
 		return subjectDataSource.observeAll()
 	}
 	
@@ -26,7 +26,7 @@ class SubjectRepositoryImpl @Inject constructor(
 		return subjectDataSource.observeById(subjectId)
 	}
 	
-	override fun observeSubjectWithTeachers(subjectId: Long): Flow<SubjectWithTeachers> {
+	override fun observeSubjectWithTeachers(subjectId: Long): Flow<SubjectWithTeachers?> {
 		return subjectDataSource.observeByIdWithTeachers(subjectId)
 	}
 	
