@@ -96,7 +96,7 @@ class TaskRepositoryImpl @Inject constructor(
 						if (localTasks.isNotEmpty()) {
 							Log.d(
 								TAG,
-								"fetchSoonTasks($date, ${classWithSubject.value.subject.getName()}):\n" +
+								"fetchSoonTasks($date, ${classWithSubject.value.subject.getName()}):" +
 										" localTasks.isNotEmpty"
 							)
 							var deletedCounter = 0
@@ -113,10 +113,25 @@ class TaskRepositoryImpl @Inject constructor(
 							)
 							if (deletedCounter == taskVariant.size) {
 								taskDataSource.upsertAll(taskVariant.toTaskEntities())
+								Log.i(
+									TAG,
+									"fetchSoonTasks($date, ${classWithSubject.value.subject.getName()}):" +
+											" saving:\n $taskVariant"
+								)
+							} else {
+								Log.i(
+									TAG,
+									"fetchSoonTasks($date, ${classWithSubject.value.subject.getName()}):" +
+											" NOT saving:\n $taskVariant"
+								)
 							}
 						} else {
-							Log.d(TAG, "fetchSoonTasks: localTasks.isEmpty so just fetching")
 							taskDataSource.upsertAll(taskVariant.toTaskEntities())
+							Log.d(
+								TAG,
+								"fetchSoonTasks($date, ${classWithSubject.value.subject.getName()}):" +
+										" localTasks.isEmpty so just saving\n $taskVariant"
+							)
 						}
 					} else {
 						Log.d(TAG, "fetchSoonTasks: taskVariant not found")

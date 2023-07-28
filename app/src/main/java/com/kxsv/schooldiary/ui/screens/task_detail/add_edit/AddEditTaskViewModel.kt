@@ -113,6 +113,7 @@ class AddEditTaskViewModel @Inject constructor(
 					description = uiState.value.description,
 					dueDate = uiState.value.dueDate,
 					subjectMasterId = uiState.value.subject!!.subjectId,
+					isFetched = false,
 					taskId = taskId
 				)
 			)
