@@ -69,13 +69,4 @@ class EduPerformanceViewModel @Inject constructor(
 	private fun showSnackbarMessage(message: Int) {
 		_uiState.update { it.copy(userMessage = message) }
 	}
-	
-	//the inline performance measurement method
-	private inline fun <T> measurePerformanceInMS(logger: (Long, T) -> Unit, func: () -> T): T {
-		val startTime = System.currentTimeMillis()
-		val result: T = func.invoke()
-		val endTime = System.currentTimeMillis()
-		logger.invoke(endTime - startTime, result)
-		return result
-	}
 }

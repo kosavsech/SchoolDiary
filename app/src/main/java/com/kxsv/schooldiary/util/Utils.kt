@@ -5,6 +5,7 @@ import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import java.util.Locale
 
 
@@ -77,6 +78,25 @@ object Utils {
 		val threeCount = calculateGrades(grade = 3)
 		
 		return EstimatesGrades(fiveCount, fourCount, threeCount)
+	}
+	
+	fun ClosedRange<LocalDate>.rangeToList(limiter: Long? = null): List<LocalDate> {
+		val dates = mutableListOf(this.start)
+		var daysAdded = 1L
+		while (daysAdded <= ChronoUnit.DAYS.between(this.start, this.endInclusive)) {
+			dates.add(this.start.plusDays(daysAdded))
+			daysAdded++
+			if (limiter != null && limiter == daysAdded) break
+		}
+		return dates
+	}
+	
+	inline fun <T> measurePerformanceInMS(logger: (Long, T) -> Unit, func: () -> T): T {
+		val startTime = System.currentTimeMillis()
+		val result: T = func.invoke()
+		val endTime = System.currentTimeMillis()
+		logger.invoke(endTime - startTime, result)
+		return result
 	}
 	
 	data class EstimatesGrades(

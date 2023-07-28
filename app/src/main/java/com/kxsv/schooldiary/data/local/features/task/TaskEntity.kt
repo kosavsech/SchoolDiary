@@ -26,6 +26,7 @@ data class TaskEntity(
 	val dueDate: LocalDate,
 	val subjectMasterId: Long?,
 	val isDone: Boolean = false,
+	val isFetched: Boolean = false,
 	@PrimaryKey(autoGenerate = true)
 	val taskId: Long = 0,
 )

@@ -11,14 +11,16 @@ class TaskParser {
 		dayInfo.forEachIndexed { index, lesson ->
 			val subjectAncestorName = lesson.child(NetLessonColumn.SUBJECT.ordinal).text()
 			if (subjectAncestorName != subject.fullName) return@forEachIndexed
-			tasks.add(
-				TaskDto(
-					title = lesson.child(NetLessonColumn.TASK.ordinal).text(),
-					subjectId = subject.subjectId,
-					dueDate = date,
-					lessonIndex = index
+			if (lesson.child(NetLessonColumn.TASK.ordinal).text().isNotEmpty()) {
+				tasks.add(
+					TaskDto(
+						title = lesson.child(NetLessonColumn.TASK.ordinal).text(),
+						subjectId = subject.subjectId,
+						dueDate = date,
+						lessonIndex = index
+					)
 				)
-			)
+			}
 		}
 		return tasks
 	}

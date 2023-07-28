@@ -11,6 +11,7 @@ import com.kxsv.schooldiary.di.IoDispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
+import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
 import com.kxsv.schooldiary.util.remote.NetworkException
 import com.kxsv.schooldiary.util.ui.GradesSortType
 import com.kxsv.schooldiary.util.ui.WhileUiSubscribed
@@ -123,12 +124,4 @@ class GradesViewModel @Inject constructor(
 		_uiState.update { it.copy(userMessage = message) }
 	}
 	
-	//the inline performance measurement method
-	private inline fun <T> measurePerformanceInMS(logger: (Long, T) -> Unit, func: () -> T): T {
-		val startTime = System.currentTimeMillis()
-		val result: T = func.invoke()
-		val endTime = System.currentTimeMillis()
-		logger.invoke(endTime - startTime, result)
-		return result
-	}
 }

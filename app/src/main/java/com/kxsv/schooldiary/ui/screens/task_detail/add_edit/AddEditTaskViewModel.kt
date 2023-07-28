@@ -12,6 +12,7 @@ import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.data.repository.TaskRepository
 import com.kxsv.schooldiary.di.IoDispatcher
 import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs
+import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
 import com.kxsv.schooldiary.util.ui.Async
 import com.kxsv.schooldiary.util.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -155,7 +156,7 @@ class AddEditTaskViewModel @Inject constructor(
 			val fetchedVariants = measurePerformanceInMS(logger = { time, result ->
 				Log.d(TAG, "fetchNet: time = $time MS\nresult = $result")
 			}) {
-				taskRepository.fetchTask(
+				taskRepository.fetchTaskByDate(
 					date = uiState.value.dueDate,
 					subject = uiState.value.subject!!
 				)
@@ -177,12 +178,4 @@ class AddEditTaskViewModel @Inject constructor(
 		}
 	}
 	
-	//the inline performance measurement method
-	private inline fun <T> measurePerformanceInMS(logger: (Long, T) -> Unit, func: () -> T): T {
-		val startTime = System.currentTimeMillis()
-		val result: T = func.invoke()
-		val endTime = System.currentTimeMillis()
-		logger.invoke(endTime - startTime, result)
-		return result
-	}
 }

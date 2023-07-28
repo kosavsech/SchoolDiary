@@ -9,6 +9,7 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.kxsv.schooldiary.app.workers.GradeSyncWorker
+import com.kxsv.schooldiary.app.workers.TaskSyncWorker
 import com.kxsv.schooldiary.ui.main.navigation.NavGraph
 import com.kxsv.schooldiary.ui.screens.login.SplashViewModel
 import com.kxsv.schooldiary.ui.theme.SchoolDiaryTheme
@@ -33,10 +34,22 @@ class MainActivity : ComponentActivity() {
 			.setConstraints(constraints)
 			.build()
 		
-		WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
+		// TODO: add user setting to edit this interval
+		val taskSyncWorkRequest = PeriodicWorkRequestBuilder<TaskSyncWorker>(15, TimeUnit.MINUTES)
+			.setConstraints(constraints)
+			.build()
+		
+		val workManager = WorkManager.getInstance(applicationContext)
+		workManager.enqueueUniquePeriodicWork(
 			"RecentGradesSyncWorker",
 			ExistingPeriodicWorkPolicy.UPDATE,
 			gradeSyncWorkRequest
+		)
+		
+		workManager.enqueueUniquePeriodicWork(
+			"SoonTasksSyncWorker",
+			ExistingPeriodicWorkPolicy.UPDATE,
+			taskSyncWorkRequest
 		)
 		
 		setContent {

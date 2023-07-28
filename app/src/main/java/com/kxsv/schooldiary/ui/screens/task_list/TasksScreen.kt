@@ -42,6 +42,7 @@ import com.kxsv.schooldiary.ui.main.topbar.TasksTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 @Composable
 fun TasksScreen(
@@ -114,15 +115,15 @@ private fun TasksContent(
 						val titleText =
 							if (key == LocalDate.now()) {
 								"Today"
-							} else if (key.dayOfMonth - LocalDate.now().dayOfMonth == 1) {
+							} else if (ChronoUnit.DAYS.between(LocalDate.now(), key) == 1L) {
 								"Tomorrow"
-							} else if (key.dayOfMonth - LocalDate.now().dayOfMonth == -1) {
+							} else if (ChronoUnit.DAYS.between(LocalDate.now(), key) == -1L) {
 								"Yesterday"
 							} else if (key.isAfter(LocalDate.now())) {
-								key.dayOfMonth.minus(LocalDate.now().dayOfMonth)
+								ChronoUnit.DAYS.between(LocalDate.now(), key)
 									.toString() + " days"
 							} else {
-								LocalDate.now().dayOfMonth.minus(key.dayOfMonth)
+								ChronoUnit.DAYS.between(key, LocalDate.now())
 									.toString() + " days ago"
 							}
 						Text(
