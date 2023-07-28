@@ -8,12 +8,12 @@ import androidx.work.WorkerParameters
 import com.kxsv.schooldiary.data.repository.GradeRepository
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.remote.NetworkException
-import com.kxsv.ychart_mod.common.extensions.roundTwoDecimal
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import java.io.IOException
+import kotlin.math.roundToInt
 
 private const val TAG = "GradeSyncWorker"
 
@@ -30,10 +30,8 @@ class GradeSyncWorker @AssistedInject constructor(
 				Utils.measurePerformanceInMS(
 					logger = { time, _ ->
 						Log.i(
-							TAG, "doWork:" +
-									" performance is ${
-										(time / 1000f).toDouble().roundTwoDecimal()
-									} S"
+							TAG, "doWork: performance is" +
+									" ${(time / 10f).roundToInt() / 100f} S"
 						)
 					}
 				) {
