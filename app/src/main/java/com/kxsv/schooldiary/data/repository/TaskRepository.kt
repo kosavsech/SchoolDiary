@@ -19,9 +19,13 @@ interface TaskRepository {
 	
 	suspend fun getTasks(): List<TaskEntity>
 	
-	suspend fun fetchTask(date: LocalDate, subject: SubjectEntity): List<TaskDto>
+	suspend fun fetchSoonTasks()
 	
-	suspend fun getTask(taskId: Long): TaskEntity?
+	suspend fun fetchTaskByDate(date: LocalDate, subject: SubjectEntity): List<TaskDto>
+	
+	suspend fun getById(taskId: Long): TaskEntity?
+	
+	suspend fun getByDateAndSubject(date: LocalDate, subjectId: Long): List<TaskEntity>
 	
 	suspend fun getTaskWithSubject(taskId: Long): TaskWithSubject?
 	
@@ -32,4 +36,5 @@ interface TaskRepository {
 	suspend fun deleteAllTasks()
 	
 	suspend fun deleteTask(taskId: Long)
+	
 }

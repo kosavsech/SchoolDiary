@@ -11,6 +11,7 @@ import com.kxsv.schooldiary.data.remote.grade.GradeParser
 import com.kxsv.schooldiary.di.ApplicationScope
 import com.kxsv.schooldiary.di.DefaultDispatcher
 import com.kxsv.schooldiary.di.IoDispatcher
+import com.kxsv.schooldiary.util.Utils.rangeToList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -71,19 +72,15 @@ class GradeRepositoryImpl @Inject constructor(
 	}
 	
 	override suspend fun fetchRecentGrades(): Unit = withContext(ioDispatcher) {
-		var daysChecked = 0
-		var counter = 0
-		while (daysChecked != 14) {
-			// todo change to NOW
-			val date = LocalDate.of(2023, 2, 19).minusDays(counter.toLong())
-			if (date.dayOfWeek != DayOfWeek.SUNDAY) {
-				async {
-					val gradesLocalised = fetchGradeByDate(date).toGradeEntities()
-					updateDatabase(gradesLocalised)
-				}
-				daysChecked++
+		// todo change to NOW
+		val startRange = LocalDate.of(2023, 2, 19)
+		val period = (startRange..startRange.plusDays(14)).rangeToList()
+		period.forEach { date ->
+			if (date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
+			async {
+				val gradesLocalised = fetchGradeByDate(date).toGradeEntities()
+				updateDatabase(gradesLocalised)
 			}
-			counter++
 		}
 	}
 	

@@ -5,9 +5,9 @@ import org.jsoup.select.Elements
 import java.time.LocalDate
 
 class ScheduleParser {
-	fun parse(lessons: Elements, localDate: LocalDate): List<LessonDto> {
+	fun parse(dayInfo: Elements, localDate: LocalDate): List<LessonDto> {
 		val schedule = mutableListOf<LessonDto>()
-		lessons.forEachIndexed { index, lesson ->
+		dayInfo.forEachIndexed { index, lesson ->
 			val subjectAncestorName = lesson.child(NetLessonColumn.SUBJECT.ordinal).text()
 			if (subjectAncestorName.isNotBlank()) {
 				schedule.add(

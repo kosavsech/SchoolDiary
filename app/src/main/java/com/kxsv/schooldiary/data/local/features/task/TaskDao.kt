@@ -3,6 +3,7 @@ package com.kxsv.schooldiary.data.local.features.task
 import androidx.room.*
 import com.kxsv.schooldiary.data.local.features.DatabaseConstants
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
 
 @Dao
 interface TaskDao {
@@ -26,6 +27,9 @@ interface TaskDao {
 	
 	@Query("SELECT * FROM ${DatabaseConstants.TASK_TABLE_NAME} WHERE taskId = :taskId")
 	suspend fun getById(taskId: Long): TaskEntity?
+	
+	@Query("SELECT * FROM ${DatabaseConstants.TASK_TABLE_NAME} WHERE dueDate = :date AND subjectMasterId = :subjectId")
+	suspend fun getByDateAndSubject(date: LocalDate, subjectId: Long): List<TaskEntity>
 	
 	@Transaction
 	@Query("SELECT * FROM ${DatabaseConstants.TASK_TABLE_NAME} WHERE taskId = :taskId")

@@ -25,6 +25,8 @@ import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.SELECTED_CUSTOM_PATTERN_OK
 import com.kxsv.schooldiary.util.ListExtensionFunctions.copyExclusively
+import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
+import com.kxsv.schooldiary.util.Utils.rangeToList
 import com.kxsv.schooldiary.util.Utils.timestampToLocalDate
 import com.kxsv.schooldiary.util.remote.NetworkException
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -40,7 +42,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import java.io.IOException
 import java.time.LocalDate
-import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 
@@ -715,24 +716,5 @@ class DayScheduleViewModel @Inject constructor(
 		}
 	}
 	
-	private fun ClosedRange<LocalDate>.rangeToList(limiter: Long? = null): List<LocalDate> {
-		val dates = mutableListOf(this.start)
-		var daysAdded = 1L
-		while (daysAdded <= ChronoUnit.DAYS.between(this.start, this.endInclusive)) {
-			dates.add(this.start.plusDays(daysAdded))
-			daysAdded++
-			if (limiter != null && limiter == daysAdded) break
-		}
-		Log.d(TAG, "rangeToList() called on range = $this and returns $dates")
-		return dates
-	}
 	
-	//the inline performance measurement method
-	private inline fun <T> measurePerformanceInMS(logger: (Long, T) -> Unit, func: () -> T): T {
-		val startTime = System.currentTimeMillis()
-		val result: T = func.invoke()
-		val endTime = System.currentTimeMillis()
-		logger.invoke(endTime - startTime, result)
-		return result
-	}
 }

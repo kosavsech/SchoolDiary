@@ -5,8 +5,8 @@ import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.kxsv.schooldiary.data.repository.GradeRepository
-import com.kxsv.schooldiary.util.Utils
+import com.kxsv.schooldiary.data.repository.TaskRepository
+import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
 import com.kxsv.schooldiary.util.remote.NetworkException
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -15,11 +15,11 @@ import kotlinx.coroutines.withTimeout
 import java.io.IOException
 import kotlin.math.roundToInt
 
-private const val TAG = "GradeSyncWorker"
+private const val TAG = "TaskSyncWorker"
 
 @HiltWorker
-class GradeSyncWorker @AssistedInject constructor(
-	@Assisted private val gradeRepository: GradeRepository,
+class TaskSyncWorker @AssistedInject constructor(
+	@Assisted private val taskRepository: TaskRepository,
 	@Assisted context: Context,
 	@Assisted params: WorkerParameters,
 ) : CoroutineWorker(context, params) {
@@ -27,7 +27,7 @@ class GradeSyncWorker @AssistedInject constructor(
 	override suspend fun doWork(): Result {
 		try {
 			withTimeout(15000L) {
-				Utils.measurePerformanceInMS(
+				measurePerformanceInMS(
 					logger = { time, _ ->
 						Log.i(
 							TAG, "doWork: performance is" +
@@ -35,30 +35,30 @@ class GradeSyncWorker @AssistedInject constructor(
 						)
 					}
 				) {
-					gradeRepository.fetchRecentGrades()
+					taskRepository.fetchSoonTasks()
 				}
 			}
 			return Result.success()
 		} catch (e: Exception) {
 			when (e) {
 				is NetworkException -> {
-					Log.e(TAG, "fetchRecentGrades: exception on login", e)
+					Log.e(TAG, "fetchSoonTasks: exception on login", e)
 					return Result.failure()
 				}
 				
 				is IOException -> {
-					Log.e(TAG, "fetchRecentGrades: exception on response parse", e)
+					Log.e(TAG, "fetchSoonTasks: exception on response parse", e)
 					return Result.failure()
 				}
 				
 				is TimeoutCancellationException -> {
-					Log.e(TAG, "fetchRecentGrades: connection timed-out", e)
+					Log.e(TAG, "fetchSoonTasks: connection timed-out", e)
 					return Result.retry()
 					// TODO: show message that couldn't connect to site
 				}
 				
 				else -> {
-					Log.e(TAG, "fetchRecentGrades: exception", e)
+					Log.e(TAG, "fetchSoonTasks: exception", e)
 					return Result.failure()
 				}
 			}
