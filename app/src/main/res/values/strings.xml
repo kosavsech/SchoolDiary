@@ -135,4 +135,14 @@
     <string name="fetch_task">Try to fetch task for this day and subject from net</string>
     <string name="pick_task_title_hint">Pick task title from Network</string>
     <string name="successfully_fetched_task">Successfully fetched task from Network</string>
+    <string name="due_date_filter">Due date filter</string>
+    <string name="date_filter">Date filter</string>
+    <string name="all_filter">All</string>
+    <string name="hide_done_tasks_filter">Hide done</string>
+    <string name="yesterday_filter">Yesterday</string>
+    <string name="today_filter">Today</string>
+    <string name="tomorrow_filter">Tomorrow</string>
+    <string name="next_week_filter">Next 7 days</string>
+    <string name="this_month_filter">This month</string>
+    <string name="next_month_filter">Next month</string>
 </resources>

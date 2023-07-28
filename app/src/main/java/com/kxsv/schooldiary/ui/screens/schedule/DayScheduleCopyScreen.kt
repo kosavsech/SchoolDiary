@@ -64,7 +64,7 @@ import com.kizitonwose.calendar.core.nextMonth
 import com.kizitonwose.calendar.core.previousMonth
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.lesson.LessonWithSubject
-import com.kxsv.schooldiary.ui.main.topbar.CopyScheduleForDayTopAppBar
+import com.kxsv.schooldiary.ui.main.app_bars.topbar.CopyScheduleForDayTopAppBar
 import com.kxsv.schooldiary.util.ui.displayText
 import com.kxsv.schooldiary.util.ui.rememberFirstCompletelyVisibleMonth
 import com.vanpra.composematerialdialogs.MaterialDialog

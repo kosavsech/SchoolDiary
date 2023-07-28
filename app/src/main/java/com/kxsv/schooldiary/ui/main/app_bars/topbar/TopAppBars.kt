@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.ui.main.topbar
+package com.kxsv.schooldiary.ui.main.app_bars.topbar
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,12 +23,15 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.kxsv.schooldiary.R
+import com.kxsv.schooldiary.util.ui.TasksDoneFilterType
 
 @Composable
 fun AddEditPatternTopAppBar(@StringRes title: Int, onBack: () -> Unit) {
@@ -160,12 +163,40 @@ fun SubjectsTopAppBar(openDrawer: () -> Unit) {
 }
 
 @Composable
-fun TasksTopAppBar(openDrawer: () -> Unit) {
+fun TasksTopAppBar(
+	openDrawer: () -> Unit,
+	onDoneFilterSet: (TasksDoneFilterType) -> Unit,
+) {
 	TopAppBar(
 		title = { Text(text = stringResource(id = R.string.agenda_title)) },
 		navigationIcon = {
 			IconButton(onClick = openDrawer) {
 				Icon(Icons.Filled.Menu, stringResource(id = R.string.open_drawer))
+			}
+		},
+		actions = {
+			var expanded by remember { mutableStateOf(false) }
+			IconButton(onClick = { expanded = true }) {
+				Icon(
+					imageVector = Icons.Default.Sort,
+					contentDescription = stringResource(R.string.grades_sort_type),
+					tint = Color.White
+				)
+				DropdownMenu(
+					expanded = expanded,
+					onDismissRequest = { expanded = false },
+				) {
+					DropdownMenuItem(
+						text = { Text(text = stringResource(R.string.all_filter)) },
+						onClick = { onDoneFilterSet(TasksDoneFilterType.ALL); expanded = false },
+					)
+					DropdownMenuItem(
+						text = { Text(text = stringResource(R.string.hide_done_tasks_filter)) },
+						onClick = {
+							onDoneFilterSet(TasksDoneFilterType.IS_NOT_DONE); expanded = false
+						},
+					)
+				}
 			}
 		},
 		modifier = Modifier.fillMaxWidth(),
@@ -245,20 +276,20 @@ private fun GradesMoreActions(
 	onSortByMarkDate: () -> Unit,
 	onSortByFetchDate: () -> Unit,
 ) {
-	val expanded = remember { mutableStateOf(false) }
-	IconButton(onClick = { expanded.value = true }) {
+	var expanded by remember { mutableStateOf(false) }
+	IconButton(onClick = { expanded = true }) {
 		Icon(
 			imageVector = Icons.Default.Sort,
 			contentDescription = stringResource(R.string.grades_sort_type),
 			tint = Color.White
 		)
 		DropdownMenu(
-			expanded = expanded.value,
-			onDismissRequest = { expanded.value = false },
+			expanded = expanded,
+			onDismissRequest = { expanded = false },
 		) {
 			DropdownMenuItem(
 				text = { Text(text = stringResource(R.string.mark_date_sort_type)) },
-				onClick = { onSortByMarkDate(); expanded.value = false },
+				onClick = { onSortByMarkDate(); expanded = false },
 				leadingIcon = {
 					Icon(
 						Icons.Default.Event,
@@ -269,7 +300,7 @@ private fun GradesMoreActions(
 			)
 			DropdownMenuItem(
 				text = { Text(text = stringResource(R.string.mark_fetch_date_sort_type)) },
-				onClick = { onSortByFetchDate(); expanded.value = false },
+				onClick = { onSortByFetchDate(); expanded = false },
 				leadingIcon = {
 					Icon(
 						Icons.Default.Cached,

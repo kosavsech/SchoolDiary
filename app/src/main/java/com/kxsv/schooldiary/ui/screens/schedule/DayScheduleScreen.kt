@@ -67,7 +67,7 @@ import com.kxsv.schooldiary.data.local.features.lesson.LessonEntity
 import com.kxsv.schooldiary.data.local.features.lesson.LessonWithSubject
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
-import com.kxsv.schooldiary.ui.main.topbar.ScheduleTopAppBar
+import com.kxsv.schooldiary.ui.main.app_bars.topbar.ScheduleTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.kxsv.schooldiary.util.ui.displayText
 import com.vanpra.composematerialdialogs.MaterialDialog

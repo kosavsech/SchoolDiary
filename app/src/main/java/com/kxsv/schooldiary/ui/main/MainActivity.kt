@@ -42,13 +42,13 @@ class MainActivity : ComponentActivity() {
 		val workManager = WorkManager.getInstance(applicationContext)
 		workManager.enqueueUniquePeriodicWork(
 			"RecentGradesSyncWorker",
-			ExistingPeriodicWorkPolicy.UPDATE,
+			ExistingPeriodicWorkPolicy.KEEP,
 			gradeSyncWorkRequest
 		)
 		
 		workManager.enqueueUniquePeriodicWork(
 			"SoonTasksSyncWorker",
-			ExistingPeriodicWorkPolicy.UPDATE,
+			ExistingPeriodicWorkPolicy.KEEP,
 			taskSyncWorkRequest
 		)
 		

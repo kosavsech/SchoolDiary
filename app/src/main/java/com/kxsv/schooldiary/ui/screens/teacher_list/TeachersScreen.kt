@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
-import com.kxsv.schooldiary.ui.main.topbar.TeachersTopAppBar
+import com.kxsv.schooldiary.ui.main.app_bars.topbar.TeachersTopAppBar
 
 
 @Composable

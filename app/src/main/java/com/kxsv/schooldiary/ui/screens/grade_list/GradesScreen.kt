@@ -32,7 +32,7 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.grade.GradeEntity
 import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
-import com.kxsv.schooldiary.ui.main.topbar.GradesTopAppBar
+import com.kxsv.schooldiary.ui.main.app_bars.topbar.GradesTopAppBar
 import com.kxsv.schooldiary.util.Mark
 import com.kxsv.schooldiary.util.Mark.Companion.getStringValueFrom
 import com.kxsv.schooldiary.util.ui.GradesSortType

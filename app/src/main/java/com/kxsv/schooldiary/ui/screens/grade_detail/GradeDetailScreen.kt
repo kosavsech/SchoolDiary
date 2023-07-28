@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
-import com.kxsv.schooldiary.ui.main.topbar.AddEditGradeTopAppBar
+import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditGradeTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter

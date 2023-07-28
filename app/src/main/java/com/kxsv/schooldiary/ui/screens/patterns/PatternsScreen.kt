@@ -47,7 +47,7 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternEntity
 import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternWithStrokes
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
-import com.kxsv.schooldiary.ui.main.topbar.PatternsTopAppBar
+import com.kxsv.schooldiary.ui.main.app_bars.topbar.PatternsTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter

@@ -44,7 +44,7 @@ import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceEn
 import com.kxsv.schooldiary.data.local.features.grade.GradeEntity
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
-import com.kxsv.schooldiary.ui.main.topbar.SubjectDetailTopAppBar
+import com.kxsv.schooldiary.ui.main.app_bars.topbar.SubjectDetailTopAppBar
 import com.kxsv.schooldiary.util.Mark
 import com.kxsv.schooldiary.util.Mark.Companion.getStringValueFrom
 import com.kxsv.schooldiary.util.Utils

@@ -13,10 +13,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Divider
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -33,12 +31,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.task.TaskEntity
 import com.kxsv.schooldiary.data.local.features.task.TaskWithSubject
-import com.kxsv.schooldiary.ui.main.topbar.TasksTopAppBar
+import com.kxsv.schooldiary.ui.main.app_bars.bottombar.TasksBottomAppBar
+import com.kxsv.schooldiary.ui.main.app_bars.topbar.TasksTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -53,17 +53,24 @@ fun TasksScreen(
 	viewModel: TasksViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
+	val uiState = viewModel.uiState.collectAsState().value
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-		topBar = { TasksTopAppBar(openDrawer = openDrawer) },
+		topBar = {
+			TasksTopAppBar(
+				openDrawer = openDrawer,
+				onDoneFilterSet = { viewModel.changeDoneFilter(it) }
+			)
+		},
+		bottomBar = {
+			TasksBottomAppBar(
+				selectedDataFilterText = stringResource(id = uiState.dateFilterType.getLocalisedStringId()),
+				onAddTask = onAddTask,
+				onDateFilterChoose = { viewModel.changeDataFilter(it) }
+			)
+		},
 		modifier = modifier.fillMaxSize(),
-		floatingActionButton = {
-			FloatingActionButton(onClick = onAddTask) {
-				Icon(Icons.Default.Add, stringResource(R.string.add_task))
-			}
-		}
 	) { paddingValues ->
-		val uiState = viewModel.uiState.collectAsState().value
 		
 		TasksContent(
 			isLoading = uiState.isLoading,
@@ -171,9 +178,14 @@ private fun TaskItem(
 				horizontal = dimensionResource(R.dimen.horizontal_margin)
 			)
 	) {
+		val textStyle = if (taskWithSubject.taskEntity.isDone) {
+			MaterialTheme.typography.titleMedium.copy(textDecoration = TextDecoration.LineThrough)
+		} else {
+			MaterialTheme.typography.titleMedium
+		}
 		Text(
 			text = taskWithSubject.taskEntity.title,
-			style = MaterialTheme.typography.titleMedium,
+			style = textStyle,
 		)
 		Spacer(modifier = Modifier.padding(vertical = 4.dp))
 		Row(

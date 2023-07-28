@@ -38,7 +38,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceWithSubject
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
-import com.kxsv.schooldiary.ui.main.topbar.EduPerformanceTopAppBar
+import com.kxsv.schooldiary.ui.main.app_bars.topbar.EduPerformanceTopAppBar
 import com.kxsv.schooldiary.util.Mark
 import com.kxsv.schooldiary.util.Mark.Companion.getStringValueFrom
 import com.kxsv.schooldiary.util.Utils
