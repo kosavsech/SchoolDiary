@@ -18,12 +18,11 @@ import com.kxsv.schooldiary.data.repository.StudyDayRepository
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.data.repository.TimePatternRepository
 import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
-import com.kxsv.schooldiary.di.IoDispatcher
+import com.kxsv.schooldiary.di.util.IoDispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_EDIT_RESULT_OK
-import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
-import com.kxsv.schooldiary.ui.main.navigation.SELECTED_CUSTOM_PATTERN_OK
+import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.util.ListExtensionFunctions.copyExclusively
 import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
 import com.kxsv.schooldiary.util.Utils.rangeToList
@@ -42,10 +41,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import java.io.IOException
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 
-private const val TAG = "DayScheduleViewModel"
+private const val TAG = "ScheduleViewModel"
 
 data class DayScheduleUiState(
 	val studyDay: StudyDayEntity? = null,
@@ -58,11 +58,30 @@ data class DayScheduleUiState(
 	val refRange: ClosedRange<LocalDate>? = null,
 	val destRange: ClosedRange<LocalDate>? = null,
 	val userMessage: Int? = null,
+	val userMessageStringArgs: Array<out Any>? = null,
 	val isLoading: Boolean = false,
-)
+) {
+	override fun equals(other: Any?): Boolean {
+		if (this === other) return true
+		if (javaClass != other?.javaClass) return false
+		
+		other as DayScheduleUiState
+		
+		if (userMessageStringArgs != null) {
+			if (other.userMessageStringArgs == null) return false
+			if (!userMessageStringArgs.contentEquals(other.userMessageStringArgs)) return false
+		} else if (other.userMessageStringArgs != null) return false
+		
+		return true
+	}
+	
+	override fun hashCode(): Int {
+		return userMessageStringArgs?.contentHashCode() ?: 0
+	}
+}
 
 @HiltViewModel
-class DayScheduleViewModel @Inject constructor(
+class ScheduleViewModel @Inject constructor(
 	private val lessonRepository: LessonRepository,
 	private val subjectRepository: SubjectRepository,
 	private val strokeRepository: PatternStrokeRepository,
@@ -73,21 +92,21 @@ class DayScheduleViewModel @Inject constructor(
 	savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 	
-	private val dateStamp: Long? = savedStateHandle[AppDestinationsArgs.DATESTAMP_ARG]
+	private val navArgs: ScheduleGraphNavArgs = savedStateHandle.navArgs()
+	private val dateStamp: Long? = navArgs.datestamp
 	
 	private val _uiState = MutableStateFlow(DayScheduleUiState())
 	val uiState: StateFlow<DayScheduleUiState> = _uiState.asStateFlow()
 	
-	private var scheduleFetchJob: Job? = null
 	private var scheduleRetrieveJob: Job? = null
 	
 	init {
-		onDayChangeUpdate(timestampToLocalDate(dateStamp) ?: LocalDate.now())
+		onDayChangeUpdate(date = timestampToLocalDate(dateStamp) ?: LocalDate.now())
 	}
 	
 	fun snackbarMessageShown() {
 		_uiState.update {
-			it.copy(userMessage = null)
+			it.copy(userMessage = null, userMessageStringArgs = null)
 		}
 	}
 	
@@ -96,12 +115,45 @@ class DayScheduleViewModel @Inject constructor(
 			EDIT_RESULT_OK -> showSnackbarMessage(R.string.successfully_saved_schedule_message)
 			ADD_EDIT_RESULT_OK -> showSnackbarMessage(R.string.successfully_added_schedule_message)
 			DELETE_RESULT_OK -> showSnackbarMessage(R.string.successfully_deleted_schedule_message)
-			SELECTED_CUSTOM_PATTERN_OK -> showSnackbarMessage(R.string.successfully_set_custom_pattern)
 		}
+	}
+	
+	fun showCustomPatternMessage(setPatternName: String) {
+		showSnackbarMessage(R.string.successfully_set_custom_pattern)
+		setSnackbarArgs(setPatternName)
+	}
+	
+	fun showDayScheduleCopyResult(result: DayScheduleCopyResult) {
+		val text = if (!result.isTimingsCopied) {
+			R.string.successfully_copied_day_schedule_0
+		} else {
+			R.string.successfully_copied_day_schedule_1
+		}
+		showSnackbarMessage(text)
+		setSnackbarArgs(result.fromDate.format(DateTimeFormatter.ISO_LOCAL_DATE))
+	}
+	
+	fun showDateRangeScheduleCopyResult(result: DateRangeScheduleCopyResult) {
+		val text = if (!result.isTimingsCopied) {
+			R.string.successfully_copied_date_range_schedule_0
+		} else {
+			R.string.successfully_copied_date_range_schedule_1
+		}
+		showSnackbarMessage(text)
+		setSnackbarArgs(
+			result.fromRangeStart.format(DateTimeFormatter.ISO_LOCAL_DATE),
+			result.fromRangeEnd.format(DateTimeFormatter.ISO_LOCAL_DATE),
+			result.toRangeStart.format(DateTimeFormatter.ISO_LOCAL_DATE),
+			result.toRangeStart.plusDays(result.fromRangeStart.until(result.fromRangeEnd).days.toLong()),
+		)
 	}
 	
 	private fun showSnackbarMessage(message: Int) {
 		_uiState.update { it.copy(userMessage = message) }
+	}
+	
+	private fun setSnackbarArgs(vararg args: Any) {
+		_uiState.update { it.copy(userMessageStringArgs = args) }
 	}
 	
 	fun deleteClass(lesson: LessonWithSubject) {
@@ -186,10 +238,7 @@ class DayScheduleViewModel @Inject constructor(
 		viewModelScope.launch(ioDispatcher) {
 			if (isScheduleRemoteOnDate(fromDate)) {
 				Log.d(TAG, "copySchedule() isScheduleRemoteOnDate = true (fromDate = $fromDate)")
-				copyRemoteScheduleToCurrentDay(
-					fromDate = fromDate,
-					shouldCopyPattern = shouldCopyPattern
-				)
+				copyCachedRemoteScheduleToCurrentDay(shouldCopyPattern = shouldCopyPattern)
 			} else {
 				Log.d(TAG, "copySchedule() isScheduleRemoteOnDate = false (fromDate = $fromDate)")
 				copyLocalScheduleFromDate(
@@ -201,25 +250,46 @@ class DayScheduleViewModel @Inject constructor(
 		}
 	}
 	
-	fun copyScheduleToRange(toCopyPattern: Boolean) {
-		if (uiState.value.refRange == null)
+	fun copyScheduleToRange(shouldCopyPattern: Boolean) {
+		if (uiState.value.refRange == null || uiState.value.destRange == null)
 			throw RuntimeException("copyScheduleToRange() was called but refRange is null.")
 		_uiState.update { it.copy(isLoading = true) }
 		
 		val copyFromDays = uiState.value.refRange!!.rangeToList()
-		val copyToDays = uiState.value.destRange!!.rangeToList(copyFromDays.size.toLong())
+		// limiter to stop copying, if copyFromDays is ended
+		val copyToDays = uiState.value.destRange!!.rangeToList(limiter = copyFromDays.size.toLong())
 		
-		for ((index, dateCopyTo) in copyToDays.withIndex()) {
+		for ((index, toDate) in copyToDays.withIndex()) {
 			viewModelScope.launch(ioDispatcher) {
+				val fromDate = copyFromDays[index]
 				Log.d(
-					TAG,
-					"copyScheduleToRange() called with: dateCopyFrom = ${copyFromDays[index]}, dateCopyTo = $dateCopyTo"
+					TAG, "copyScheduleToRange() called with:" +
+							" dateCopyFrom = ${copyFromDays[index]}, toDate = $toDate"
 				)
-				copyLocalScheduleFromDate(
-					fromDate = copyFromDays[index],
-					toDate = dateCopyTo,
-					shouldCopyPattern = toCopyPattern
-				)
+				viewModelScope.launch(ioDispatcher) {
+					if (isScheduleRemoteOnDate(fromDate)) {
+						Log.d(
+							TAG,
+							"copyScheduleToRange() isScheduleRemoteOnDate = true (fromDate = $fromDate)"
+						)
+						copyRemoteSchedule(
+							fromDate = fromDate,
+							toDate = toDate,
+							shouldCopyPattern = shouldCopyPattern
+						)
+					} else {
+						Log.d(
+							TAG,
+							"copyScheduleToRange() isScheduleRemoteOnDate = false (fromDate = $fromDate)"
+						)
+						copyLocalScheduleFromDate(
+							fromDate = fromDate,
+							toDate = toDate,
+							shouldCopyPattern = shouldCopyPattern
+						)
+					}
+				}
+				
 			}
 		}
 		_uiState.update { it.copy(refRange = null, destRange = null) }
@@ -274,14 +344,14 @@ class DayScheduleViewModel @Inject constructor(
 	}
 	
 	/**
-	 * Copies remote lesson from [specific day][fromDate] to [another day][toDate].
+	 * Copies lessons from [specific day][fromDate] to [another day][toDate].
 	 * Does DB call, so should be time effective.
 	 *
-	 * @param fromDate
-	 * @param toDate
+	 * @param fromDate any date
+	 * @param toDate any date
 	 * @param shouldCopyPattern determines whether the method will copy applied pattern id from
 	 * reference study day
-	 * @see copyRemoteScheduleToCurrentDay
+	 * @see copyCachedRemoteScheduleToCurrentDay
 	 * @see copyRemoteSchedule
 	 */
 	private suspend fun copyLocalScheduleFromDate(
@@ -333,14 +403,15 @@ class DayScheduleViewModel @Inject constructor(
 	}
 	
 	/**
-	 * Copies remote lesson from [specific day][fromDate] to [another day][toDate].
-	 * Does 1 network call, so costly in time.
+	 * Copies remote lessons from [given day][fromDate] to [destination day][toDate].
+	 * Does one network call to obtain remote lessons on [given day][fromDate]
+	 * from [edu.tatar.ru](https://edu.tatar.ru/), so it takes some time(~1 sec).
 	 *
-	 * @param fromDate
-	 * @param toDate
+	 * @param fromDate any date
+	 * @param toDate any date
 	 * @param shouldCopyPattern determines whether the method will copy applied pattern id from
 	 * reference study day
-	 * @see copyRemoteScheduleToCurrentDay
+	 * @see copyCachedRemoteScheduleToCurrentDay
 	 */
 	private suspend fun copyRemoteSchedule(
 		fromDate: LocalDate, toDate: LocalDate, shouldCopyPattern: Boolean,
@@ -393,19 +464,18 @@ class DayScheduleViewModel @Inject constructor(
 	}
 	
 	/**
-	 * Copies remote lesson from [specific day][fromDate] to [current day][com.kxsv.schooldiary.ui.screens.schedule.DayScheduleUiState.selectedDate].
+	 * Copies remote lessons from [selected reference day][com.kxsv.schooldiary.ui.screens.schedule.DayScheduleUiState.selectedRefCalendarDay] which are cached in [classes][com.kxsv.schooldiary.ui.screens.schedule.DayScheduleUiState.classes]
+	 * because of lessons preview in [DayScheduleCopyScreen] to [current day][com.kxsv.schooldiary.ui.screens.schedule.DayScheduleUiState.selectedDate].
 	 * Does not make network calls, so time efficient.
 	 *
-	 * @param fromDate
 	 * @param shouldCopyPattern determines whether the method will copy applied pattern id from
 	 * reference study day
 	 * @see copyRemoteSchedule
 	 */
-	private suspend fun copyRemoteScheduleToCurrentDay(
-		fromDate: LocalDate, shouldCopyPattern: Boolean,
-	) {
+	private suspend fun copyCachedRemoteScheduleToCurrentDay(shouldCopyPattern: Boolean) {
 		try {
-			val refStudyDay = studyDayRepository.getByDate(fromDate)
+			val refStudyDay =
+				studyDayRepository.getByDate(uiState.value.selectedRefCalendarDay!!.date)
 			val toStudyDay = studyDayRepository.getByDate(uiState.value.selectedDate)
 			
 			val cloneDayId = if (toStudyDay != null) {
@@ -591,8 +661,7 @@ class DayScheduleViewModel @Inject constructor(
 				} catch (e: Exception) {
 					Log.e(
 						TAG,
-						"scheduleChoose(remote): couldn't complete operation successfully",
-						e
+						"scheduleChoose(remote): couldn't complete operation successfully", e
 					)
 				}
 			}
@@ -601,8 +670,8 @@ class DayScheduleViewModel @Inject constructor(
 	
 	fun fetchSchedule() {
 		_uiState.update { it.copy(isLoading = true) }
-		scheduleFetchJob?.cancel()
-		scheduleFetchJob = viewModelScope.launch(ioDispatcher) {
+		scheduleRetrieveJob?.cancel()
+		scheduleRetrieveJob = viewModelScope.launch(ioDispatcher) {
 			try {
 				if (isScheduleRemote()) {
 					localiseNetSchedule()
