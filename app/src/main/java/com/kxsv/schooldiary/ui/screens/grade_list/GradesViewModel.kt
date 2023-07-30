@@ -7,8 +7,8 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
 import com.kxsv.schooldiary.data.repository.EduPerformanceRepository
 import com.kxsv.schooldiary.data.repository.GradeRepository
-import com.kxsv.schooldiary.di.IoDispatcher
-import com.kxsv.schooldiary.ui.main.navigation.ADD_EDIT_RESULT_OK
+import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
@@ -74,7 +74,7 @@ class GradesViewModel @Inject constructor(
 	fun showEditResultMessage(result: Int) {
 		when (result) {
 			EDIT_RESULT_OK -> showSnackbarMessage(R.string.successfully_saved_grade_message)
-			ADD_EDIT_RESULT_OK -> showSnackbarMessage(R.string.successfully_added_grade_message)
+			ADD_RESULT_OK -> showSnackbarMessage(R.string.successfully_added_grade_message)
 			DELETE_RESULT_OK -> showSnackbarMessage(R.string.successfully_deleted_grade_message)
 		}
 	}

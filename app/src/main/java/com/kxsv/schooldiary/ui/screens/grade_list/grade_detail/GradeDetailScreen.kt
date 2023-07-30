@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.ui.screens.grade_detail
+package com.kxsv.schooldiary.ui.screens.grade_list.grade_detail
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,7 +21,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
@@ -33,22 +32,30 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditGradeTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
+data class GradeDetailScreenNavArgs(
+	val gradeId: String,
+)
+
+@Destination(
+	navArgsDelegate = GradeDetailScreenNavArgs::class
+)
 @Composable
 fun GradeDetailScreen(
-	onBack: () -> Unit,
-	modifier: Modifier = Modifier,
+	navigator: DestinationsNavigator,
 	viewModel: GradeDetailViewModel = hiltViewModel(),
-	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+	snackbarHostState: SnackbarHostState,
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
 	
 	Scaffold(
-		modifier = modifier.fillMaxSize(),
+		modifier = Modifier.fillMaxSize(),
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-		topBar = { AddEditGradeTopAppBar(onBack) },
+		topBar = { AddEditGradeTopAppBar { navigator.popBackStack() } },
 	) { paddingValues ->
 		
 		AddEditSubjectContent(

@@ -9,7 +9,7 @@ interface TimePatternRepository {
 	
 	fun getPatternsStream(): Flow<List<TimePatternEntity>>
 	
-	fun getPatternsWithStrokesStream(): Flow<List<TimePatternWithStrokes>>
+	fun observePatternsWithStrokes(): Flow<List<TimePatternWithStrokes>>
 	
 	fun getPatternWithStrokesStream(patternId: Long): Flow<TimePatternWithStrokes?>
 	

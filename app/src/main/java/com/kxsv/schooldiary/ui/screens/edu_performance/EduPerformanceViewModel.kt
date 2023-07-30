@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceWithSubject
 import com.kxsv.schooldiary.data.repository.EduPerformanceRepository
-import com.kxsv.schooldiary.di.IoDispatcher
+import com.kxsv.schooldiary.di.util.IoDispatcher
 import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
 import com.kxsv.schooldiary.util.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -51,13 +51,14 @@ class EduPerformanceViewModel @Inject constructor(
 	init {
 //		refresh()
 	}
+	// todo add showeditresult message
 	
 	fun snackbarMessageShown() {
 		_uiState.update { it.copy(userMessage = null) }
 	}
 	
 	fun refresh() {
-		viewModelScope.launch {
+		viewModelScope.launch(ioDispatcher) {
 			eduPerformanceRepository.fetchEduPerformance()
 		}
 	}

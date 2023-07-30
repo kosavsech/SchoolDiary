@@ -1,11 +1,11 @@
-package com.kxsv.schooldiary.ui.screens.grade_detail
+package com.kxsv.schooldiary.ui.screens.grade_list.grade_detail
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.repository.GradeRepository
-import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs
+import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.util.Mark.Companion.getStringValueFrom
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,7 +31,8 @@ class GradeDetailViewModel @Inject constructor(
 	savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 	
-	private val gradeId: String = savedStateHandle[AppDestinationsArgs.GRADE_ID_ARG]!!
+	private val navArgs: GradeDetailScreenNavArgs = savedStateHandle.navArgs()
+	private val gradeId: String = navArgs.gradeId
 	
 	private val _uiState = MutableStateFlow(GradeDetailUiState())
 	val uiState: StateFlow<GradeDetailUiState> = _uiState.asStateFlow()

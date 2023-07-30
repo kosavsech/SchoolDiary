@@ -1,5 +1,6 @@
 package com.kxsv.schooldiary.ui.screens.schedule
 
+import android.os.Parcelable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -65,26 +66,39 @@ import com.kizitonwose.calendar.core.previousMonth
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.lesson.LessonWithSubject
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.CopyScheduleForDayTopAppBar
+import com.kxsv.schooldiary.ui.main.navigation.ScheduleNavGraph
 import com.kxsv.schooldiary.util.ui.displayText
 import com.kxsv.schooldiary.util.ui.rememberFirstCompletelyVisibleMonth
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.ramcosta.composedestinations.result.ResultBackNavigator
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.MaterialDialogState
 import com.vanpra.composematerialdialogs.message
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 import com.vanpra.composematerialdialogs.title
 import kotlinx.coroutines.launch
+import kotlinx.parcelize.Parcelize
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+@Parcelize
+data class DayScheduleCopyResult(
+	val isTimingsCopied: Boolean,
+	val fromDate: LocalDate,
+) : Parcelable
+
+@ScheduleNavGraph
+@Destination
 @Composable
 fun DayScheduleCopyScreen(
-	onBack: () -> Unit,
-	modifier: Modifier = Modifier,
-	viewModel: DayScheduleViewModel,
-	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+	resultNavigator: ResultBackNavigator<DayScheduleCopyResult>,
+	navigator: DestinationsNavigator,
+	viewModel: ScheduleViewModel,
+	snackbarHostState: SnackbarHostState,
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
 	val dialogState = rememberMaterialDialogState()
@@ -92,7 +106,7 @@ fun DayScheduleCopyScreen(
 	Scaffold(
 		topBar = {
 			CopyScheduleForDayTopAppBar(
-				onBack = onBack,
+				onBack = { navigator.popBackStack() },
 				date = uiState.selectedDate.format(
 					DateTimeFormatter.ISO_LOCAL_DATE.withLocale(Locale.getDefault())
 				)
@@ -105,16 +119,15 @@ fun DayScheduleCopyScreen(
 					uiState.selectedRefCalendarDay != null && uiState.classes.isNotEmpty()
 				}
 			if (showButton) {
-				FloatingActionButton(
-					onClick = {
-						dialogState.show()
-					}
-				) {
-					Icon(Icons.Default.ContentCopy, "Copy lesson from selected calendar day")
+				FloatingActionButton(onClick = { dialogState.show() }) {
+					Icon(
+						imageVector = Icons.Default.ContentCopy,
+						contentDescription = "Copy lesson from selected calendar day"
+					)
 				}
 			}
 		},
-		modifier = modifier.fillMaxSize(),
+		modifier = Modifier.fillMaxSize(),
 	) { paddingValues ->
 		
 		DayScheduleCopyContent(
@@ -127,8 +140,9 @@ fun DayScheduleCopyScreen(
 		
 		DayScheduleCopyDialog(
 			dialogState = dialogState,
+			fromDate = uiState.selectedRefCalendarDay?.date,
 			copyScheduleFromDay = viewModel::copySchedule,
-			onScheduleCopied = onBack
+			onScheduleCopied = { result -> resultNavigator.navigateBack(result = result) }
 		)
 		
 		uiState.userMessage?.let { userMessage ->
@@ -144,18 +158,37 @@ fun DayScheduleCopyScreen(
 @Composable
 fun DayScheduleCopyDialog(
 	dialogState: MaterialDialogState,
+	fromDate: LocalDate?,
 	copyScheduleFromDay: (Boolean) -> Unit,
-	onScheduleCopied: () -> Unit,
+	onScheduleCopied: (DayScheduleCopyResult) -> Unit,
 ) {
-	MaterialDialog(
-		dialogState = dialogState,
-		buttons = {
-			positiveButton("Yes", onClick = { copyScheduleFromDay(true); onScheduleCopied() })
-			negativeButton("No", onClick = { copyScheduleFromDay(false); onScheduleCopied() })
+	if (fromDate != null) {
+		MaterialDialog(
+			dialogState = dialogState,
+			buttons = {
+				positiveButton(
+					text = "Yes",
+					onClick = {
+						copyScheduleFromDay(true)
+						onScheduleCopied(
+							DayScheduleCopyResult(isTimingsCopied = true, fromDate = fromDate)
+						)
+					}
+				)
+				negativeButton(
+					text = "No",
+					onClick = {
+						copyScheduleFromDay(false)
+						onScheduleCopied(
+							DayScheduleCopyResult(isTimingsCopied = false, fromDate = fromDate)
+						)
+					}
+				)
+			}
+		) {
+			title(text = "Copy time pattern too?") // TODO create string resource
+			message(text = "Should we also copy bell timings from that day ?")
 		}
-	) {
-		title(text = "Copy time pattern too?") // TODO create string resource
-		message(text = "Should we also copy bell timings from that day ?")
 	}
 }
 

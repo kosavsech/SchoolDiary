@@ -7,8 +7,8 @@ import com.kxsv.schooldiary.data.local.features.subject.SubjectDao
 import com.kxsv.schooldiary.data.remote.WebService
 import com.kxsv.schooldiary.data.remote.edu_performance.EduPerformanceDto
 import com.kxsv.schooldiary.data.remote.edu_performance.EduPerformanceParser
-import com.kxsv.schooldiary.di.ApplicationScope
-import com.kxsv.schooldiary.di.IoDispatcher
+import com.kxsv.schooldiary.di.util.ApplicationScope
+import com.kxsv.schooldiary.di.util.IoDispatcher
 import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -60,6 +60,7 @@ class EduPerformanceRepositoryImpl @Inject constructor(
         return if (term != "year") EduPerformanceParser().parseTerm(rows, term)
 		else EduPerformanceParser().parseYear(rows)
 	}
+	
 	
 	override suspend fun fetchEduPerformance(): Unit = withContext(ioDispatcher) {
 		for (termIndex in 1..4) {

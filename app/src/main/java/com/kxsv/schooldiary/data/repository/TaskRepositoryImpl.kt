@@ -13,8 +13,8 @@ import com.kxsv.schooldiary.data.remote.WebService
 import com.kxsv.schooldiary.data.remote.lesson.ScheduleParser
 import com.kxsv.schooldiary.data.remote.task.TaskDto
 import com.kxsv.schooldiary.data.remote.task.TaskParser
-import com.kxsv.schooldiary.di.ApplicationScope
-import com.kxsv.schooldiary.di.IoDispatcher
+import com.kxsv.schooldiary.di.util.ApplicationScope
+import com.kxsv.schooldiary.di.util.IoDispatcher
 import com.kxsv.schooldiary.util.Utils.rangeToList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope

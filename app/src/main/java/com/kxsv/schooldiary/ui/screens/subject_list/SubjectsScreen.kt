@@ -1,6 +1,5 @@
 package com.kxsv.schooldiary.ui.screens.subject_list
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -11,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.DrawerState
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -22,9 +22,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -35,24 +32,27 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.SubjectsTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
+@Destination
 @Composable
 fun SubjectsScreen(
-	@StringRes userMessage: Int,
-	onUserMessageDisplayed: () -> Unit,
-	onAddSubject: () -> Unit,
-	onSubjectClick: (SubjectEntity) -> Unit,
-	openDrawer: () -> Unit,
-	modifier: Modifier = Modifier,
+	destinationsNavigator: DestinationsNavigator,
+	drawerState: DrawerState,
+	coroutineScope: CoroutineScope,
 	viewModel: SubjectsViewModel = hiltViewModel(),
-	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+	snackbarHostState: SnackbarHostState,
 ) {
+	val navigator = SubjectsScreenNavActions(navigator = destinationsNavigator)
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-		topBar = { SubjectsTopAppBar(openDrawer = openDrawer) },
-		modifier = modifier.fillMaxSize(),
+		topBar = { SubjectsTopAppBar(openDrawer = { coroutineScope.launch { drawerState.open() } }) },
+		modifier = Modifier.fillMaxSize(),
 		floatingActionButton = {
-			FloatingActionButton(onClick = onAddSubject) {
+			FloatingActionButton(onClick = { navigator.onAddSubject() }) {
 				Icon(Icons.Default.Add, stringResource(R.string.add_subject))
 			}
 		}
@@ -63,7 +63,7 @@ fun SubjectsScreen(
 			loading = uiState.isLoading,
 			subjects = uiState.subjects,
 			//noSubjectsLabel = 0,
-			onSubjectClick = onSubjectClick,
+			onSubjectClick = { subjectId -> navigator.onSubjectClick(subjectId) },
 			modifier = Modifier.padding(paddingValues),
 		)
 		
@@ -77,13 +77,13 @@ fun SubjectsScreen(
 		}
 		
 		// Check if there's a userMessage to show to the user
-		val currentOnUserMessageDisplayed by rememberUpdatedState(onUserMessageDisplayed)
+		/*val currentOnUserMessageDisplayed by rememberUpdatedState(onUserMessageDisplayed)
 		LaunchedEffect(userMessage) {
 			if (userMessage != 0) {
 				viewModel.showEditResultMessage(userMessage)
 				currentOnUserMessageDisplayed()
 			}
-		}
+		}*/
 	}
 }
 
@@ -94,7 +94,7 @@ private fun SubjectsContent(
 	// TODO
 	//  @StringRes noSubjectsLabel: Int,
 	//  onRefresh: () -> Unit,
-	onSubjectClick: (SubjectEntity) -> Unit,
+	onSubjectClick: (Long) -> Unit,
 	modifier: Modifier,
 ) {
 	LoadingContent(
@@ -121,13 +121,13 @@ private fun SubjectsContent(
 @Composable
 private fun SubjectItem(
 	subject: SubjectEntity,
-	onSubjectClick: (SubjectEntity) -> Unit,
+	onSubjectClick: (Long) -> Unit,
 ) {
 	Row(
 		verticalAlignment = Alignment.CenterVertically,
 		modifier = Modifier
 			.fillMaxWidth()
-			.clickable { onSubjectClick(subject) }
+			.clickable { onSubjectClick(subject.subjectId) }
 			.padding(
 				horizontal = dimensionResource(R.dimen.horizontal_margin),
 				vertical = dimensionResource(R.dimen.vertical_margin)

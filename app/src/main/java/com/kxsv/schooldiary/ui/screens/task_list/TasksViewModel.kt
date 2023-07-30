@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.task.TaskWithSubject
 import com.kxsv.schooldiary.data.repository.TaskRepository
-import com.kxsv.schooldiary.ui.main.navigation.ADD_EDIT_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.util.ui.Async
@@ -152,7 +152,7 @@ class TasksViewModel @Inject constructor(
 	fun showEditResultMessage(result: Int) {
 		when (result) {
 			EDIT_RESULT_OK -> showSnackbarMessage(R.string.successfully_saved_subject_message)
-			ADD_EDIT_RESULT_OK -> showSnackbarMessage(R.string.successfully_added_subject_message)
+			ADD_RESULT_OK -> showSnackbarMessage(R.string.successfully_added_subject_message)
 			DELETE_RESULT_OK -> showSnackbarMessage(R.string.successfully_deleted_subject_message)
 		}
 	}

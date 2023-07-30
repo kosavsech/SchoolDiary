@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.ui.screens.subject_detail.add_edit
+package com.kxsv.schooldiary.ui.screens.subject_list.subject_detail.add_edit
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -8,7 +8,9 @@ import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.data.repository.TeacherRepository
-import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs
+import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
+import com.kxsv.schooldiary.ui.screens.navArgs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,8 +28,6 @@ data class AddEditSubjectUiState(
 	val availableTeachers: List<TeacherEntity> = emptyList(),
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
-	val isSubjectSaved: Boolean = false,
-	val isSubjectDeleted: Boolean = false,
 )
 
 @HiltViewModel
@@ -37,27 +37,30 @@ class AddEditSubjectViewModel @Inject constructor(
 	savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 	
-	private val subjectId: Long = savedStateHandle[AppDestinationsArgs.SUBJECT_ID_ARG]!!
+	val navArgs: AddEditSubjectScreenNavArgs = savedStateHandle.navArgs()
+	val subjectId = navArgs.subjectId
 	
 	private val _uiState = MutableStateFlow(AddEditSubjectUiState())
 	val uiState: StateFlow<AddEditSubjectUiState> = _uiState.asStateFlow()
 	
 	init {
-		if (subjectId != 0L) loadSubject(subjectId)
+		if (subjectId != null) loadSubject(subjectId)
 	}
 	
-	fun saveSubject() {
+	fun saveSubject(): Int? {
 		if (uiState.value.fullName.isEmpty()) {
 			_uiState.update {
 				it.copy(userMessage = R.string.empty_subject_message)
 			}
-			return
+			return null
 		}
 		
-		if (subjectId == 0L) {
+		return if (subjectId == null) {
 			createNewSubject()
+			ADD_RESULT_OK
 		} else {
 			updateSubject()
+			EDIT_RESULT_OK
 		}
 	}
 	
@@ -133,14 +136,10 @@ class AddEditSubjectViewModel @Inject constructor(
 			SubjectEntity(uiState.value.fullName, uiState.value.displayName, uiState.value.cabinet),
 			uiState.value.selectedTeachers
 		)
-		
-		_uiState.update {
-			it.copy(isSubjectSaved = true)
-		}
 	}
 	
 	private fun updateSubject() {
-		if (subjectId == 0L) throw RuntimeException("updateSubject() was called but subject is new.")
+		if (subjectId == null) throw RuntimeException("updateSubject() was called but subject is new.")
 		
 		viewModelScope.launch {
 			subjectRepository.updateSubject(
@@ -152,9 +151,6 @@ class AddEditSubjectViewModel @Inject constructor(
 				),
 				teachers = uiState.value.selectedTeachers
 			)
-			_uiState.update {
-				it.copy(isSubjectSaved = true)
-			}
 		}
 	}
 	

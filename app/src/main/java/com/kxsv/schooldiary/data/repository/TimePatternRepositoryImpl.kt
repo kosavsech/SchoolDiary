@@ -20,7 +20,7 @@ class TimePatternRepositoryImpl @Inject constructor(
 		return patternDataSource.observeAll()
 	}
 	
-	override fun getPatternsWithStrokesStream(): Flow<List<TimePatternWithStrokes>> {
+	override fun observePatternsWithStrokes(): Flow<List<TimePatternWithStrokes>> {
 		return patternDataSource.observeAllWithStrokes()
 	}
 	

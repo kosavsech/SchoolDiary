@@ -1,5 +1,6 @@
 package com.kxsv.schooldiary.ui.screens.schedule
 
+import android.os.Parcelable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -55,17 +56,22 @@ import com.kizitonwose.calendar.core.daysOfWeek
 import com.kizitonwose.calendar.core.nextMonth
 import com.kizitonwose.calendar.core.previousMonth
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.CopyScheduleForDayTopAppBar
+import com.kxsv.schooldiary.ui.main.navigation.ScheduleNavGraph
 import com.kxsv.schooldiary.util.ui.ContinuousSelectionHelper.getSelection
 import com.kxsv.schooldiary.util.ui.DateSelection
 import com.kxsv.schooldiary.util.ui.backgroundHighlight
 import com.kxsv.schooldiary.util.ui.displayText
 import com.kxsv.schooldiary.util.ui.rememberFirstCompletelyVisibleMonth
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.ramcosta.composedestinations.result.ResultBackNavigator
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.MaterialDialogState
 import com.vanpra.composematerialdialogs.message
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 import com.vanpra.composematerialdialogs.title
 import kotlinx.coroutines.launch
+import kotlinx.parcelize.Parcelize
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -74,12 +80,24 @@ import java.util.Locale
 
 private const val TAG = "DateRangeScheduleCopy"
 
+@Parcelize
+data class DateRangeScheduleCopyResult(
+	val isTimingsCopied: Boolean = false,
+	val fromRangeStart: LocalDate,
+	val fromRangeEnd: LocalDate,
+	val toRangeStart: LocalDate,
+	val toRangeEnd: LocalDate,
+) : Parcelable
+
+
+@ScheduleNavGraph()
+@Destination
 @Composable
 fun DateRangeScheduleCopyScreen(
-	onBack: () -> Unit,
-	modifier: Modifier = Modifier,
-	viewModel: DayScheduleViewModel,
-	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+	resultNavigator: ResultBackNavigator<DateRangeScheduleCopyResult>,
+	navigator: DestinationsNavigator,
+	viewModel: ScheduleViewModel,
+	snackbarHostState: SnackbarHostState,
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
 	val dialogState = rememberMaterialDialogState()
@@ -87,14 +105,14 @@ fun DateRangeScheduleCopyScreen(
 	Scaffold(
 		topBar = {
 			CopyScheduleForDayTopAppBar(
-				onBack = onBack,
+				onBack = { navigator.popBackStack() },
 				date = uiState.selectedDate.format(
 					DateTimeFormatter.ISO_LOCAL_DATE.withLocale(Locale.getDefault())
 				)
 			)
 		},
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-		modifier = modifier.fillMaxSize(),
+		modifier = Modifier.fillMaxSize(),
 	) { paddingValues ->
 		
 		DateRangeScheduleCopyContent(
@@ -113,8 +131,10 @@ fun DateRangeScheduleCopyScreen(
 		
 		DateRangeScheduleCopyDialog(
 			dialogState = dialogState,
-			copyScheduleToRange = viewModel::copyScheduleToRange,
-			onScheduleCopied = onBack
+			refRange = uiState.refRange,
+			destRange = uiState.destRange,
+			copyScheduleToRange = { viewModel.copyScheduleToRange(it) },
+			onScheduleCopied = { result -> resultNavigator.navigateBack(result = result) }
 		)
 		
 		uiState.userMessage?.let { userMessage ->
@@ -130,18 +150,40 @@ fun DateRangeScheduleCopyScreen(
 @Composable
 fun DateRangeScheduleCopyDialog(
 	dialogState: MaterialDialogState,
+	refRange: ClosedRange<LocalDate>?,
+	destRange: ClosedRange<LocalDate>?,
 	copyScheduleToRange: (Boolean) -> Unit,
-	onScheduleCopied: () -> Unit,
+	onScheduleCopied: (DateRangeScheduleCopyResult) -> Unit,
 ) {
-	MaterialDialog(
-		dialogState = dialogState,
-		buttons = {
-			positiveButton("Yes", onClick = { copyScheduleToRange(true); onScheduleCopied() })
-			negativeButton("No", onClick = { copyScheduleToRange(false); onScheduleCopied() })
+	if (refRange != null && destRange != null) {
+		val result = DateRangeScheduleCopyResult(
+			fromRangeStart = refRange.start,
+			fromRangeEnd = refRange.endInclusive,
+			toRangeStart = destRange.start,
+			toRangeEnd = destRange.endInclusive
+		)
+		MaterialDialog(
+			dialogState = dialogState,
+			buttons = {
+				positiveButton(
+					text = "Yes",
+					onClick = {
+						copyScheduleToRange(true)
+						onScheduleCopied(result.copy(isTimingsCopied = true))
+					}
+				)
+				negativeButton(
+					text = "No",
+					onClick = {
+						copyScheduleToRange(false)
+						onScheduleCopied(result.copy(isTimingsCopied = false))
+					}
+				)
+			}
+		) {
+			title(text = "Copy time pattern too?") // TODO create string resource
+			message(text = "Should we also copy bell timings from that dates ?")
 		}
-	) {
-		title(text = "Copy time pattern too?") // TODO create string resource
-		message(text = "Should we also copy bell timings from that dates ?")
 	}
 }
 

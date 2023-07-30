@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.ui.screens.task_detail.add_edit
+package com.kxsv.schooldiary.ui.screens.task_list.task_detail.add_edit
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -29,7 +29,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,6 +45,9 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditTaskTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.ramcosta.composedestinations.result.ResultBackNavigator
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.datetime.date.datepicker
 import com.vanpra.composematerialdialogs.listItems
@@ -56,29 +58,40 @@ import java.time.format.DateTimeFormatter
 
 private const val TAG = "AddEditTaskScreen"
 
+data class AddEditTaskScreenNavArgs(
+	val taskId: Long?,
+)
+
+@Destination(
+	navArgsDelegate = AddEditTaskScreenNavArgs::class
+)
 @Composable
 fun AddEditTaskScreen(
-	onTaskSave: () -> Unit,
-	onBack: () -> Unit,
-	modifier: Modifier = Modifier,
+	navigator: DestinationsNavigator,
+	resultNavigator: ResultBackNavigator<Int>,
 	viewModel: AddEditTaskViewModel = hiltViewModel(),
-	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+	snackbarHostState: SnackbarHostState,
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
 	
 	Scaffold(
-		modifier = modifier.fillMaxSize(),
+		modifier = Modifier.fillMaxSize(),
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		topBar = {
 			AddEditTaskTopAppBar(
-				onBack = onBack,
+				onBack = { navigator.popBackStack() },
 				fetchNet = { viewModel.fetchNet() },
 				fetchEnabled = (uiState.subject != null)
 			)
 		},
 		floatingActionButton = {
 			Row {
-				FloatingActionButton(onClick = { viewModel.saveTask() }) {
+				FloatingActionButton(
+					onClick = {
+						val result = viewModel.saveTask()
+						if (result != null) resultNavigator.navigateBack(result)
+					}
+				) {
 					Icon(Icons.Filled.Done, stringResource(R.string.save_task))
 				}
 			}
@@ -99,18 +112,11 @@ fun AddEditTaskScreen(
 			modifier = Modifier.padding(paddingValues)
 		)
 		
-		// Check if the pattern is saved and call onPatternUpdate event
-		LaunchedEffect(uiState.isTaskSaved) {
-			if (uiState.isTaskSaved) {
-				onTaskSave()
-			}
-		}
-		
 		val taskVariantsListDialogState = rememberMaterialDialogState(false)
 		
 		LaunchedEffect(uiState.fetchedVariants) {
 			if (uiState.fetchedVariants != null) {
-				// todo add ability to configure task fetch override behavior
+				// todo add ability to configure task fetching override behavior
 				if (uiState.fetchedVariants.size == 1) {
 					viewModel.changeTitle(uiState.fetchedVariants.first().title)
 					viewModel.onFetchedTitleChoose()

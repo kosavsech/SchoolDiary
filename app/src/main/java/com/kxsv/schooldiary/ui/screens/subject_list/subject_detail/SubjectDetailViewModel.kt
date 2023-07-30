@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.ui.screens.subject_detail
+package com.kxsv.schooldiary.ui.screens.subject_list.subject_detail
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -11,11 +11,11 @@ import com.kxsv.schooldiary.data.repository.EduPerformanceRepository
 import com.kxsv.schooldiary.data.repository.GradeRepository
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
-import com.kxsv.schooldiary.di.IoDispatcher
-import com.kxsv.schooldiary.ui.main.navigation.ADD_EDIT_RESULT_OK
-import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs
+import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
+import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.util.ui.Async
 import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
 import com.kxsv.schooldiary.util.ui.WhileUiSubscribed
@@ -42,7 +42,6 @@ data class SubjectDetailUiState(
 	val targetMark: Double = 0.0,
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
-	val isSubjectDeleted: Boolean = false,
 )
 
 private data class AsyncData(
@@ -61,7 +60,8 @@ class SubjectDetailViewModel @Inject constructor(
 	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
-	val subjectId: Long = savedStateHandle[AppDestinationsArgs.SUBJECT_ID_ARG]!!
+	val navArgs: SubjectDetailScreenNavArgs = savedStateHandle.navArgs()
+	val subjectId = navArgs.subjectId
 	
 	private val _period = MutableStateFlow(EduPerformancePeriod.FOURTH_TERM)
 	
@@ -85,7 +85,7 @@ class SubjectDetailViewModel @Inject constructor(
 			eduPerformanceRepository.observeEduPerformanceBySubject(subjectId, period)
 		}
 	
-	private val asyncData = combine(
+	private val _asyncData = combine(
 		_subjectWithTeachersAsync, _gradesAsync, _eduPerformanceAsync
 	) { subjectWithTeachers, grades, eduPerformance ->
 		AsyncData(subjectWithTeachers, grades, eduPerformance)
@@ -96,7 +96,7 @@ class SubjectDetailViewModel @Inject constructor(
 	
 	private val _uiState = MutableStateFlow(SubjectDetailUiState())
 	val uiState: StateFlow<SubjectDetailUiState> = combine(
-		_uiState, asyncData, _period, _targetMark
+		_uiState, _asyncData, _period, _targetMark
 	) { state, asyncData, period, targetMark ->
 		when (asyncData) {
 			Async.Loading -> state.copy(isLoading = true)
@@ -114,9 +114,6 @@ class SubjectDetailViewModel @Inject constructor(
 	
 	fun deleteSubject() = viewModelScope.launch(ioDispatcher) {
 		subjectRepository.deleteSubject(subjectId)
-		_uiState.update {
-			it.copy(isSubjectDeleted = true)
-		}
 	}
 	
 	fun snackbarMessageShown() {
@@ -133,15 +130,21 @@ class SubjectDetailViewModel @Inject constructor(
 	
 	private fun handleAsyncData(asyncData: AsyncData): Async<AsyncData> {
 		if (asyncData.subjectWithTeachers == null) return Async.Error(R.string.subject_not_found)
-		if (asyncData.eduPerformance == null) return Async.Error(R.string.edu_performance_not_found)
+//		if (asyncData.eduPerformance == null) return Async.Error(R.string.edu_performance_not_found)
 		return Async.Success(asyncData)
 	}
 	
 	fun showEditResultMessage(result: Int) {
 		when (result) {
 			EDIT_RESULT_OK -> showSnackbarMessage(R.string.successfully_saved_grade_message)
-			ADD_EDIT_RESULT_OK -> showSnackbarMessage(R.string.successfully_added_grade_message)
+			ADD_RESULT_OK -> showSnackbarMessage(R.string.successfully_added_grade_message)
 			DELETE_RESULT_OK -> showSnackbarMessage(R.string.successfully_deleted_grade_message)
+		}
+	}
+	
+	fun refresh() {
+		viewModelScope.launch(ioDispatcher) {
+			eduPerformanceRepository.fetchEduPerformance()
 		}
 	}
 	
@@ -152,9 +155,7 @@ class SubjectDetailViewModel @Inject constructor(
 	fun changeTargetMark(newTargetMark: Double) = viewModelScope.launch(ioDispatcher) {
 		uiState.value.subjectWithTeachers?.subject?.let {
 			subjectRepository.updateSubject(
-				subject = it.copy(
-					targetMark = newTargetMark
-				)
+				subject = it.copy(targetMark = newTargetMark)
 			)
 		}
 	}

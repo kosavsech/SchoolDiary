@@ -1,6 +1,6 @@
 package com.kxsv.schooldiary.ui.screens.patterns
 
-import androidx.annotation.StringRes
+import android.os.Parcelable
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,9 +32,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
@@ -48,29 +45,49 @@ import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternEntity
 import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternWithStrokes
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.PatternSelectionTopAppBar
+import com.kxsv.schooldiary.ui.screens.destinations.AddEditPatternScreenDestination
 import com.kxsv.schooldiary.util.ui.LoadingContent
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.ramcosta.composedestinations.result.NavResult
+import com.ramcosta.composedestinations.result.ResultBackNavigator
+import com.ramcosta.composedestinations.result.ResultRecipient
+import kotlinx.parcelize.Parcelize
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
+
+@Parcelize
+data class PatternSelectionResult(
+	val patternId: Long,
+	val patternName: String,
+) : Parcelable
+
+@Destination
 @Composable
 fun PatternSelectionScreen(
-	modifier: Modifier = Modifier,
-	@StringRes userMessage: Int,
-	onAddPattern: () -> Unit,
-	onEditPattern: (TimePatternWithStrokes) -> Unit,
-	onUserMessageDisplayed: () -> Unit,
-	onPatternSelected: () -> Unit,
-	onBack: () -> Unit,
+	destinationsNavigator: DestinationsNavigator,
+	resultNavigator: ResultBackNavigator<PatternSelectionResult>,
+	patternAddEditResult: ResultRecipient<AddEditPatternScreenDestination, Int>,
 	viewModel: PatternsViewModel = hiltViewModel(),
-	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+	snackbarHostState: SnackbarHostState,
 ) {
+	patternAddEditResult.onNavResult { result ->
+		when (result) {
+			is NavResult.Canceled -> {}
+			is NavResult.Value -> {
+				viewModel.showEditResultMessage(result.value)
+			}
+		}
+	}
+	val navigator = PatternsScreenNavActions(navigator = destinationsNavigator)
 	Scaffold(
-		topBar = { PatternSelectionTopAppBar(onBack = onBack) },
+		topBar = { PatternSelectionTopAppBar(onBack = { destinationsNavigator.popBackStack() }) },
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-		modifier = modifier.fillMaxSize(),
+		modifier = Modifier.fillMaxSize(),
 		floatingActionButton = {
-			FloatingActionButton(onClick = onAddPattern) {
+			FloatingActionButton(onClick = { navigator.onAddEditPattern(null) }) {
 				Icon(Icons.Default.Add, stringResource(R.string.add_pattern))
 			}
 		}
@@ -80,12 +97,13 @@ fun PatternSelectionScreen(
 		PatternsSelectionContent(
 			loading = uiState.isLoading,
 			patterns = uiState.patterns,
-			//noPatternsLabel = 0,
 			defaultPatternId = uiState.defaultPatternId,
-			editPattern = onEditPattern,
-			deletePattern = viewModel::deletePattern,
-			setDefaultPattern = viewModel::updateDefaultPatternId,
-			selectCustomPattern = { (viewModel::selectCustomPattern)(it); onPatternSelected() },
+			editPattern = { navigator.onAddEditPattern(it.timePattern.patternId) },
+			deletePattern = { viewModel.deletePattern(it) },
+			setDefaultPattern = { viewModel.updateDefaultPatternId(it) },
+			selectCustomPattern = {
+				resultNavigator.navigateBack(PatternSelectionResult(it.patternId, it.name))
+			},
 			modifier = Modifier.padding(paddingValues),
 		)
 		
@@ -97,18 +115,6 @@ fun PatternSelectionScreen(
 			}
 		}
 		
-		/*		LaunchedEffect(uiState.isPatternDeleted) {
-					if (uiState.isPatternDeleted) {
-						viewModel.processAuthError(DELETE_RESULT_OK)
-					}
-				}*/
-		
-		// Check if there's a userMessage to show to the user
-		val currentOnUserMessageDisplayed by rememberUpdatedState(onUserMessageDisplayed)
-		LaunchedEffect(userMessage != 0) {
-			viewModel.showEditResultMessage(userMessage)
-			currentOnUserMessageDisplayed()
-		}
 	}
 }
 
@@ -117,12 +123,10 @@ private fun PatternsSelectionContent(
 	loading: Boolean,
 	patterns: List<TimePatternWithStrokes>,
 	defaultPatternId: Long,
-	//@StringRes noPatternsLabel: Int,
-	//onRefresh: () -> Unit,
 	editPattern: (TimePatternWithStrokes) -> Unit,
 	deletePattern: (Long) -> Unit,
 	setDefaultPattern: (Long) -> Unit,
-	selectCustomPattern: (Long) -> Unit,
+	selectCustomPattern: (TimePatternEntity) -> Unit,
 	modifier: Modifier,
 ) {
 	LoadingContent(
@@ -130,7 +134,6 @@ private fun PatternsSelectionContent(
 		isContentScrollable = true,
 		empty = false,
 		emptyContent = { Text(text = "empty content") },
-		onRefresh = { }
 	) {
 		LazyVerticalGrid(
 			columns = GridCells.Adaptive(minSize = 128.dp),
@@ -158,7 +161,7 @@ private fun PatternItem(
 	editPattern: (TimePatternWithStrokes) -> Unit,
 	deletePattern: (Long) -> Unit,
 	setDefaultPattern: (Long) -> Unit,
-	selectCustomPattern: (Long) -> Unit,
+	selectCustomPattern: (TimePatternEntity) -> Unit,
 ) {
 	
 	Column(
@@ -188,7 +191,7 @@ private fun PatternItem(
 		TimeStrokes(
 			strokes = pattern.strokes,
 			isPatternSetAsDefault = (pattern.timePattern.patternId == defaultPatternId),
-			modifier = Modifier.clickable { selectCustomPattern(pattern.timePattern.patternId) }
+			modifier = Modifier.clickable { selectCustomPattern(pattern.timePattern) }
 		)
 	}
 }

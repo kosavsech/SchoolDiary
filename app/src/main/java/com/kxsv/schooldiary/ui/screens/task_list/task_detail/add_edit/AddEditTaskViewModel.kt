@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.ui.screens.task_detail.add_edit
+package com.kxsv.schooldiary.ui.screens.task_list.task_detail.add_edit
 
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
@@ -10,8 +10,10 @@ import com.kxsv.schooldiary.data.local.features.task.TaskEntity
 import com.kxsv.schooldiary.data.remote.task.TaskDto
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.data.repository.TaskRepository
-import com.kxsv.schooldiary.di.IoDispatcher
-import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs
+import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
+import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
 import com.kxsv.schooldiary.util.ui.Async
 import com.kxsv.schooldiary.util.ui.WhileUiSubscribed
@@ -40,7 +42,6 @@ data class AddEditTaskUiState(
 	val fetchedVariants: List<TaskDto>? = null,
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
-	val isTaskSaved: Boolean = false,
 )
 
 @HiltViewModel
@@ -51,7 +52,8 @@ class AddEditTaskViewModel @Inject constructor(
 	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
-	val taskId: Long = savedStateHandle[AppDestinationsArgs.TASK_ID_ARG]!!
+	private val navArgs: AddEditTaskScreenNavArgs = savedStateHandle.navArgs()
+	val taskId: Long? = navArgs.taskId
 	
 	private val _subjectsAsync = subjectRepository.observeAll()
 		.map { Async.Success(it) }
@@ -72,55 +74,77 @@ class AddEditTaskViewModel @Inject constructor(
 	private var taskFetchJob: Job? = null
 	
 	init {
-		if (taskId != 0L) loadTask()
+		if (taskId != null) loadTask()
 	}
 	
-	private fun loadTask() = viewModelScope.launch(ioDispatcher) {
-		_uiState.update { it.copy(isLoading = true) }
-		taskRepository.getTaskWithSubject(taskId).let { taskWithSubject ->
-			if (taskWithSubject != null) {
-				_uiState.update {
-					it.copy(
-						title = taskWithSubject.taskEntity.title,
-						description = taskWithSubject.taskEntity.description,
-						dueDate = taskWithSubject.taskEntity.dueDate,
-						subject = taskWithSubject.subject,
-						isLoading = false
-					)
-				}
-			} else {
-				_uiState.update {
-					it.copy(
-						userMessage = R.string.task_not_found,
-						isLoading = false
-					)
-				}
-			}
-		}
-	}
-	
-	
-	fun saveTask() {
-		if (uiState.value.title.isEmpty() || uiState.value.subject == null) {
-			_uiState.update { it.copy(userMessage = R.string.fill_required_fields_message) }
-			return
-		}
+	private fun loadTask() {
+		if (taskId == null) throw RuntimeException("loadTask() was called but task is new.")
 		
 		viewModelScope.launch(ioDispatcher) {
-			taskRepository.updateTask(
-				task = TaskEntity(
-					title = uiState.value.title,
-					description = uiState.value.description,
-					dueDate = uiState.value.dueDate,
-					subjectMasterId = uiState.value.subject!!.subjectId,
-					isFetched = false,
-					taskId = taskId
-				)
-			)
-			_uiState.update {
-				it.copy(isTaskSaved = true)
+			_uiState.update { it.copy(isLoading = true) }
+			taskRepository.getTaskWithSubject(taskId).let { taskWithSubject ->
+				if (taskWithSubject != null) {
+					_uiState.update {
+						it.copy(
+							title = taskWithSubject.taskEntity.title,
+							description = taskWithSubject.taskEntity.description,
+							dueDate = taskWithSubject.taskEntity.dueDate,
+							subject = taskWithSubject.subject,
+							isLoading = false
+						)
+					}
+				} else {
+					_uiState.update {
+						it.copy(
+							userMessage = R.string.task_not_found,
+							isLoading = false
+						)
+					}
+				}
 			}
 		}
+	}
+	
+	
+	fun saveTask(): Int? {
+		if (uiState.value.title.isEmpty() || uiState.value.subject == null) {
+			_uiState.update { it.copy(userMessage = R.string.fill_required_fields_message) }
+			return null
+		}
+		
+		
+		return if (taskId == null) {
+			createNewTask()
+			ADD_RESULT_OK
+		} else {
+			updateTask()
+			EDIT_RESULT_OK
+		}
+	}
+	
+	private fun createNewTask() = viewModelScope.launch(ioDispatcher) {
+		taskRepository.createTask(
+			task = TaskEntity(
+				title = uiState.value.title,
+				description = uiState.value.description,
+				dueDate = uiState.value.dueDate,
+				subjectMasterId = uiState.value.subject!!.subjectId,
+				isFetched = false,
+			)
+		)
+	}
+	
+	private fun updateTask() = viewModelScope.launch(ioDispatcher) {
+		taskRepository.updateTask(
+			task = TaskEntity(
+				title = uiState.value.title,
+				description = uiState.value.description,
+				dueDate = uiState.value.dueDate,
+				subjectMasterId = uiState.value.subject!!.subjectId,
+				isFetched = false,
+				taskId = taskId!!
+			)
+		)
 	}
 	
 	fun snackbarMessageShown() {

@@ -1,6 +1,5 @@
 package com.kxsv.schooldiary.ui.screens.schedule
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -29,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DrawerState
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -43,10 +43,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -68,62 +66,106 @@ import com.kxsv.schooldiary.data.local.features.lesson.LessonWithSubject
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.ScheduleTopAppBar
+import com.kxsv.schooldiary.ui.main.navigation.ScheduleNavGraph
+import com.kxsv.schooldiary.ui.screens.destinations.AddEditLessonScreenDestination
+import com.kxsv.schooldiary.ui.screens.destinations.DateRangeScheduleCopyScreenDestination
+import com.kxsv.schooldiary.ui.screens.destinations.DayScheduleCopyScreenDestination
+import com.kxsv.schooldiary.ui.screens.destinations.PatternSelectionScreenDestination
+import com.kxsv.schooldiary.ui.screens.patterns.PatternSelectionResult
+import com.kxsv.schooldiary.util.Utils.localDateToTimestamp
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.kxsv.schooldiary.util.ui.displayText
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.ramcosta.composedestinations.result.NavResult
+import com.ramcosta.composedestinations.result.ResultRecipient
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.MaterialDialogState
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
-private fun localDateToTimestamp(date: LocalDate): Long =
-	date.atStartOfDay(ZoneId.systemDefault()).toEpochSecond()
+data class DayScheduleScreenNavArgs(
+	val datestamp: Long?,
+)
 
+private const val TAG = "DayScheduleScreen"
+
+@ScheduleNavGraph(start = true)
+@Destination(navArgsDelegate = DayScheduleScreenNavArgs::class)
 @Composable
 fun DayScheduleScreen(
-	@StringRes userMessage: Int,
-	onUserMessageDisplayed: () -> Unit,
-	isCustomPatternWasSet: Boolean?,
-	onAddClass: (Long) -> Unit,
-	onEditClass: (Long) -> Unit,
-	onChangePattern: (Long) -> Unit,
-	onCopyDaySchedule: () -> Unit,
-	onCopyDateRangeSchedule: () -> Unit,
-	openDrawer: () -> Unit,
-	modifier: Modifier = Modifier,
-	viewModel: DayScheduleViewModel,
-	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+	lessonAddEditResult: ResultRecipient<AddEditLessonScreenDestination, Int>,
+	patternPickResult: ResultRecipient<PatternSelectionScreenDestination, PatternSelectionResult>,
+	dayScheduleCopyResult: ResultRecipient<DayScheduleCopyScreenDestination, DayScheduleCopyResult>,
+	dateRangeScheduleCopyResult: ResultRecipient<DateRangeScheduleCopyScreenDestination, DateRangeScheduleCopyResult>,
+	destinationsNavigator: DestinationsNavigator,
+	drawerState: DrawerState,
+	coroutineScope: CoroutineScope,
+	snackbarHostState: SnackbarHostState,
+	viewModel: ScheduleViewModel,
 ) {
+	val navigator = DayScheduleScreenNavActions(navigator = destinationsNavigator)
 	val uiState = viewModel.uiState.collectAsState().value
-	val coroutineScope = rememberCoroutineScope()
-	
+	lessonAddEditResult.onNavResult { result ->
+		when (result) {
+			is NavResult.Canceled -> {}
+			is NavResult.Value -> {
+				viewModel.showEditResultMessage(result.value)
+			}
+		}
+	}
+	patternPickResult.onNavResult { result ->
+		when (result) {
+			is NavResult.Canceled -> {}
+			is NavResult.Value -> {
+				viewModel.selectCustomPattern(result.value)
+			}
+		}
+	}
+	dayScheduleCopyResult.onNavResult { result ->
+		when (result) {
+			is NavResult.Canceled -> {}
+			is NavResult.Value -> {
+				viewModel.showDayScheduleCopyResult(result.value)
+			}
+		}
+	}
+	dateRangeScheduleCopyResult.onNavResult { result ->
+		when (result) {
+			is NavResult.Canceled -> {}
+			is NavResult.Value -> {
+				viewModel.showDateRangeScheduleCopyResult(result.value)
+			}
+		}
+	}
 	Scaffold(
 		topBar = {
 			ScheduleTopAppBar(
 				onChangePattern = {
 					coroutineScope.launch {
-						onChangePattern(viewModel.getCurrentStudyDayForced().studyDayId)
+						navigator.onChangePattern()
 					}
 				},
-				onCopyDaySchedule = onCopyDaySchedule,
-				onCopyDateRangeSchedule = onCopyDateRangeSchedule,
+				onCopyDaySchedule = navigator.onCopyDaySchedule,
+				onCopyDateRangeSchedule = navigator.onCopyDateRangeSchedule,
 				onFetchSchedule = { viewModel.fetchSchedule() },
-				openDrawer = openDrawer
+				openDrawer = { coroutineScope.launch { drawerState.open() } }
 			)
 		},
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-		modifier = modifier.fillMaxSize(),
+		modifier = Modifier.fillMaxSize(),
 		floatingActionButton = {
 			FloatingActionButton(
 				onClick = {
 					coroutineScope.launch {
-						if (viewModel.isScheduleRemote()) viewModel.localiseNetSchedule()
-						onAddClass(localDateToTimestamp(uiState.selectedDate))
+						if (viewModel.isScheduleRemote()) viewModel.localiseCachedNetClasses()
+						navigator.onAddEditClass(localDateToTimestamp(uiState.selectedDate)!!, null)
 					}
 				}
 			) {
@@ -137,7 +179,6 @@ fun DayScheduleScreen(
 			modifier = Modifier.padding(paddingValues),
 			loading = uiState.isLoading,
 			classes = uiState.classes,
-			noClassesLabel = R.string.no_classes_label,
 			fetchedClasses = uiState.fetchedClasses,
 			selectedDate = uiState.selectedDate,
 			currentPattern = uiState.currentTimings,
@@ -151,37 +192,27 @@ fun DayScheduleScreen(
 			classDetailed = uiState.classDetailed,
 			selectedDate = uiState.selectedDate,
 			currentPattern = uiState.currentTimings,
-			onDeleteClass = viewModel::deleteClass,
-			onEditClass = onEditClass,
-			unselectClass = viewModel::unselectClass,
-			getIdForClassFromNet = viewModel::getIdForClassFromNet,
+			onDeleteClass = { viewModel.deleteClass(it) },
+			onEditClass = navigator.onAddEditClass,
+			unselectClass = { viewModel.unselectClass() },
+			getIdForClassFromNet = { viewModel.getIdForClassFromNet() },
 			dialogState = dialogState
 		)
 		
 		uiState.userMessage?.let { userMessage ->
-			val snackbarText = stringResource(userMessage)
+			val snackbarText = if (uiState.userMessageArgs != null) {
+				stringResource(userMessage, *uiState.userMessageArgs)
+			} else {
+				stringResource(userMessage)
+			}
 			LaunchedEffect(snackbarHostState, viewModel, userMessage, snackbarText) {
 				snackbarHostState.showSnackbar(snackbarText)
 				viewModel.snackbarMessageShown()
 			}
 		}
-		
-		LaunchedEffect(isCustomPatternWasSet) {
-			if (isCustomPatternWasSet == true) {
-				viewModel.onDayChangeUpdate(uiState.selectedDate)
-			}
-		}
-		
-		// Check if there's a userMessage to show to the user
-		val currentOnUserMessageDisplayed by rememberUpdatedState(onUserMessageDisplayed)
-		LaunchedEffect(userMessage) {
-			if (userMessage != 0) {
-				viewModel.showEditResultMessage(userMessage)
-				currentOnUserMessageDisplayed()
-			}
-		}
 	}
 }
+
 
 @Composable
 private fun LessonDialog(
@@ -189,7 +220,7 @@ private fun LessonDialog(
 	selectedDate: LocalDate,
 	currentPattern: List<PatternStrokeEntity>,
 	onDeleteClass: (LessonWithSubject) -> Unit,
-	onEditClass: (Long) -> Unit,
+	onEditClass: (Long, Long?) -> Unit,
 	unselectClass: () -> Unit,
 	getIdForClassFromNet: suspend () -> Long,
 	dialogState: MaterialDialogState,
@@ -239,9 +270,9 @@ private fun LessonDialog(
 						onClick = {
 							coroutineScope.launch {
 								if (classDetailed.lesson.lessonId == 0L) {
-									onEditClass(getIdForClassFromNet())
+									onEditClass(0, getIdForClassFromNet())
 								} else {
-									onEditClass(classDetailed.lesson.lessonId)
+									onEditClass(0, classDetailed.lesson.lessonId)
 								}
 								
 								dialogState.hide()
@@ -284,7 +315,6 @@ private fun DayScheduleContent(
 	modifier: Modifier,
 	loading: Boolean,
 	classes: Map<Int, LessonWithSubject>,
-	@StringRes noClassesLabel: Int,
 	fetchedClasses: Map<Int, LessonWithSubject>?,
 	selectedDate: LocalDate,
 	currentPattern: List<PatternStrokeEntity>,
@@ -309,7 +339,6 @@ private fun DayScheduleContent(
 				classes = classes,
 				selectedDate = selectedDate,
 				currentPattern = currentPattern,
-				noClassesLabel = noClassesLabel,
 				onRefresh = onRefresh,
 				onClassClick = onClassClick
 			)
@@ -445,7 +474,6 @@ private fun ScheduleForDay(
 	classes: Map<Int, LessonWithSubject>,
 	selectedDate: LocalDate,
 	currentPattern: List<PatternStrokeEntity>,
-	@StringRes noClassesLabel: Int,
 	onRefresh: () -> Unit,
 	onClassClick: (LessonWithSubject) -> Unit,
 ) {
@@ -457,7 +485,7 @@ private fun ScheduleForDay(
 			Column(
 				modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.horizontal_margin))
 			) {
-				Text(text = stringResource(noClassesLabel))
+				Text(text = stringResource(R.string.no_classes_label))
 			}
 		},
 		onRefresh = onRefresh
@@ -676,7 +704,6 @@ private fun DayScheduleContentPreview() {
 					)
 				),
 			),
-			noClassesLabel = R.string.no_classes_label,
 			fetchedClasses = mapOf(
 				Pair(
 					2, LessonWithSubject(
@@ -730,7 +757,7 @@ private fun LessonDialogPreview() {
 				),
 			),
 			onDeleteClass = {},
-			onEditClass = {},
+			onEditClass = { _, _ -> },
 			unselectClass = {},
 			getIdForClassFromNet = { 0 },
 			dialogState = rememberMaterialDialogState(true)

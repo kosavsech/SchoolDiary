@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DrawerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -26,7 +27,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceWithSubject
-import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.EduPerformanceTopAppBar
 import com.kxsv.schooldiary.util.Mark
 import com.kxsv.schooldiary.util.Mark.Companion.getStringValueFrom
@@ -45,22 +44,27 @@ import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.stringRoundTo
 import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
 import com.kxsv.schooldiary.util.ui.LoadingContent
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
+@Destination
 @Composable
 fun EduPerformanceScreen(
-//	onSubjectClick: (Long) -> Unit,
-	openDrawer: () -> Unit,
-	modifier: Modifier = Modifier,
-	onEduPerformanceClick: (SubjectEntity) -> Unit,
+	destinationsNavigator: DestinationsNavigator,
+	drawerState: DrawerState,
+	coroutineScope: CoroutineScope,
 	viewModel: EduPerformanceViewModel = hiltViewModel(),
-	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+	snackbarHostState: SnackbarHostState,
 ) {
+	val navigator = EduPerformanceScreenNavActions(navigator = destinationsNavigator)
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		topBar = {
-			EduPerformanceTopAppBar(openDrawer = openDrawer)
+			EduPerformanceTopAppBar(openDrawer = { coroutineScope.launch { drawerState.open() } })
 		},
-		modifier = modifier.fillMaxSize(),
+		modifier = Modifier.fillMaxSize(),
 	) { paddingValues ->
 		val uiState = viewModel.uiState.collectAsState().value
 		
@@ -68,7 +72,9 @@ fun EduPerformanceScreen(
 			loading = uiState.isLoading,
 			eduPerformanceList = uiState.eduPerformanceList,
 			onPeriodChange = { viewModel.changePeriod(it) },
-			onEduPerformanceClick = onEduPerformanceClick,
+			onEduPerformanceClick = { eduPerformanceId ->
+				navigator.onEduPerformanceClick(eduPerformanceId)
+			},
 			currentEduPerformancePeriod = uiState.period,
 			onRefresh = { viewModel.refresh() },
 			modifier = Modifier.padding(paddingValues)
@@ -81,8 +87,7 @@ private fun EduPerformanceContent(
 	loading: Boolean,
 	eduPerformanceList: List<EduPerformanceWithSubject>,
 	onPeriodChange: (EduPerformancePeriod) -> Unit,
-	onEduPerformanceClick: (SubjectEntity) -> Unit,
-	//	onSubjectClick: (Long) -> Unit,
+	onEduPerformanceClick: (Long) -> Unit,
 	currentEduPerformancePeriod: EduPerformancePeriod,
 	onRefresh: () -> Unit,
 	modifier: Modifier,
@@ -143,7 +148,10 @@ private fun EduPerformanceContent(
 			}
 			LazyColumn {
 				items(eduPerformanceList) { performanceWithSubject ->
-					PerformanceRow(performanceWithSubject, onEduPerformanceClick)
+					PerformanceRow(
+						performanceWithSubject = performanceWithSubject,
+						onEduPerformanceClick = onEduPerformanceClick
+					)
 				}
 			}
 		}
@@ -153,7 +161,7 @@ private fun EduPerformanceContent(
 @Composable
 private fun PerformanceRow(
 	performanceWithSubject: EduPerformanceWithSubject,
-	onEduPerformanceClick: (SubjectEntity) -> Unit,
+	onEduPerformanceClick: (Long) -> Unit,
 ) {
 	if (performanceWithSubject.eduPerformance.period != EduPerformancePeriod.YEAR_PERIOD) {
 		Row(
@@ -161,7 +169,7 @@ private fun PerformanceRow(
 			horizontalArrangement = Arrangement.SpaceBetween,
 			modifier = Modifier
 				.fillMaxWidth()
-				.clickable { onEduPerformanceClick(performanceWithSubject.subject) }
+				.clickable { onEduPerformanceClick(performanceWithSubject.subject.subjectId) }
 				.padding(
 					horizontal = dimensionResource(R.dimen.horizontal_margin),
 					vertical = dimensionResource(R.dimen.vertical_margin)
@@ -227,7 +235,7 @@ private fun PerformanceRow(
 @Composable
 fun YearPerformanceRowItem(
 	index: Int,
-	grade: Mark?
+	grade: Mark?,
 ) {
 	val term = when (index) {
 		1 -> "I"

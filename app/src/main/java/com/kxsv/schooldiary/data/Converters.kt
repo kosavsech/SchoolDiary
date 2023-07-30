@@ -16,7 +16,7 @@ import java.util.Collections
 class Converters {
 	// LocalDate <-> Long
 	@TypeConverter
-	fun timestampToLocalDate(value: Long?): LocalDate? = value?.let {
+	fun fromTimestampToLocalDate(value: Long?): LocalDate? = value?.let {
 		Instant.ofEpochSecond(it).atZone(ZoneId.systemDefault()).toLocalDate()
 	}
 	
@@ -26,12 +26,12 @@ class Converters {
 	
 	// LocalTime <-> Int
 	@TypeConverter
-	fun secondOfDayToLocalTime(value: Int?): LocalTime? = value?.let {
+	fun fromTimestampToLocalTime(value: Int?): LocalTime? = value?.let {
 		LocalTime.ofSecondOfDay(value.toLong())
 	}
 	
 	@TypeConverter
-	fun localTimeToSecondOfDay(time: LocalTime?): Int? =
+	fun localTimeToTimestamp(time: LocalTime?): Int? =
 		time?.toSecondOfDay()
 	
 	// LocalDateTime <-> Long
@@ -50,14 +50,17 @@ class Converters {
 	
 	// List<Mark> <-> String
 	@TypeConverter
-	fun stringToListMark(data: String?): List<Mark>? {
+	fun listMarkToString(markList: List<Mark?>?): String? {
+		return Gson().toJson(markList)
+	}
+	
+	@TypeConverter
+	fun stringToListMark(data: String?): List<Mark?>? {
 		if (data == null) return Collections.emptyList()
 		val listType: Type = object : TypeToken<List<Mark>?>() {}.type
 		return Gson().fromJson<List<Mark>>(data, listType)
 	}
 	
-	@TypeConverter
-	fun listMarkToString(markList: List<Mark>?): String? = Gson().toJson(markList)
 	
 	// Calendar <-> Long
 	/*@TypeConverter

@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.ui.screens.task_detail
+package com.kxsv.schooldiary.ui.screens.task_list.task_detail
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,7 +22,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -33,26 +32,40 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.task.TaskEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.TaskDetailTopAppBar
+import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.util.ui.LoadingContent
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.ramcosta.composedestinations.result.ResultBackNavigator
 import java.time.format.DateTimeFormatter
 
+data class TaskDetailScreenNavArgs(
+	val taskId: Long,
+)
+
+@Destination(
+	navArgsDelegate = TaskDetailScreenNavArgs::class
+)
 @Composable
 fun TaskDetailScreen(
-	onEditTask: () -> Unit,
-	onBack: () -> Unit,
-	modifier: Modifier = Modifier,
+	destinationsNavigator: DestinationsNavigator,
+	resultNavigator: ResultBackNavigator<Int>,
 	viewModel: TaskDetailViewModel = hiltViewModel(),
-	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+	snackbarHostState: SnackbarHostState,
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
+	val navigator = TasksDetailNavActions(navigator = destinationsNavigator)
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-		modifier = modifier.fillMaxSize(),
+		modifier = Modifier.fillMaxSize(),
 		topBar = {
 			TaskDetailTopAppBar(
-				onBack = onBack,
-				onDelete = { viewModel.deleteTask() },
-				onEdit = onEditTask
+				onBack = { destinationsNavigator.popBackStack() },
+				onDelete = {
+					viewModel.deleteTask()
+					resultNavigator.navigateBack(DELETE_RESULT_OK)
+				},
+				onEdit = { navigator.onEditTask(viewModel.taskId) }
 			)
 		},
 		floatingActionButton = {
@@ -80,11 +93,6 @@ fun TaskDetailScreen(
 			}
 		}
 		
-		LaunchedEffect(uiState.isTaskDeleted) {
-			if (uiState.isTaskDeleted) {
-				onBack()
-			}
-		}
 	}
 }
 

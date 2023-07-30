@@ -9,7 +9,7 @@ import com.kxsv.schooldiary.data.local.features.lesson.LessonEntity
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.repository.LessonRepository
 import com.kxsv.schooldiary.data.repository.SubjectRepository
-import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs
+import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.util.Utils.timestampToLocalDate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,22 +38,25 @@ class AddEditLessonViewModel @Inject constructor(
 	savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 	
-	private val scheduleId: Long = savedStateHandle[AppDestinationsArgs.SCHEDULE_ID_ARG]!!
-	private val dateStamp: Long = savedStateHandle[AppDestinationsArgs.DATESTAMP_ARG]!!
+	private val addEditLessonScreenNavArgs: AddEditLessonDestinationNavArgs =
+		savedStateHandle.navArgs()
+	
+	private val datestamp = addEditLessonScreenNavArgs.datestamp
+	val lessonId = addEditLessonScreenNavArgs.lessonId
 	
 	private val _uiState = MutableStateFlow(AddEditScheduleUiState())
 	val uiState: StateFlow<AddEditScheduleUiState> = _uiState.asStateFlow()
 	
 	init {
-		if (scheduleId != 0L) {
-			loadClass(scheduleId)
+		if (lessonId != null) {
+			loadClass(lessonId)
 		} else {
-			updateDate(timestampToLocalDate(dateStamp)!!)
+			updateDate(timestampToLocalDate(datestamp)!!)
 		}
 		
 	}
 	
-	fun saveSchedule() {
+	fun saveLesson() {
 		if (uiState.value.pickedSubject == null
 			|| uiState.value.classDate == null
 			|| uiState.value.classIndex.isBlank()
@@ -64,7 +67,7 @@ class AddEditLessonViewModel @Inject constructor(
 			return
 		}
 		
-		if (scheduleId == 0L) {
+		if (lessonId == null) {
 			createNewClass()
 		} else {
 			updateClass()
@@ -136,14 +139,14 @@ class AddEditLessonViewModel @Inject constructor(
 	}
 	
 	private fun updateClass() {
-		if (scheduleId == 0L) throw RuntimeException("updateClass() was called but class is new.")
+		if (lessonId == null) throw RuntimeException("updateClass() was called but class is new.")
 		
 		viewModelScope.launch {
 			lessonRepository.updateLesson(
 				lesson = LessonEntity(
 					index = uiState.value.classIndex.toInt() - 1,
 					subjectAncestorId = uiState.value.pickedSubject!!.subjectId,
-					lessonId = scheduleId
+					lessonId = lessonId
 				),
 				date = uiState.value.classDate!!
 			)
