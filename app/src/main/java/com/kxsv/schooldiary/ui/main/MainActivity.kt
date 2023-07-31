@@ -42,19 +42,22 @@ class MainActivity : ComponentActivity() {
 		val workManager = WorkManager.getInstance(applicationContext)
 		workManager.enqueueUniquePeriodicWork(
 			"RecentGradesSyncWorker",
-			ExistingPeriodicWorkPolicy.KEEP,
+			ExistingPeriodicWorkPolicy.UPDATE,
 			gradeSyncWorkRequest
 		)
 		
 		workManager.enqueueUniquePeriodicWork(
 			"SoonTasksSyncWorker",
-			ExistingPeriodicWorkPolicy.KEEP,
+			ExistingPeriodicWorkPolicy.UPDATE,
 			taskSyncWorkRequest
 		)
 		
 		setContent {
 			SchoolDiaryTheme {
-				NavGraph(startDestination = splashViewModel.startDestination.value)
+				NavGraph(
+					startDestination = splashViewModel.startDestination.value,
+					activity = this
+				)
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.ui.screens.task_detail
+package com.kxsv.schooldiary.ui.screens.task_list.task_detail
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -6,8 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.task.TaskWithSubject
 import com.kxsv.schooldiary.data.repository.TaskRepository
-import com.kxsv.schooldiary.di.IoDispatcher
-import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs
+import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.util.ui.Async
 import com.kxsv.schooldiary.util.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,7 +26,6 @@ data class TaskDetailUiState(
 	val taskWithSubject: TaskWithSubject? = null,
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
-	val isTaskDeleted: Boolean = false,
 )
 
 @HiltViewModel
@@ -36,7 +35,8 @@ class TaskDetailViewModel @Inject constructor(
 	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
-	val taskId: Long = savedStateHandle[AppDestinationsArgs.TASK_ID_ARG]!!
+	private var navArgs: TaskDetailScreenNavArgs = savedStateHandle.navArgs()
+	val taskId = navArgs.taskId
 	
 	private val _taskWithSubjectAsync = taskRepository.observeTaskWithSubject(taskId)
 		.map { handleTask(it) }
@@ -59,7 +59,6 @@ class TaskDetailViewModel @Inject constructor(
 	
 	fun deleteTask() = viewModelScope.launch {
 		taskRepository.deleteTask(taskId)
-		_uiState.update { it.copy(isTaskDeleted = true) }
 	}
 	
 	fun completeTask() = viewModelScope.launch {
@@ -73,6 +72,7 @@ class TaskDetailViewModel @Inject constructor(
 		}
 	}
 	
+	// todo add edit result message
 	private fun showSnackbarMessage(message: Int) {
 		_uiState.update {
 			it.copy(userMessage = message)
@@ -80,9 +80,8 @@ class TaskDetailViewModel @Inject constructor(
 	}
 	
 	private fun handleTask(task: TaskWithSubject?): Async<TaskWithSubject?> {
-		if (task == null) {
-			return Async.Error(R.string.task_not_found)
-		}
+		if (task == null) return Async.Error(R.string.task_not_found)
+		
 		return Async.Success(task)
 	}
 }

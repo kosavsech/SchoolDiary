@@ -8,7 +8,9 @@ import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternEntity
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import com.kxsv.schooldiary.data.repository.PatternStrokeRepository
 import com.kxsv.schooldiary.data.repository.TimePatternRepository
-import com.kxsv.schooldiary.ui.main.navigation.AppDestinationsArgs
+import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
+import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.util.ListExtensionFunctions.copyExclusively
 import com.kxsv.schooldiary.util.ListExtensionFunctions.copyInclusively
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,7 +31,6 @@ data class AddEditPatternUiState(
 	val endTime: LocalTime = startTime.plusMinutes(45),
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
-	val isPatternSaved: Boolean = false,
 	val isStrokeDialogShown: Boolean = false,
 	val stroke: PatternStrokeEntity? = null,
 )
@@ -41,13 +42,14 @@ class AddEditPatternViewModel @Inject constructor(
 	savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 	
-	private val patternId: Long = savedStateHandle[AppDestinationsArgs.PATTERN_ID_ARG]!!
+	private val navArgs: AddEditPatternScreenNavArgs = savedStateHandle.navArgs()
+	private val patternId = navArgs.patternId
 	
 	private val _uiState = MutableStateFlow(AddEditPatternUiState())
 	val uiState: StateFlow<AddEditPatternUiState> = _uiState.asStateFlow()
 	
 	init {
-		if (patternId != 0L) loadPattern(patternId)
+		if (patternId != null) loadPattern(patternId)
 	}
 	
 	fun saveStroke() = viewModelScope.launch {
@@ -76,8 +78,8 @@ class AddEditPatternViewModel @Inject constructor(
 				isStrokeDialogShown = false,
 				stroke = null,
 				strokes = newStrokes,
-				startTime = LocalTime.MIDNIGHT,
-				endTime = LocalTime.MIDNIGHT,
+				startTime = it.endTime.plusMinutes(10),
+				endTime = it.endTime.plusMinutes(55),
 			)
 		}
 	}
@@ -94,18 +96,20 @@ class AddEditPatternViewModel @Inject constructor(
 		showSnackbarMessage(R.string.successfully_deleted_stroke)
 	}
 	
-	fun savePattern() {
+	fun savePattern(): Int? {
 		if (uiState.value.strokes.isEmpty()) {
 			_uiState.update {
 				it.copy(userMessage = R.string.empty_pattern_message)
 			}
-			return
+			return null
 		}
 		
-		if (patternId == 0L) {
+		return if (patternId == null) {
 			createNewPattern()
+			ADD_RESULT_OK
 		} else {
 			updatePattern()
+			EDIT_RESULT_OK
 		}
 	}
 	
@@ -119,8 +123,8 @@ class AddEditPatternViewModel @Inject constructor(
 		_uiState.update {
 			it.copy(
 				isStrokeDialogShown = false,
-				startTime = LocalTime.MIDNIGHT,
-				endTime = LocalTime.MIDNIGHT
+				startTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES),
+				endTime = it.startTime.plusMinutes(45),
 			)
 		}
 	}
@@ -177,13 +181,10 @@ class AddEditPatternViewModel @Inject constructor(
 	
 	private fun createNewPattern() = viewModelScope.launch {
 		patternRepository.createPatternWithStrokes(uiState.value.name, uiState.value.strokes)
-		_uiState.update {
-			it.copy(isPatternSaved = true)
-		}
 	}
 	
 	private fun updatePattern() {
-		if (patternId == 0L) throw RuntimeException("updatePatternWithStrokes() was called but pattern is new.")
+		if (patternId == null) throw RuntimeException("updatePatternWithStrokes() was called but pattern is new.")
 		
 		viewModelScope.launch {
 			patternRepository.updatePatternWithStrokes(
@@ -193,9 +194,6 @@ class AddEditPatternViewModel @Inject constructor(
 				),
 				strokes = uiState.value.strokes
 			)
-			_uiState.update {
-				it.copy(isPatternSaved = true)
-			}
 		}
 	}
 	

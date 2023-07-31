@@ -1,6 +1,5 @@
 package com.kxsv.schooldiary.ui.screens.patterns
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +18,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.DrawerState
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,9 +31,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,29 +45,43 @@ import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternEntity
 import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternWithStrokes
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.PatternsTopAppBar
+import com.kxsv.schooldiary.ui.screens.destinations.AddEditPatternScreenDestination
 import com.kxsv.schooldiary.util.ui.LoadingContent
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.ramcosta.composedestinations.result.NavResult
+import com.ramcosta.composedestinations.result.ResultRecipient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
+@Destination
 @Composable
 fun PatternsScreen(
-	modifier: Modifier = Modifier,
-	@StringRes userMessage: Int,
-	onAddPattern: () -> Unit,
-	onEditPattern: (TimePatternWithStrokes) -> Unit,
-	onDeletePattern: () -> Unit,
-	onUserMessageDisplayed: () -> Unit,
-	openDrawer: () -> Unit,
+	destinationsNavigator: DestinationsNavigator,
+	patternAddEditResult: ResultRecipient<AddEditPatternScreenDestination, Int>,
+	drawerState: DrawerState,
 	viewModel: PatternsViewModel = hiltViewModel(),
-	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+	coroutineScope: CoroutineScope,
+	snackbarHostState: SnackbarHostState,
 ) {
+	val navigator = PatternsScreenNavActions(navigator = destinationsNavigator)
+	patternAddEditResult.onNavResult { result ->
+		when (result) {
+			is NavResult.Canceled -> {}
+			is NavResult.Value -> {
+				viewModel.showEditResultMessage(result.value)
+			}
+		}
+	}
 	Scaffold(
-		topBar = { PatternsTopAppBar(openDrawer = openDrawer) },
+		topBar = { PatternsTopAppBar(openDrawer = { coroutineScope.launch { drawerState.open() } }) },
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-		modifier = modifier.fillMaxSize(),
+		modifier = Modifier.fillMaxSize(),
 		floatingActionButton = {
-			FloatingActionButton(onClick = onAddPattern) {
+			FloatingActionButton(onClick = { navigator.onAddEditPattern(null) }) {
 				Icon(Icons.Default.Add, stringResource(R.string.add_pattern))
 			}
 		}
@@ -82,7 +93,7 @@ fun PatternsScreen(
 			patterns = uiState.patterns,
 			//noPatternsLabel = 0,
 			defaultPatternId = uiState.defaultPatternId,
-			editPattern = onEditPattern,
+			editPattern = { patternId -> navigator.onAddEditPattern(patternId) },
 			deletePattern = viewModel::deletePattern,
 			setDefaultPattern = viewModel::updateDefaultPatternId,
 			modifier = Modifier.padding(paddingValues),
@@ -95,21 +106,6 @@ fun PatternsScreen(
 				viewModel.snackbarMessageShown()
 			}
 		}
-		
-		LaunchedEffect(uiState.isPatternDeleted) {
-			if (uiState.isPatternDeleted) {
-				onDeletePattern()
-			}
-		}
-		
-		// Check if there's a userMessage to show to the user
-		val currentOnUserMessageDisplayed by rememberUpdatedState(onUserMessageDisplayed)
-		LaunchedEffect(userMessage) {
-			if (userMessage != 0) {
-				viewModel.showEditResultMessage(userMessage)
-				currentOnUserMessageDisplayed()
-			}
-		}
 	}
 }
 
@@ -120,7 +116,7 @@ private fun PatternsContent(
 	defaultPatternId: Long,
 //@StringRes noPatternsLabel: Int,
 	//onRefresh: () -> Unit,
-	editPattern: (TimePatternWithStrokes) -> Unit,
+	editPattern: (Long) -> Unit,
 	deletePattern: (Long) -> Unit,
 	setDefaultPattern: (Long) -> Unit,
 	modifier: Modifier,
@@ -152,7 +148,7 @@ private fun PatternsContent(
 private fun PatternItem(
 	pattern: TimePatternWithStrokes,
 	defaultPatternId: Long,
-	editPattern: (TimePatternWithStrokes) -> Unit,
+	editPattern: (Long) -> Unit,
 	deletePattern: (Long) -> Unit,
 	setDefaultPattern: (Long) -> Unit,
 ) {
@@ -179,7 +175,7 @@ private fun PatternItem(
 			IconButton(onClick = { deletePattern(pattern.timePattern.patternId) }) {
 				Icon(Icons.Default.Delete, stringResource(R.string.delete_pattern))
 			}
-			IconButton(onClick = { editPattern(pattern) }) {
+			IconButton(onClick = { editPattern(pattern.timePattern.patternId) }) {
 				Icon(Icons.Default.Edit, stringResource(R.string.edit_pattern))
 			}
 			IconButton(onClick = { setDefaultPattern(pattern.timePattern.patternId) }) {

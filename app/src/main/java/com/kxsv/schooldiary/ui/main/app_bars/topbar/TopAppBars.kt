@@ -381,9 +381,9 @@ fun CopyScheduleForDayTopAppBar(date: String? = "", onBack: () -> Unit) {
 }
 
 @Composable
-fun SubjectDetailTopAppBar(title: String? = "", onBack: () -> Unit, onDelete: () -> Unit) {
+fun SubjectDetailTopAppBar(title: String, onBack: () -> Unit, onDelete: () -> Unit) {
 	TopAppBar(
-		title = { if (title != null) Text(text = title) },
+		title = { Text(text = title) },
 		navigationIcon = {
 			IconButton(onClick = onBack) {
 				Icon(Icons.Filled.ArrowBack, stringResource(id = R.string.menu_back))

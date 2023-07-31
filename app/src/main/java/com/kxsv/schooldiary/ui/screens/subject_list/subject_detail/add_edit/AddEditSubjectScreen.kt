@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.ui.screens.subject_detail.add_edit
+package com.kxsv.schooldiary.ui.screens.subject_list.subject_detail.add_edit
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -24,7 +24,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,28 +36,39 @@ import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditSubjectTopAppBar
 import com.kxsv.schooldiary.util.Utils.fullNameOf
 import com.kxsv.schooldiary.util.ui.LoadingContent
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.ramcosta.composedestinations.result.ResultBackNavigator
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.listItemsMultiChoice
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 
+data class AddEditSubjectScreenNavArgs(
+	val subjectId: Long?,
+)
+
+@Destination(
+	navArgsDelegate = AddEditSubjectScreenNavArgs::class
+)
 @Composable
 fun AddEditSubjectScreen(
-	//@StringRes topBarTitle: Int, // is needed for title?
-	onSubjectUpdate: () -> Unit,
-	onBack: () -> Unit,
-	modifier: Modifier = Modifier,
+	resultNavigator: ResultBackNavigator<Int>,
+	navigator: DestinationsNavigator,
 	viewModel: AddEditSubjectViewModel = hiltViewModel(),
-	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+	snackbarHostState: SnackbarHostState,
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
 	
 	Scaffold(
-		modifier = modifier.fillMaxSize(),
+		modifier = Modifier.fillMaxSize(),
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-		topBar = { AddEditSubjectTopAppBar(onBack) },
+		topBar = { AddEditSubjectTopAppBar { navigator.popBackStack() } },
 		floatingActionButton = {
 			Row {
-				FloatingActionButton(onClick = viewModel::saveSubject) {
+				FloatingActionButton(onClick = {
+					val result = viewModel.saveSubject()
+					if (result != null) resultNavigator.navigateBack(result)
+				}) {
 					Icon(Icons.Filled.Done, stringResource(R.string.save_subject))
 				}
 			}
@@ -80,13 +90,6 @@ fun AddEditSubjectScreen(
 			onCabinetChanged = viewModel::updateCabinet,
 			modifier = Modifier.padding(paddingValues)
 		)
-		
-		// Check if the pattern is saved and call onPatternUpdate event
-		LaunchedEffect(uiState.isSubjectSaved) {
-			if (uiState.isSubjectSaved) {
-				onSubjectUpdate()
-			}
-		}
 		
 		uiState.userMessage?.let { userMessage ->
 			val snackbarText = stringResource(userMessage)
@@ -115,7 +118,7 @@ private fun AddEditSubjectContent(
 	modifier: Modifier = Modifier,
 ) {
 	LoadingContent(
-		loading,
+		loading = loading,
 		empty = false,
 		emptyContent = { Text(text = "Empty") },
 		onRefresh = {}) {

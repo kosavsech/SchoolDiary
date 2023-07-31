@@ -29,7 +29,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,7 +41,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditScheduleTopAppBar
+import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.util.ui.LoadingContent
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.ramcosta.composedestinations.result.ResultBackNavigator
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.MaterialDialogState
 import com.vanpra.composematerialdialogs.datetime.date.datepicker
@@ -53,22 +57,29 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+data class AddEditLessonDestinationNavArgs(
+	val datestamp: Long,
+	val lessonId: Long? = null,
+)
+
+@Destination(
+	navArgsDelegate = AddEditLessonDestinationNavArgs::class
+)
 @Composable
 fun AddEditLessonScreen(
-	onScheduleUpdate: (Long) -> Unit,
-	onBack: () -> Unit,
-	modifier: Modifier = Modifier,
+	resultNavigator: ResultBackNavigator<Int>,
+	navigator: DestinationsNavigator,
 	viewModel: AddEditLessonViewModel = hiltViewModel(),
-	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+	snackbarHostState: SnackbarHostState,
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
 	
 	Scaffold(
-		modifier = modifier.fillMaxSize(),
+		modifier = Modifier.fillMaxSize(),
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-		topBar = { AddEditScheduleTopAppBar(onBack) },
+		topBar = { AddEditScheduleTopAppBar { navigator.popBackStack() } },
 		floatingActionButton = {
-			FloatingActionButton(onClick = viewModel::saveSchedule) {
+			FloatingActionButton(onClick = viewModel::saveLesson) {
 				Icon(Icons.Filled.Done, stringResource(R.string.save_schedule))
 			}
 			
@@ -91,7 +102,13 @@ fun AddEditLessonScreen(
 		
 		LaunchedEffect(uiState.isClassSaved) {
 			if (uiState.isClassSaved) {
-				onScheduleUpdate(localDateToTimestamp(uiState.classDate!!))
+				resultNavigator.navigateBack(
+					if (viewModel.lessonId == null) {
+						ADD_RESULT_OK
+					} else {
+						EDIT_RESULT_OK
+					}
+				)
 			}
 		}
 		

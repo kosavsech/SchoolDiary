@@ -1,8 +1,7 @@
-package com.kxsv.schooldiary.ui.screens.subject_detail
+package com.kxsv.schooldiary.ui.screens.subject_list.subject_detail
 
 import android.graphics.Typeface
 import android.text.TextUtils
-import androidx.annotation.StringRes
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
@@ -31,7 +30,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,6 +43,7 @@ import com.kxsv.schooldiary.data.local.features.grade.GradeEntity
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.SubjectDetailTopAppBar
+import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.util.Mark
 import com.kxsv.schooldiary.util.Mark.Companion.getStringValueFrom
 import com.kxsv.schooldiary.util.Utils
@@ -60,6 +59,9 @@ import com.kxsv.ychart_mod.common.utils.DataUtils
 import com.kxsv.ychart_mod.ui.piechart.charts.PieChart
 import com.kxsv.ychart_mod.ui.piechart.models.PieChartConfig
 import com.kxsv.ychart_mod.ui.piechart.models.PieChartData
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.ramcosta.composedestinations.result.ResultBackNavigator
 import com.stephenvinouze.segmentedprogressbar.SegmentedProgressBar
 import com.stephenvinouze.segmentedprogressbar.models.SegmentColor
 import com.vanpra.composematerialdialogs.MaterialDialog
@@ -69,43 +71,55 @@ import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 import com.vanpra.composematerialdialogs.title
 import java.time.format.DateTimeFormatter
 
+data class SubjectDetailScreenNavArgs(
+	val subjectId: Long,
+)
+
+@Destination(
+	navArgsDelegate = SubjectDetailScreenNavArgs::class
+)
 @Composable
 fun SubjectDetailScreen(
-	@StringRes userMessage: Int?,
-	onGradeClick: (String) -> Unit,
-	onEditSubject: (Long) -> Unit,
-	onBack: () -> Unit,
-	onDeleteSubject: () -> Unit,
-	modifier: Modifier = Modifier,
+	resultNavigator: ResultBackNavigator<Int>,
+	destinationsNavigator: DestinationsNavigator,
 	viewModel: SubjectDetailViewModel = hiltViewModel(),
-	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+	snackbarHostState: SnackbarHostState,
 ) {
+	val navigator = SubjectDetailScreenNavActions(navigator = destinationsNavigator)
 	val uiState = viewModel.uiState.collectAsState().value
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-		modifier = modifier.fillMaxSize(),
+		modifier = Modifier.fillMaxSize(),
 		topBar = {
 			SubjectDetailTopAppBar(
-				title = uiState.subjectWithTeachers?.subject?.getName(),
-				onBack = onBack,
-				onDelete = viewModel::deleteSubject
+				title = uiState.subjectWithTeachers?.subject?.getName()
+					?: stringResource(R.string.subject_not_loaded),
+				onBack = { destinationsNavigator.popBackStack() },
+				onDelete = {
+					viewModel.deleteSubject()
+					resultNavigator.navigateBack(DELETE_RESULT_OK)
+				}
 			)
 		},
 	) { paddingValues ->
 		val targetMarkDialogState = rememberMaterialDialogState(false)
 		SubjectContent(
-			loading = uiState.isLoading,
+			isLoading = uiState.isLoading,
 			empty = (uiState.subjectWithTeachers == null && uiState.grades.isEmpty()) && !uiState.isLoading,
 			subject = uiState.subjectWithTeachers?.subject,
 			targetMark = uiState.targetMark,
 			dialogState = targetMarkDialogState,
 			teachers = uiState.subjectWithTeachers?.teachers?.toList(),
 			grades = uiState.grades,
-			currentEduPerformancePeriod = uiState.period,
+			currentPeriod = uiState.period,
 			eduPerformance = uiState.eduPerformance,
 			onPeriodChange = { viewModel.changePeriod(it) },
-			onGradeClick = onGradeClick,
-			onEditSubject = onEditSubject,
+			onGradeClick = { /*TODO pop-up with fetched date of grade */ },
+			onEditSubject = {
+				val subject = uiState.subjectWithTeachers?.subject
+				if (subject != null) navigator.onEditSubject(subject.subjectId)
+			},
+			onRefresh = { viewModel.refresh() },
 			modifier = Modifier.padding(paddingValues)
 		)
 		
@@ -122,35 +136,24 @@ fun SubjectDetailScreen(
 				viewModel.snackbarMessageShown()
 			}
 		}
-		
-		LaunchedEffect(uiState.isSubjectDeleted) {
-			if (uiState.isSubjectDeleted) {
-				onDeleteSubject()
-			}
-		}
-		
-		if (userMessage != null) {
-			LaunchedEffect(userMessage != 0) {
-				viewModel.showEditResultMessage(userMessage)
-			}
-		}
 	}
 }
 
 @Composable
 private fun SubjectContent(
-	loading: Boolean,
+	isLoading: Boolean,
 	empty: Boolean,
 	subject: SubjectEntity?,
 	targetMark: Double,
 	dialogState: MaterialDialogState,
 	teachers: List<TeacherEntity>?,
-	currentEduPerformancePeriod: EduPerformancePeriod,
+	currentPeriod: EduPerformancePeriod,
 	grades: List<GradeEntity>,
 	eduPerformance: EduPerformanceEntity?,
 	onPeriodChange: (EduPerformancePeriod) -> Unit,
 	onGradeClick: (String) -> Unit,
-	onEditSubject: (Long) -> Unit,
+	onEditSubject: () -> Unit,
+	onRefresh: () -> Unit,
 	modifier: Modifier,
 ) {
 	val screenPadding = Modifier.padding(
@@ -162,11 +165,11 @@ private fun SubjectContent(
 		.then(screenPadding)
 	
 	LoadingContent(
-		loading = loading,
+		loading = isLoading,
 		isContentScrollable = true,
 		empty = empty,
 		emptyContent = { Text(text = stringResource(R.string.no_data), modifier = commonModifier) },
-		onRefresh = {}
+		onRefresh = onRefresh
 	) {
 		Column(
 			modifier = modifier.verticalScroll(rememberScrollState())
@@ -185,7 +188,7 @@ private fun SubjectContent(
 			Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding)))
 			
 			TermSelector(
-				currentEduPerformancePeriod = currentEduPerformancePeriod,
+				currentPeriod = currentPeriod,
 				onPeriodChange = onPeriodChange
 			)
 			
@@ -199,48 +202,49 @@ private fun SubjectContent(
 					targetMark = targetMark,
 					dialogState = dialogState
 				)
-			}
-			
-			Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.vertical_margin)))
-			
-			val fivesCount = eduPerformance?.marks?.count { it == Mark.FIVE }?.toFloat() ?: 0F
-			val fourthsCount = eduPerformance?.marks?.count { it == Mark.FOUR }?.toFloat() ?: 0F
-			val threesCount = eduPerformance?.marks?.count { it == Mark.THREE }?.toFloat() ?: 0F
-			val twosCount = eduPerformance?.marks?.count { it == Mark.TWO }?.toFloat() ?: 0F
-			val pieChartData = PieChartData(
-				slices = listOf(
-					PieChartData.Slice("5", fivesCount, Color(0xFF5200D5)),
-					PieChartData.Slice("4", fourthsCount, Color(0xFF2A7511)),
-					PieChartData.Slice("3", threesCount, Color(0xFFF68300)),
-					PieChartData.Slice("2", twosCount, Color(0xFFD10000)),
-				), plotType = PlotType.Pie
-			)
-			val pieChartConfig = PieChartConfig(
-				activeSliceAlpha = 0.9f,
-				isEllipsizeEnabled = true,
-				sliceLabelEllipsizeAt = TextUtils.TruncateAt.MIDDLE,
-				sliceLabelTypeface = Typeface.defaultFromStyle(Typeface.ITALIC),
-				isAnimationEnable = true,
-				chartPadding = 40,
-				showSliceLabels = true,
-				labelVisible = true,
-				labelType = PieChartConfig.LabelType.BOTH,
-				sumUnit = "unit"
-			)
-			
-			Column(
-				modifier = Modifier
-					.height(300.dp)
-					.padding(horizontal = dimensionResource(R.dimen.horizontal_margin))
-			) {
-				Legends(
-					legendsConfig = DataUtils.getLegendsConfigFromPieChartData(pieChartData, 4)
+				
+				Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.vertical_margin)))
+				
+				val fivesCount = eduPerformance.marks.count { it == Mark.FIVE }.toFloat()
+				val fourthsCount = eduPerformance.marks.count { it == Mark.FOUR }.toFloat()
+				val threesCount = eduPerformance.marks.count { it == Mark.THREE }.toFloat()
+				val twosCount = eduPerformance.marks.count { it == Mark.TWO }.toFloat()
+				
+				val pieChartData = PieChartData(
+					slices = listOf(
+						PieChartData.Slice("5", fivesCount, Color(0xFF5200D5)),
+						PieChartData.Slice("4", fourthsCount, Color(0xFF2A7511)),
+						PieChartData.Slice("3", threesCount, Color(0xFFF68300)),
+						PieChartData.Slice("2", twosCount, Color(0xFFD10000)),
+					), plotType = PlotType.Pie
 				)
-				PieChart(
-					modifier = Modifier,
-					pieChartData = pieChartData,
-					pieChartConfig = pieChartConfig
+				val pieChartConfig = PieChartConfig(
+					activeSliceAlpha = 0.9f,
+					isEllipsizeEnabled = true,
+					sliceLabelEllipsizeAt = TextUtils.TruncateAt.MIDDLE,
+					sliceLabelTypeface = Typeface.defaultFromStyle(Typeface.ITALIC),
+					isAnimationEnable = true,
+					chartPadding = 40,
+					showSliceLabels = true,
+					labelVisible = true,
+					labelType = PieChartConfig.LabelType.BOTH,
+					sumUnit = "unit"
 				)
+				
+				Column(
+					modifier = Modifier
+						.height(300.dp)
+						.padding(horizontal = dimensionResource(R.dimen.horizontal_margin))
+				) {
+					Legends(
+						legendsConfig = DataUtils.getLegendsConfigFromPieChartData(pieChartData, 4)
+					)
+					PieChart(
+						modifier = Modifier,
+						pieChartData = pieChartData,
+						pieChartConfig = pieChartConfig
+					)
+				}
 			}
 			GradesHistory(grades = grades, onGradeClick = onGradeClick)
 		}
@@ -390,7 +394,7 @@ private fun TargetGradeDialog(
 
 @Composable
 private fun TermSelector(
-	currentEduPerformancePeriod: EduPerformancePeriod,
+	currentPeriod: EduPerformancePeriod,
 	onPeriodChange: (EduPerformancePeriod) -> Unit,
 ) {
 	val buttons = listOf(
@@ -400,7 +404,7 @@ private fun TermSelector(
 		Utils.PeriodButton("Fourth term", EduPerformancePeriod.FOURTH_TERM),
 	)
 	LazyRow(
-		state = LazyListState(firstVisibleItemIndex = currentEduPerformancePeriod.ordinal)
+		state = LazyListState(firstVisibleItemIndex = currentPeriod.ordinal)
 	) {
 		items(buttons) {
 			OutlinedButton(
@@ -408,7 +412,7 @@ private fun TermSelector(
 				modifier = Modifier.padding(
 					horizontal = dimensionResource(R.dimen.list_item_padding)
 				),
-				enabled = (currentEduPerformancePeriod != it.callbackPeriod)
+				enabled = (currentPeriod != it.callbackPeriod)
 			) {
 				Text(text = it.text)
 			}
@@ -471,7 +475,7 @@ private fun SubjectInfo(
 	modifier: Modifier = Modifier,
 	subject: SubjectEntity?,
 	teachers: List<TeacherEntity>?,
-	onEditSubject: (Long) -> Unit,
+	onEditSubject: () -> Unit,
 ) {
 	ElevatedCard(
 		modifier = modifier
@@ -504,7 +508,7 @@ private fun SubjectInfo(
 			}
 			
 			Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding)))
-			Button(onClick = { if (subject != null) onEditSubject(subject.subjectId) }) {
+			Button(onClick = onEditSubject) {
 				Text(
 					text = stringResource(R.string.edit_subject),
 					style = MaterialTheme.typography.labelMedium

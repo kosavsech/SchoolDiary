@@ -8,16 +8,17 @@ import com.kxsv.schooldiary.data.local.features.subject.SubjectDao
 import com.kxsv.schooldiary.data.remote.WebService
 import com.kxsv.schooldiary.data.remote.grade.DayGradeDto
 import com.kxsv.schooldiary.data.remote.grade.GradeParser
-import com.kxsv.schooldiary.di.ApplicationScope
-import com.kxsv.schooldiary.di.DefaultDispatcher
-import com.kxsv.schooldiary.di.IoDispatcher
+import com.kxsv.schooldiary.di.util.DefaultDispatcher
+import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
 import com.kxsv.schooldiary.util.Utils.rangeToList
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -34,9 +35,7 @@ class GradeRepositoryImpl @Inject constructor(
 	private val subjectDataSource: SubjectDao,
 	@DefaultDispatcher private val dispatcher: CoroutineDispatcher,
 	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
-	@ApplicationScope private val scope: CoroutineScope,
 ) : GradeRepository {
-	private var newGradesFound: Boolean = false
 	
 	override fun observeAllOrderedByMarkDate(): Flow<List<GradeEntity>> {
 		return gradeDataSource.observeAllOrderedByMarkDate()
@@ -71,19 +70,25 @@ class GradeRepositoryImpl @Inject constructor(
 		return GradeParser().parse(dayInfo, localDate)
 	}
 	
-	override suspend fun fetchRecentGrades(): Unit = withContext(ioDispatcher) {
-		// todo change to NOW
-		val startRange = LocalDate.of(2023, 2, 19)
-		val period = (startRange..startRange.plusDays(14)).rangeToList()
-		period.forEach { date ->
-			if (date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
-			async {
-				val gradesLocalised = fetchGradeByDate(date).toGradeEntities()
-				updateDatabase(gradesLocalised)
+	override suspend fun fetchRecentGrades(): List<GradeWithSubject> {
+		return withContext(ioDispatcher) {
+			withTimeout(15000L) {
+				val newGradesFound: MutableList<GradeWithSubject> = mutableListOf()
+				// todo change to NOW
+				val startRange = LocalDate.of(2023, 2, 19)
+				val period = (startRange..startRange.plusDays(14)).rangeToList()
+				period.forEach { date ->
+					if (date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
+					async {
+						val gradesWithSubjectLocalised =
+							fetchGradeByDate(date).toGradesWithSubject()
+						newGradesFound.addAll(updateDatabase(gradesWithSubjectLocalised))
+					}
+				}
+				return@withTimeout newGradesFound
 			}
 		}
 	}
-	
 	
 	override suspend fun getGradesWithSubjects(): List<GradeWithSubject> {
 		return gradeDataSource.getAllWithSubjects()
@@ -99,7 +104,11 @@ class GradeRepositoryImpl @Inject constructor(
 	
 	override suspend fun create(grade: GradeEntity): String {
 		val gradeId =
-			generateGradeId(date = grade.date, index = grade.index, lessonIndex = grade.lessonIndex)
+			generateGradeId(
+				date = grade.date,
+				index = grade.index,
+				lessonIndex = grade.lessonIndex
+			)
 		gradeDataSource.upsert(grade.copy(gradeId = gradeId))
 		return gradeId
 	}
@@ -120,17 +129,37 @@ class GradeRepositoryImpl @Inject constructor(
 		gradeDataSource.deleteById(gradeId)
 	}
 	
-	private suspend fun updateDatabase(gradeEntities: List<GradeEntity>) = scope.launch {
-		for (gradeEntity in gradeEntities) {
-			val gradeFound = gradeDataSource.getById(gradeEntity.gradeId) != null
-			if (gradeFound) {
-				update(gradeEntity)
-			} else {
-				create(gradeEntity)
-				newGradesFound = true
-				Log.i(TAG, "updateDatabase: FOUND NEW GRADE $gradeEntity")
+	private suspend fun updateDatabase(gradeEntities: List<GradeWithSubject>): List<GradeWithSubject> {
+		return coroutineScope {
+			val newGradesFound: MutableList<GradeWithSubject> = mutableListOf()
+			for (gradeEntity in gradeEntities) {
+				launch {
+					val gradeFound = measurePerformanceInMS(
+						{ time, result ->
+							Log.e(
+								TAG,
+								"gradeDataSource.getById: $time ms\n found = $result",
+							)
+						}
+					) {
+						gradeDataSource.getById(gradeEntity.grade.gradeId) != null
+					}
+					Log.i(
+						TAG,
+						"updateDatabase: gradeFound = $gradeFound and id = ${gradeEntity.grade.gradeId}"
+					)
+					if (gradeFound) {
+						update(gradeEntity.grade)
+					} else {
+						create(gradeEntity.grade)
+						newGradesFound.add(gradeEntity)
+						Log.i(TAG, "updateDatabase: FOUND NEW GRADE ${gradeEntity.grade}")
+					}
+				}
 			}
+			newGradesFound
 		}
+		
 	}
 	
 	private suspend fun DayGradeDto.toGradeEntity(): GradeEntity {
@@ -156,6 +185,33 @@ class GradeRepositoryImpl @Inject constructor(
 	}
 	
 	private suspend fun List<DayGradeDto>.toGradeEntities() = map { it.toGradeEntity() }
+	
+	private suspend fun DayGradeDto.toGradeWithSubject(): GradeWithSubject {
+		try {
+			val subjectEntity =
+				subjectDataSource.getByName(subjectAncestorName)
+					?: throw NoSuchElementException("Not found subject with name $subjectAncestorName")
+			// TODO: add prompt to create subject with such name, or create it forcibly
+			return GradeWithSubject(
+				grade = GradeEntity(
+					mark = mark,
+					date = date,
+					fetchDateTime = LocalDateTime.now(),
+					subjectMasterId = subjectEntity.subjectId,
+					typeOfWork = typeOfWork,
+					index = index,
+					lessonIndex = lessonIndex,
+					gradeId = generateGradeId(date = date, index = index, lessonIndex = lessonIndex)
+				),
+				subject = subjectEntity
+			)
+			
+		} catch (e: NoSuchElementException) {
+			throw RuntimeException("Failed to convert network to local", e)
+		}
+	}
+	
+	private suspend fun List<DayGradeDto>.toGradesWithSubject() = map { it.toGradeWithSubject() }
 	
 	private fun generateGradeId(date: LocalDate, index: Int, lessonIndex: Int): String {
 		val dateStamp = date.atStartOfDay(ZoneId.of("Europe/Moscow")).toEpochSecond().toString()

@@ -42,15 +42,9 @@ class TeachersViewModel @Inject constructor(
 	private val _uiState = MutableStateFlow(TeachersUiState())
 	val uiState = combine(_uiState, _teachersAsync) { state, teachersAsync ->
 		when (teachersAsync) {
-			Async.Loading -> {
-				TeachersUiState(isLoading = true)
-			}
+			Async.Loading -> TeachersUiState(isLoading = true)
 			
-			is Async.Error -> {
-				TeachersUiState(
-					userMessage = teachersAsync.errorMessage
-				)
-			}
+			is Async.Error -> TeachersUiState(userMessage = teachersAsync.errorMessage)
 			
 			is Async.Success -> {
 				TeachersUiState(

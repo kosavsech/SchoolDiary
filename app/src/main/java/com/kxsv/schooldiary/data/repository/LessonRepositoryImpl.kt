@@ -95,8 +95,8 @@ class LessonRepositoryImpl @Inject constructor(
 		lessonDataSource.deleteAllByDayId(studyDayMasterId)
 	}
 	
-	override suspend fun deleteLesson(scheduleId: Long) {
-		lessonDataSource.deleteById(scheduleId)
+	override suspend fun deleteLesson(lessonId: Long) {
+		lessonDataSource.deleteById(lessonId)
 	}
 	
 }

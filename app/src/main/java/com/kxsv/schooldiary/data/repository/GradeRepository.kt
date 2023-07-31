@@ -24,7 +24,7 @@ interface GradeRepository {
 	
 	suspend fun fetchGradeByDate(localDate: LocalDate): List<DayGradeDto>
 	
-	suspend fun fetchRecentGrades()
+	suspend fun fetchRecentGrades(): List<GradeWithSubject>
 	
 	suspend fun getGradesWithSubjects(): List<GradeWithSubject>
 	

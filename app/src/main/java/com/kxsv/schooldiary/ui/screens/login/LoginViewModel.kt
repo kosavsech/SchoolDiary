@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.remote.WebService
-import com.kxsv.schooldiary.di.IoDispatcher
+import com.kxsv.schooldiary.di.util.IoDispatcher
 import com.kxsv.schooldiary.util.remote.NetworkError
 import com.kxsv.schooldiary.util.remote.NetworkException
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,7 +23,7 @@ private const val TAG = "LoginViewModel"
 data class LoginUiState(
 	val eduLogin: String = "",
 	val eduPassword: String = "",
-	val userMessage: Int? = null,
+	val errorMessage: Int? = null,
 	val authError: NetworkError? = null,
 	val loggedIn: Boolean = false,
 )
@@ -38,7 +38,7 @@ class LoginViewModel @Inject constructor(
 	val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 	
 	fun snackbarMessageShown() {
-		_uiState.update { it.copy(userMessage = null) }
+		_uiState.update { it.copy(errorMessage = null) }
 	}
 	
 	fun updatePassword(password: String) {
@@ -50,7 +50,7 @@ class LoginViewModel @Inject constructor(
 	}
 	
 	private fun showSnackbarMessage(message: Int) {
-		_uiState.update { it.copy(userMessage = message) }
+		_uiState.update { it.copy(errorMessage = message) }
 	}
 	
 	private fun processAuthError() {
@@ -67,7 +67,7 @@ class LoginViewModel @Inject constructor(
 	fun login() {
 		if (uiState.value.eduLogin.isEmpty() || uiState.value.eduPassword.isEmpty()) {
 			_uiState.update {
-				it.copy(userMessage = R.string.fill_required_fields_message)
+				it.copy(errorMessage = R.string.fill_required_fields_message)
 			}
 			return
 		}

@@ -49,10 +49,6 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.ViewModel
-import androidx.navigation.NavBackStackEntry
-import androidx.navigation.NavHostController
 import com.kizitonwose.calendar.compose.CalendarLayoutInfo
 import com.kizitonwose.calendar.compose.CalendarState
 import com.kizitonwose.calendar.core.CalendarDay
@@ -83,22 +79,30 @@ import kotlin.math.roundToInt
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun LoadingContent(
+	modifier: Modifier = Modifier,
 	loading: Boolean,
 	isContentScrollable: Boolean = false,
 	empty: Boolean,
 	emptyContent: @Composable () -> Unit = { Text(text = "Empty") },
-	onRefresh: () -> Unit,
-	modifier: Modifier = Modifier,
+	onRefresh: (() -> Unit)? = null,
 	content: @Composable () -> Unit,
 ) {
 	val isEmpty = empty && !loading
+	
 	val scrollModifier = if (!isContentScrollable || isEmpty) {
 		Modifier.verticalScroll(rememberScrollState())
 	} else Modifier
-	val pullRefreshState = rememberPullRefreshState(loading, onRefresh)
+	
+	val pullRefreshState = onRefresh?.let { rememberPullRefreshState(loading, it) }
+		?: rememberPullRefreshState(loading, {})
+	
+	val pullRefreshModifier = if (onRefresh != null) {
+		Modifier.pullRefresh(pullRefreshState)
+	} else Modifier
+	
 	Box(
 		modifier = modifier
-			.pullRefresh(pullRefreshState)
+			.then(pullRefreshModifier)
 			.fillMaxSize()
 			.then(scrollModifier),
 	) {
@@ -107,17 +111,56 @@ fun LoadingContent(
 	}
 	
 }
-
+/*
 @Composable
-inline fun <reified T : ViewModel> NavBackStackEntry.sharedViewModel(
-	navController: NavHostController,
-): T {
-	val navGraphRoute = destination.parent?.route ?: return hiltViewModel()
-	val parentEntry = remember(this) {
-		navController.getBackStackEntry(navGraphRoute)
+fun Indicator(
+	size: Dp = 32.dp,
+	sweepAngle: Float = 90f,
+	color: Color = MaterialTheme.colorScheme.primary,
+	strokeWidth: Dp = ProgressIndicatorDefaults.CircularStrokeWidth,
+) {
+	// https://developer.android.com/jetpack/compose/animation
+	val transition = rememberInfiniteTransition(label = "")
+	
+	val currentArcStartAngle by transition.animateValue(
+		0,
+		360,
+		Int.VectorConverter,
+		infiniteRepeatable(
+			animation = tween(
+				durationMillis = 1100,
+				easing = LinearEasing
+			)
+		),
+		label = ""
+	)
+	
+	val stroke = with(LocalDensity.current) {
+		Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Square)
 	}
-	return hiltViewModel(parentEntry)
-}
+	
+	Canvas(
+		Modifier
+			.progressSemantics()
+			.size(size)
+			.padding(strokeWidth / 2) // otherwise, not the whole circle will fit in the canvas
+	) {
+		// draw "background" (gray) circle with defined stroke.
+		// without explicit center and radius it fit canvas bounds
+		drawCircle(Color.LightGray, style = stroke)
+		
+		// draw arc with the same stroke
+		drawArc(
+			color,
+			// arc start angle
+			// -90 shifts the start position towards the y-axis
+			startAngle = currentArcStartAngle.toFloat() - 90,
+			sweepAngle = sweepAngle,
+			useCenter = false,
+			style = stroke
+		)
+	}
+}*/
 
 /**
  * Alternative way to find the first fully visible month in the layout.

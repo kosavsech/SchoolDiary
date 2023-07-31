@@ -29,7 +29,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -38,10 +37,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavBackStackEntry
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditPatternTopAppBar
+import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.util.ui.LoadingContent
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.ramcosta.composedestinations.result.ResultBackNavigator
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.MaterialDialogState
 import com.vanpra.composematerialdialogs.datetime.time.timepicker
@@ -52,26 +56,40 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 
+data class AddEditPatternScreenNavArgs(
+	val patternId: Long?,
+	@StringRes val topBarTitle: Int,
+)
+
+@Destination(
+	navArgsDelegate = AddEditPatternScreenNavArgs::class
+)
 @Composable
-fun AddEditTimePatternScreen(
-	@StringRes topBarTitle: Int,
-	onPatternUpdate: () -> Unit,
-	onBack: () -> Unit,
-	modifier: Modifier = Modifier,
+fun AddEditPatternScreen(
+	resultNavigator: ResultBackNavigator<Int>,
+	navigator: DestinationsNavigator,
 	viewModel: AddEditPatternViewModel = hiltViewModel(),
-	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+	snackbarHostState: SnackbarHostState,
+	navBackStackEntry: NavBackStackEntry,
 ) {
+	val navArgs: AddEditPatternScreenNavArgs = navBackStackEntry.navArgs()
+	val topBarTitle = navArgs.topBarTitle
 	Scaffold(
-		modifier = modifier.fillMaxSize(),
+		modifier = Modifier.fillMaxSize(),
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-		topBar = { AddEditPatternTopAppBar(topBarTitle, onBack) },
+		topBar = { AddEditPatternTopAppBar(topBarTitle) { navigator.popBackStack() } },
 		floatingActionButton = {
 			Row {
 				FloatingActionButton(onClick = viewModel::showStrokeDialog) {
 					Icon(Icons.Filled.Add, stringResource(R.string.add_pattern_stroke))
 				}
 				Spacer(Modifier.padding(horizontal = dimensionResource(R.dimen.horizontal_margin)))
-				FloatingActionButton(onClick = viewModel::savePattern) {
+				FloatingActionButton(
+					onClick = {
+						val result = viewModel.savePattern()
+						if (result != null) resultNavigator.navigateBack(result)
+					}
+				) {
 					Icon(Icons.Filled.Done, stringResource(R.string.save_pattern))
 				}
 			}
@@ -99,12 +117,6 @@ fun AddEditTimePatternScreen(
 				updateEndTime = viewModel::updateEndTime,
 			)
 		}
-		// Check if the pattern is saved and call onPatternUpdate event
-		LaunchedEffect(uiState.isPatternSaved) {
-			if (uiState.isPatternSaved) {
-				onPatternUpdate()
-			}
-		}
 		
 		uiState.userMessage?.let { userMessage ->
 			val snackbarText = stringResource(userMessage)
@@ -127,7 +139,7 @@ private fun AddEditPatternContent(
 	modifier: Modifier = Modifier,
 ) {
 	LoadingContent(
-		loading,
+		loading = loading,
 		empty = false,
 		emptyContent = { Text(text = "Empty") },
 		onRefresh = {}) {

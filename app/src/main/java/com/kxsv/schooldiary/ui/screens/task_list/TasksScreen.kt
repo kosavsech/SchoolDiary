@@ -1,6 +1,7 @@
 package com.kxsv.schooldiary.ui.screens.task_list
 
 
+import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DrawerState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -24,7 +26,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.Bottom
 import androidx.compose.ui.Modifier
@@ -35,47 +36,61 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.data.local.features.task.TaskEntity
 import com.kxsv.schooldiary.data.local.features.task.TaskWithSubject
 import com.kxsv.schooldiary.ui.main.app_bars.bottombar.TasksBottomAppBar
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.TasksTopAppBar
+import com.kxsv.schooldiary.ui.screens.grade_list.MY_URI
 import com.kxsv.schooldiary.util.ui.LoadingContent
+import com.ramcosta.composedestinations.annotation.DeepLink
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.FULL_ROUTE_PLACEHOLDER
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
+@Destination(
+	deepLinks = [
+		DeepLink(
+			action = Intent.ACTION_VIEW,
+			uriPattern = "$MY_URI/$FULL_ROUTE_PLACEHOLDER"
+		)
+	]
+)
 @Composable
 fun TasksScreen(
-	onAddTask: () -> Unit,
-	onTaskClick: (TaskEntity) -> Unit,
-	openDrawer: () -> Unit,
-	modifier: Modifier = Modifier,
+	destinationsNavigator: DestinationsNavigator,
+	drawerState: DrawerState,
+	coroutineScope: CoroutineScope,
 	viewModel: TasksViewModel = hiltViewModel(),
-	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+	snackbarHostState: SnackbarHostState,
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
+	val navigator = TasksScreenNavActions(navigator = destinationsNavigator)
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		topBar = {
 			TasksTopAppBar(
-				openDrawer = openDrawer,
+				openDrawer = { coroutineScope.launch { drawerState.open() } },
 				onDoneFilterSet = { viewModel.changeDoneFilter(it) }
 			)
 		},
 		bottomBar = {
 			TasksBottomAppBar(
 				selectedDataFilterText = stringResource(id = uiState.dateFilterType.getLocalisedStringId()),
-				onAddTask = onAddTask,
+				onAddTask = navigator.onAddTask,
 				onDateFilterChoose = { viewModel.changeDataFilter(it) }
 			)
 		},
-		modifier = modifier.fillMaxSize(),
+		modifier = Modifier.fillMaxSize(),
 	) { paddingValues ->
 		
 		TasksContent(
 			isLoading = uiState.isLoading,
 			tasksGroups = uiState.tasks,
-			onTaskClick = onTaskClick,
+			onTaskClick = { taskId -> navigator.onTaskClick(taskId) },
 			modifier = Modifier.padding(paddingValues)
 		)
 		
@@ -94,7 +109,7 @@ fun TasksScreen(
 private fun TasksContent(
 	isLoading: Boolean,
 	tasksGroups: Map<LocalDate, List<TaskWithSubject>>,
-	onTaskClick: (TaskEntity) -> Unit,
+	onTaskClick: (Long) -> Unit,
 	modifier: Modifier,
 ) {
 	LoadingContent(
@@ -146,7 +161,7 @@ private fun TasksContent(
 					}
 				}
 				items(tasksGroups[key]!!) { taskWithSubject ->
-					Column() {
+					Column {
 						TaskItem(
 							taskWithSubject = taskWithSubject,
 							onTaskClick = onTaskClick,
@@ -167,12 +182,12 @@ private fun TasksContent(
 @Composable
 private fun TaskItem(
 	taskWithSubject: TaskWithSubject,
-	onTaskClick: (TaskEntity) -> Unit,
+	onTaskClick: (Long) -> Unit,
 ) {
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
-			.clickable { onTaskClick(taskWithSubject.taskEntity) }
+			.clickable { onTaskClick(taskWithSubject.taskEntity.taskId) }
 			.padding(
 				vertical = dimensionResource(R.dimen.vertical_margin),
 				horizontal = dimensionResource(R.dimen.horizontal_margin)

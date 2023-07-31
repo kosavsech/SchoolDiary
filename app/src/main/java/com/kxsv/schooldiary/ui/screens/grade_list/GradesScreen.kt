@@ -1,6 +1,6 @@
 package com.kxsv.schooldiary.ui.screens.grade_list
 
-import androidx.annotation.StringRes
+import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.DrawerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -19,9 +20,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -37,38 +35,52 @@ import com.kxsv.schooldiary.util.Mark
 import com.kxsv.schooldiary.util.Mark.Companion.getStringValueFrom
 import com.kxsv.schooldiary.util.ui.GradesSortType
 import com.kxsv.schooldiary.util.ui.LoadingContent
+import com.ramcosta.composedestinations.annotation.DeepLink
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.FULL_ROUTE_PLACEHOLDER
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
+const val MY_URI = "https://www.school-diary.com"
+
+@Destination(
+	deepLinks = [
+		DeepLink(
+			action = Intent.ACTION_VIEW,
+			uriPattern = "$MY_URI/$FULL_ROUTE_PLACEHOLDER"
+		)
+	]
+)
 @Composable
 fun GradesScreen(
-	@StringRes userMessage: Int,
-	onUserMessageDisplayed: () -> Unit,
-	onGradeClick: (GradeEntity) -> Unit,
-	openDrawer: () -> Unit,
-	modifier: Modifier = Modifier,
+	destinationsNavigator: DestinationsNavigator,
+	drawerState: DrawerState,
+	coroutineScope: CoroutineScope,
 	viewModel: GradesViewModel = hiltViewModel(),
-	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+	snackbarHostState: SnackbarHostState,
 ) {
+	val navigator = GradesScreenNavActions(navigator = destinationsNavigator)
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		topBar = {
 			GradesTopAppBar(
-				openDrawer = openDrawer,
+				openDrawer = { coroutineScope.launch { drawerState.open() } },
 				onSortByMarkDate = { viewModel.sortGrades(GradesSortType.MARK_DATE) },
 				onSortByFetchDate = { viewModel.sortGrades(GradesSortType.FETCH_DATE) }
 			)
 		},
-		modifier = modifier.fillMaxSize(),
+		modifier = Modifier.fillMaxSize(),
 	) { paddingValues ->
 		val uiState = viewModel.uiState.collectAsState().value
 		
 		GradesContent(
 			loading = uiState.isLoading,
 			grades = uiState.grades,
-			//noSubjectsLabel = 0,
-			onGradeClick = onGradeClick,
+			onGradeClick = { gradeId -> navigator.onGradeClick(gradeId) },
 			onRefresh = { viewModel.fetchGrades() },
 			modifier = Modifier.padding(paddingValues),
 		)
@@ -82,14 +94,14 @@ fun GradesScreen(
 			}
 		}
 		
-		// Check if there's a userMessage to show to the user
+		/*// Check if there's a userMessage to show to the user
 		val currentOnUserMessageDisplayed by rememberUpdatedState(onUserMessageDisplayed)
 		LaunchedEffect(userMessage) {
 			if (userMessage != 0) {
 				viewModel.showEditResultMessage(userMessage)
 				currentOnUserMessageDisplayed()
 			}
-		}
+		}*/
 	}
 }
 
@@ -100,11 +112,12 @@ private fun GradesContent(
 	// TODO
 	//  @StringRes noSubjectsLabel: Int,
 	//  onRefresh: () -> Unit,
-	onGradeClick: (GradeEntity) -> Unit,
+	onGradeClick: (String) -> Unit,
 	onRefresh: () -> Unit,
 	modifier: Modifier,
 ) {
 	LoadingContent(
+		modifier = modifier,
 		loading = loading,
 		isContentScrollable = true,
 		empty = grades.isEmpty(),
@@ -127,14 +140,14 @@ private fun GradesContent(
 @Composable
 private fun GradeItem(
 	gradeWithSubject: GradeWithSubject,
-	onGradeClick: (GradeEntity) -> Unit,
+	onGradeClick: (String) -> Unit,
 ) {
 	Row(
 		verticalAlignment = Alignment.CenterVertically,
 		horizontalArrangement = Arrangement.SpaceBetween,
 		modifier = Modifier
 			.fillMaxWidth()
-			.clickable { onGradeClick(gradeWithSubject.grade) }
+			.clickable { onGradeClick(gradeWithSubject.grade.gradeId) }
 			.padding(
 				horizontal = dimensionResource(R.dimen.horizontal_margin),
 				vertical = dimensionResource(R.dimen.vertical_margin)

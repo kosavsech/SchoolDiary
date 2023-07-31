@@ -3,7 +3,7 @@ package com.kxsv.schooldiary.data.remote
 import android.util.Log
 import com.kxsv.schooldiary.data.remote.utils.RemoteUtils.handleErrorResponse
 import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
-import com.kxsv.schooldiary.di.IoDispatcher
+import com.kxsv.schooldiary.di.util.IoDispatcher
 import com.kxsv.schooldiary.util.remote.NetworkException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
