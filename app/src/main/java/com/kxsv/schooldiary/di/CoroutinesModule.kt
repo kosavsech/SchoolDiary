@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.kxsv.schooldiary.di.data_modules
+package com.kxsv.schooldiary.di
 
 import com.kxsv.schooldiary.di.util.ApplicationScope
 import com.kxsv.schooldiary.di.util.DefaultDispatcher

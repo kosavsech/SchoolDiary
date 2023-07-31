@@ -1,5 +1,6 @@
 package com.kxsv.schooldiary.ui.screens.grade_list
 
+import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -34,7 +35,9 @@ import com.kxsv.schooldiary.util.Mark
 import com.kxsv.schooldiary.util.Mark.Companion.getStringValueFrom
 import com.kxsv.schooldiary.util.ui.GradesSortType
 import com.kxsv.schooldiary.util.ui.LoadingContent
+import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.FULL_ROUTE_PLACEHOLDER
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -42,7 +45,16 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-@Destination
+const val MY_URI = "https://www.school-diary.com"
+
+@Destination(
+	deepLinks = [
+		DeepLink(
+			action = Intent.ACTION_VIEW,
+			uriPattern = "$MY_URI/$FULL_ROUTE_PLACEHOLDER"
+		)
+	]
+)
 @Composable
 fun GradesScreen(
 	destinationsNavigator: DestinationsNavigator,

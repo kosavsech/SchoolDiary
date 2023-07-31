@@ -16,8 +16,16 @@ annotation class ApplicationScope
 
 @Retention(AnnotationRetention.RUNTIME)
 @Qualifier
-annotation class NotificationBuilder
+annotation class GradeNotification
 
 @Retention(AnnotationRetention.RUNTIME)
 @Qualifier
-annotation class SummaryNotificationBuilder
+annotation class GradeSummaryNotification
+
+@Retention(AnnotationRetention.RUNTIME)
+@Qualifier
+annotation class TaskNotification
+
+@Retention(AnnotationRetention.RUNTIME)
+@Qualifier
+annotation class TaskSummaryNotification

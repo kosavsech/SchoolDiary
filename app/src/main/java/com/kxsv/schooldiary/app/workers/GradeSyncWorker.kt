@@ -4,9 +4,7 @@ import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.util.Log
 import androidx.core.app.ActivityCompat
@@ -16,9 +14,9 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
 import com.kxsv.schooldiary.data.repository.GradeRepository
-import com.kxsv.schooldiary.di.util.NotificationsConstants
+import com.kxsv.schooldiary.di.util.NotificationsConstants.FETCHED_GRADES_GROUP_ID
+import com.kxsv.schooldiary.di.util.NotificationsConstants.FETCHED_GRADES_SUMMARY_ID
 import com.kxsv.schooldiary.di.util.NotificationsConstants.GRADE_CHANNEL_ID
-import com.kxsv.schooldiary.ui.main.MainActivity
 import com.kxsv.schooldiary.util.Mark
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.remote.NetworkException
@@ -33,10 +31,8 @@ private const val TAG = "GradeSyncWorker"
 @HiltWorker
 class GradeSyncWorker @AssistedInject constructor(
 	@Assisted private val gradeRepository: GradeRepository,
-	@Assisted(NotificationsConstants.FETCHED_GRADE_SUMMARY_ID)
-	private val gradeSummaryNotificationBuilder: Notification.Builder,
-	@Assisted(NotificationsConstants.FETCHED_GRADE_GROUP_ID)
-	private val gradeNotificationBuilder: Notification.Builder,
+	@Assisted(FETCHED_GRADES_SUMMARY_ID) private val gradeSummaryNotificationBuilder: Notification.Builder,
+	@Assisted(FETCHED_GRADES_GROUP_ID) private val gradeNotificationBuilder: Notification.Builder,
 	@Assisted private val notificationManager: NotificationManager,
 	@Assisted private val context: Context,
 	@Assisted params: WorkerParameters,
@@ -55,19 +51,15 @@ class GradeSyncWorker @AssistedInject constructor(
 				gradeRepository.fetchRecentGrades()
 			}
 			if (ActivityCompat
-					.checkSelfPermission(
-						context,
-						Manifest.permission.POST_NOTIFICATIONS
-					) == PackageManager.PERMISSION_GRANTED
+					.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
+				PackageManager.PERMISSION_GRANTED
 			) {
 				Log.d(TAG, "DEBUG $newGradeEntities")
 				if (newGradeEntities.isNotEmpty()) {
 					notificationManager.notify(2, createSummaryNotification())
 					newGradeEntities.forEach {
 						notificationManager.notify(
-							it.grade.gradeId,
-							1,
-							createNotification(gradeEntity = it)
+							it.grade.gradeId, 1, createNotification(gradeEntity = it)
 						)
 					}
 				}
@@ -112,15 +104,7 @@ class GradeSyncWorker @AssistedInject constructor(
 	
 	private fun createSummaryNotification(): Notification {
 		createNotificationChannel()
-		
-		val mainActivityPendingIntent = PendingIntent.getActivity(
-			applicationContext,
-			0,
-			Intent(applicationContext, MainActivity::class.java),
-			PendingIntent.FLAG_IMMUTABLE
-		)
-		
-		return gradeSummaryNotificationBuilder.setContentIntent(mainActivityPendingIntent).build()
+		return gradeSummaryNotificationBuilder.build()
 	}
 	
 	private fun createNotification(gradeEntity: GradeWithSubject): Notification {
@@ -142,6 +126,5 @@ class GradeSyncWorker @AssistedInject constructor(
 			ContextCompat.getSystemService(applicationContext, NotificationManager::class.java)
 		
 		notificationManager?.createNotificationChannel(gradeChannel)
-		
 	}
 }

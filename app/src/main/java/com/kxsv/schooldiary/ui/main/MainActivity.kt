@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity() {
 		
 		workManager.enqueueUniquePeriodicWork(
 			"SoonTasksSyncWorker",
-			ExistingPeriodicWorkPolicy.KEEP,
+			ExistingPeriodicWorkPolicy.UPDATE,
 			taskSyncWorkRequest
 		)
 		
@@ -56,7 +56,6 @@ class MainActivity : ComponentActivity() {
 			SchoolDiaryTheme {
 				NavGraph(
 					startDestination = splashViewModel.startDestination.value,
-					splashViewModel = splashViewModel,
 					activity = this
 				)
 			}

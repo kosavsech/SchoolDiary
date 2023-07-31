@@ -14,7 +14,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.kxsv.schooldiary.ui.screens.NavGraph
 import com.kxsv.schooldiary.ui.screens.NavGraphs
-import com.kxsv.schooldiary.ui.screens.login.SplashViewModel
 import com.kxsv.schooldiary.ui.screens.schedule.ScheduleViewModel
 import com.ramcosta.composedestinations.DestinationsNavHost
 import com.ramcosta.composedestinations.navigation.dependency
@@ -28,7 +27,6 @@ fun NavGraph(
 	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 	activity: ComponentActivity,
 	startDestination: NavGraph,
-	splashViewModel: SplashViewModel,
 ) {
 	AppModalDrawer(
 		drawerState = drawerState,

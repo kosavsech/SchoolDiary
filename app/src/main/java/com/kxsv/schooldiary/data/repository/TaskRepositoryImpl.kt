@@ -4,11 +4,13 @@ import android.util.Log
 import com.kxsv.schooldiary.data.local.features.study_day.StudyDayDao
 import com.kxsv.schooldiary.data.local.features.subject.SubjectDao
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
+import com.kxsv.schooldiary.data.local.features.task.TaskAndUniqueIdWithSubject
 import com.kxsv.schooldiary.data.local.features.task.TaskDao
 import com.kxsv.schooldiary.data.local.features.task.TaskEntity
 import com.kxsv.schooldiary.data.local.features.task.TaskWithSubject
 import com.kxsv.schooldiary.data.mapper.toLocalWithSubject
 import com.kxsv.schooldiary.data.mapper.toTaskEntities
+import com.kxsv.schooldiary.data.mapper.toTasksAndUniqueIdWithSubject
 import com.kxsv.schooldiary.data.remote.WebService
 import com.kxsv.schooldiary.data.remote.lesson.ScheduleParser
 import com.kxsv.schooldiary.data.remote.task.TaskDto
@@ -21,6 +23,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.jsoup.select.Elements
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -59,85 +62,97 @@ class TaskRepositoryImpl @Inject constructor(
 		return taskDataSource.getAll()
 	}
 	
-	override suspend fun fetchSoonTasks(): Unit = withContext(ioDispatcher) {
+	override suspend fun fetchSoonTasks(): MutableList<TaskAndUniqueIdWithSubject> {
 		// todo change to NOW
-		val startRange = LocalDate.of(2023, 2, 11)
-		val period = (startRange..startRange.plusDays(7)).rangeToList()
-		period.forEach { date ->
-			if (date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
-			async {
-				Log.d(TAG, "fetchSoonTasks: started for date $date")
-				val dayWithClasses = studyDayDataSource.getByDateWithSchedulesAndSubjects(date)
-				var dayInfo: Elements? = null
-				val classes = if (dayWithClasses != null && dayWithClasses.classes.isNotEmpty()) {
-					dayWithClasses.classes.associateBy { it.lesson.index }
-				} else {
-					dayInfo = webService.getDayInfo(date)
-					ScheduleParser().parse(dayInfo = dayInfo, localDate = date)
-						.toLocalWithSubject(subjectDataSource, studyDayDataSource)
-				}
-				classes.forEach { classWithSubject ->
-					if (dayInfo == null) dayInfo = webService.getDayInfo(date)
-					val taskVariant = TaskParser().parse(
-						dayInfo = dayInfo!!,
-						date = date,
-						subject = classWithSubject.value.subject,
-					)
-					if (taskVariant.isNotEmpty()) {
-						Log.d(
-							TAG,
-							"fetchSoonTasks($date, ${classWithSubject.value.subject.getName()}):\n" +
-									" taskVariant found ${taskVariant.size}: ${taskVariant[0]}" +
-									(if (taskVariant.size > 1) taskVariant[1] else "") +
-									if (taskVariant.size > 2) "..." else ""
-						)
-						val localTasks =
-							getByDateAndSubject(date, classWithSubject.value.subject.subjectId)
-						if (localTasks.isNotEmpty()) {
-							Log.d(
-								TAG,
-								"fetchSoonTasks($date, ${classWithSubject.value.subject.getName()}):" +
-										" localTasks.isNotEmpty"
-							)
-							var deletedCounter = 0
-							localTasks.forEach { taskEntity ->
-								if (taskEntity.isFetched) {
-									deleteTask(taskEntity.taskId)
-									deletedCounter++
-								}
-							}
-							Log.d(
-								TAG,
-								"fetchSoonTasks($date, ${classWithSubject.value.subject.getName()}):\n" +
-										" deleted old fetched: $deletedCounter"
-							)
-							if (deletedCounter == taskVariant.size) {
-								taskDataSource.upsertAll(taskVariant.toTaskEntities())
-								Log.i(
-									TAG,
-									"fetchSoonTasks($date, ${classWithSubject.value.subject.getName()}):" +
-											" saving:\n $taskVariant"
-								)
+		return withContext(ioDispatcher) {
+			withTimeout(15000L) {
+				val startRange = LocalDate.of(2023, 2, 11)
+				val period = (startRange..startRange.plusDays(7)).rangeToList()
+				val result: MutableList<TaskAndUniqueIdWithSubject> = mutableListOf()
+				period.forEach { date ->
+					if (date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
+					async {
+						Log.d(TAG, "fetchSoonTasks: started for date $date")
+						val dayWithClasses =
+							studyDayDataSource.getByDateWithSchedulesAndSubjects(date)
+						var dayInfo: Elements? = null
+						val classes =
+							if (dayWithClasses != null && dayWithClasses.classes.isNotEmpty()) {
+								dayWithClasses.classes.associateBy { it.lesson.index }
 							} else {
-								Log.i(
-									TAG,
-									"fetchSoonTasks($date, ${classWithSubject.value.subject.getName()}):" +
-											" NOT saving:\n $taskVariant"
-								)
+								dayInfo = webService.getDayInfo(date)
+								ScheduleParser().parse(dayInfo = dayInfo, localDate = date)
+									.toLocalWithSubject(subjectDataSource, studyDayDataSource)
 							}
-						} else {
-							taskDataSource.upsertAll(taskVariant.toTaskEntities())
-							Log.d(
-								TAG,
-								"fetchSoonTasks($date, ${classWithSubject.value.subject.getName()}):" +
-										" localTasks.isEmpty so just saving\n $taskVariant"
+						classes.forEach { classWithSubject ->
+							if (dayInfo == null) dayInfo = webService.getDayInfo(date)
+							val taskVariant = TaskParser().parse(
+								dayInfo = dayInfo!!,
+								date = date,
+								subject = classWithSubject.value.subject,
 							)
+							if (taskVariant.isNotEmpty()) {
+								Log.d(
+									TAG,
+									"fetchSoonTasks($date, ${classWithSubject.value.subject.getName()}):\n" +
+											" taskVariant found ${taskVariant.size}: ${taskVariant[0]}" +
+											(if (taskVariant.size > 1) taskVariant[1] else "") +
+											if (taskVariant.size > 2) "..." else ""
+								)
+								val localTasks =
+									getByDateAndSubject(
+										date,
+										classWithSubject.value.subject.subjectId
+									)
+								if (localTasks.isNotEmpty()) {
+									Log.d(
+										TAG,
+										"fetchSoonTasks($date, ${classWithSubject.value.subject.getName()}):" +
+												" localTasks.isNotEmpty"
+									)
+									var deletedCounter = 0
+									localTasks.forEach { taskEntity ->
+										if (taskEntity.isFetched) {
+											deleteTask(taskEntity.taskId)
+											deletedCounter++
+										}
+									}
+									Log.d(
+										TAG,
+										"fetchSoonTasks($date, ${classWithSubject.value.subject.getName()}):\n" +
+												" deleted old fetched: $deletedCounter"
+									)
+									if (deletedCounter == taskVariant.size) {
+										taskDataSource.upsertAll(taskVariant.toTaskEntities())
+										Log.i(
+											TAG,
+											"fetchSoonTasks($date, ${classWithSubject.value.subject.getName()}):" +
+													" saving:\n $taskVariant"
+										)
+									} else {
+										Log.i(
+											TAG,
+											"fetchSoonTasks($date, ${classWithSubject.value.subject.getName()}):" +
+													" NOT saving:\n $taskVariant"
+										)
+									}
+								} else {
+									result.addAll(taskVariant.toTasksAndUniqueIdWithSubject())
+									taskDataSource.upsertAll(taskVariant.toTaskEntities())
+									Log.d(
+										TAG,
+										"fetchSoonTasks($date, ${classWithSubject.value.subject.getName()}):" +
+												" localTasks.isEmpty so just saving\n $taskVariant"
+									)
+								}
+							} else {
+								Log.d(TAG, "fetchSoonTasks: taskVariant not found")
+							}
+							
 						}
-					} else {
-						Log.d(TAG, "fetchSoonTasks: taskVariant not found")
 					}
-					
 				}
+				return@withTimeout result
 			}
 		}
 	}

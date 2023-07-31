@@ -1,6 +1,7 @@
 package com.kxsv.schooldiary.data.repository
 
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
+import com.kxsv.schooldiary.data.local.features.task.TaskAndUniqueIdWithSubject
 import com.kxsv.schooldiary.data.local.features.task.TaskEntity
 import com.kxsv.schooldiary.data.local.features.task.TaskWithSubject
 import com.kxsv.schooldiary.data.remote.task.TaskDto
@@ -19,7 +20,7 @@ interface TaskRepository {
 	
 	suspend fun getTasks(): List<TaskEntity>
 	
-	suspend fun fetchSoonTasks()
+	suspend fun fetchSoonTasks(): MutableList<TaskAndUniqueIdWithSubject>
 	
 	suspend fun fetchTaskByDate(date: LocalDate, subject: SubjectEntity): List<TaskDto>
 	

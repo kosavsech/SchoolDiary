@@ -1,6 +1,7 @@
 package com.kxsv.schooldiary.ui.screens.task_list
 
 
+import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -38,8 +39,11 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.task.TaskWithSubject
 import com.kxsv.schooldiary.ui.main.app_bars.bottombar.TasksBottomAppBar
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.TasksTopAppBar
+import com.kxsv.schooldiary.ui.screens.grade_list.MY_URI
 import com.kxsv.schooldiary.util.ui.LoadingContent
+import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.FULL_ROUTE_PLACEHOLDER
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -47,7 +51,14 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
-@Destination
+@Destination(
+	deepLinks = [
+		DeepLink(
+			action = Intent.ACTION_VIEW,
+			uriPattern = "$MY_URI/$FULL_ROUTE_PLACEHOLDER"
+		)
+	]
+)
 @Composable
 fun TasksScreen(
 	destinationsNavigator: DestinationsNavigator,

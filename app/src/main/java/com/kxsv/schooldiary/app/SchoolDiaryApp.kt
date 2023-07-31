@@ -13,8 +13,10 @@ import com.kxsv.schooldiary.app.workers.GradeSyncWorker
 import com.kxsv.schooldiary.app.workers.TaskSyncWorker
 import com.kxsv.schooldiary.data.repository.GradeRepository
 import com.kxsv.schooldiary.data.repository.TaskRepository
-import com.kxsv.schooldiary.di.util.NotificationBuilder
-import com.kxsv.schooldiary.di.util.SummaryNotificationBuilder
+import com.kxsv.schooldiary.di.util.GradeNotification
+import com.kxsv.schooldiary.di.util.GradeSummaryNotification
+import com.kxsv.schooldiary.di.util.TaskNotification
+import com.kxsv.schooldiary.di.util.TaskSummaryNotification
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -37,8 +39,10 @@ class SchoolDiaryApp : Application(), Configuration.Provider {
 class CustomSyncWorkerFactory @Inject constructor(
 	private val gradeRepository: GradeRepository,
 	private val taskRepository: TaskRepository,
-	@NotificationBuilder private val notificationBuilder: Notification.Builder,
-	@SummaryNotificationBuilder private val summaryNotificationBuilder: Notification.Builder,
+	@GradeNotification private val gradeNotificationBuilder: Notification.Builder,
+	@GradeSummaryNotification private val gradeSummaryNotificationBuilder: Notification.Builder,
+	@TaskNotification private val taskNotificationBuilder: Notification.Builder,
+	@TaskSummaryNotification private val taskSummaryNotificationBuilder: Notification.Builder,
 	private val notificationManager: NotificationManager,
 ) : WorkerFactory() {
 	override fun createWorker(
@@ -53,9 +57,9 @@ class CustomSyncWorkerFactory @Inject constructor(
 				Log.i(TAG, "createWorker: launched GradeSyncWorker")
 				GradeSyncWorker(
 					gradeRepository = gradeRepository,
-					gradeNotificationBuilder = notificationBuilder,
+					gradeNotificationBuilder = gradeNotificationBuilder,
+					gradeSummaryNotificationBuilder = gradeSummaryNotificationBuilder,
 					notificationManager = notificationManager,
-					gradeSummaryNotificationBuilder = summaryNotificationBuilder,
 					context = appContext,
 					params = workerParameters
 				)
@@ -63,7 +67,14 @@ class CustomSyncWorkerFactory @Inject constructor(
 			
 			TaskSyncWorker::class.java.name -> {
 				Log.i(TAG, "createWorker: launched TaskSyncWorker")
-				TaskSyncWorker(taskRepository, appContext, workerParameters)
+				TaskSyncWorker(
+					taskRepository = taskRepository,
+					taskNotificationBuilder = taskNotificationBuilder,
+					taskSummaryNotificationBuilder = taskSummaryNotificationBuilder,
+					notificationManager = notificationManager,
+					context = appContext,
+					params = workerParameters
+				)
 			}
 			
 			else -> {

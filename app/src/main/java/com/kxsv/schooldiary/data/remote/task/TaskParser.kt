@@ -15,7 +15,7 @@ class TaskParser {
 				tasks.add(
 					TaskDto(
 						title = lesson.child(NetLessonColumn.TASK.ordinal).text(),
-						subjectId = subject.subjectId,
+						subject = subject,
 						dueDate = date,
 						lessonIndex = index
 					)
