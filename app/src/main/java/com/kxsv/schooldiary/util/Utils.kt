@@ -1,5 +1,6 @@
 package com.kxsv.schooldiary.util
 
+import android.util.Log
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
 import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
 import java.time.Instant
@@ -7,7 +8,11 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import java.util.Locale
+import kotlin.math.ceil
+import kotlin.math.floor
 
+private const val TAG = "Utils"
+const val ROUND_RULE = 0.6
 
 object Utils {
 	fun timestampToLocalDate(value: Long?): LocalDate? = value?.let {
@@ -23,6 +28,11 @@ object Utils {
 	
 	fun Double.roundTo(n: Int): Double {
 		return String.format("%.${n}f", this, Locale.ENGLISH).toDouble()
+	}
+	
+	fun roundWithRule(x: Double): Double {
+		val floored = floor(x)
+		return if (x >= (floored + ROUND_RULE)) ceil(x) else floor(x)
 	}
 	
 	/**
@@ -57,12 +67,12 @@ object Utils {
 		}
 	}
 	
-	fun calculateMarkPrediction(
+	fun calculateMarksUntilTarget(
 		target: Double,
 		avgMark: Double,
 		sum: Int,
 		valueSum: Double,
-	): EstimatesGrades {
+	): Map<Int, Int?> {
 		fun calculateGrades(grade: Int): Int? {
 			var processAvg = avgMark
 			var gradeCount: Int = if (processAvg >= grade) return null else 0
@@ -73,11 +83,133 @@ object Utils {
 			return gradeCount
 		}
 		
-		val fiveCount = calculateGrades(grade = 5)
-		val fourCount = calculateGrades(grade = 4)
-		val threeCount = calculateGrades(grade = 3)
+		val result = mutableMapOf<Int, Int?>()
+		for (i in 3..5) {
+			result[i] = calculateGrades(grade = i)
+		}
+		return result
+	}
+	
+	fun calculateRealizableBadMarks(
+		lowerBound: Double,
+		avgMark: Double,
+		sum: Int,
+		valueSum: Double,
+	): Map<String, Map<String, Int?>?> {
+		fun calculateGrades(vararg grade: Int): Map<String, Int?>? {
+			var processAvg = avgMark
+			when (grade.size) {
+				1 -> {
+					var gradeCount: Int =
+						if (grade.first() >= roundWithRule(processAvg)) {
+							Log.w(TAG, "calculateGrades: auto-skip of ${grade[0]}")
+							return null
+						} else {
+							0
+						}
+					
+					while (processAvg > lowerBound && gradeCount != 66) {
+						processAvg =
+							(valueSum + grade.first() * (gradeCount + 1)) / (sum + (gradeCount + 1))
+						if (processAvg < lowerBound) {
+							// early quit because can't stand gradeCount increase
+							return if (gradeCount == 0) {
+								Log.w(
+									TAG,
+									"calculateGrades: semi-auto-skip on fail after first try ${grade[0]}"
+								)
+								null
+							} else {
+								mapOf(Pair(grade.first().toString(), gradeCount))
+							}
+						}
+						gradeCount++
+					}
+					return if (gradeCount == 0) {
+						null
+					} else {
+						mapOf(Pair(grade.first().toString(), gradeCount))
+					}
+				}
+				
+				2 -> {
+					val maxGrade = maxOf(grade[0], grade[1])
+					if (maxGrade >= roundWithRule(processAvg)) {
+						Log.w(TAG, "calculateGrades: auto-skip of ${grade[0]} and ${grade[1]}")
+						return null
+					}
+					
+					var firstGradeCount = 0
+					var secondGradeCount = 0
+					var applyingFirstGrade = true
+					var isSecondGradeBanned = false
+					var isFirstGradeBanned = false
+					
+					while (processAvg > lowerBound && firstGradeCount != 66) {
+						if (applyingFirstGrade) firstGradeCount++ else secondGradeCount++
+						
+						val tryPassCheckValue =
+							(valueSum + (grade[0] * firstGradeCount) + (grade[1] * secondGradeCount)) /
+									(sum + firstGradeCount + secondGradeCount)
+						
+						if (tryPassCheckValue < lowerBound) {
+							if (applyingFirstGrade) {
+								firstGradeCount--; isFirstGradeBanned = true
+							} else {
+								secondGradeCount--; isSecondGradeBanned = true
+							}
+						} else {
+							processAvg = tryPassCheckValue
+						}
+						
+						applyingFirstGrade = if (isFirstGradeBanned || isSecondGradeBanned) {
+							if (isFirstGradeBanned && isSecondGradeBanned) {
+								return if (firstGradeCount == 0 || secondGradeCount == 0) {
+									null
+								} else {
+									mapOf(
+										Pair(grade[0].toString(), firstGradeCount),
+										Pair(grade[1].toString(), secondGradeCount)
+									)
+								}
+							} else {
+								!isFirstGradeBanned
+								// !isFirstGradeBanned == isSecondGradeBanned
+								// Because we are checking, if we applying first grade
+								// on next iteration. And one of them is guaranteed banned.
+							}
+						} else {
+							// casual in-progress behaviour of switcher
+							!applyingFirstGrade
+						}
+					}
+					return if (firstGradeCount == 0 || secondGradeCount == 0) {
+						null
+					} else {
+						mapOf(
+							Pair(grade[0].toString(), firstGradeCount),
+							Pair(grade[1].toString(), secondGradeCount)
+						)
+					}
+					
+				}
+				
+				else -> return null
+			}
+		}
 		
-		return EstimatesGrades(fiveCount, fourCount, threeCount)
+		val result: MutableMap<String, Map<String, Int?>?> = mutableMapOf()
+		
+		result["4_"] = calculateGrades(4)
+		result["4_3"] = calculateGrades(4, 3)
+		result["3_4"] = calculateGrades(3, 4)
+		result["3_"] = calculateGrades(3)
+		result["3_2"] = calculateGrades(3, 2)
+		result["2_3"] = calculateGrades(2, 3)
+		result["2_"] = calculateGrades(2)
+		
+		Log.d(TAG, "calculateRealizableBadMarks() returned: $result")
+		return result
 	}
 	
 	fun ClosedRange<LocalDate>.rangeToList(limiter: Long? = null): List<LocalDate> {
@@ -98,12 +230,6 @@ object Utils {
 		logger.invoke(endTime - startTime, result)
 		return result
 	}
-	
-	data class EstimatesGrades(
-		val fiveCount: Int? = null,
-		val fourCount: Int? = null,
-		val threeCount: Int? = null,
-	)
 	
 	data class PeriodButton(
 		val text: String,

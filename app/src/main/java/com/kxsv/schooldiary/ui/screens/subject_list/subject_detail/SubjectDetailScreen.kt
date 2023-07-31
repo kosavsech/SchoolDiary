@@ -46,10 +46,13 @@ import com.kxsv.schooldiary.ui.main.app_bars.topbar.SubjectDetailTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.util.Mark
 import com.kxsv.schooldiary.util.Mark.Companion.getStringValueFrom
+import com.kxsv.schooldiary.util.ROUND_RULE
 import com.kxsv.schooldiary.util.Utils
-import com.kxsv.schooldiary.util.Utils.calculateMarkPrediction
+import com.kxsv.schooldiary.util.Utils.calculateMarksUntilTarget
+import com.kxsv.schooldiary.util.Utils.calculateRealizableBadMarks
 import com.kxsv.schooldiary.util.Utils.fullNameOf
 import com.kxsv.schooldiary.util.Utils.roundTo
+import com.kxsv.schooldiary.util.Utils.roundWithRule
 import com.kxsv.schooldiary.util.Utils.stringRoundTo
 import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
 import com.kxsv.schooldiary.util.ui.LoadingContent
@@ -70,6 +73,7 @@ import com.vanpra.composematerialdialogs.input
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 import com.vanpra.composematerialdialogs.title
 import java.time.format.DateTimeFormatter
+import kotlin.math.floor
 
 data class SubjectDetailScreenNavArgs(
 	val subjectId: Long,
@@ -269,7 +273,7 @@ private fun TargetGradeProgress(
 		eduPerformance.marks.forEach { if (it != null) value += it.value!! }
 		val avgMark = (value / eduPerformance.marks.size).roundTo(2)
 		
-		val offset = kotlin.math.floor(avgMark)
+		val offset = floor(avgMark)
 		val targetInBar = targetMark - offset
 		val startInBar = avgMark - offset
 		
@@ -314,12 +318,20 @@ private fun TargetGradeProgress(
 				// Get notified when the progression animation ends.
 			}*/
 		)
-		val estimatesGrades = calculateMarkPrediction(
+		val marksUntilTarget = calculateMarksUntilTarget(
 			target = targetMark,
 			avgMark = avgMark,
 			sum = eduPerformance.marks.size,
 			valueSum = value
 		)
+		val lowerBound = roundWithRule(avgMark) - 1 + ROUND_RULE
+		val realizableBadMarks = calculateRealizableBadMarks(
+			lowerBound = lowerBound,
+			avgMark = avgMark,
+			sum = eduPerformance.marks.size,
+			valueSum = value
+		)
+		
 		Column(
 			modifier = Modifier.padding(dimensionResource(R.dimen.vertical_margin))
 		) {
@@ -334,27 +346,39 @@ private fun TargetGradeProgress(
 					text = "To achieve target:",
 					style = MaterialTheme.typography.titleMedium,
 				)
-				if (estimatesGrades.fiveCount != null) {
-					Text(
-						text = "Need 5 x ${estimatesGrades.fiveCount}",
-						style = MaterialTheme.typography.titleMedium,
-						modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding))
-					)
+				marksUntilTarget.forEach { (mark, count) ->
+					if (count != null) {
+						Text(
+							text = "Need $mark x $count times",
+							style = MaterialTheme.typography.titleMedium,
+							modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding))
+						)
+					}
 				}
-				if (estimatesGrades.fourCount != null) {
-					Text(
-						text = "Need 4 x ${estimatesGrades.fourCount}",
-						style = MaterialTheme.typography.titleMedium,
-						modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding))
-					)
+			}
+			Text(
+				text = "To not ruin current mark:",
+				style = MaterialTheme.typography.titleMedium,
+			)
+			if (realizableBadMarks.map { it.value }.find { it != null } != null) {
+				realizableBadMarks.forEach { (mark, count) ->
+					if (count != null) {
+						val (mark1, mark2) = mark.split("_")
+						Text(
+							text = "No more than $mark1 x ${count[mark1]} times" +
+									if (mark2.isNotEmpty() && count[mark2] != 0) " with $mark2 x ${count[mark2]} times" else
+										"",
+							style = MaterialTheme.typography.titleMedium,
+							modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding))
+						)
+					}
 				}
-				if (estimatesGrades.threeCount != null) {
-					Text(
-						text = "Need 3 x ${estimatesGrades.threeCount} ",
-						style = MaterialTheme.typography.titleMedium,
-						modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding))
-					)
-				}
+			} else {
+				Text(
+					text = "You cannot afford any others marks",
+					style = MaterialTheme.typography.titleMedium,
+					modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding))
+				)
 			}
 			Button(onClick = { if (subject != null) dialogState.show() }) {
 				Text(
