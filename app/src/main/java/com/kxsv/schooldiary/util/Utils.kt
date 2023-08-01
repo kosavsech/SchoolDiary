@@ -1,7 +1,6 @@
 package com.kxsv.schooldiary.util
 
 import android.util.Log
-import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
 import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
 import java.time.Instant
 import java.time.LocalDate
@@ -47,38 +46,6 @@ object Utils {
 			} else {
 				return@let it.trim()
 			}
-		}
-	}
-	
-	/**
-	 * Return teacher full name. Variants:
-	 * 1) try to get L.N. Patronymic
-	 * 2) if Patronymic isNotEmpty N. Patronymic / L. Patronymic / Patronymic
-	 * 3) if firstName isNotEmpty  N. Lastname / Name
-	 * 4) Lastname
-	 *
-	 * @param teacher
-	 * @return [teacher full name][String]
-	 */
-	fun fullNameOf(teacher: TeacherEntity): String {
-		return if (teacher.lastName.isNotEmpty() && teacher.firstName.isNotEmpty() && teacher.patronymic.isNotEmpty()) {
-			teacher.firstName[0] + "." + teacher.lastName[0] + ". " + teacher.patronymic
-		} else if (teacher.patronymic.isNotEmpty()) {
-			if (teacher.firstName.isNotEmpty()) {
-				teacher.firstName[0] + "." + teacher.patronymic
-			} else if (teacher.lastName.isNotEmpty()) {
-				teacher.lastName[0] + "." + teacher.patronymic
-			} else {
-				teacher.patronymic
-			}
-		} else if (teacher.firstName.isNotEmpty()) {
-			if (teacher.lastName.isNotEmpty()) {
-				teacher.firstName[0] + "." + teacher.lastName
-			} else {
-				teacher.firstName
-			}
-		} else {
-			teacher.lastName
 		}
 	}
 	

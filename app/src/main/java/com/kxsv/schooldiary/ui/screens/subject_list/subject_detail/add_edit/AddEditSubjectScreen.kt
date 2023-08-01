@@ -24,6 +24,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,8 +34,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
+import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity.Companion.fullName
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditSubjectTopAppBar
-import com.kxsv.schooldiary.util.Utils.fullNameOf
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -75,19 +76,33 @@ fun AddEditSubjectScreen(
 		}
 	) { paddingValues ->
 		
+		val teacherListLoad = remember { { viewModel.loadAvailableTeachers() } }
+		val saveSelectedTeachers = remember<(Set<Int>) -> Unit> {
+			{ viewModel.saveSelectedTeachers(it) }
+		}
+		val updateFullName = remember<(String) -> Unit> {
+			{ viewModel.updateFullName(it) }
+		}
+		val updateDisplayName = remember<(String) -> Unit> {
+			{ viewModel.updateDisplayName(it) }
+		}
+		val updateCabinet = remember<(String) -> Unit> {
+			{ viewModel.updateCabinet(it) }
+		}
+		
 		AddEditSubjectContent(
-			loading = uiState.isLoading,
+			isLoading = uiState.isLoading,
 			fullName = uiState.fullName,
 			displayName = uiState.displayName,
 			cabinet = uiState.cabinet,
 			selectedTeachers = uiState.selectedTeachers,
 			teachers = uiState.availableTeachers,
 			initialSelection = uiState.initialSelection,
-			onAddTeacher = viewModel::loadAvailableTeachers,
-			onTeacherChanged = viewModel::saveSelectedTeachers,
-			onFullNameChanged = viewModel::updateFullName,
-			onDisplayNameChanged = viewModel::updateDisplayName,
-			onCabinetChanged = viewModel::updateCabinet,
+			onAddTeacher = teacherListLoad,
+			onTeacherChanged = saveSelectedTeachers,
+			onFullNameChanged = updateFullName,
+			onDisplayNameChanged = updateDisplayName,
+			onCabinetChanged = updateCabinet,
 			modifier = Modifier.padding(paddingValues)
 		)
 		
@@ -103,7 +118,7 @@ fun AddEditSubjectScreen(
 
 @Composable
 private fun AddEditSubjectContent(
-	loading: Boolean,
+	isLoading: Boolean,
 	fullName: String,
 	displayName: String,
 	cabinet: String,
@@ -118,10 +133,10 @@ private fun AddEditSubjectContent(
 	modifier: Modifier = Modifier,
 ) {
 	LoadingContent(
-		loading = loading,
+		loading = isLoading,
 		empty = false,
 		emptyContent = { Text(text = "Empty") },
-		onRefresh = {}) {
+	) {
 		Column(
 			modifier
 				.fillMaxWidth()
@@ -143,7 +158,7 @@ private fun AddEditSubjectContent(
 					)
 				},
 				textStyle = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Bold),
-				maxLines = 1,
+				maxLines = 2,
 				colors = textFieldColors
 			)
 			
@@ -199,20 +214,26 @@ private fun AddEditSubjectContent(
 			) {
 				Icon(Icons.Default.Person, stringResource(R.string.teacher_icon))
 				Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.horizontal_margin)))
-				var text = ""
-				if (selectedTeachers.isNotEmpty()) {
-					selectedTeachers.forEachIndexed { index, teacher ->
-						text += (if (index != 0) ", " else "")
-						text += fullNameOf(teacher)
+				val teacherRowText = if (selectedTeachers.isNotEmpty()) {
+					val rememberedTeacherRowText = remember(selectedTeachers) {
+						var text = ""
+						selectedTeachers.forEachIndexed { index, teacher ->
+							text += (if (index != 0) ", " else "")
+							text += teacher.fullName()
+						}
+						return@remember text
 					}
+					rememberedTeacherRowText
 				} else {
-					text = stringResource(R.string.add_teacher_hint)
+					stringResource(R.string.add_teacher_hint)
 				}
 				Text(
-					text = text,
+					text = teacherRowText,
 					style = MaterialTheme.typography.body1
 				)
-				
+			}
+			val listItems = remember(teachers) {
+				teachers.map { teacher -> teacher.fullName() }
 			}
 			MaterialDialog(
 				dialogState = teacherDialog,
@@ -222,9 +243,7 @@ private fun AddEditSubjectContent(
 				}
 			) {
 				listItemsMultiChoice(
-					list = teachers.map { teacher ->
-						teacher.firstName + " " + teacher.patronymic
-					},
+					list = listItems,
 					waitForPositiveButton = true,
 					initialSelection = initialSelection,
 					onCheckedChange = onTeacherChanged

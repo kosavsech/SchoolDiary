@@ -43,6 +43,7 @@ import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceEn
 import com.kxsv.schooldiary.data.local.features.grade.GradeEntity
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
+import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity.Companion.fullName
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.SubjectDetailTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.util.Mark
@@ -51,7 +52,6 @@ import com.kxsv.schooldiary.util.ROUND_RULE
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.calculateMarksUntilTarget
 import com.kxsv.schooldiary.util.Utils.calculateRealizableBadMarks
-import com.kxsv.schooldiary.util.Utils.fullNameOf
 import com.kxsv.schooldiary.util.Utils.roundTo
 import com.kxsv.schooldiary.util.Utils.roundWithRule
 import com.kxsv.schooldiary.util.Utils.stringRoundTo
@@ -539,7 +539,7 @@ private fun SubjectInfo(
 			var teachersText = ""
 			teachers?.forEachIndexed { index, teacher ->
 				teachersText += (if (index != 0) ", " else "")
-				teachersText += fullNameOf(teacher)
+				teachersText += teacher.fullName()
 				if (index == 2) return@forEachIndexed
 			}
 			if (teachersText.isNotEmpty()) {

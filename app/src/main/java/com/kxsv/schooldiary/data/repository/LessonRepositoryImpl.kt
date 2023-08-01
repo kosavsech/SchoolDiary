@@ -9,6 +9,7 @@ import com.kxsv.schooldiary.data.local.features.study_day.StudyDayEntity
 import com.kxsv.schooldiary.data.remote.WebService
 import com.kxsv.schooldiary.data.remote.lesson.LessonDto
 import com.kxsv.schooldiary.data.remote.lesson.ScheduleParser
+import com.kxsv.schooldiary.util.remote.NetworkException
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 import javax.inject.Inject
@@ -36,6 +37,9 @@ class LessonRepositoryImpl @Inject constructor(
 		return lessonDataSource.getAll()
 	}
 	
+	/**
+	 * @throws NetworkException.NotLoggedInException
+	 */
 	override suspend fun fetchLessonsByDate(localDate: LocalDate): List<LessonDto> {
 		val dayInfo = webService.getDayInfo(localDate)
 		return ScheduleParser().parse(dayInfo, localDate)

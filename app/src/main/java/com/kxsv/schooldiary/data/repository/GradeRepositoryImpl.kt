@@ -12,6 +12,7 @@ import com.kxsv.schooldiary.di.util.DefaultDispatcher
 import com.kxsv.schooldiary.di.util.IoDispatcher
 import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
 import com.kxsv.schooldiary.util.Utils.rangeToList
+import com.kxsv.schooldiary.util.remote.NetworkException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -65,11 +66,17 @@ class GradeRepositoryImpl @Inject constructor(
 		return gradeDataSource.getAll()
 	}
 	
+	/**
+	 * @throws NetworkException.NotLoggedInException
+	 */
 	override suspend fun fetchGradeByDate(localDate: LocalDate): List<DayGradeDto> {
 		val dayInfo = webService.getDayInfo(localDate)
 		return GradeParser().parse(dayInfo, localDate)
 	}
 	
+	/**
+	 * @throws NetworkException.NotLoggedInException
+	 */
 	override suspend fun fetchRecentGrades(): List<GradeWithSubject> {
 		return withContext(ioDispatcher) {
 			withTimeout(15000L) {

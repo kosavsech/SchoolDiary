@@ -9,6 +9,7 @@ import com.kxsv.schooldiary.data.remote.edu_performance.EduPerformanceDto
 import com.kxsv.schooldiary.data.remote.edu_performance.EduPerformanceParser
 import com.kxsv.schooldiary.di.util.ApplicationScope
 import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.util.remote.NetworkException
 import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -44,24 +45,29 @@ class EduPerformanceRepositoryImpl @Inject constructor(
         subjectId: Long,
         period: EduPerformancePeriod
     ): Flow<EduPerformanceEntity> {
-        return eduPerformanceDataSource.observeBySubjectId(subjectId, period)
+	    return eduPerformanceDataSource.observeBySubjectId(subjectId, period)
     }
-    
-    override fun observeAllWithSubjectForPeriod(period: EduPerformancePeriod): Flow<List<EduPerformanceWithSubject>> {
-        return eduPerformanceDataSource.observeAllWithSubjectByPeriod(period)
-    }
-    
-    override suspend fun getEduPerformances(): List<EduPerformanceEntity> {
-        return eduPerformanceDataSource.getAll()
-    }
-    
-    override suspend fun fetchEduPerformanceByTerm(term: String): List<EduPerformanceDto> {
-        val rows = webService.getTermEduPerformance(term)
-        return if (term != "year") EduPerformanceParser().parseTerm(rows, term)
+	
+	override fun observeAllWithSubjectForPeriod(period: EduPerformancePeriod): Flow<List<EduPerformanceWithSubject>> {
+		return eduPerformanceDataSource.observeAllWithSubjectByPeriod(period)
+	}
+	
+	override suspend fun getEduPerformances(): List<EduPerformanceEntity> {
+		return eduPerformanceDataSource.getAll()
+	}
+	
+	/**
+	 * @throws NetworkException.NotLoggedInException
+	 */
+	override suspend fun fetchEduPerformanceByTerm(term: String): List<EduPerformanceDto> {
+		val rows = webService.getTermEduPerformance(term)
+		return if (term != "year") EduPerformanceParser().parseTerm(rows, term)
 		else EduPerformanceParser().parseYear(rows)
 	}
 	
-	
+	/**
+	 * @throws NetworkException.NotLoggedInException
+	 */
 	override suspend fun fetchEduPerformance(): Unit = withContext(ioDispatcher) {
 		for (termIndex in 1..4) {
 			async {

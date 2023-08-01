@@ -6,6 +6,7 @@ sealed class NetworkException(message: String? = null) : Exception(message) {
 	object BlankInputException : NetworkException()
 	object IncorrectAuthDataException : NetworkException()
 	object NotLoggedInException : NetworkException()
+	object NotActualAuthSessionException : NetworkException()
 	
 	fun mapToNetworkError(): NetworkError {
 		return when (this) {
@@ -23,6 +24,10 @@ sealed class NetworkException(message: String? = null) : Exception(message) {
 			
 			NotLoggedInException -> {
 				NetworkError.NotLoggedIn
+			}
+			
+			NotActualAuthSessionException -> {
+				NetworkError.NotActualAuthSession
 			}
 			
 			else -> NetworkError.GeneralError(this.message)

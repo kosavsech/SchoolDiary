@@ -21,12 +21,12 @@ import kotlinx.coroutines.CoroutineScope
 
 @Composable
 fun NavGraph(
+	startDestination: NavGraph,
+	activity: ComponentActivity,
 	navController: NavHostController = rememberNavController(),
 	coroutineScope: CoroutineScope = rememberCoroutineScope(),
 	drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
 	snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
-	activity: ComponentActivity,
-	startDestination: NavGraph,
 ) {
 	AppModalDrawer(
 		drawerState = drawerState,
@@ -57,4 +57,3 @@ const val ADD_RESULT_OK = Activity.RESULT_FIRST_USER + 1
 const val DELETE_RESULT_OK = Activity.RESULT_FIRST_USER + 2
 const val EDIT_RESULT_OK = Activity.RESULT_FIRST_USER + 3
 const val SELECTED_DEFAULT_PATTERN_OK = Activity.RESULT_FIRST_USER + 4
-const val LOGIN_RESULT_OK = Activity.RESULT_FIRST_USER + 5
