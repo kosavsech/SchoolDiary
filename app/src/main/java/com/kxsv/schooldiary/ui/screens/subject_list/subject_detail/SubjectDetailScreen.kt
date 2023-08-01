@@ -382,8 +382,11 @@ private fun TargetGradeProgress(
 						val (mark1, mark2) = mark.split("_")
 						Text(
 							text = "No more than $mark1 x ${count[mark1]} times" +
-									if (mark2.isNotEmpty() && count[mark2] != 0) " with $mark2 x ${count[mark2]} times" else
-										"",
+									if (mark2.isNotEmpty() && count[mark2] != 0) {
+										" with $mark2 x ${count[mark2]} times"
+									} else {
+										""
+									},
 							style = MaterialTheme.typography.titleMedium,
 							modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding))
 						)
