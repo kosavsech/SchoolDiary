@@ -22,7 +22,7 @@ interface TaskRepository {
 	
 	suspend fun fetchSoonTasks(): MutableList<TaskAndUniqueIdWithSubject>
 	
-	suspend fun fetchTaskByDate(date: LocalDate, subject: SubjectEntity): List<TaskDto>
+	suspend fun fetchTaskVariantsByDate(date: LocalDate, subject: SubjectEntity): List<TaskDto>
 	
 	suspend fun getById(taskId: Long): TaskEntity?
 	

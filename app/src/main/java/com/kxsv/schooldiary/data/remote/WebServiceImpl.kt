@@ -7,6 +7,7 @@ import com.kxsv.schooldiary.di.util.IoDispatcher
 import com.kxsv.schooldiary.util.remote.NetworkException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import okio.IOException
 import org.jsoup.Connection
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -31,7 +32,7 @@ class WebServiceImpl @Inject constructor(
 	 * @throws NetworkException.BlankInputException
 	 */
 	override suspend fun eduTatarAuth(login: String, password: String) {
-		Log.d(TAG, "eduTatarAuth() called login $login, password $password")
+		Log.i(TAG, "eduTatarAuth() called with login: $login, password: $password")
 		val response = withContext(ioDispatcher) {
 			Jsoup.connect("$BASE_URL/logon")
 				.method(Connection.Method.POST)
@@ -52,12 +53,16 @@ class WebServiceImpl @Inject constructor(
 	 *
 	 * @param localDate
 	 * @return
+	 * @throws NetworkException.NotLoggedInException
 	 */
 	override suspend fun getDayInfo(localDate: LocalDate): Elements {
 		val dayPage = getDayPage(localDate)
 		return dayPage.select("div.d-table > table > tbody > tr")
 	}
 	
+	/**
+	 * @throws NetworkException.NotLoggedInException
+	 */
 	override suspend fun getTermEduPerformance(term: String): Elements {
 		val termPage = getTermPage(term)
 		return termPage.select("table > tbody > tr")
@@ -69,30 +74,38 @@ class WebServiceImpl @Inject constructor(
 	 *
 	 * @param targetSegment
 	 * @return [not parsed document of page][Document]
-	 * @throws NetworkException.NotLoggedInException if cookie is not valid
+	 * @throws NetworkException.NotLoggedInException
+	 * @throws IOException if couldn't parse document
 	 */
 	private suspend fun getPage(targetSegment: String): Document {
 		Log.d(TAG, "getPage() called with: targetSegment = $targetSegment")
 		// TODO: add exception on eduLogin or eduPassword is null or empty, show dialog
 		//  where user can re-enter auth data
+		val login = userPreferencesRepository.getEduLogin()
+		val password = userPreferencesRepository.getEduPassword()
+		if (login.isNullOrBlank() || password.isNullOrBlank()) {
+			throw NetworkException.NotLoggedInException
+		}
 		return try {
-			val cookie =
-				userPreferencesRepository.getAuthCookie()
-					?: throw NetworkException.NotLoggedInException
 			val doc = withContext(ioDispatcher) {
+				val cookie = userPreferencesRepository.getAuthCookie()
+					?: throw NetworkException.NotActualAuthSessionException
 				Jsoup.connect("$BASE_URL$targetSegment").cookie(AUTH_COOKIE, cookie).get()
 			}
 			Log.d(TAG, doc.location())
 			if (doc.location().contains("login") or doc.location().contains("message")) {
-				throw NetworkException.NotLoggedInException
+				throw NetworkException.NotActualAuthSessionException
 			}
 			doc
 		} catch (e: NetworkException) {
-			eduTatarAuth(
-				userPreferencesRepository.getEduLogin()!!,
-				userPreferencesRepository.getEduPassword()!!
-			)
-			getPage(targetSegment)
+			if (e == NetworkException.NotActualAuthSessionException) {
+				eduTatarAuth(login = login, password = password)
+				getPage(targetSegment)
+			} else {
+				throw e
+			}
+		} catch (e: IOException) {
+			throw e
 		}
 		
 	}
@@ -101,13 +114,21 @@ class WebServiceImpl @Inject constructor(
 	 * Get day schedule page
 	 *
 	 * @param localDate
-	 * @return
+	 * @throws NetworkException.NotLoggedInException
+	 * @return parsed document of page
 	 */
 	private suspend fun getDayPage(localDate: LocalDate): Document {
 		val dateFormat = localDate.format(DateTimeFormatter.ISO_LOCAL_DATE)
 		return getPage("/user/diary/day?for=$dateFormat")
 	}
 	
+	/**
+	 * Get term page
+	 *
+	 * @param term to get, could be "year" also
+	 * @throws NetworkException.NotLoggedInException
+	 * @return parsed document of page
+	 */
 	private suspend fun getTermPage(term: String): Document {
 		return getPage("/user/diary/term?term=$term")
 	}

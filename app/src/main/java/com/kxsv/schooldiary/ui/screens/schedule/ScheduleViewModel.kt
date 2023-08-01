@@ -411,6 +411,7 @@ class ScheduleViewModel @Inject constructor(
 	 * @param shouldCopyPattern determines whether the method will copy applied pattern id from
 	 * reference study day
 	 * @see copyCachedNetScheduleToCurrentDay
+	 * @throws NetworkException.NotLoggedInException
 	 */
 	private suspend fun copyNetSchedule(
 		fromDate: LocalDate, toDate: LocalDate, shouldCopyPattern: Boolean,
@@ -516,6 +517,7 @@ class ScheduleViewModel @Inject constructor(
 	 *
 	 * @return [StudyDayEntity]
 	 * @throws IllegalStateException if didn't succeed to create newStudyDay
+	 * @throws NetworkException.NotLoggedInException
 	 */
 	private suspend fun getCurrentStudyDayForced(): StudyDayEntity {
 //		userPreferencesRepository.setAuthCookie(null)
@@ -653,6 +655,9 @@ class ScheduleViewModel @Inject constructor(
 		}
 	}
 	
+	/**
+	 * @throws NetworkException.NotLoggedInException
+	 */
 	fun fetchSchedule() {
 		_uiState.update { it.copy(isLoading = true) }
 		scheduleRetrieveJob?.cancel()

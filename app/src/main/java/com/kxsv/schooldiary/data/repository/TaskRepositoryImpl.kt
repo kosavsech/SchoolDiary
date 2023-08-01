@@ -18,6 +18,7 @@ import com.kxsv.schooldiary.data.remote.task.TaskParser
 import com.kxsv.schooldiary.di.util.ApplicationScope
 import com.kxsv.schooldiary.di.util.IoDispatcher
 import com.kxsv.schooldiary.util.Utils.rangeToList
+import com.kxsv.schooldiary.util.remote.NetworkException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -62,6 +63,9 @@ class TaskRepositoryImpl @Inject constructor(
 		return taskDataSource.getAll()
 	}
 	
+	/**
+	 * @throws NetworkException.NotLoggedInException
+	 */
 	override suspend fun fetchSoonTasks(): MutableList<TaskAndUniqueIdWithSubject> {
 		// todo change to NOW
 		return withContext(ioDispatcher) {
@@ -157,8 +161,13 @@ class TaskRepositoryImpl @Inject constructor(
 		}
 	}
 	
-	
-	override suspend fun fetchTaskByDate(date: LocalDate, subject: SubjectEntity): List<TaskDto> {
+	/**
+	 * @throws NetworkException.NotLoggedInException
+	 */
+	override suspend fun fetchTaskVariantsByDate(
+		date: LocalDate,
+		subject: SubjectEntity,
+	): List<TaskDto> {
 		val dayInfo = webService.getDayInfo(date)
 		return TaskParser().parse(
 			dayInfo = dayInfo,

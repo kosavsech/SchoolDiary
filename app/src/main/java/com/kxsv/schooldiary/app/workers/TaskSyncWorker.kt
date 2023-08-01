@@ -79,7 +79,7 @@ class TaskSyncWorker @AssistedInject constructor(
 		} catch (e: Exception) {
 			when (e) {
 				is NetworkException -> {
-					Log.e(TAG, "fetchSoonTasks: exception on login", e)
+					Log.e(TAG, "fetchSoonTasks: NetworkException on fetch", e)
 					return Result.failure()
 				}
 				

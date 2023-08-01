@@ -15,6 +15,7 @@ import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
+import com.kxsv.schooldiary.util.remote.NetworkException
 import com.kxsv.schooldiary.util.ui.Async
 import com.kxsv.schooldiary.util.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -173,6 +174,9 @@ class AddEditTaskViewModel @Inject constructor(
 		_uiState.update { it.copy(fetchedVariants = null) }
 	}
 	
+	/**
+	 * @throws NetworkException.NotLoggedInException
+	 */
 	fun fetchNet() {
 		if (uiState.value.subject == null) throw IllegalStateException("Subject shouldn't be null when fetch is called")
 		
@@ -181,7 +185,7 @@ class AddEditTaskViewModel @Inject constructor(
 			val fetchedVariants = measurePerformanceInMS(logger = { time, result ->
 				Log.d(TAG, "fetchNet: time = $time MS\nresult = $result")
 			}) {
-				taskRepository.fetchTaskByDate(
+				taskRepository.fetchTaskVariantsByDate(
 					date = uiState.value.dueDate,
 					subject = uiState.value.subject!!
 				)
