@@ -30,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -268,17 +269,26 @@ private fun TargetGradeProgress(
 			.fillMaxWidth()
 			.padding(horizontal = dimensionResource(R.dimen.horizontal_margin)),
 	) {
-		var value = 0.0
-		
-		eduPerformance.marks.forEach { if (it != null) value += it.value!! }
-		val avgMark = (value / eduPerformance.marks.size).roundTo(2)
-		
-		val offset = floor(avgMark)
-		val targetInBar = targetMark - offset
-		val startInBar = avgMark - offset
-		
-		val progress =
+		val valueSum = remember(eduPerformance.marks) {
+			var temp = 0.0
+			eduPerformance.marks.forEach { if (it != null) temp += it.value!! }
+			return@remember temp
+		}
+		val avgMark = remember(eduPerformance.marks, valueSum) {
+			(valueSum / eduPerformance.marks.size).roundTo(2)
+		}
+		val offset = remember(avgMark) {
+			floor(avgMark)
+		}
+		val targetInBar = remember(avgMark, offset) {
+			targetMark - offset
+		}
+		val startInBar = remember(avgMark, offset) {
+			avgMark - offset
+		}
+		val progress = remember(avgMark, targetMark) {
 			if (avgMark >= targetMark) 10f else ((startInBar / targetInBar).toFloat()) * 10f
+		}
 		
 		Row(
 			modifier = Modifier
@@ -295,7 +305,6 @@ private fun TargetGradeProgress(
 				style = MaterialTheme.typography.titleMedium,
 			)
 		}
-		
 		SegmentedProgressBar(
 			segmentCount = 10,
 			modifier = Modifier.height(25.dp),
@@ -318,19 +327,26 @@ private fun TargetGradeProgress(
 				// Get notified when the progression animation ends.
 			}*/
 		)
-		val marksUntilTarget = calculateMarksUntilTarget(
-			target = targetMark,
-			avgMark = avgMark,
-			sum = eduPerformance.marks.size,
-			valueSum = value
-		)
-		val lowerBound = roundWithRule(avgMark) - 1 + ROUND_RULE
-		val realizableBadMarks = calculateRealizableBadMarks(
-			lowerBound = lowerBound,
-			avgMark = avgMark,
-			sum = eduPerformance.marks.size,
-			valueSum = value
-		)
+		val marksUntilTarget = remember(targetMark, eduPerformance.marks.size, avgMark, valueSum) {
+			calculateMarksUntilTarget(
+				target = targetMark,
+				avgMark = avgMark,
+				sum = eduPerformance.marks.size,
+				valueSum = valueSum
+			)
+		}
+		val lowerBound = remember(avgMark) {
+			roundWithRule(avgMark) - 1 + ROUND_RULE
+		}
+		val realizableBadMarks =
+			remember(lowerBound, avgMark, eduPerformance.marks.size, valueSum) {
+				calculateRealizableBadMarks(
+					lowerBound = lowerBound,
+					avgMark = avgMark,
+					sum = eduPerformance.marks.size,
+					valueSum = valueSum
+				)
+			}
 		
 		Column(
 			modifier = Modifier.padding(dimensionResource(R.dimen.vertical_margin))

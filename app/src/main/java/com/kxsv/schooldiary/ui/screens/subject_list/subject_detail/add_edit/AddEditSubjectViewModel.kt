@@ -11,6 +11,7 @@ import com.kxsv.schooldiary.data.repository.TeacherRepository
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.screens.navArgs
+import com.kxsv.schooldiary.util.Utils.nonEmptyTrim
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +22,7 @@ import javax.inject.Inject
 
 data class AddEditSubjectUiState(
 	val fullName: String = "",
-	val displayName: String? = null,
+	val displayName: String = "",
 	val cabinet: String = "",
 	val initialSelection: Set<Int> = emptySet(),
 	val selectedTeachers: Set<TeacherEntity> = emptySet(),
@@ -133,7 +134,11 @@ class AddEditSubjectViewModel @Inject constructor(
 	
 	private fun createNewSubject() = viewModelScope.launch {
 		subjectRepository.createSubject(
-			SubjectEntity(uiState.value.fullName, uiState.value.displayName, uiState.value.cabinet),
+			SubjectEntity(
+				uiState.value.fullName.trim(),
+				uiState.value.displayName.nonEmptyTrim(),
+				uiState.value.cabinet.nonEmptyTrim()
+			),
 			uiState.value.selectedTeachers
 		)
 	}
@@ -144,9 +149,9 @@ class AddEditSubjectViewModel @Inject constructor(
 		viewModelScope.launch {
 			subjectRepository.updateSubject(
 				subject = SubjectEntity(
-					fullName = uiState.value.fullName,
-					cabinet = uiState.value.cabinet,
-					displayName = uiState.value.displayName,
+					fullName = uiState.value.fullName.trim(),
+					cabinet = uiState.value.cabinet.nonEmptyTrim(),
+					displayName = uiState.value.displayName.nonEmptyTrim(),
 					subjectId = subjectId
 				),
 				teachers = uiState.value.selectedTeachers
@@ -165,7 +170,7 @@ class AddEditSubjectViewModel @Inject constructor(
 					_uiState.update {
 						it.copy(
 							fullName = subjectWithTeachers.subject.fullName,
-							displayName = subjectWithTeachers.subject.displayName,
+							displayName = subjectWithTeachers.subject.getDisplayNameString(),
 							cabinet = subjectWithTeachers.subject.getCabinetString(),
 							selectedTeachers = subjectWithTeachers.teachers,
 							isLoading = false

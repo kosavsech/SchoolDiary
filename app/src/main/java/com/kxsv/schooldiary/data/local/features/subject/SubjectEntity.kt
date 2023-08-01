@@ -17,10 +17,26 @@ data class SubjectEntity(
 	val subjectId: Long = 0,
 ) {
 	fun getName(): String {
-		return this.displayName ?: this.fullName
+		return if (!this.displayName.isNullOrBlank()) {
+			this.displayName
+		} else {
+			this.fullName
+		}
 	}
 	
 	fun getCabinetString(): String {
-		return this.cabinet ?: ""
+		return if (!this.cabinet.isNullOrBlank()) {
+			this.cabinet
+		} else {
+			""
+		}
+	}
+	
+	fun getDisplayNameString(): String {
+		return if (!this.displayName.isNullOrBlank()) {
+			this.displayName
+		} else {
+			""
+		}
 	}
 }

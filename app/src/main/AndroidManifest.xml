@@ -17,8 +17,8 @@
         tools:targetApi="31">
         <activity
             android:name=".ui.main.MainActivity"
-            android:launchMode="singleTop"
             android:exported="true"
+            android:launchMode="singleTop"
             android:theme="@style/Theme.SchoolDiary">
 
             <intent-filter>
@@ -31,6 +31,9 @@
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
             tools:node="remove" />
+        <profileable
+            android:enabled="true"
+            android:shell="true" />
     </application>
 
 </manifest>

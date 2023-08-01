@@ -22,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -109,10 +110,12 @@ private fun SubjectsContent(
 			contentPadding = PaddingValues(vertical = dimensionResource(R.dimen.list_item_padding)),
 		) {
 			items(subjects) { subject ->
-				SubjectItem(
-					subject = subject,
-					onSubjectClick = onSubjectClick,
-				)
+				key(subject.subjectId) {
+					SubjectItem(
+						subject = subject,
+						onSubjectClick = onSubjectClick,
+					)
+				}
 			}
 		}
 	}

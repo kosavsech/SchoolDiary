@@ -105,7 +105,7 @@ fun AddEditSubjectScreen(
 private fun AddEditSubjectContent(
 	loading: Boolean,
 	fullName: String,
-	displayName: String?,
+	displayName: String,
 	cabinet: String,
 	selectedTeachers: Set<TeacherEntity>,
 	teachers: List<TeacherEntity>,
@@ -154,7 +154,7 @@ private fun AddEditSubjectContent(
 			)
 			
 			OutlinedTextField(
-				value = displayName ?: "",
+				value = displayName,
 				modifier = Modifier.fillMaxWidth(),
 				onValueChange = onDisplayNameChanged,
 				placeholder = {
