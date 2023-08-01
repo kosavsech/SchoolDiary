@@ -36,6 +36,21 @@ object Utils {
 	}
 	
 	/**
+	 *
+	 * @return null if string is either null or empty or consists solely
+	 * of whitespace characters, else trimmed self
+	 */
+	fun String?.nonEmptyTrim(): String? {
+		return this.let {
+			if (it.isNullOrBlank()) {
+				return@let null
+			} else {
+				return@let it.trim()
+			}
+		}
+	}
+	
+	/**
 	 * Return teacher full name. Variants:
 	 * 1) try to get L.N. Patronymic
 	 * 2) if Patronymic isNotEmpty N. Patronymic / L. Patronymic / Patronymic
