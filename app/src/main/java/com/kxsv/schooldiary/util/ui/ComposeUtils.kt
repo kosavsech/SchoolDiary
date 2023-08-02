@@ -25,7 +25,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -38,11 +41,13 @@ import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
@@ -60,6 +65,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
@@ -70,6 +76,7 @@ import com.kizitonwose.calendar.core.CalendarDay
 import com.kizitonwose.calendar.core.CalendarMonth
 import com.kizitonwose.calendar.core.DayPosition
 import com.kxsv.schooldiary.R
+import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.ui.ContinuousSelectionHelper.isInDateBetweenSelection
 import com.kxsv.schooldiary.util.ui.ContinuousSelectionHelper.isOutDateBetweenSelection
 import kotlinx.coroutines.flow.filterNotNull
@@ -174,6 +181,38 @@ fun Indicator(
 			useCenter = false,
 			style = stroke
 		)
+	}
+}
+
+@Composable
+fun TermSelector(
+	currentPeriod: EduPerformancePeriod,
+	onPeriodChange: (EduPerformancePeriod) -> Unit,
+	buttons: List<Utils.PeriodButton>,
+) {
+	Column(
+		modifier = Modifier
+			.horizontalScroll(rememberScrollState(initial = currentPeriod.ordinal))
+			.padding(vertical = dimensionResource(R.dimen.list_item_padding)),
+		verticalArrangement = Arrangement.Center,
+		horizontalAlignment = Alignment.CenterHorizontally
+	) {
+		buttons.forEach {
+			key(it.text) {
+				OutlinedButton(
+					onClick = { onPeriodChange(it.callbackPeriod) },
+					modifier = Modifier.padding(
+						horizontal = dimensionResource(R.dimen.list_item_padding)
+					),
+					enabled = (currentPeriod != it.callbackPeriod)
+				) {
+					Text(
+						text = it.text,
+						style = MaterialTheme.typography.labelMedium
+					)
+				}
+			}
+		}
 	}
 }
 

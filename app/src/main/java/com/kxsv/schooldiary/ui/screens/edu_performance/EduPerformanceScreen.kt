@@ -14,19 +14,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,6 +42,7 @@ import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.stringRoundTo
 import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
 import com.kxsv.schooldiary.util.ui.LoadingContent
+import com.kxsv.schooldiary.util.ui.TermSelector
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.CoroutineScope
@@ -92,60 +91,29 @@ private fun EduPerformanceContent(
 	onRefresh: () -> Unit,
 	modifier: Modifier,
 ) {
-	
-	val buttons = listOf(
-		Utils.PeriodButton("First term", EduPerformancePeriod.FIRST_TERM),
-		Utils.PeriodButton("Second term", EduPerformancePeriod.SECOND_TERM),
-		Utils.PeriodButton("Third term", EduPerformancePeriod.THIRD_TERM),
-		Utils.PeriodButton("Fourth term", EduPerformancePeriod.FOURTH_TERM),
-		Utils.PeriodButton("Year", EduPerformancePeriod.YEAR_PERIOD),
-	)
 	LoadingContent(
+		modifier = modifier,
 		loading = loading,
 		isContentScrollable = true,
 		empty = eduPerformanceList.isEmpty(),
 		emptyContent = {
 			Column {
-				LazyRow(
-					modifier = modifier
-						.padding(vertical = dimensionResource(R.dimen.list_item_padding)),
-					state = LazyListState(firstVisibleItemIndex = currentEduPerformancePeriod.ordinal)
-				) {
-					items(buttons) {
-						OutlinedButton(
-							onClick = { onPeriodChange(it.callbackPeriod) },
-							modifier = Modifier.padding(
-								horizontal = dimensionResource(R.dimen.list_item_padding)
-							),
-							enabled = (currentEduPerformancePeriod != it.callbackPeriod)
-						) {
-							Text(text = it.text)
-						}
-					}
-				}
+				TermSelector(
+					currentPeriod = currentEduPerformancePeriod,
+					onPeriodChange = onPeriodChange,
+					buttons = remember { Utils.PeriodButton.all }
+				)
 				Text(text = "No subjects yet")
 			}
 		},
 		onRefresh = onRefresh
 	) {
 		Column {
-			LazyRow(
-				modifier = modifier
-					.padding(vertical = dimensionResource(R.dimen.list_item_padding)),
-				state = LazyListState(firstVisibleItemIndex = currentEduPerformancePeriod.ordinal)
-			) {
-				items(buttons) {
-					OutlinedButton(
-						onClick = { onPeriodChange(it.callbackPeriod) },
-						modifier = Modifier.padding(
-							horizontal = dimensionResource(R.dimen.list_item_padding)
-						),
-						enabled = (currentEduPerformancePeriod != it.callbackPeriod)
-					) {
-						Text(text = it.text)
-					}
-				}
-			}
+			TermSelector(
+				currentPeriod = currentEduPerformancePeriod,
+				onPeriodChange = onPeriodChange,
+				buttons = remember { Utils.PeriodButton.all }
+			)
 			LazyColumn {
 				items(eduPerformanceList) { performanceWithSubject ->
 					PerformanceRow(

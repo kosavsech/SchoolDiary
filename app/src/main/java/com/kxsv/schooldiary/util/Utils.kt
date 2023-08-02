@@ -31,7 +31,29 @@ object Utils {
 	
 	fun roundWithRule(x: Double): Double {
 		val floored = floor(x)
-		return if (x >= (floored + ROUND_RULE)) ceil(x) else floor(x)
+		return if (x >= (floored + ROUND_RULE)) {
+			ceil(x)
+		} else {
+			floored
+		}
+	}
+	
+	/**
+	 * @param x which is [grade][Mark.value]
+	 * @throws IllegalArgumentException if param [x] > [5][Mark.FIVE] or [x] < [2][Mark.TWO]
+	 */
+	fun getLowerBoundOfGrade(x: Int): Double {
+		if (x > Mark.FIVE.value!! || x < Mark.TWO.value!!) throw IllegalArgumentException("Non-existent grade")
+		return x - 1 + ROUND_RULE
+	}
+	
+	/**
+	 * @param x is mark with type [Double] so could consume any number of marks.
+	 * @throws IllegalArgumentException if param [x] > [5][Mark.FIVE] or [x] < [2][Mark.TWO]
+	 */
+	fun getLowerBoundForMark(x: Double): Double {
+		if (x > Mark.FIVE.value!! || x < Mark.TWO.value!!) throw IllegalArgumentException("Non-existent mark")
+		return roundWithRule(x) - 1 + ROUND_RULE
 	}
 	
 	/**
@@ -216,5 +238,33 @@ object Utils {
 	data class PeriodButton(
 		val text: String,
 		val callbackPeriod: EduPerformancePeriod,
-	)
+	) {
+		companion object {
+			val allTerms = listOf(
+				PeriodButton(text = "First term", callbackPeriod = EduPerformancePeriod.FIRST_TERM),
+				PeriodButton(
+					text = "Second term",
+					callbackPeriod = EduPerformancePeriod.SECOND_TERM
+				),
+				PeriodButton(text = "Third term", callbackPeriod = EduPerformancePeriod.THIRD_TERM),
+				PeriodButton(
+					text = "Fourth term",
+					callbackPeriod = EduPerformancePeriod.FOURTH_TERM
+				),
+			)
+			val all = listOf(
+				PeriodButton(text = "First term", callbackPeriod = EduPerformancePeriod.FIRST_TERM),
+				PeriodButton(
+					text = "Second term",
+					callbackPeriod = EduPerformancePeriod.SECOND_TERM
+				),
+				PeriodButton(text = "Third term", callbackPeriod = EduPerformancePeriod.THIRD_TERM),
+				PeriodButton(
+					text = "Fourth term",
+					callbackPeriod = EduPerformancePeriod.FOURTH_TERM
+				),
+				PeriodButton(text = "Year", callbackPeriod = EduPerformancePeriod.YEAR_PERIOD),
+			)
+		}
+	}
 }

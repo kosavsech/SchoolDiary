@@ -79,6 +79,8 @@ class SubjectDetailViewModel @Inject constructor(
 			}
 		}
 	
+	private val dialogTargetMark: MutableStateFlow<Double?> = MutableStateFlow(null)
+	
 	@OptIn(ExperimentalCoroutinesApi::class)
 	private val _eduPerformanceAsync = _period
 		.flatMapLatest { period ->
@@ -142,6 +144,11 @@ class SubjectDetailViewModel @Inject constructor(
 		}
 	}
 	
+	/**
+	 * Refresh
+	 *
+	 * @throws NetworkException.NotLoggedInException
+	 */
 	fun refresh() {
 		viewModelScope.launch(ioDispatcher) {
 			eduPerformanceRepository.fetchEduPerformance()
@@ -152,11 +159,15 @@ class SubjectDetailViewModel @Inject constructor(
 		_period.update { newPeriod }
 	}
 	
-	fun changeTargetMark(newTargetMark: Double) = viewModelScope.launch(ioDispatcher) {
+	fun saveTargetMark() = viewModelScope.launch(ioDispatcher) {
 		uiState.value.subjectWithTeachers?.subject?.let {
 			subjectRepository.updateSubject(
-				subject = it.copy(targetMark = newTargetMark)
+				subject = it.copy(targetMark = dialogTargetMark.value)
 			)
 		}
+	}
+	
+	fun changeTargetMark(newTargetMark: Double?) {
+		dialogTargetMark.update { newTargetMark }
 	}
 }

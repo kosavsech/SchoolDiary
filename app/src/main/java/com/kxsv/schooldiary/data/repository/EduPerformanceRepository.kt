@@ -26,7 +26,7 @@ interface EduPerformanceRepository {
 	suspend fun fetchEduPerformanceByTerm(term: String): List<EduPerformanceDto>
 	
 	/**
-	 * @throws RuntimeException
+	 * @throws NetworkException.NotLoggedInException
 	 */
 	suspend fun fetchEduPerformance()
 	

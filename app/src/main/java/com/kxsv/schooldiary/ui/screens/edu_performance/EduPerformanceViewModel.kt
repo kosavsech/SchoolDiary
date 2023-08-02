@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceWithSubject
 import com.kxsv.schooldiary.data.repository.EduPerformanceRepository
 import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.util.remote.NetworkException
 import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
 import com.kxsv.schooldiary.util.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -57,6 +58,11 @@ class EduPerformanceViewModel @Inject constructor(
 		_uiState.update { it.copy(userMessage = null) }
 	}
 	
+	/**
+	 * Refresh
+	 *
+	 * @throws NetworkException.NotLoggedInException
+	 */
 	fun refresh() {
 		viewModelScope.launch(ioDispatcher) {
 			eduPerformanceRepository.fetchEduPerformance()

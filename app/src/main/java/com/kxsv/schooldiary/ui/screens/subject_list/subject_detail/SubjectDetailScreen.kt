@@ -2,8 +2,6 @@ package com.kxsv.schooldiary.ui.screens.subject_list.subject_detail
 
 import android.graphics.Typeface
 import android.text.TextUtils
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,15 +12,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -30,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,24 +38,23 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceEntity
 import com.kxsv.schooldiary.data.local.features.grade.GradeEntity
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
+import com.kxsv.schooldiary.data.local.features.subject.SubjectWithTeachers
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity.Companion.fullName
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.SubjectDetailTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.util.Mark
 import com.kxsv.schooldiary.util.Mark.Companion.getStringValueFrom
-import com.kxsv.schooldiary.util.ROUND_RULE
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.calculateMarksUntilTarget
 import com.kxsv.schooldiary.util.Utils.calculateRealizableBadMarks
+import com.kxsv.schooldiary.util.Utils.getLowerBoundForMark
 import com.kxsv.schooldiary.util.Utils.roundTo
-import com.kxsv.schooldiary.util.Utils.roundWithRule
 import com.kxsv.schooldiary.util.Utils.stringRoundTo
 import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
 import com.kxsv.schooldiary.util.ui.LoadingContent
-import com.kxsv.ychart_mod.common.components.Legends
+import com.kxsv.schooldiary.util.ui.TermSelector
 import com.kxsv.ychart_mod.common.model.PlotType
-import com.kxsv.ychart_mod.common.utils.DataUtils
 import com.kxsv.ychart_mod.ui.piechart.charts.PieChart
 import com.kxsv.ychart_mod.ui.piechart.models.PieChartConfig
 import com.kxsv.ychart_mod.ui.piechart.models.PieChartData
@@ -79,6 +74,8 @@ import kotlin.math.floor
 data class SubjectDetailScreenNavArgs(
 	val subjectId: Long,
 )
+
+private const val TAG = "SubjectDetailScreen"
 
 @Destination(
 	navArgsDelegate = SubjectDetailScreenNavArgs::class
@@ -108,30 +105,43 @@ fun SubjectDetailScreen(
 		},
 	) { paddingValues ->
 		val targetMarkDialogState = rememberMaterialDialogState(false)
+		
+		val changePeriod = remember<(EduPerformancePeriod) -> Unit> {
+			{ viewModel.changePeriod(it) }
+		}
+		val editSubject = remember<(Long) -> Unit> {
+			{ navigator.onEditSubject(it) }
+		}
+		val showGradeDetails = remember<(String) -> Unit> {
+			{ /*TODO pop-up with fetched date of grade */ }
+		}
+		val refresh = remember { { viewModel.refresh() } }
 		SubjectContent(
+			modifier = Modifier.padding(paddingValues),
+			targetMarkDialogState = targetMarkDialogState,
 			isLoading = uiState.isLoading,
-			empty = (uiState.subjectWithTeachers == null && uiState.grades.isEmpty()) && !uiState.isLoading,
-			subject = uiState.subjectWithTeachers?.subject,
-			targetMark = uiState.targetMark,
-			dialogState = targetMarkDialogState,
-			teachers = uiState.subjectWithTeachers?.teachers?.toList(),
-			grades = uiState.grades,
 			currentPeriod = uiState.period,
+			subjectWithTeachers = uiState.subjectWithTeachers,
+			targetMark = uiState.targetMark,
 			eduPerformance = uiState.eduPerformance,
-			onPeriodChange = { viewModel.changePeriod(it) },
-			onGradeClick = { /*TODO pop-up with fetched date of grade */ },
-			onEditSubject = {
-				val subject = uiState.subjectWithTeachers?.subject
-				if (subject != null) navigator.onEditSubject(subject.subjectId)
-			},
-			onRefresh = { viewModel.refresh() },
-			modifier = Modifier.padding(paddingValues)
+			grades = uiState.grades,
+			onPeriodChange = changePeriod,
+			onGradeClick = showGradeDetails,
+			onEditSubject = editSubject,
+			onRefresh = refresh
 		)
 		
+		val saveTargetMark = remember<() -> Unit> {
+			{ viewModel.saveTargetMark() }
+		}
+		val changeDialogTargetMark = remember<(Double?) -> Unit> {
+			{ viewModel.changeTargetMark(it) }
+		}
 		TargetGradeDialog(
 			dialogState = targetMarkDialogState,
 			targetMark = uiState.targetMark,
-			changeTargetMark = { viewModel.changeTargetMark(it) }
+			saveTargetMark = saveTargetMark,
+			changeTargetMark = changeDialogTargetMark
 		)
 		
 		uiState.userMessage?.let { userMessage ->
@@ -146,20 +156,18 @@ fun SubjectDetailScreen(
 
 @Composable
 private fun SubjectContent(
+	modifier: Modifier,
+	targetMarkDialogState: MaterialDialogState,
 	isLoading: Boolean,
-	empty: Boolean,
-	subject: SubjectEntity?,
-	targetMark: Double,
-	dialogState: MaterialDialogState,
-	teachers: List<TeacherEntity>?,
 	currentPeriod: EduPerformancePeriod,
-	grades: List<GradeEntity>,
+	subjectWithTeachers: SubjectWithTeachers?,
+	targetMark: Double,
 	eduPerformance: EduPerformanceEntity?,
+	grades: List<GradeEntity>,
 	onPeriodChange: (EduPerformancePeriod) -> Unit,
 	onGradeClick: (String) -> Unit,
-	onEditSubject: () -> Unit,
+	onEditSubject: (Long) -> Unit,
 	onRefresh: () -> Unit,
-	modifier: Modifier,
 ) {
 	val screenPadding = Modifier.padding(
 		horizontal = dimensionResource(id = R.dimen.horizontal_margin),
@@ -170,50 +178,58 @@ private fun SubjectContent(
 		.then(screenPadding)
 	
 	LoadingContent(
+		modifier = modifier,
 		loading = isLoading,
 		isContentScrollable = true,
-		empty = empty,
+		empty = (subjectWithTeachers == null) && grades.isEmpty(),
 		emptyContent = { Text(text = stringResource(R.string.no_data), modifier = commonModifier) },
 		onRefresh = onRefresh
 	) {
 		Column(
-			modifier = modifier.verticalScroll(rememberScrollState())
+			modifier = Modifier
+				.verticalScroll(rememberScrollState())
+				.padding(vertical = dimensionResource(R.dimen.vertical_margin)),
 		) {
-			Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.vertical_margin)))
-			
-			SubjectInfo(
-				subject = subject,
-				teachers = teachers,
-				onEditSubject = onEditSubject,
-				modifier = Modifier
-					.fillMaxWidth()
-					.padding(horizontal = dimensionResource(R.dimen.horizontal_margin))
-			)
-			
-			Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding)))
+			if (subjectWithTeachers != null) {
+				SubjectInfo(
+					subject = subjectWithTeachers.subject,
+					teachers = subjectWithTeachers.teachers.toList(),
+					onEditSubject = onEditSubject,
+					modifier = Modifier
+						.fillMaxWidth()
+						.padding(horizontal = dimensionResource(R.dimen.horizontal_margin))
+				)
+				Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding)))
+			}
 			
 			TermSelector(
 				currentPeriod = currentPeriod,
-				onPeriodChange = onPeriodChange
+				onPeriodChange = onPeriodChange,
+				buttons = remember { Utils.PeriodButton.allTerms }
 			)
-			
 			Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding)))
 			
 			// TODO: make noContent cover
 			if (eduPerformance != null) {
 				TargetGradeProgress(
-					eduPerformance = eduPerformance,
-					subject = subject,
-					targetMark = targetMark,
-					dialogState = dialogState
+					targetMarkDialogState = targetMarkDialogState,
+					performanceEntity = eduPerformance,
+					targetMark = targetMark
 				)
-				
 				Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.vertical_margin)))
 				
-				val fivesCount = eduPerformance.marks.count { it == Mark.FIVE }.toFloat()
-				val fourthsCount = eduPerformance.marks.count { it == Mark.FOUR }.toFloat()
-				val threesCount = eduPerformance.marks.count { it == Mark.THREE }.toFloat()
-				val twosCount = eduPerformance.marks.count { it == Mark.TWO }.toFloat()
+				val fivesCount = remember(eduPerformance.marks) {
+					eduPerformance.marks.count { it == Mark.FIVE }.toFloat()
+				}
+				val fourthsCount = remember(eduPerformance.marks) {
+					eduPerformance.marks.count { it == Mark.FOUR }.toFloat()
+				}
+				val threesCount = remember(eduPerformance.marks) {
+					eduPerformance.marks.count { it == Mark.THREE }.toFloat()
+				}
+				val twosCount = remember(eduPerformance.marks) {
+					eduPerformance.marks.count { it == Mark.TWO }.toFloat()
+				}
 				
 				val pieChartData = PieChartData(
 					slices = listOf(
@@ -241,9 +257,6 @@ private fun SubjectContent(
 						.height(300.dp)
 						.padding(horizontal = dimensionResource(R.dimen.horizontal_margin))
 				) {
-					Legends(
-						legendsConfig = DataUtils.getLegendsConfigFromPieChartData(pieChartData, 4)
-					)
 					PieChart(
 						modifier = Modifier,
 						pieChartData = pieChartData,
@@ -258,36 +271,31 @@ private fun SubjectContent(
 
 @Composable
 private fun TargetGradeProgress(
-	eduPerformance: EduPerformanceEntity,
-	subject: SubjectEntity?,
+	targetMarkDialogState: MaterialDialogState,
+	performanceEntity: EduPerformanceEntity,
 	targetMark: Double,
-//	onEditTargetMark: (Long) -> Unit,
-	dialogState: MaterialDialogState,
 ) {
 	ElevatedCard(
 		modifier = Modifier
 			.fillMaxWidth()
 			.padding(horizontal = dimensionResource(R.dimen.horizontal_margin)),
 	) {
-		val valueSum = remember(eduPerformance.marks) {
+		val valueSum = remember(performanceEntity.marks) {
 			var temp = 0.0
-			eduPerformance.marks.forEach { if (it != null) temp += it.value!! }
+			performanceEntity.marks.forEach { if (it != null) temp += it.value!! }
 			return@remember temp
 		}
-		val avgMark = remember(eduPerformance.marks, valueSum) {
-			(valueSum / eduPerformance.marks.size).roundTo(2)
-		}
-		val offset = remember(avgMark) {
-			floor(avgMark)
-		}
-		val targetInBar = remember(avgMark, offset) {
-			targetMark - offset
-		}
-		val startInBar = remember(avgMark, offset) {
-			avgMark - offset
+		val avgMark = remember(performanceEntity, performanceEntity.marks, valueSum) {
+			(valueSum / performanceEntity.marks.size).roundTo(2)
 		}
 		val progress = remember(avgMark, targetMark) {
-			if (avgMark >= targetMark) 10f else ((startInBar / targetInBar).toFloat()) * 10f
+			if (avgMark >= targetMark) {
+				10f
+			} else {
+				(((avgMark - floor(avgMark)) / (targetMark - floor(avgMark))).toFloat()) * 10f
+			}
+			/*Log.d(TAG, "TargetGradeProgress: PROGRESS IS $result")
+			return@remember result*/
 		}
 		
 		Row(
@@ -309,41 +317,30 @@ private fun TargetGradeProgress(
 			segmentCount = 10,
 			modifier = Modifier.height(25.dp),
 			spacing = 8.dp,
-			angle = 30f, // Can also be negative to invert the bevel side
+			angle = -30f,
 			progress = progress,
 			segmentColor = SegmentColor(color = Color.Gray, alpha = 0.3f),
 			progressColor = SegmentColor(color = Color.Green, alpha = 1f),
-			drawSegmentsBehindProgress = false, // See Javadoc for more explanation on this parameter
-			progressAnimationSpec = tween(
-				// You can give any animation spec you'd like
-				durationMillis = 1000,
-				easing = LinearEasing,
-			),
-			/*onProgressChanged = { progress: Float, progressCoordinates: SegmentCoordinates ->
-				// Get notified at each recomposition cycle when a progression occurs.
-				// You can use the current progression or the coordinates the progress segment currently has.
-			},
-			onProgressFinished = {
-				// Get notified when the progression animation ends.
-			}*/
+			drawSegmentsBehindProgress = false,
 		)
-		val marksUntilTarget = remember(targetMark, eduPerformance.marks.size, avgMark, valueSum) {
-			calculateMarksUntilTarget(
-				target = targetMark,
-				avgMark = avgMark,
-				sum = eduPerformance.marks.size,
-				valueSum = valueSum
-			)
-		}
+		val marksUntilTarget =
+			remember(targetMark, performanceEntity.marks.size, avgMark, valueSum) {
+				calculateMarksUntilTarget(
+					target = targetMark,
+					avgMark = avgMark,
+					sum = performanceEntity.marks.size,
+					valueSum = valueSum
+				)
+			}
 		val lowerBound = remember(avgMark) {
-			roundWithRule(avgMark) - 1 + ROUND_RULE
+			getLowerBoundForMark(avgMark)
 		}
 		val realizableBadMarks =
-			remember(lowerBound, avgMark, eduPerformance.marks.size, valueSum) {
+			remember(lowerBound, avgMark, performanceEntity.marks.size, valueSum) {
 				calculateRealizableBadMarks(
 					lowerBound = lowerBound,
 					avgMark = avgMark,
-					sum = eduPerformance.marks.size,
+					sum = performanceEntity.marks.size,
 					valueSum = valueSum
 				)
 			}
@@ -363,12 +360,14 @@ private fun TargetGradeProgress(
 					style = MaterialTheme.typography.titleMedium,
 				)
 				marksUntilTarget.forEach { (mark, count) ->
-					if (count != null) {
-						Text(
-							text = "Need $mark x $count times",
-							style = MaterialTheme.typography.titleMedium,
-							modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding))
-						)
+					key(mark, count) {
+						if (count != null) {
+							Text(
+								text = "Need $mark x $count times",
+								style = MaterialTheme.typography.titleMedium,
+								modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding))
+							)
+						}
 					}
 				}
 			}
@@ -376,20 +375,25 @@ private fun TargetGradeProgress(
 				text = "To not ruin current mark:",
 				style = MaterialTheme.typography.titleMedium,
 			)
-			if (realizableBadMarks.map { it.value }.find { it != null } != null) {
+			val isRealizableBadMarksNotEmpty = remember(realizableBadMarks) {
+				realizableBadMarks.map { it.value }.find { it != null } != null
+			}
+			if (isRealizableBadMarksNotEmpty) {
 				realizableBadMarks.forEach { (mark, count) ->
-					if (count != null) {
-						val (mark1, mark2) = mark.split("_")
-						Text(
-							text = "No more than $mark1 x ${count[mark1]} times" +
-									if (mark2.isNotEmpty() && count[mark2] != 0) {
-										" with $mark2 x ${count[mark2]} times"
-									} else {
-										""
-									},
-							style = MaterialTheme.typography.titleMedium,
-							modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding))
-						)
+					key(mark, count) {
+						if (count != null) {
+							val (mark1, mark2) = mark.split("_")
+							Text(
+								text = "No more than $mark1 x ${count[mark1]} times" +
+										if (mark2.isNotEmpty() && count[mark2] != 0) {
+											" with $mark2 x ${count[mark2]} times"
+										} else {
+											""
+										},
+								style = MaterialTheme.typography.titleMedium,
+								modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding))
+							)
+						}
 					}
 				}
 			} else {
@@ -399,7 +403,7 @@ private fun TargetGradeProgress(
 					modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding))
 				)
 			}
-			Button(onClick = { if (subject != null) dialogState.show() }) {
+			Button(onClick = { targetMarkDialogState.show() }) {
 				Text(
 					text = stringResource(R.string.edit_target_mark),
 					style = MaterialTheme.typography.labelMedium
@@ -413,53 +417,28 @@ private fun TargetGradeProgress(
 private fun TargetGradeDialog(
 	dialogState: MaterialDialogState,
 	targetMark: Double,
-	changeTargetMark: (Double) -> Unit,
+	saveTargetMark: () -> Unit,
+	changeTargetMark: (Double?) -> Unit,
 ) {
 	MaterialDialog(
 		dialogState = dialogState,
 		buttons = {
-			positiveButton(res = R.string.btn_save)
+			positiveButton(res = R.string.btn_save, onClick = { saveTargetMark() })
 			negativeButton(res = R.string.btn_cancel)
 		},
 	) {
-		// todo re-do  because saves momentously
 		title(res = R.string.enter_target_mark_dialog_title)
 		input(
 			label = "Target mark",
 			prefill = targetMark.stringRoundTo(2),
-			placeholder = "4.69",
-			isTextValid = { it.toDoubleOrNull() != null && it.toDouble() < 4.99 }
-		) { inputString ->
-			changeTargetMark(inputString.toDouble())
-		}
-	}
-}
-
-@Composable
-private fun TermSelector(
-	currentPeriod: EduPerformancePeriod,
-	onPeriodChange: (EduPerformancePeriod) -> Unit,
-) {
-	val buttons = listOf(
-		Utils.PeriodButton("First term", EduPerformancePeriod.FIRST_TERM),
-		Utils.PeriodButton("Second term", EduPerformancePeriod.SECOND_TERM),
-		Utils.PeriodButton("Third term", EduPerformancePeriod.THIRD_TERM),
-		Utils.PeriodButton("Fourth term", EduPerformancePeriod.FOURTH_TERM),
-	)
-	LazyRow(
-		state = LazyListState(firstVisibleItemIndex = currentPeriod.ordinal)
-	) {
-		items(buttons) {
-			OutlinedButton(
-				onClick = { onPeriodChange(it.callbackPeriod) },
-				modifier = Modifier.padding(
-					horizontal = dimensionResource(R.dimen.list_item_padding)
-				),
-				enabled = (currentPeriod != it.callbackPeriod)
-			) {
-				Text(text = it.text)
-			}
-		}
+			placeholder = "2.89",
+			isTextValid = {
+				it.toDoubleOrNull() != null && (it.toDouble() > 2.00 && it.toDouble() < 5.00)
+			},
+			errorMessage = "Follow the format.\nAlso ensure that target is more than 2 and is less than 5",
+			onInput = { changeTargetMark(it.toDoubleOrNull()) },
+			waitForPositiveButton = false
+		)
 	}
 }
 
@@ -516,9 +495,9 @@ private fun GradesHistory(
 @Composable
 private fun SubjectInfo(
 	modifier: Modifier = Modifier,
-	subject: SubjectEntity?,
-	teachers: List<TeacherEntity>?,
-	onEditSubject: () -> Unit,
+	subject: SubjectEntity,
+	teachers: List<TeacherEntity>,
+	onEditSubject: (Long) -> Unit,
 ) {
 	ElevatedCard(
 		modifier = modifier
@@ -528,16 +507,16 @@ private fun SubjectInfo(
 			modifier = Modifier.padding(dimensionResource(R.dimen.vertical_margin))
 		) {
 			Text(
-				text = subject?.fullName ?: "",
+				text = subject.fullName,
 				style = MaterialTheme.typography.titleMedium,
 			)
 			Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding)))
 			Text(
-				text = subject?.getCabinetString() ?: "",
+				text = subject.getCabinetString(),
 				style = MaterialTheme.typography.titleMedium,
 			)
 			var teachersText = ""
-			teachers?.forEachIndexed { index, teacher ->
+			teachers.forEachIndexed { index, teacher ->
 				teachersText += (if (index != 0) ", " else "")
 				teachersText += teacher.fullName()
 				if (index == 2) return@forEachIndexed
@@ -549,9 +528,8 @@ private fun SubjectInfo(
 					style = MaterialTheme.typography.titleMedium,
 				)
 			}
-			
 			Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding)))
-			Button(onClick = onEditSubject) {
+			Button(onClick = { onEditSubject(subject.subjectId) }) {
 				Text(
 					text = stringResource(R.string.edit_subject),
 					style = MaterialTheme.typography.labelMedium
