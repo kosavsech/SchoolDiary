@@ -63,7 +63,7 @@ fun GradesScreen(
 	viewModel: GradesViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState,
 ) {
-	val navigator = GradesScreenNavActions(navigator = destinationsNavigator)
+	val navigator = GradesScreenNavActions(destinationsNavigator = destinationsNavigator)
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		topBar = {

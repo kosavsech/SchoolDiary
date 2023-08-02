@@ -67,7 +67,7 @@ fun PatternsScreen(
 	coroutineScope: CoroutineScope,
 	snackbarHostState: SnackbarHostState,
 ) {
-	val navigator = PatternsScreenNavActions(navigator = destinationsNavigator)
+	val navigator = PatternsScreenNavActions(destinationsNavigator = destinationsNavigator)
 	patternAddEditResult.onNavResult { result ->
 		when (result) {
 			is NavResult.Canceled -> {}

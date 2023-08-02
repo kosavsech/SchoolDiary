@@ -57,7 +57,7 @@ fun EduPerformanceScreen(
 	viewModel: EduPerformanceViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState,
 ) {
-	val navigator = EduPerformanceScreenNavActions(navigator = destinationsNavigator)
+	val navigator = EduPerformanceScreenNavActions(destinationsNavigator = destinationsNavigator)
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		topBar = {

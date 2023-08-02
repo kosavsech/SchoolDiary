@@ -73,6 +73,10 @@ fun PatternSelectionScreen(
 	viewModel: PatternsViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState,
 ) {
+	val navigator = PatternsScreenNavActions(
+		destinationsNavigator = destinationsNavigator,
+		resultNavigator = resultNavigator
+	)
 	patternAddEditResult.onNavResult { result ->
 		when (result) {
 			is NavResult.Canceled -> {}
@@ -81,9 +85,8 @@ fun PatternSelectionScreen(
 			}
 		}
 	}
-	val navigator = PatternsScreenNavActions(navigator = destinationsNavigator)
 	Scaffold(
-		topBar = { PatternSelectionTopAppBar(onBack = { destinationsNavigator.popBackStack() }) },
+		topBar = { PatternSelectionTopAppBar(onBack = { navigator.popBackStack() }) },
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		modifier = Modifier.fillMaxSize(),
 		floatingActionButton = {
@@ -102,7 +105,7 @@ fun PatternSelectionScreen(
 			deletePattern = { viewModel.deletePattern(it) },
 			setDefaultPattern = { viewModel.updateDefaultPatternId(it) },
 			selectCustomPattern = {
-				resultNavigator.navigateBack(PatternSelectionResult(it.patternId, it.name))
+				navigator.navigateBackWithResult(PatternSelectionResult(it.patternId, it.name))
 			},
 			modifier = Modifier.padding(paddingValues),
 		)

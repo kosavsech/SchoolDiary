@@ -68,7 +68,7 @@ fun TasksScreen(
 	snackbarHostState: SnackbarHostState,
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
-	val navigator = TasksScreenNavActions(navigator = destinationsNavigator)
+	val navigator = TasksScreenNavActions(destinationsNavigator = destinationsNavigator)
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		topBar = {
@@ -80,7 +80,7 @@ fun TasksScreen(
 		bottomBar = {
 			TasksBottomAppBar(
 				selectedDataFilterText = stringResource(id = uiState.dateFilterType.getLocalisedStringId()),
-				onAddTask = navigator.onAddTask,
+				onAddTask = { navigator.onAddTask() },
 				onDateFilterChoose = { viewModel.changeDataFilter(it) }
 			)
 		},

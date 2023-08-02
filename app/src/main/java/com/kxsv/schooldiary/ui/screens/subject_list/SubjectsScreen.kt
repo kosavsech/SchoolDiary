@@ -47,7 +47,7 @@ fun SubjectsScreen(
 	viewModel: SubjectsViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState,
 ) {
-	val navigator = SubjectsScreenNavActions(navigator = destinationsNavigator)
+	val navigator = SubjectsScreenNavActions(destinationsNavigator = destinationsNavigator)
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		topBar = { SubjectsTopAppBar(openDrawer = { coroutineScope.launch { drawerState.open() } }) },

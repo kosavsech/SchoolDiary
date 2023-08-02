@@ -2,19 +2,28 @@ package com.kxsv.schooldiary.ui.screens.patterns
 
 import androidx.annotation.StringRes
 import com.kxsv.schooldiary.R
+import com.kxsv.schooldiary.ui.main.navigation.NavActions
 import com.kxsv.schooldiary.ui.screens.destinations.AddEditPatternScreenDestination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.ramcosta.composedestinations.result.ResultBackNavigator
 
 
-class PatternsScreenNavActions(private val navigator: DestinationsNavigator) {
-	val onAddEditPattern: (Long?) -> Unit = { patternId ->
+class PatternsScreenNavActions(
+	override val destinationsNavigator: DestinationsNavigator,
+	val resultNavigator: ResultBackNavigator<PatternSelectionResult>? = null,
+) : NavActions {
+	fun onAddEditPattern(patternId: Long?) {
 		@StringRes val topBarTitle: Int = if (patternId == null) {
 			R.string.add_pattern
 		} else {
 			R.string.edit_pattern
 		}
-		navigator.navigate(
+		destinationsNavigator.navigate(
 			AddEditPatternScreenDestination(patternId = patternId, topBarTitle = topBarTitle)
 		)
+	}
+	
+	fun navigateBackWithResult(result: PatternSelectionResult) {
+		resultNavigator?.navigateBack(result)
 	}
 }

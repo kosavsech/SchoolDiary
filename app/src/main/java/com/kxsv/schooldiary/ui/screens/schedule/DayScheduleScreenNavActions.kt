@@ -1,28 +1,31 @@
 package com.kxsv.schooldiary.ui.screens.schedule
 
+import com.kxsv.schooldiary.ui.main.navigation.NavActions
 import com.kxsv.schooldiary.ui.screens.destinations.AddEditLessonScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.DateRangeScheduleCopyScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.DayScheduleCopyScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.PatternSelectionScreenDestination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
-class DayScheduleScreenNavActions(private val navigator: DestinationsNavigator) {
-	val onAddEditClass: (Long, Long?) -> Unit = { datestamp, lessonId ->
-		navigator.navigate(
+
+class DayScheduleScreenNavActions(
+	override val destinationsNavigator: DestinationsNavigator,
+) : NavActions {
+	fun onAddEditClass(datestamp: Long, lessonId: Long?) {
+		destinationsNavigator.navigate(
 			AddEditLessonScreenDestination(datestamp = datestamp, lessonId = lessonId)
 		)
 	}
-	val onChangePattern: () -> Unit = { ->
-		navigator.navigate(PatternSelectionScreenDestination())
+	
+	fun onChangePattern() {
+		destinationsNavigator.navigate(PatternSelectionScreenDestination())
 	}
-	val onCopyDaySchedule: () -> Unit = {
-		navigator.navigate(
-			DayScheduleCopyScreenDestination
-		)
+	
+	fun onCopyDaySchedule() {
+		destinationsNavigator.navigate(DayScheduleCopyScreenDestination)
 	}
-	val onCopyDateRangeSchedule: () -> Unit = {
-		navigator.navigate(
-			DateRangeScheduleCopyScreenDestination
-		)
+	
+	fun onCopyDateRangeSchedule() {
+		destinationsNavigator.navigate(DateRangeScheduleCopyScreenDestination)
 	}
 }

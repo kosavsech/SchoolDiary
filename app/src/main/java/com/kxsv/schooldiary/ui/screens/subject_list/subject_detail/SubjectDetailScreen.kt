@@ -87,19 +87,21 @@ fun SubjectDetailScreen(
 	viewModel: SubjectDetailViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState,
 ) {
-	val navigator = SubjectDetailScreenNavActions(navigator = destinationsNavigator)
+	val navigator = SubjectDetailScreenNavActions(
+		destinationsNavigator = destinationsNavigator,
+		resultBackNavigator = resultNavigator
+	)
 	val uiState = viewModel.uiState.collectAsState().value
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		modifier = Modifier.fillMaxSize(),
 		topBar = {
 			SubjectDetailTopAppBar(
-				title = uiState.subjectWithTeachers?.subject?.getName()
-					?: stringResource(R.string.subject_not_loaded),
-				onBack = { destinationsNavigator.popBackStack() },
+				title = uiState.subjectWithTeachers?.subject?.getName() ?: "",
+				onBack = { navigator.popBackStack() },
 				onDelete = {
 					viewModel.deleteSubject()
-					resultNavigator.navigateBack(DELETE_RESULT_OK)
+					navigator.backWithResult(DELETE_RESULT_OK)
 				}
 			)
 		},

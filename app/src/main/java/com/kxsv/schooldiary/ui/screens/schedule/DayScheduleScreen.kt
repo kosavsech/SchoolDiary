@@ -110,7 +110,7 @@ fun DayScheduleScreen(
 	snackbarHostState: SnackbarHostState,
 	viewModel: ScheduleViewModel,
 ) {
-	val navigator = DayScheduleScreenNavActions(navigator = destinationsNavigator)
+	val navigator = DayScheduleScreenNavActions(destinationsNavigator = destinationsNavigator)
 	val uiState = viewModel.uiState.collectAsState().value
 	lessonAddEditResult.onNavResult { result ->
 		when (result) {
@@ -152,8 +152,8 @@ fun DayScheduleScreen(
 						navigator.onChangePattern()
 					}
 				},
-				onCopyDaySchedule = navigator.onCopyDaySchedule,
-				onCopyDateRangeSchedule = navigator.onCopyDateRangeSchedule,
+				onCopyDaySchedule = { navigator.onCopyDaySchedule() },
+				onCopyDateRangeSchedule = { navigator.onCopyDateRangeSchedule() },
 				onFetchSchedule = { viewModel.fetchSchedule() },
 				openDrawer = { coroutineScope.launch { drawerState.open() } }
 			)
@@ -193,7 +193,7 @@ fun DayScheduleScreen(
 			selectedDate = uiState.selectedDate,
 			currentPattern = uiState.currentTimings,
 			onDeleteClass = { viewModel.deleteClass(it) },
-			onEditClass = navigator.onAddEditClass,
+			onEditClass = { datestamp, lessonId -> navigator.onAddEditClass(datestamp, lessonId) },
 			unselectClass = { viewModel.unselectClass() },
 			getIdForClassFromNet = { viewModel.getIdForClassFromNet() },
 			dialogState = dialogState
