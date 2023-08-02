@@ -421,8 +421,8 @@ private fun TargetGradeDialog(
 			positiveButton(res = R.string.btn_save)
 			negativeButton(res = R.string.btn_cancel)
 		},
-		
-		) {
+	) {
+		// todo re-do  because saves momentously
 		title(res = R.string.enter_target_mark_dialog_title)
 		input(
 			label = "Target mark",

@@ -14,7 +14,7 @@
     <string name="patterns_title">Time Patterns</string>
     <string name="patterns_list">Time patterns list</string>
     <string name="loading_teachers_error">Error while loading teachers</string>
-    <string name="successfully_deleted_teacher">Teacher deleted</string>
+    <string name="successfully_deleted_teacher_message">Teacher deleted</string>
     <string name="empty_teacher_message">Teacher cannot be unnamed</string>
     <string name="teachers_title">Teachers</string>
     <string name="subjects_title">Subjects</string>
@@ -156,4 +156,6 @@
     <string name="toggle_password_visibility">Toggle password visibility</string>
     <string name="auth_session_is_expired">Your auth session is expired</string>
     <string name="login_dialog_title">edu.tatar login</string>
+    <string name="successfully_saved_teacher_message">Teacher saved</string>
+    <string name="successfully_added_teacher_message">Teacher added</string>
 </resources>

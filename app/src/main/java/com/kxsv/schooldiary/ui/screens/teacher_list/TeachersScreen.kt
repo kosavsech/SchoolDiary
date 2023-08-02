@@ -2,7 +2,6 @@ package com.kxsv.schooldiary.ui.screens.teacher_list
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -11,9 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.AlertDialog
-import androidx.compose.material.Button
-import androidx.compose.material.TextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -30,19 +28,29 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
+import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity.Companion.fullName
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.TeachersTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.ramcosta.composedestinations.annotation.Destination
+import com.vanpra.composematerialdialogs.MaterialDialog
+import com.vanpra.composematerialdialogs.MaterialDialogState
+import com.vanpra.composematerialdialogs.input
+import com.vanpra.composematerialdialogs.rememberMaterialDialogState
+import com.vanpra.composematerialdialogs.title
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -55,40 +63,71 @@ fun TeachersScreen(
 	viewModel: TeachersViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState,
 ) {
+	val teacherDialogState = rememberMaterialDialogState(false)
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		modifier = Modifier.fillMaxSize(),
 		topBar = { TeachersTopAppBar(openDrawer = { coroutineScope.launch { drawerState.open() } }) },
 		floatingActionButton = {
-			FloatingActionButton(onClick = viewModel::showTeacherDialog) {
-				Icon(Icons.Default.Add, stringResource(R.string.add_teacher))
+			FloatingActionButton(onClick = { teacherDialogState.show() }) {
+				Icon(
+					imageVector = Icons.Default.Add,
+					contentDescription = stringResource(R.string.add_teacher)
+				)
 			}
 		}
 	) { paddingValues ->
 		val uiState = viewModel.uiState.collectAsState().value
 		
+		val onTeacherClick = remember<(TeacherEntity) -> Unit> {
+			{
+				viewModel.onTeacherClick(it)
+				teacherDialogState.show()
+			}
+		}
+		val deleteTeacher = remember<(Int) -> Unit> {
+			{ viewModel.deleteTeacher(it) }
+		}
 		TeachersContent(
 			isLoading = uiState.isLoading,
-			teachers = uiState.teachers,
-			onTeacherClick = viewModel::onTeacherClick,
-			deleteTeacher = viewModel::deleteTeacher,
+			teacherEntities = uiState.teachers,
+			onTeacherClick = onTeacherClick,
+			onDeleteClick = deleteTeacher,
 			modifier = Modifier.padding(paddingValues)
 		)
 		
-		if (uiState.isTeacherDialogShown) {
-			AddEditTeacherDialog(
-				hideTeacherDialog = viewModel::hideTeacherDialog,
-				saveTeacher = viewModel::saveTeacher,
-				updateFirstName = viewModel::updateFirstName,
-				updateLastName = viewModel::updateLastName,
-				updatePatronymic = viewModel::updatePatronymic,
-				updatePhoneNumber = viewModel::updatePhoneNumber,
-				firstName = uiState.firstName,
-				lastName = uiState.lastName,
-				patronymic = uiState.patronymic,
-				phoneNumber = uiState.phoneNumber
-			)
+		val saveTeacher = remember {
+			{ viewModel.saveTeacher() }
 		}
+		val updateFirstName = remember<(String) -> Unit> {
+			{ viewModel.updateFirstName(it) }
+		}
+		val updateLastName = remember<(String) -> Unit> {
+			{ viewModel.updateLastName(it) }
+		}
+		val updatePatronymic = remember<(String) -> Unit> {
+			{ viewModel.updatePatronymic(it) }
+		}
+		val updatePhoneNumber = remember<(String) -> Unit> {
+			{ viewModel.updatePhoneNumber(it) }
+		}
+		val eraseData = remember {
+			{ viewModel.eraseData() }
+		}
+		AddEditTeacherDialog(
+			dialogState = teacherDialogState,
+			firstName = uiState.firstName,
+			lastName = uiState.lastName,
+			patronymic = uiState.patronymic,
+			phoneNumber = uiState.phoneNumber,
+			updateFirstName = updateFirstName,
+			updateLastName = updateLastName,
+			updatePatronymic = updatePatronymic,
+			updatePhoneNumber = updatePhoneNumber,
+			onSaveClick = saveTeacher,
+			onCancelClick = eraseData
+		)
+		
 		
 		uiState.userMessage?.let { userMessage ->
 			val snackbarText = stringResource(userMessage)
@@ -102,90 +141,146 @@ fun TeachersScreen(
 
 @Composable
 private fun AddEditTeacherDialog(
-	hideTeacherDialog: () -> Unit,
-	saveTeacher: () -> Unit,
-	updateFirstName: (String) -> Unit,
-	updateLastName: (String) -> Unit,
-	updatePatronymic: (String) -> Unit,
-	updatePhoneNumber: (String) -> Unit,
+	dialogState: MaterialDialogState,
 	firstName: String,
 	lastName: String,
 	patronymic: String,
 	phoneNumber: String,
+	updateFirstName: (String) -> Unit,
+	updateLastName: (String) -> Unit,
+	updatePatronymic: (String) -> Unit,
+	updatePhoneNumber: (String) -> Unit,
+	onSaveClick: () -> Unit,
+	onCancelClick: () -> Unit,
 ) {
-	AlertDialog(
-		onDismissRequest = { hideTeacherDialog() },
-		title = { Text(text = stringResource(R.string.add_teacher)) },
-		text = {
-			Column(
-				verticalArrangement = Arrangement.spacedBy(8.dp)
-			) {
-				TextField(
-					value = firstName,
-					onValueChange = { updateFirstName(it) },
-					placeholder = {
-						Text(text = stringResource(R.string.first_name_hint))
-					}
-				)
-				TextField(
-					value = lastName,
-					onValueChange = { updateLastName(it) },
-					placeholder = {
-						Text(text = stringResource(R.string.last_name_hint))
-					}
-				)
-				TextField(
-					value = patronymic,
-					onValueChange = { updatePatronymic(it) },
-					placeholder = {
-						Text(text = stringResource(R.string.patronymic_hint))
-					}
-				)
-				TextField(
-					value = phoneNumber,
-					onValueChange = { updatePhoneNumber(it) },
-					placeholder = {
-						Text(text = stringResource(R.string.phone_number_hint))
-					}
-				)
-			}
-		},
+	val isTextValid = remember(firstName, lastName, patronymic) {
+		patronymic.isNotBlank() || lastName.isNotBlank() || firstName.isNotBlank()
+	}
+	MaterialDialog(
+		dialogState = dialogState,
 		buttons = {
-			Box(
-				modifier = Modifier.fillMaxWidth(),
-				contentAlignment = Alignment.CenterEnd
-			) {
-				Button(onClick = { saveTeacher() }) {
-					Text(text = stringResource(R.string.save_teacher))
+			positiveButton(
+				res = R.string.btn_save,
+				onClick = onSaveClick
+			)
+			negativeButton(
+				res = R.string.btn_cancel,
+				onClick = onCancelClick
+			)
+		},
+	) {
+		val focusManager = LocalFocusManager.current
+		PositiveButtonEnabled(valid = isTextValid, onDispose = {})
+		title(res = R.string.add_teacher)
+		input(
+			label = stringResource(R.string.first_name_hint),
+			prefill = firstName,
+			onInput = { updateFirstName(it) },
+			waitForPositiveButton = false,
+			singleLine = true,
+			keyboardOptions = KeyboardOptions(
+				imeAction = ImeAction.Next,
+				autoCorrect = false,
+				capitalization = KeyboardCapitalization.Words,
+				keyboardType = KeyboardType.Text
+			),
+			keyboardActions = KeyboardActions(
+				onNext = {
+					focusManager.moveFocus(FocusDirection.Next)
 				}
-			}
-		}
-	)
+			),
+		)
+		input(
+			label = stringResource(R.string.last_name_hint),
+			prefill = lastName,
+			onInput = { updateLastName(it) },
+			waitForPositiveButton = false,
+			singleLine = true,
+			keyboardOptions = KeyboardOptions(
+				imeAction = ImeAction.Next,
+				autoCorrect = false,
+				capitalization = KeyboardCapitalization.Words,
+				keyboardType = KeyboardType.Text
+			),
+			keyboardActions = KeyboardActions(
+				onNext = {
+					focusManager.moveFocus(FocusDirection.Next)
+				}
+			),
+		)
+		input(
+			label = stringResource(R.string.patronymic_hint),
+			prefill = patronymic,
+			onInput = { updatePatronymic(it) },
+			waitForPositiveButton = false,
+			singleLine = true,
+			keyboardOptions = KeyboardOptions(
+				imeAction = if (!isTextValid) {
+					ImeAction.None
+				} else {
+					ImeAction.Next
+				},
+				autoCorrect = false,
+				capitalization = KeyboardCapitalization.Words,
+				keyboardType = KeyboardType.Text
+			),
+			keyboardActions = KeyboardActions(
+				onNext = {
+					focusManager.moveFocus(FocusDirection.Next)
+				},
+			),
+		)
+		input(
+			label = stringResource(R.string.phone_number_hint),
+			prefill = phoneNumber,
+			onInput = { updatePhoneNumber(it) },
+			waitForPositiveButton = false,
+			singleLine = true,
+			keyboardOptions = KeyboardOptions(
+				imeAction = if (!isTextValid) {
+					ImeAction.Previous
+				} else {
+					ImeAction.Done
+				},
+				autoCorrect = false,
+				capitalization = KeyboardCapitalization.None,
+				keyboardType = KeyboardType.Phone
+			),
+			keyboardActions = KeyboardActions(
+				onDone = {
+					onSaveClick()
+					dialogState.hide(focusManager)
+				},
+				onPrevious = {
+					focusManager.moveFocus(FocusDirection.Previous)
+				}
+			),
+		)
+	}
 }
 
 @Composable
 private fun TeachersContent(
 	isLoading: Boolean,
-	teachers: List<TeacherEntity>,
+	teacherEntities: List<TeacherEntity>,
 	onTeacherClick: (TeacherEntity) -> Unit,
-	deleteTeacher: (TeacherEntity) -> Unit,
+	onDeleteClick: (Int) -> Unit,
 	modifier: Modifier = Modifier,
 ) {
 	LoadingContent(
 		modifier = modifier,
 		loading = isLoading,
 		isContentScrollable = true,
-		empty = teachers.isEmpty()
+		empty = teacherEntities.isEmpty()
 	) {
 		LazyColumn(
 			contentPadding = PaddingValues(vertical = dimensionResource(R.dimen.vertical_margin)),
-			verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.list_item_padding))
 		) {
-			items(teachers) { teacher ->
+			items(teacherEntities) { teacherEntity ->
 				TeacherItem(
-					teacher = teacher,
-					onTeacherClick = { onTeacherClick(teacher) },
-					deleteTeacher = { deleteTeacher(teacher) }
+					teacherEntity = teacherEntity,
+					onTeacherClick = { onTeacherClick(teacherEntity) },
+					onDeleteClick = { onDeleteClick(teacherEntity.teacherId) }
 				)
 			}
 		}
@@ -194,30 +289,39 @@ private fun TeachersContent(
 
 @Composable
 private fun TeacherItem(
-	teacher: TeacherEntity,
+	teacherEntity: TeacherEntity,
 	onTeacherClick: () -> Unit,
-	deleteTeacher: () -> Unit,
+	onDeleteClick: () -> Unit,
 ) {
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
 			.clickable { onTeacherClick() }
+			.padding(vertical = dimensionResource(R.dimen.list_item_padding)),
+		horizontalArrangement = Arrangement.Center,
+		verticalAlignment = Alignment.CenterVertically
 	) {
 		Column(
-			modifier = Modifier.weight(1f)
+			modifier = Modifier
+				.weight(1f)
+				.padding(horizontal = dimensionResource(R.dimen.horizontal_margin))
 		) {
 			Text(
-				text = teacher.firstName + " " + teacher.patronymic,
-				style = androidx.compose.material.MaterialTheme.typography.h6,
-				color = Color.Black,
+				text = teacherEntity.fullName(),
+				style = MaterialTheme.typography.bodyLarge,
 			)
-			Text(
-				text = teacher.phoneNumber,
-				style = MaterialTheme.typography.labelMedium
-			)
+			if (teacherEntity.phoneNumber.isNotBlank()) {
+				Text(
+					text = teacherEntity.phoneNumber,
+					style = MaterialTheme.typography.labelMedium
+				)
+			}
 		}
-		IconButton(onClick = deleteTeacher) {
-			Icon(Icons.Default.Delete, stringResource(R.string.delete_teacher))
+		IconButton(onClick = onDeleteClick) {
+			Icon(
+				imageVector = Icons.Default.Delete,
+				contentDescription = stringResource(R.string.delete_teacher)
+			)
 		}
 	}
 }
@@ -227,8 +331,8 @@ private fun TeacherItem(
 private fun TeachersContentPreview() {
 	Surface {
 		TeachersContent(
-			isLoading = true,
-			teachers = listOf(
+			isLoading = false,
+			teacherEntities = listOf(
 				TeacherEntity(
 					firstName = "Ivan",
 					lastName = "Stepanov",
@@ -239,7 +343,7 @@ private fun TeachersContentPreview() {
 					firstName = "Stepan",
 					lastName = "Ivanov",
 					patronymic = "Vasilievich",
-					phoneNumber = "+756248932572"
+					phoneNumber = ""
 				),
 				TeacherEntity(
 					firstName = "Oleg",
@@ -254,8 +358,7 @@ private fun TeachersContentPreview() {
 					phoneNumber = "+756248932572"
 				),
 			),
-			onTeacherClick = {},
-			deleteTeacher = {}
+			onTeacherClick = {}, onDeleteClick = {}
 		)
 	}
 }
@@ -265,13 +368,13 @@ private fun TeachersContentPreview() {
 private fun TeacherItemPreview() {
 	Surface {
 		TeacherItem(
-			teacher = TeacherEntity(
+			teacherEntity = TeacherEntity(
 				firstName = "Ivan",
 				lastName = "Stepanov",
 				patronymic = "Yegorovich",
 				phoneNumber = "+756248932572"
 			),
-			onTeacherClick = {}, deleteTeacher = {}
+			onTeacherClick = {}, onDeleteClick = {}
 		)
 	}
 }

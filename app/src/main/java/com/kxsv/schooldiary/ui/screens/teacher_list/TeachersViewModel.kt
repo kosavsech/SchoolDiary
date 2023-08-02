@@ -5,10 +5,14 @@ import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
 import com.kxsv.schooldiary.data.repository.TeacherRepository
-import com.kxsv.schooldiary.util.ListExtensionFunctions.copyExclusively
+import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.util.ui.Async
 import com.kxsv.schooldiary.util.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
@@ -20,12 +24,11 @@ import javax.inject.Inject
 
 data class TeachersUiState(
 	val teachers: List<TeacherEntity> = emptyList(),
-	val teacher: TeacherEntity? = null,
 	val firstName: String = "",
 	val lastName: String = "",
 	val patronymic: String = "",
+	val teacherId: Int? = null,
 	val phoneNumber: String = "",
-	val isTeacherDialogShown: Boolean = false,
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
 )
@@ -33,6 +36,7 @@ data class TeachersUiState(
 @HiltViewModel
 class TeachersViewModel @Inject constructor(
 	private val teacherRepository: TeacherRepository,
+	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
 	private val _teachersAsync = teacherRepository.getTeachersStream()
@@ -47,22 +51,14 @@ class TeachersViewModel @Inject constructor(
 			is Async.Error -> TeachersUiState(userMessage = teachersAsync.errorMessage)
 			
 			is Async.Success -> {
-				TeachersUiState(
+				state.copy(
 					teachers = teachersAsync.data,
-					teacher = state.teacher,
-					firstName = state.firstName,
-					lastName = state.lastName,
-					patronymic = state.patronymic,
-					phoneNumber = state.phoneNumber,
-					isTeacherDialogShown = state.isTeacherDialogShown,
-					isLoading = state.isLoading,
-					userMessage = state.userMessage,
 				)
 			}
 		}
 	}.stateIn(viewModelScope, WhileUiSubscribed, TeachersUiState(isLoading = true))
 	
-	private fun showSnackBarMessage(message: Int) {
+	private fun showSnackbarMessage(message: Int) {
 		_uiState.update {
 			it.copy(
 				userMessage = message
@@ -71,120 +67,97 @@ class TeachersViewModel @Inject constructor(
 	}
 	
 	fun snackbarMessageShown() {
-		_uiState.update {
-			it.copy(
-				userMessage = null
-			)
+		_uiState.update { it.copy(userMessage = null) }
+	}
+	
+	fun deleteTeacher(teacherId: Int) {
+		if (teacherId == 0) throw RuntimeException("deleteTeacher() was called but no teacher id is provided.")
+		viewModelScope.launch(ioDispatcher) {
+			teacherRepository.deleteTeacher(teacherId)
+			showEditResultMessage(DELETE_RESULT_OK)
 		}
 	}
 	
-	fun deleteTeacher(teacher: TeacherEntity) = viewModelScope.launch {
-		if (teacher.teacherId != 0) teacherRepository.deleteTeacher(teacher.teacherId)
-		
-		val newTeachers = copyExclusively(teacher, uiState.value.teachers)
-		_uiState.update {
-			it.copy(
-				teachers = newTeachers
-			)
+	fun showEditResultMessage(result: Int) {
+		when (result) {
+			EDIT_RESULT_OK -> showSnackbarMessage(R.string.successfully_saved_teacher_message)
+			ADD_RESULT_OK -> showSnackbarMessage(R.string.successfully_added_teacher_message)
+			DELETE_RESULT_OK -> showSnackbarMessage(R.string.successfully_deleted_teacher_message)
 		}
-		showSnackBarMessage(R.string.successfully_deleted_teacher)
 	}
-	
 	
 	fun saveTeacher() {
-		if (uiState.value.patronymic.isBlank() and
-			uiState.value.lastName.isBlank() and
-			uiState.value.firstName.isBlank()
-		) {
-			_uiState.update {
-				it.copy(userMessage = R.string.empty_teacher_message)
-			}
-			return
+		if (uiState.value.teacherId == null) {
+			createNewTeacher()
+			showEditResultMessage(ADD_RESULT_OK)
+		} else {
+			updateTeacher()
+			showEditResultMessage(EDIT_RESULT_OK)
 		}
 		
-		viewModelScope.launch {
-			if (uiState.value.teacher != null) {
-				teacherRepository.updateTeacher(uiState.value.teacher!!)
-			} else {
-				teacherRepository.createTeacher(
-					TeacherEntity(
-						uiState.value.firstName,
-						uiState.value.lastName,
-						uiState.value.patronymic,
-						uiState.value.phoneNumber
-					)
-				)
-			}
-		}
+		eraseData()
+	}
+	
+	fun eraseData() {
 		_uiState.update {
 			it.copy(
-				isTeacherDialogShown = false,
 				firstName = "",
 				lastName = "",
 				patronymic = "",
 				phoneNumber = "",
-				teacher = null
+				teacherId = null
 			)
 		}
+	}
+	
+	private fun createNewTeacher() = viewModelScope.launch(ioDispatcher) {
+		teacherRepository.createTeacher(
+			TeacherEntity(
+				firstName = uiState.value.firstName,
+				lastName = uiState.value.lastName,
+				patronymic = uiState.value.patronymic,
+				phoneNumber = uiState.value.phoneNumber
+			)
+		)
+	}
+	
+	private fun updateTeacher() = viewModelScope.launch(ioDispatcher) {
+		if (uiState.value.teacherId == null) throw RuntimeException("updateTeacher() was called but no teacher is new.")
+		teacherRepository.createTeacher(
+			TeacherEntity(
+				firstName = uiState.value.firstName,
+				lastName = uiState.value.lastName,
+				patronymic = uiState.value.patronymic,
+				phoneNumber = uiState.value.phoneNumber,
+				teacherId = uiState.value.teacherId!!
+			)
+		)
 	}
 	
 	fun updateFirstName(firstName: String) {
-		_uiState.update {
-			it.copy(
-				firstName = firstName
-			)
-		}
+		_uiState.update { it.copy(firstName = firstName) }
 	}
 	
 	fun updateLastName(newLastName: String) {
-		_uiState.update {
-			it.copy(
-				lastName = newLastName
-			)
-		}
+		_uiState.update { it.copy(lastName = newLastName) }
 	}
 	
 	fun updatePatronymic(newPatronymic: String) {
-		_uiState.update {
-			it.copy(
-				patronymic = newPatronymic
-			)
-		}
+		_uiState.update { it.copy(patronymic = newPatronymic) }
 	}
 	
 	fun updatePhoneNumber(newPhoneNumber: String) {
-		_uiState.update {
-			it.copy(
-				phoneNumber = newPhoneNumber
-			)
-		}
-	}
-	
-	fun hideTeacherDialog() {
-		_uiState.update {
-			it.copy(
-				isTeacherDialogShown = false
-			)
-		}
-	}
-	
-	fun showTeacherDialog() {
-		_uiState.update {
-			it.copy(
-				isTeacherDialogShown = true
-			)
-		}
+		_uiState.update { it.copy(phoneNumber = newPhoneNumber) }
 	}
 	
 	fun onTeacherClick(teacher: TeacherEntity) {
 		_uiState.update {
 			it.copy(
-				isTeacherDialogShown = true,
 				firstName = teacher.firstName,
 				lastName = teacher.lastName,
 				patronymic = teacher.patronymic,
 				phoneNumber = teacher.phoneNumber,
-				teacher = teacher
+				teacherId = teacher.teacherId
 			)
 		}
 	}
