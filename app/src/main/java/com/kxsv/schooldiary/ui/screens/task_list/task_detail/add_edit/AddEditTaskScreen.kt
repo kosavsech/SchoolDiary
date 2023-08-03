@@ -44,6 +44,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditTaskTopAppBar
+import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AddEditTaskScreenNavActions
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -67,12 +68,13 @@ data class AddEditTaskScreenNavArgs(
 )
 @Composable
 fun AddEditTaskScreen(
-	navigator: DestinationsNavigator,
+	destinationsNavigator: DestinationsNavigator,
 	resultNavigator: ResultBackNavigator<Int>,
 	viewModel: AddEditTaskViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState,
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
+	val navigator = AddEditTaskScreenNavActions(destinationsNavigator = destinationsNavigator)
 	
 	Scaffold(
 		modifier = Modifier.fillMaxSize(),

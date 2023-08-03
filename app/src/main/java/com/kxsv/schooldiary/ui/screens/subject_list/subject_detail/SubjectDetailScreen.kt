@@ -43,6 +43,7 @@ import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity.Companion.fullName
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.SubjectDetailTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.nav_actions.SubjectDetailScreenNavActions
 import com.kxsv.schooldiary.util.Mark
 import com.kxsv.schooldiary.util.Mark.Companion.getStringValueFrom
 import com.kxsv.schooldiary.util.Utils
@@ -182,9 +183,9 @@ private fun SubjectContent(
 	LoadingContent(
 		modifier = modifier,
 		loading = isLoading,
-		isContentScrollable = true,
 		empty = (subjectWithTeachers == null) && grades.isEmpty(),
 		emptyContent = { Text(text = stringResource(R.string.no_data), modifier = commonModifier) },
+		isContentScrollable = true,
 		onRefresh = onRefresh
 	) {
 		Column(

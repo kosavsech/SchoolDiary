@@ -43,6 +43,7 @@ import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditScheduleTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AddEditLessonScreenNavActions
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -67,12 +68,15 @@ data class AddEditLessonDestinationNavArgs(
 )
 @Composable
 fun AddEditLessonScreen(
-	resultNavigator: ResultBackNavigator<Int>,
-	navigator: DestinationsNavigator,
+	resultBackNavigator: ResultBackNavigator<Int>,
+	destinationsNavigator: DestinationsNavigator,
 	viewModel: AddEditLessonViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState,
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
+	val navigator = AddEditLessonScreenNavActions(
+		destinationsNavigator = destinationsNavigator, resultBackNavigator = resultBackNavigator
+	)
 	
 	Scaffold(
 		modifier = Modifier.fillMaxSize(),
@@ -102,7 +106,7 @@ fun AddEditLessonScreen(
 		
 		LaunchedEffect(uiState.isClassSaved) {
 			if (uiState.isClassSaved) {
-				resultNavigator.navigateBack(
+				navigator.navigateBackWithResult(
 					if (viewModel.lessonId == null) {
 						ADD_RESULT_OK
 					} else {

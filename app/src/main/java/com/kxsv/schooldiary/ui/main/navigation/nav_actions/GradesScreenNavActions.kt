@@ -1,6 +1,5 @@
-package com.kxsv.schooldiary.ui.screens.grade_list
+package com.kxsv.schooldiary.ui.main.navigation.nav_actions
 
-import com.kxsv.schooldiary.ui.main.navigation.NavActions
 import com.kxsv.schooldiary.ui.screens.destinations.GradeDetailScreenDestination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 

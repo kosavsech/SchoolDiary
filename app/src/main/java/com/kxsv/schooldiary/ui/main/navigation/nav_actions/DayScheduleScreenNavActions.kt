@@ -1,6 +1,5 @@
-package com.kxsv.schooldiary.ui.screens.schedule
+package com.kxsv.schooldiary.ui.main.navigation.nav_actions
 
-import com.kxsv.schooldiary.ui.main.navigation.NavActions
 import com.kxsv.schooldiary.ui.screens.destinations.AddEditLessonScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.DateRangeScheduleCopyScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.DayScheduleCopyScreenDestination

@@ -28,8 +28,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.progressSemantics
@@ -91,11 +92,12 @@ import kotlin.math.roundToInt
 /**
  * Display an initial empty state or swipe to refresh content.
  *
+ * @param modifier the modifier to apply to this layout
  * @param loading (state) when true, display a loading spinner over [content]
  * @param empty (state) when true, display [emptyContent]
  * @param emptyContent (slot) the content to display for the empty state
- * @param onRefresh (event) event to request refresh
- * @param modifier the modifier to apply to this layout.
+ * @param isContentScrollable (state) when true, doesn't apply vertical scroll modifier
+ * @param onRefresh (event) event to request refresh. Can be null, so user cannot drag update
  * @param content (slot) the main content to show
  */
 @OptIn(ExperimentalMaterialApi::class)
@@ -103,9 +105,9 @@ import kotlin.math.roundToInt
 fun LoadingContent(
 	modifier: Modifier = Modifier,
 	loading: Boolean,
-	isContentScrollable: Boolean = false,
 	empty: Boolean,
 	emptyContent: @Composable () -> Unit = { Text(text = "Empty") },
+	isContentScrollable: Boolean = false,
 	onRefresh: (() -> Unit)? = null,
 	content: @Composable () -> Unit,
 ) {
@@ -190,12 +192,13 @@ fun TermSelector(
 	onPeriodChange: (EduPerformancePeriod) -> Unit,
 	buttons: List<Utils.PeriodButton>,
 ) {
-	Column(
+	Row(
 		modifier = Modifier
+			.fillMaxWidth()
 			.horizontalScroll(rememberScrollState(initial = currentPeriod.ordinal))
 			.padding(vertical = dimensionResource(R.dimen.list_item_padding)),
-		verticalArrangement = Arrangement.Center,
-		horizontalAlignment = Alignment.CenterHorizontally
+		verticalAlignment = Alignment.CenterVertically,
+		horizontalArrangement = Arrangement.SpaceBetween
 	) {
 		buttons.forEach {
 			key(it.text) {

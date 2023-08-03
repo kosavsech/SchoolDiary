@@ -45,6 +45,7 @@ import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternEntity
 import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternWithStrokes
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.PatternsTopAppBar
+import com.kxsv.schooldiary.ui.main.navigation.nav_actions.PatternsScreenNavActions
 import com.kxsv.schooldiary.ui.screens.destinations.AddEditPatternScreenDestination
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.ramcosta.composedestinations.annotation.Destination

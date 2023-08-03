@@ -33,6 +33,7 @@ import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.task.TaskEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.TaskDetailTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.nav_actions.TasksDetailNavActions
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -54,16 +55,19 @@ fun TaskDetailScreen(
 	snackbarHostState: SnackbarHostState,
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
-	val navigator = TasksDetailNavActions(navigator = destinationsNavigator)
+	val navigator = TasksDetailNavActions(
+		destinationsNavigator = destinationsNavigator,
+		resultBackNavigator = resultNavigator
+	)
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		modifier = Modifier.fillMaxSize(),
 		topBar = {
 			TaskDetailTopAppBar(
-				onBack = { destinationsNavigator.popBackStack() },
+				onBack = { navigator.popBackStack() },
 				onDelete = {
 					viewModel.deleteTask()
-					resultNavigator.navigateBack(DELETE_RESULT_OK)
+					navigator.backWithResult(DELETE_RESULT_OK)
 				},
 				onEdit = { navigator.onEditTask(viewModel.taskId) }
 			)
@@ -114,9 +118,9 @@ private fun TaskContent(
 	LoadingContent(
 		modifier = commonModifier,
 		loading = isLoading,
-		isContentScrollable = true,
 		empty = (taskEntity == null && subjectEntity == null),
 		emptyContent = { Text(text = stringResource(R.string.no_data), modifier = commonModifier) },
+		isContentScrollable = true,
 		onRefresh = {}
 	) {
 		if (taskEntity != null) {

@@ -67,6 +67,7 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.lesson.LessonWithSubject
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.CopyScheduleForDayTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.ScheduleNavGraph
+import com.kxsv.schooldiary.ui.main.navigation.nav_actions.DayScheduleCopyScreenNavActions
 import com.kxsv.schooldiary.util.ui.displayText
 import com.kxsv.schooldiary.util.ui.rememberFirstCompletelyVisibleMonth
 import com.ramcosta.composedestinations.annotation.Destination
@@ -95,14 +96,17 @@ data class DayScheduleCopyResult(
 @Destination
 @Composable
 fun DayScheduleCopyScreen(
-	resultNavigator: ResultBackNavigator<DayScheduleCopyResult>,
-	navigator: DestinationsNavigator,
+	resultBackNavigator: ResultBackNavigator<DayScheduleCopyResult>,
+	destinationsNavigator: DestinationsNavigator,
 	viewModel: ScheduleViewModel,
 	snackbarHostState: SnackbarHostState,
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
 	val dialogState = rememberMaterialDialogState()
-	
+	val navigator = DayScheduleCopyScreenNavActions(
+		destinationsNavigator = destinationsNavigator,
+		resultBackNavigator = resultBackNavigator
+	)
 	Scaffold(
 		topBar = {
 			CopyScheduleForDayTopAppBar(
@@ -142,7 +146,7 @@ fun DayScheduleCopyScreen(
 			dialogState = dialogState,
 			fromDate = uiState.selectedRefCalendarDay?.date,
 			copyScheduleFromDay = viewModel::copySchedule,
-			onScheduleCopied = { result -> resultNavigator.navigateBack(result = result) }
+			onScheduleCopied = { navigator.backWithResult(it) }
 		)
 		
 		uiState.userMessage?.let { userMessage ->

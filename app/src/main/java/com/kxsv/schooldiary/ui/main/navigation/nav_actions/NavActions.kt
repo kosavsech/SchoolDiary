@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.ui.main.navigation
+package com.kxsv.schooldiary.ui.main.navigation.nav_actions
 
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 

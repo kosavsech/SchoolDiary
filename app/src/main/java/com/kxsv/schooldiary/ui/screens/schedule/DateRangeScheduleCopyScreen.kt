@@ -57,6 +57,7 @@ import com.kizitonwose.calendar.core.nextMonth
 import com.kizitonwose.calendar.core.previousMonth
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.CopyScheduleForDayTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.ScheduleNavGraph
+import com.kxsv.schooldiary.ui.main.navigation.nav_actions.DateRangeScheduleCopyScreenNavActions
 import com.kxsv.schooldiary.util.ui.ContinuousSelectionHelper.getSelection
 import com.kxsv.schooldiary.util.ui.DateSelection
 import com.kxsv.schooldiary.util.ui.backgroundHighlight
@@ -94,13 +95,17 @@ data class DateRangeScheduleCopyResult(
 @Destination
 @Composable
 fun DateRangeScheduleCopyScreen(
-	resultNavigator: ResultBackNavigator<DateRangeScheduleCopyResult>,
-	navigator: DestinationsNavigator,
+	resultBackNavigator: ResultBackNavigator<DateRangeScheduleCopyResult>,
+	destinationsNavigator: DestinationsNavigator,
 	viewModel: ScheduleViewModel,
 	snackbarHostState: SnackbarHostState,
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
 	val dialogState = rememberMaterialDialogState()
+	val navigator = DateRangeScheduleCopyScreenNavActions(
+		destinationsNavigator = destinationsNavigator,
+		resultBackNavigator = resultBackNavigator
+	)
 	
 	Scaffold(
 		topBar = {
@@ -134,7 +139,7 @@ fun DateRangeScheduleCopyScreen(
 			refRange = uiState.refRange,
 			destRange = uiState.destRange,
 			copyScheduleToRange = { viewModel.copyScheduleToRange(it) },
-			onScheduleCopied = { result -> resultNavigator.navigateBack(result = result) }
+			onScheduleCopied = { navigator.navigateBackWithResult(it) }
 		)
 		
 		uiState.userMessage?.let { userMessage ->

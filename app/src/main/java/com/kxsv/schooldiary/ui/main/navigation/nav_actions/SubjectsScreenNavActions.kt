@@ -1,6 +1,5 @@
-package com.kxsv.schooldiary.ui.screens.subject_list
+package com.kxsv.schooldiary.ui.main.navigation.nav_actions
 
-import com.kxsv.schooldiary.ui.main.navigation.NavActions
 import com.kxsv.schooldiary.ui.screens.destinations.AddEditSubjectScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.SubjectDetailScreenDestination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator

@@ -270,8 +270,8 @@ private fun TeachersContent(
 	LoadingContent(
 		modifier = modifier,
 		loading = isLoading,
-		isContentScrollable = true,
-		empty = teacherEntities.isEmpty()
+		empty = teacherEntities.isEmpty(),
+		isContentScrollable = true
 	) {
 		LazyColumn(
 			contentPadding = PaddingValues(vertical = dimensionResource(R.dimen.vertical_margin)),

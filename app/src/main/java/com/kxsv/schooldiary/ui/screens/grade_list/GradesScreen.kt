@@ -31,6 +31,7 @@ import com.kxsv.schooldiary.data.local.features.grade.GradeEntity
 import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.GradesTopAppBar
+import com.kxsv.schooldiary.ui.main.navigation.nav_actions.GradesScreenNavActions
 import com.kxsv.schooldiary.util.Mark
 import com.kxsv.schooldiary.util.Mark.Companion.getStringValueFrom
 import com.kxsv.schooldiary.util.ui.GradesSortType
@@ -119,9 +120,9 @@ private fun GradesContent(
 	LoadingContent(
 		modifier = modifier,
 		loading = loading,
-		isContentScrollable = true,
 		empty = grades.isEmpty(),
 		emptyContent = { Text(text = "No subjects for yet") },
+		isContentScrollable = true,
 		onRefresh = onRefresh
 	) {
 		LazyColumn(

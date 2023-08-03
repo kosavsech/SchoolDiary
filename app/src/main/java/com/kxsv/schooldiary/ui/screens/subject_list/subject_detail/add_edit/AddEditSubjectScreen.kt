@@ -36,6 +36,7 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity.Companion.fullName
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditSubjectTopAppBar
+import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AddEditSubjectScreenNavActions
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -53,12 +54,16 @@ data class AddEditSubjectScreenNavArgs(
 )
 @Composable
 fun AddEditSubjectScreen(
-	resultNavigator: ResultBackNavigator<Int>,
-	navigator: DestinationsNavigator,
+	resultBackNavigator: ResultBackNavigator<Int>,
+	destinationsNavigator: DestinationsNavigator,
 	viewModel: AddEditSubjectViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState,
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
+	val navigator = AddEditSubjectScreenNavActions(
+		destinationsNavigator = destinationsNavigator,
+		resultBackNavigator = resultBackNavigator
+	)
 	
 	Scaffold(
 		modifier = Modifier.fillMaxSize(),
@@ -68,7 +73,7 @@ fun AddEditSubjectScreen(
 			Row {
 				FloatingActionButton(onClick = {
 					val result = viewModel.saveSubject()
-					if (result != null) resultNavigator.navigateBack(result)
+					if (result != null) navigator.navigateBackWithResult(result)
 				}) {
 					Icon(Icons.Filled.Done, stringResource(R.string.save_subject))
 				}

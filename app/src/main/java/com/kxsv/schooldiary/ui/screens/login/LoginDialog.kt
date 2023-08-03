@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.ui.screens.destinations.DayScheduleScreenDestination
+import com.kxsv.schooldiary.ui.main.navigation.nav_actions.LoginDialogNavActions
 import com.kxsv.schooldiary.util.ui.Indicator
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -71,26 +71,19 @@ fun LoginDialog(
 	destinationsNavigator: DestinationsNavigator,
 	viewModel: LoginViewModel = hiltViewModel(),
 ) {
+	val navigator = LoginDialogNavActions(destinationsNavigator = destinationsNavigator)
 	val uiState = viewModel.uiState.collectAsState().value
 	val updateLogin = remember<(String) -> Unit> {
-		{
-			viewModel.updateLogin(it)
-		}
+		{ viewModel.updateLogin(it) }
 	}
 	val updatePassword = remember<(String) -> Unit> {
-		{
-			viewModel.updatePassword(it)
-		}
+		{ viewModel.updatePassword(it) }
 	}
 	val onLoginClick = remember {
-		{
-			viewModel.onLoginClick()
-		}
+		{ viewModel.onLoginClick() }
 	}
 	val onLoggedIn = remember {
-		{
-			destinationsNavigator.navigate(DayScheduleScreenDestination.route)
-		}
+		{ navigator.onLoggedIn() }
 	}
 	LaunchedEffect(uiState.loggedIn) {
 		if (uiState.loggedIn) onLoggedIn()

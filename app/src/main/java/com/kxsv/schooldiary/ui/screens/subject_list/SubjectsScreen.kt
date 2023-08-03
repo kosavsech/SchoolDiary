@@ -32,6 +32,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.SubjectsTopAppBar
+import com.kxsv.schooldiary.ui.main.navigation.nav_actions.SubjectsScreenNavActions
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -47,6 +48,7 @@ fun SubjectsScreen(
 	viewModel: SubjectsViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState,
 ) {
+	// todo add NavActions
 	val navigator = SubjectsScreenNavActions(destinationsNavigator = destinationsNavigator)
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -101,9 +103,9 @@ private fun SubjectsContent(
 	LoadingContent(
 		modifier = modifier,
 		loading = loading,
-		isContentScrollable = true,
 		empty = subjects.isEmpty(),
 		emptyContent = { Text(text = "No subjects for yet") },
+		isContentScrollable = true,
 		onRefresh = { /*TODO*/ }
 	) {
 		LazyColumn(

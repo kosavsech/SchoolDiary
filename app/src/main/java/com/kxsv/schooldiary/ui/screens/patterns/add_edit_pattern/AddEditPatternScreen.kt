@@ -41,6 +41,7 @@ import androidx.navigation.NavBackStackEntry
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditPatternTopAppBar
+import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AddEditPatternScreenNavActions
 import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.ramcosta.composedestinations.annotation.Destination
@@ -66,12 +67,15 @@ data class AddEditPatternScreenNavArgs(
 )
 @Composable
 fun AddEditPatternScreen(
-	resultNavigator: ResultBackNavigator<Int>,
-	navigator: DestinationsNavigator,
+	resultBackNavigator: ResultBackNavigator<Int>,
+	destinationsNavigator: DestinationsNavigator,
 	viewModel: AddEditPatternViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState,
 	navBackStackEntry: NavBackStackEntry,
 ) {
+	val navigator = AddEditPatternScreenNavActions(
+		destinationsNavigator = destinationsNavigator, resultBackNavigator = resultBackNavigator
+	)
 	val navArgs: AddEditPatternScreenNavArgs = navBackStackEntry.navArgs()
 	val topBarTitle = navArgs.topBarTitle
 	Scaffold(
@@ -87,7 +91,7 @@ fun AddEditPatternScreen(
 				FloatingActionButton(
 					onClick = {
 						val result = viewModel.savePattern()
-						if (result != null) resultNavigator.navigateBack(result)
+						if (result != null) navigator.navigateBackWithResult(result)
 					}
 				) {
 					Icon(Icons.Filled.Done, stringResource(R.string.save_pattern))

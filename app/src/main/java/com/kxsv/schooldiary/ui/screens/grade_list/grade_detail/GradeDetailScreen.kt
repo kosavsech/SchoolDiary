@@ -31,6 +31,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditGradeTopAppBar
+import com.kxsv.schooldiary.ui.main.navigation.nav_actions.GradeDetailScreenNavActions
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -46,12 +47,12 @@ data class GradeDetailScreenNavArgs(
 )
 @Composable
 fun GradeDetailScreen(
-	navigator: DestinationsNavigator,
+	destinationsNavigator: DestinationsNavigator,
 	viewModel: GradeDetailViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState,
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
-	
+	val navigator = GradeDetailScreenNavActions(destinationsNavigator = destinationsNavigator)
 	Scaffold(
 		modifier = Modifier.fillMaxSize(),
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },

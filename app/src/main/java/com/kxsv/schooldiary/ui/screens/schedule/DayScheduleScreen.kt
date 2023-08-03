@@ -67,6 +67,7 @@ import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.ScheduleTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.ScheduleNavGraph
+import com.kxsv.schooldiary.ui.main.navigation.nav_actions.DayScheduleScreenNavActions
 import com.kxsv.schooldiary.ui.screens.destinations.AddEditLessonScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.DateRangeScheduleCopyScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.DayScheduleCopyScreenDestination
@@ -359,9 +360,9 @@ fun ScheduleComparisonTable(
 		
 		LoadingContent(
 			loading = loading,
-			isContentScrollable = true,
 			empty = false,
 			emptyContent = {},
+			isContentScrollable = true,
 			onRefresh = onRefresh
 		) {
 			val cellWidth: (Int) -> Dp = { index ->
@@ -479,7 +480,6 @@ private fun ScheduleForDay(
 ) {
 	LoadingContent(
 		loading = loading,
-		isContentScrollable = true,
 		empty = classes.isEmpty(),
 		emptyContent = {
 			Column(
@@ -488,6 +488,7 @@ private fun ScheduleForDay(
 				Text(text = stringResource(R.string.no_classes_label))
 			}
 		},
+		isContentScrollable = true,
 		onRefresh = onRefresh
 	) {
 		LazyColumn(
