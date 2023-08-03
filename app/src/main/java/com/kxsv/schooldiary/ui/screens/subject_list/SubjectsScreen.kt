@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -22,7 +23,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -65,7 +65,6 @@ fun SubjectsScreen(
 		SubjectsContent(
 			loading = uiState.isLoading,
 			subjects = uiState.subjects,
-			//noSubjectsLabel = 0,
 			onSubjectClick = { subjectId -> navigator.onSubjectClick(subjectId) },
 			modifier = Modifier.padding(paddingValues),
 		)
@@ -78,15 +77,6 @@ fun SubjectsScreen(
 				viewModel.snackbarMessageShown()
 			}
 		}
-		
-		// Check if there's a userMessage to show to the user
-		/*val currentOnUserMessageDisplayed by rememberUpdatedState(onUserMessageDisplayed)
-		LaunchedEffect(userMessage) {
-			if (userMessage != 0) {
-				viewModel.showEditResultMessage(userMessage)
-				currentOnUserMessageDisplayed()
-			}
-		}*/
 	}
 }
 
@@ -94,9 +84,6 @@ fun SubjectsScreen(
 private fun SubjectsContent(
 	loading: Boolean,
 	subjects: List<SubjectEntity>,
-	// TODO
-	//  @StringRes noSubjectsLabel: Int,
-	//  onRefresh: () -> Unit,
 	onSubjectClick: (Long) -> Unit,
 	modifier: Modifier,
 ) {
@@ -106,18 +93,17 @@ private fun SubjectsContent(
 		empty = subjects.isEmpty(),
 		emptyContent = { Text(text = "No subjects for yet") },
 		isContentScrollable = true,
-		onRefresh = { /*TODO*/ }
+		onRefresh = null
 	) {
 		LazyColumn(
 			contentPadding = PaddingValues(vertical = dimensionResource(R.dimen.list_item_padding)),
 		) {
 			items(subjects) { subject ->
-				key(subject.subjectId) {
-					SubjectItem(
-						subject = subject,
-						onSubjectClick = onSubjectClick,
-					)
-				}
+				SubjectItem(
+					subject = subject,
+					onSubjectClick = onSubjectClick,
+				)
+				Divider()
 			}
 		}
 	}
