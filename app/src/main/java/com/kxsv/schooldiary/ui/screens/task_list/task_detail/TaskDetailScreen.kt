@@ -74,7 +74,10 @@ fun TaskDetailScreen(
 			)
 		},
 		floatingActionButton = {
-			FloatingActionButton(onClick = { viewModel.completeTask() }) {
+			FloatingActionButton(onClick = {
+				viewModel.completeTask()
+				navigator.popBackStack()
+			}) {
 				Icon(
 					imageVector = Icons.Filled.Done,
 					contentDescription = stringResource(R.string.mark_task_done)
