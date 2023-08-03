@@ -90,7 +90,7 @@ private fun SubjectsContent(
 		modifier = modifier,
 		loading = loading,
 		empty = subjects.isEmpty(),
-		emptyContent = { Text(text = "No subjects for yet") },
+		emptyContent = { Text(text = "No subjects yet") },
 		isContentScrollable = true,
 		onRefresh = null
 	) {

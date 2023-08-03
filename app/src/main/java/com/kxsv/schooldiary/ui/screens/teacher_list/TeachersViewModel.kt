@@ -39,7 +39,7 @@ class TeachersViewModel @Inject constructor(
 	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
-	private val _teachersAsync = teacherRepository.getTeachersStream()
+	private val _teachersAsync = teacherRepository.observeTeachers()
 		.map { Async.Success(it) }
 		.catch<Async<List<TeacherEntity>>> { emit(Async.Error(R.string.loading_teachers_error)) }
 	

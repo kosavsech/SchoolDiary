@@ -1,5 +1,6 @@
 package com.kxsv.schooldiary.ui.screens.subject_list.subject_detail.add_edit
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,14 +9,20 @@ import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.data.repository.TeacherRepository
+import com.kxsv.schooldiary.di.util.IoDispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.util.Utils.nonEmptyTrim
+import com.kxsv.schooldiary.util.ui.Async
+import com.kxsv.schooldiary.util.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -24,28 +31,71 @@ data class AddEditSubjectUiState(
 	val fullName: String = "",
 	val displayName: String = "",
 	val cabinet: String = "",
-	val initialSelection: Set<Int> = emptySet(),
-	val selectedTeachers: Set<TeacherEntity> = emptySet(),
+	val selectedTeachersIds: Set<Int> = emptySet(),
 	val availableTeachers: List<TeacherEntity> = emptyList(),
+	
+	val firstName: String = "",
+	val lastName: String = "",
+	val patronymic: String = "",
+	val teacherId: Int? = null,
+	val phoneNumber: String = "",
+	
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
 )
+
+private const val TAG = "AddEditSubjectViewModel"
 
 @HiltViewModel
 class AddEditSubjectViewModel @Inject constructor(
 	private val subjectRepository: SubjectRepository,
 	private val teacherRepository: TeacherRepository,
+	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 	savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 	
 	val navArgs: AddEditSubjectScreenNavArgs = savedStateHandle.navArgs()
 	val subjectId = navArgs.subjectId
 	
+	private val _availableTeachersAsync = teacherRepository.observeTeachers()
+		.map { Async.Success(it) }
+		.catch<Async<List<TeacherEntity>>> { emit(Async.Error(R.string.loading_teachers_error)) }
+	
 	private val _uiState = MutableStateFlow(AddEditSubjectUiState())
-	val uiState: StateFlow<AddEditSubjectUiState> = _uiState.asStateFlow()
+	val uiState = combine(
+		_uiState, _availableTeachersAsync
+	) { state, availableTeachers ->
+		when (availableTeachers) {
+			Async.Loading -> AddEditSubjectUiState(isLoading = true)
+			
+			is Async.Error -> AddEditSubjectUiState(userMessage = availableTeachers.errorMessage)
+			
+			is Async.Success -> {
+				state.copy(
+					availableTeachers = availableTeachers.data
+				)
+			}
+		}
+	}.stateIn(viewModelScope, WhileUiSubscribed, AddEditSubjectUiState(isLoading = true))
 	
 	init {
 		if (subjectId != null) loadSubject(subjectId)
+	}
+	
+	fun showEditResultMessage(result: Int) {
+		when (result) {
+//			EDIT_RESULT_OK -> showSnackbarMessage(R.string.successfully_saved_teacher_message)
+			ADD_RESULT_OK -> showSnackbarMessage(R.string.successfully_added_teacher_message)
+//			DELETE_RESULT_OK -> showSnackbarMessage(R.string.successfully_deleted_teacher_message)
+		}
+	}
+	
+	private fun showSnackbarMessage(message: Int) {
+		_uiState.update {
+			it.copy(
+				userMessage = message
+			)
+		}
 	}
 	
 	fun saveSubject(): Int? {
@@ -95,58 +145,72 @@ class AddEditSubjectViewModel @Inject constructor(
 		}
 	}
 	
-	fun saveSelectedTeachers(newIndices: Set<Int>) {
-		val newSelectedTeachers: MutableSet<TeacherEntity> = mutableSetOf()
-		newIndices.forEach { index ->
-			newSelectedTeachers.add(uiState.value.availableTeachers[index])
-		}
+	fun saveNewTeacher() {
+		createNewTeacher()
+		showEditResultMessage(ADD_RESULT_OK)
+		eraseData()
+	}
+	
+	fun eraseData() {
 		_uiState.update {
 			it.copy(
-				selectedTeachers = newSelectedTeachers,
-				initialSelection = emptySet()
+				firstName = "",
+				lastName = "",
+				patronymic = "",
+				phoneNumber = "",
+				teacherId = null
 			)
 		}
 	}
 	
-	fun loadAvailableTeachers() {
-		_uiState.update {
-			it.copy(isLoading = true)
-		}
-		
-		viewModelScope.launch {
-			teacherRepository.getTeachers().let { teachers ->
-				val updatedSelectedTeachersIndices: MutableSet<Int> = mutableSetOf()
-				uiState.value.selectedTeachers.forEach { teacher ->
-					updatedSelectedTeachersIndices.add(
-						teachers.binarySearch(teacher, compareBy { it.patronymic })
-					)
-				}
-				_uiState.update {
-					it.copy(
-						availableTeachers = teachers,
-						initialSelection = updatedSelectedTeachersIndices,
-						isLoading = false
-					)
-				}
-			}
-		}
+	private fun createNewTeacher() = viewModelScope.launch(ioDispatcher) {
+		teacherRepository.createTeacher(
+			TeacherEntity(
+				firstName = uiState.value.firstName,
+				lastName = uiState.value.lastName,
+				patronymic = uiState.value.patronymic,
+				phoneNumber = uiState.value.phoneNumber
+			)
+		)
 	}
 	
-	private fun createNewSubject() = viewModelScope.launch {
-		subjectRepository.createSubject(
-			SubjectEntity(
-				uiState.value.fullName.trim(),
-				uiState.value.displayName.nonEmptyTrim(),
-				uiState.value.cabinet.nonEmptyTrim()
-			),
-			uiState.value.selectedTeachers
-		)
+	fun updateFirstName(firstName: String) {
+		_uiState.update { it.copy(firstName = firstName) }
+	}
+	
+	fun updateLastName(newLastName: String) {
+		_uiState.update { it.copy(lastName = newLastName) }
+	}
+	
+	fun updatePatronymic(newPatronymic: String) {
+		_uiState.update { it.copy(patronymic = newPatronymic) }
+	}
+	
+	fun updatePhoneNumber(newPhoneNumber: String) {
+		_uiState.update { it.copy(phoneNumber = newPhoneNumber) }
+	}
+	
+	fun updateSelectedTeachers(newSelectedTeachersIds: Set<Int>) {
+		Log.i(TAG, "updateSelectedTeachers: newSelectedTeachersIds $newSelectedTeachersIds")
+		_uiState.update { it.copy(selectedTeachersIds = newSelectedTeachersIds) }
+	}
+	
+	private fun createNewSubject() {
+		viewModelScope.launch(ioDispatcher) {
+			subjectRepository.createSubject(
+				subject = SubjectEntity(
+					uiState.value.fullName.trim(),
+					uiState.value.displayName.nonEmptyTrim(),
+					uiState.value.cabinet.nonEmptyTrim()
+				),
+				teachersIds = uiState.value.selectedTeachersIds
+			)
+		}
 	}
 	
 	private fun updateSubject() {
 		if (subjectId == null) throw RuntimeException("updateSubject() was called but subject is new.")
-		
-		viewModelScope.launch {
+		viewModelScope.launch(ioDispatcher) {
 			subjectRepository.updateSubject(
 				subject = SubjectEntity(
 					fullName = uiState.value.fullName.trim(),
@@ -154,7 +218,7 @@ class AddEditSubjectViewModel @Inject constructor(
 					displayName = uiState.value.displayName.nonEmptyTrim(),
 					subjectId = subjectId
 				),
-				teachers = uiState.value.selectedTeachers
+				teachersIds = uiState.value.selectedTeachersIds
 			)
 		}
 	}
@@ -164,15 +228,18 @@ class AddEditSubjectViewModel @Inject constructor(
 			it.copy(isLoading = true)
 		}
 		
-		viewModelScope.launch {
+		viewModelScope.launch(ioDispatcher) {
 			subjectRepository.getSubjectWithTeachers(subjectId).let { subjectWithTeachers ->
 				if (subjectWithTeachers != null) {
+					val selectedTeachersIds = subjectWithTeachers.teachers.map {
+						it.teacherId
+					}.toSet()
 					_uiState.update {
 						it.copy(
 							fullName = subjectWithTeachers.subject.fullName,
 							displayName = subjectWithTeachers.subject.getDisplayNameString(),
+							selectedTeachersIds = selectedTeachersIds,
 							cabinet = subjectWithTeachers.subject.getCabinetString(),
-							selectedTeachers = subjectWithTeachers.teachers,
 							isLoading = false
 						)
 					}

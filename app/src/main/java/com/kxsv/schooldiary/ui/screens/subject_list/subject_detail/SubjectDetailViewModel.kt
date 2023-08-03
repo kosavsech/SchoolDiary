@@ -160,9 +160,10 @@ class SubjectDetailViewModel @Inject constructor(
 	}
 	
 	fun saveTargetMark() = viewModelScope.launch(ioDispatcher) {
-		uiState.value.subjectWithTeachers?.subject?.let {
+		uiState.value.subjectWithTeachers?.let {
 			subjectRepository.updateSubject(
-				subject = it.copy(targetMark = dialogTargetMark.value)
+				subject = it.subject.copy(targetMark = dialogTargetMark.value),
+				teachersIds = null
 			)
 		}
 	}

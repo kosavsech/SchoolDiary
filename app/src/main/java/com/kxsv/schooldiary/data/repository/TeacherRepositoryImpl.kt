@@ -12,7 +12,7 @@ class TeacherRepositoryImpl @Inject constructor(
 	private val teacherDataSource: TeacherDao,
 ) : TeacherRepository {
 	
-	override fun getTeachersStream(): Flow<List<TeacherEntity>> {
+	override fun observeTeachers(): Flow<List<TeacherEntity>> {
 		return teacherDataSource.observeAll()
 	}
 	

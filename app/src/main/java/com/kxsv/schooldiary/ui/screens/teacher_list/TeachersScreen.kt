@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -31,13 +29,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
@@ -46,11 +39,7 @@ import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity.Companion.
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.TeachersTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.ramcosta.composedestinations.annotation.Destination
-import com.vanpra.composematerialdialogs.MaterialDialog
-import com.vanpra.composematerialdialogs.MaterialDialogState
-import com.vanpra.composematerialdialogs.input
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
-import com.vanpra.composematerialdialogs.title
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -136,126 +125,6 @@ fun TeachersScreen(
 				viewModel.snackbarMessageShown()
 			}
 		}
-	}
-}
-
-@Composable
-private fun AddEditTeacherDialog(
-	dialogState: MaterialDialogState,
-	firstName: String,
-	lastName: String,
-	patronymic: String,
-	phoneNumber: String,
-	updateFirstName: (String) -> Unit,
-	updateLastName: (String) -> Unit,
-	updatePatronymic: (String) -> Unit,
-	updatePhoneNumber: (String) -> Unit,
-	onSaveClick: () -> Unit,
-	onCancelClick: () -> Unit,
-) {
-	val isTextValid = remember(firstName, lastName, patronymic) {
-		patronymic.isNotBlank() || lastName.isNotBlank() || firstName.isNotBlank()
-	}
-	MaterialDialog(
-		dialogState = dialogState,
-		buttons = {
-			positiveButton(
-				res = R.string.btn_save,
-				onClick = onSaveClick
-			)
-			negativeButton(
-				res = R.string.btn_cancel,
-				onClick = onCancelClick
-			)
-		},
-	) {
-		val focusManager = LocalFocusManager.current
-		PositiveButtonEnabled(valid = isTextValid, onDispose = {})
-		title(res = R.string.add_teacher)
-		input(
-			label = stringResource(R.string.first_name_hint),
-			prefill = firstName,
-			onInput = { updateFirstName(it) },
-			waitForPositiveButton = false,
-			singleLine = true,
-			keyboardOptions = KeyboardOptions(
-				imeAction = ImeAction.Next,
-				autoCorrect = false,
-				capitalization = KeyboardCapitalization.Words,
-				keyboardType = KeyboardType.Text
-			),
-			keyboardActions = KeyboardActions(
-				onNext = {
-					focusManager.moveFocus(FocusDirection.Next)
-				}
-			),
-		)
-		input(
-			label = stringResource(R.string.last_name_hint),
-			prefill = lastName,
-			onInput = { updateLastName(it) },
-			waitForPositiveButton = false,
-			singleLine = true,
-			keyboardOptions = KeyboardOptions(
-				imeAction = ImeAction.Next,
-				autoCorrect = false,
-				capitalization = KeyboardCapitalization.Words,
-				keyboardType = KeyboardType.Text
-			),
-			keyboardActions = KeyboardActions(
-				onNext = {
-					focusManager.moveFocus(FocusDirection.Next)
-				}
-			),
-		)
-		input(
-			label = stringResource(R.string.patronymic_hint),
-			prefill = patronymic,
-			onInput = { updatePatronymic(it) },
-			waitForPositiveButton = false,
-			singleLine = true,
-			keyboardOptions = KeyboardOptions(
-				imeAction = if (!isTextValid) {
-					ImeAction.None
-				} else {
-					ImeAction.Next
-				},
-				autoCorrect = false,
-				capitalization = KeyboardCapitalization.Words,
-				keyboardType = KeyboardType.Text
-			),
-			keyboardActions = KeyboardActions(
-				onNext = {
-					focusManager.moveFocus(FocusDirection.Next)
-				},
-			),
-		)
-		input(
-			label = stringResource(R.string.phone_number_hint),
-			prefill = phoneNumber,
-			onInput = { updatePhoneNumber(it) },
-			waitForPositiveButton = false,
-			singleLine = true,
-			keyboardOptions = KeyboardOptions(
-				imeAction = if (!isTextValid) {
-					ImeAction.Previous
-				} else {
-					ImeAction.Done
-				},
-				autoCorrect = false,
-				capitalization = KeyboardCapitalization.None,
-				keyboardType = KeyboardType.Phone
-			),
-			keyboardActions = KeyboardActions(
-				onDone = {
-					onSaveClick()
-					dialogState.hide(focusManager)
-				},
-				onPrevious = {
-					focusManager.moveFocus(FocusDirection.Previous)
-				}
-			),
-		)
 	}
 }
 

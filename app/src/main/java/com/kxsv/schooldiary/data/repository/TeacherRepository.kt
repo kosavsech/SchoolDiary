@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface TeacherRepository {
 	
-	fun getTeachersStream(): Flow<List<TeacherEntity>>
+	fun observeTeachers(): Flow<List<TeacherEntity>>
 	
 	fun getTeacherStream(teacherId: Int): Flow<TeacherEntity>
 	

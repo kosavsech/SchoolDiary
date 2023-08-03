@@ -3,7 +3,6 @@ package com.kxsv.schooldiary.data.repository
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.subject.SubjectWithGrades
 import com.kxsv.schooldiary.data.local.features.subject.SubjectWithTeachers
-import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
 import kotlinx.coroutines.flow.Flow
 
 interface SubjectRepository {
@@ -26,9 +25,9 @@ interface SubjectRepository {
 	
 	suspend fun getSubjectWithTeachers(subjectId: Long): SubjectWithTeachers?
 	
-	suspend fun createSubject(subject: SubjectEntity, teachers: Set<TeacherEntity>)
+	suspend fun createSubject(subject: SubjectEntity, teachersIds: Set<Int>)
 	
-	suspend fun updateSubject(subject: SubjectEntity, teachers: Set<TeacherEntity>? = null)
+	suspend fun updateSubject(subject: SubjectEntity, teachersIds: Set<Int>?)
 	
 	suspend fun deleteAllSubjects()
 	

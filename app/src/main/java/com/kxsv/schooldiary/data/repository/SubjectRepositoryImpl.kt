@@ -6,7 +6,6 @@ import com.kxsv.schooldiary.data.local.features.subject.SubjectDao
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.subject.SubjectWithGrades
 import com.kxsv.schooldiary.data.local.features.subject.SubjectWithTeachers
-import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -54,24 +53,24 @@ class SubjectRepositoryImpl @Inject constructor(
 		return subjectDataSource.getByIdWithTeachers(subjectId)
 	}
 	
-	override suspend fun createSubject(subject: SubjectEntity, teachers: Set<TeacherEntity>) {
+	override suspend fun createSubject(subject: SubjectEntity, teachersIds: Set<Int>) {
 		val subjectId = subjectDataSource.upsert(subject)
 		
-		teachers.forEach {
+		teachersIds.forEach { teacherId ->
 			subjectTeacherDataSource.upsert(
-				SubjectTeacher(subjectId = subjectId, teacherId = it.teacherId)
+				SubjectTeacher(subjectId = subjectId, teacherId = teacherId)
 			)
 		}
 	}
 	
-	override suspend fun updateSubject(subject: SubjectEntity, teachers: Set<TeacherEntity>?) {
+	override suspend fun updateSubject(subject: SubjectEntity, teachersIds: Set<Int>?) {
 		subjectDataSource.upsert(subject)
 		
-		if (teachers != null) {
-			subjectTeacherDataSource.deleteBySubjectId(subject.subjectId) // TODO: is it excess?
-			teachers.forEach { teacher ->
+		if (teachersIds != null) {
+			subjectTeacherDataSource.deleteBySubjectId(subject.subjectId)
+			teachersIds.forEach { teacherId ->
 				subjectTeacherDataSource.upsert(
-					SubjectTeacher(subject.subjectId, teacher.teacherId)
+					SubjectTeacher(subject.subjectId, teacherId)
 				)
 			}
 		}

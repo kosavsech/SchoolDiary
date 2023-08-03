@@ -60,6 +60,13 @@ object NonDismissibleDialog : DestinationStyle.Dialog {
 	)
 }
 
+object DismissibleDialog : DestinationStyle.Dialog {
+	override val properties = DialogProperties(
+		dismissOnClickOutside = true,
+		dismissOnBackPress = true,
+	)
+}
+
 private const val TAG = "LoginDialog"
 
 @LoginNavGraph

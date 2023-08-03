@@ -1,48 +1,64 @@
 package com.kxsv.schooldiary.ui.screens.subject_list.subject_detail.add_edit
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Divider
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity.Companion.fullName
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditSubjectTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AddEditSubjectScreenNavActions
+import com.kxsv.schooldiary.ui.screens.teacher_list.AddEditTeacherDialog
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.result.ResultBackNavigator
 import com.vanpra.composematerialdialogs.MaterialDialog
-import com.vanpra.composematerialdialogs.listItemsMultiChoice
+import com.vanpra.composematerialdialogs.MaterialDialogScope
+import com.vanpra.composematerialdialogs.MaterialDialogState
+import com.vanpra.composematerialdialogs.listItems
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 
 data class AddEditSubjectScreenNavArgs(
@@ -64,6 +80,8 @@ fun AddEditSubjectScreen(
 		destinationsNavigator = destinationsNavigator,
 		resultBackNavigator = resultBackNavigator
 	)
+	val teacherCreateDialog = rememberMaterialDialogState(false)
+	val teacherSelectDialog = rememberMaterialDialogState(false)
 	
 	Scaffold(
 		modifier = Modifier.fillMaxSize(),
@@ -81,9 +99,8 @@ fun AddEditSubjectScreen(
 		}
 	) { paddingValues ->
 		
-		val teacherListLoad = remember { { viewModel.loadAvailableTeachers() } }
-		val saveSelectedTeachers = remember<(Set<Int>) -> Unit> {
-			{ viewModel.saveSelectedTeachers(it) }
+		val onCheckedChange = remember<(Set<Int>) -> Unit> {
+			{ viewModel.updateSelectedTeachers(it) }
 		}
 		val updateFullName = remember<(String) -> Unit> {
 			{ viewModel.updateFullName(it) }
@@ -94,23 +111,55 @@ fun AddEditSubjectScreen(
 		val updateCabinet = remember<(String) -> Unit> {
 			{ viewModel.updateCabinet(it) }
 		}
+		val onCreateTeacher = remember { { teacherCreateDialog.show() } }
 		
 		AddEditSubjectContent(
+			modifier = Modifier.padding(paddingValues),
+			teacherSelectDialog = teacherSelectDialog,
 			isLoading = uiState.isLoading,
 			fullName = uiState.fullName,
 			displayName = uiState.displayName,
 			cabinet = uiState.cabinet,
-			selectedTeachers = uiState.selectedTeachers,
-			teachers = uiState.availableTeachers,
-			initialSelection = uiState.initialSelection,
-			onAddTeacher = teacherListLoad,
-			onTeacherChanged = saveSelectedTeachers,
+			availableTeachers = uiState.availableTeachers,
+			selectedTeachersIds = uiState.selectedTeachersIds,
+			onCreateTeacher = onCreateTeacher,
+			onCheckedChange = onCheckedChange,
 			onFullNameChanged = updateFullName,
 			onDisplayNameChanged = updateDisplayName,
-			onCabinetChanged = updateCabinet,
-			modifier = Modifier.padding(paddingValues)
+			onCabinetChanged = updateCabinet
 		)
 		
+		val saveTeacher = remember {
+			{ viewModel.saveNewTeacher() }
+		}
+		val updateFirstName = remember<(String) -> Unit> {
+			{ viewModel.updateFirstName(it) }
+		}
+		val updateLastName = remember<(String) -> Unit> {
+			{ viewModel.updateLastName(it) }
+		}
+		val updatePatronymic = remember<(String) -> Unit> {
+			{ viewModel.updatePatronymic(it) }
+		}
+		val updatePhoneNumber = remember<(String) -> Unit> {
+			{ viewModel.updatePhoneNumber(it) }
+		}
+		val eraseData = remember {
+			{ viewModel.eraseData() }
+		}
+		AddEditTeacherDialog(
+			dialogState = teacherCreateDialog,
+			firstName = uiState.firstName,
+			lastName = uiState.lastName,
+			patronymic = uiState.patronymic,
+			phoneNumber = uiState.phoneNumber,
+			updateFirstName = updateFirstName,
+			updateLastName = updateLastName,
+			updatePatronymic = updatePatronymic,
+			updatePhoneNumber = updatePhoneNumber,
+			onSaveClick = saveTeacher,
+			onCancelClick = eraseData
+		)
 		uiState.userMessage?.let { userMessage ->
 			val snackbarText = stringResource(userMessage)
 			LaunchedEffect(snackbarHostState, viewModel, userMessage, snackbarText) {
@@ -123,46 +172,49 @@ fun AddEditSubjectScreen(
 
 @Composable
 private fun AddEditSubjectContent(
+	modifier: Modifier = Modifier,
+	teacherSelectDialog: MaterialDialogState,
 	isLoading: Boolean,
 	fullName: String,
 	displayName: String,
 	cabinet: String,
-	selectedTeachers: Set<TeacherEntity>,
-	teachers: List<TeacherEntity>,
-	initialSelection: Set<Int>,
-	onAddTeacher: () -> Unit,
-	onTeacherChanged: (Set<Int>) -> Unit,
+	availableTeachers: List<TeacherEntity>,
+	selectedTeachersIds: Set<Int>,
+	onCreateTeacher: () -> Unit,
+	onCheckedChange: (Set<Int>) -> Unit,
 	onFullNameChanged: (String) -> Unit,
 	onDisplayNameChanged: (String) -> Unit,
 	onCabinetChanged: (String) -> Unit,
-	modifier: Modifier = Modifier,
 ) {
 	LoadingContent(
+		modifier = modifier,
 		loading = isLoading,
 		empty = false,
 		emptyContent = { Text(text = "Empty") },
 	) {
 		Column(
-			modifier
-				.fillMaxWidth()
-				.padding(dimensionResource(id = R.dimen.horizontal_margin))
+			modifier = Modifier.fillMaxWidth(),
+			horizontalAlignment = Alignment.CenterHorizontally,
+			verticalArrangement = Arrangement.SpaceBetween
 		) {
 			val textFieldColors = TextFieldDefaults.outlinedTextFieldColors(
 				focusedBorderColor = Color.Transparent,
 				unfocusedBorderColor = Color.Transparent,
-				cursorColor = MaterialTheme.colors.secondary.copy(alpha = ContentAlpha.high)
+				cursorColor = MaterialTheme.colorScheme.secondary.copy(alpha = ContentAlpha.high)
 			)
 			OutlinedTextField(
 				value = fullName,
-				modifier = Modifier.fillMaxWidth(),
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(horizontal = (dimensionResource(id = R.dimen.horizontal_margin))),
 				onValueChange = onFullNameChanged,
 				placeholder = {
 					Text(
 						text = stringResource(id = R.string.full_name_hint),
-						style = MaterialTheme.typography.h6
+						style = MaterialTheme.typography.headlineSmall
 					)
 				},
-				textStyle = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Bold),
+				textStyle = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
 				maxLines = 2,
 				colors = textFieldColors
 			)
@@ -175,15 +227,17 @@ private fun AddEditSubjectContent(
 			
 			OutlinedTextField(
 				value = displayName,
-				modifier = Modifier.fillMaxWidth(),
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(horizontal = (dimensionResource(id = R.dimen.horizontal_margin))),
 				onValueChange = onDisplayNameChanged,
 				placeholder = {
 					Text(
 						text = stringResource(id = R.string.display_name_hint),
-						style = MaterialTheme.typography.h6
+						style = MaterialTheme.typography.headlineSmall
 					)
 				},
-				textStyle = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Bold),
+				textStyle = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
 				maxLines = 1,
 				colors = textFieldColors
 			)
@@ -196,33 +250,38 @@ private fun AddEditSubjectContent(
 			
 			OutlinedTextField(
 				value = cabinet,
-				modifier = Modifier.fillMaxWidth(),
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(horizontal = (dimensionResource(id = R.dimen.horizontal_margin))),
 				onValueChange = onCabinetChanged,
 				placeholder = {
 					Text(
 						text = stringResource(id = R.string.cabinet_hint),
-						style = MaterialTheme.typography.h6
+						style = MaterialTheme.typography.headlineSmall
 					)
 				},
-				textStyle = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Bold),
+				textStyle = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
 				maxLines = 1,
 				colors = textFieldColors
 			)
 			
-			val teacherDialog = rememberMaterialDialogState(false)
 			Row(modifier = Modifier
 				.fillMaxWidth()
-				.clickable {
-					onAddTeacher()
-					teacherDialog.show()
-				}
+				.clickable { teacherSelectDialog.show() }
+				.padding(
+					vertical = dimensionResource(R.dimen.vertical_margin),
+					horizontal = dimensionResource(id = R.dimen.horizontal_margin),
+				)
 			) {
 				Icon(Icons.Default.Person, stringResource(R.string.teacher_icon))
 				Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.horizontal_margin)))
-				val teacherRowText = if (selectedTeachers.isNotEmpty()) {
-					val rememberedTeacherRowText = remember(selectedTeachers) {
+				val selectedTeacherEntities = remember(selectedTeachersIds, availableTeachers) {
+					return@remember availableTeachers.filter { selectedTeachersIds.contains(it.teacherId) }
+				}
+				val teacherRowText = if (selectedTeacherEntities.isNotEmpty()) {
+					val rememberedTeacherRowText = remember(selectedTeacherEntities) {
 						var text = ""
-						selectedTeachers.forEachIndexed { index, teacher ->
+						selectedTeacherEntities.forEachIndexed { index, teacher ->
 							text += (if (index != 0) ", " else "")
 							text += teacher.fullName()
 						}
@@ -234,26 +293,95 @@ private fun AddEditSubjectContent(
 				}
 				Text(
 					text = teacherRowText,
-					style = MaterialTheme.typography.body1
+					style = MaterialTheme.typography.bodyLarge
 				)
 			}
-			val listItems = remember(teachers) {
-				teachers.map { teacher -> teacher.fullName() }
-			}
 			MaterialDialog(
-				dialogState = teacherDialog,
+				dialogState = teacherSelectDialog,
 				buttons = {
+					button(
+						res = R.string.btn_add,
+						onClick = onCreateTeacher
+					)
 					positiveButton(res = R.string.btn_select)
 					negativeButton(res = R.string.btn_cancel)
 				}
 			) {
-				listItemsMultiChoice(
-					list = listItems,
-					waitForPositiveButton = true,
-					initialSelection = initialSelection,
-					onCheckedChange = onTeacherChanged
+				ModdedListItemsMultiChoice(
+					list = availableTeachers,
+					selectedTeachersIds = selectedTeachersIds,
+					onCheckedChange = onCheckedChange,
 				)
 			}
 		}
+	}
+}
+
+@SuppressLint("MutableCollectionMutableState")
+@Composable
+fun MaterialDialogScope.ModdedListItemsMultiChoice(
+	list: List<TeacherEntity>,
+	state: LazyListState = rememberLazyListState(),
+	selectedTeachersIds: Set<Int> = setOf(),
+	onCheckedChange: (indices: Set<Int>) -> Unit = {},
+) {
+	var dialogSelectedTeachersIds by remember { mutableStateOf(selectedTeachersIds) }
+	
+	DialogCallback { onCheckedChange(dialogSelectedTeachersIds) }
+	
+	val onChecked = { teacherEntityId: Int ->
+		/* Have to create temp var as mutableState doesn't trigger on adding to set */
+		val newSelectedTeachersIds = dialogSelectedTeachersIds.toMutableSet()
+		if (teacherEntityId in dialogSelectedTeachersIds) {
+			newSelectedTeachersIds.remove(teacherEntityId)
+		} else {
+			newSelectedTeachersIds.add(teacherEntityId)
+		}
+		dialogSelectedTeachersIds = newSelectedTeachersIds
+		
+	}
+	
+	listItems(
+		list = list,
+		state = state,
+		onClick = { _, teacherEntity -> onChecked(teacherEntity.teacherId) },
+		closeOnClick = false
+	) { index, teacherEntity ->
+		val selected = remember(dialogSelectedTeachersIds, list) {
+			list[index].teacherId in dialogSelectedTeachersIds
+		}
+		MultiChoiceItem(
+			item = teacherEntity,
+			selected = selected,
+			onChecked = { clickedTeacherEntity -> onChecked(clickedTeacherEntity.teacherId) }
+		)
+	}
+}
+
+
+@Composable
+private fun MultiChoiceItem(
+	item: TeacherEntity,
+	selected: Boolean = false,
+	onChecked: (item: TeacherEntity) -> Unit = { _ -> },
+) {
+	Row(
+		Modifier
+			.fillMaxWidth()
+			.height(48.dp)
+			.padding(start = 12.dp, end = 24.dp),
+		verticalAlignment = Alignment.CenterVertically
+	) {
+		Checkbox(checked = selected, onCheckedChange = { onChecked(item) })
+		Spacer(
+			modifier = Modifier
+				.fillMaxHeight()
+				.width(32.dp)
+		)
+		Text(
+			item.fullName(),
+			color = MaterialTheme.colorScheme.onSurface,
+			style = MaterialTheme.typography.bodyMedium
+		)
 	}
 }
