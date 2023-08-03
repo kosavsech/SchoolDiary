@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
@@ -121,14 +122,19 @@ private fun TaskContent(
 		empty = (taskEntity == null && subjectEntity == null),
 		emptyContent = { Text(text = stringResource(R.string.no_data), modifier = commonModifier) },
 		isContentScrollable = true,
-		onRefresh = {}
+		onRefresh = null
 	) {
 		if (taskEntity != null) {
 			Column(modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.horizontal_margin))) {
 				Column {
+					val textStyle = if (taskEntity.isDone) {
+						MaterialTheme.typography.titleLarge.copy(textDecoration = TextDecoration.LineThrough)
+					} else {
+						MaterialTheme.typography.titleLarge
+					}
 					Text(
 						text = taskEntity.title,
-						style = MaterialTheme.typography.titleLarge,
+						style = textStyle,
 					)
 					Text(
 						text = subjectEntity?.getName() ?: "Not loaded subject",
