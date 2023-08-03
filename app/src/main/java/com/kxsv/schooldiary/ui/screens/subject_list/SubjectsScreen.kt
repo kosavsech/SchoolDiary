@@ -48,7 +48,6 @@ fun SubjectsScreen(
 	viewModel: SubjectsViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState,
 ) {
-	// todo add NavActions
 	val navigator = SubjectsScreenNavActions(destinationsNavigator = destinationsNavigator)
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
