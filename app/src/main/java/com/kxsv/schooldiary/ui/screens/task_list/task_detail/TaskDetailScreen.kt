@@ -164,19 +164,20 @@ private fun TaskContent(
 					}
 				}
 				Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.vertical_margin)))
-				Row(verticalAlignment = Alignment.Top) {
-					Icon(
-						imageVector = Icons.Default.Description,
-						contentDescription = stringResource(R.string.due_date),
-						modifier = Modifier.size(18.dp)
-					)
-					Spacer(modifier = Modifier.padding(horizontal = 8.dp))
-					Text(
-						text = taskEntity.description,
-						style = MaterialTheme.typography.titleMedium,
-					)
+				if (taskEntity.description.isNotBlank()) {
+					Row(verticalAlignment = Alignment.Top) {
+						Icon(
+							imageVector = Icons.Default.Description,
+							contentDescription = stringResource(R.string.due_date),
+							modifier = Modifier.size(18.dp)
+						)
+						Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+						Text(
+							text = taskEntity.description,
+							style = MaterialTheme.typography.titleMedium,
+						)
+					}
 				}
-				
 			}
 		}
 	}
