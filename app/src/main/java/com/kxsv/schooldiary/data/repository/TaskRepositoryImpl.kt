@@ -17,7 +17,7 @@ import com.kxsv.schooldiary.data.remote.task.TaskDto
 import com.kxsv.schooldiary.data.remote.task.TaskParser
 import com.kxsv.schooldiary.di.util.ApplicationScope
 import com.kxsv.schooldiary.di.util.IoDispatcher
-import com.kxsv.schooldiary.util.Utils.rangeToList
+import com.kxsv.schooldiary.util.Utils.toList
 import com.kxsv.schooldiary.util.remote.NetworkException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -51,6 +51,13 @@ class TaskRepositoryImpl @Inject constructor(
 		return taskDataSource.observeAllWithSubject()
 	}
 	
+	override fun observeAllWithSubjectForDateRange(
+		startRange: LocalDate,
+		endRange: LocalDate,
+	): Flow<List<TaskWithSubject>> {
+		return taskDataSource.observeAllWithSubjectForDateRange(startRange, endRange)
+	}
+	
 	override fun observeTask(taskId: Long): Flow<TaskEntity> {
 		return taskDataSource.observeById(taskId)
 	}
@@ -71,7 +78,7 @@ class TaskRepositoryImpl @Inject constructor(
 		return withContext(ioDispatcher) {
 			withTimeout(15000L) {
 				val startRange = LocalDate.of(2023, 2, 11)
-				val period = (startRange..startRange.plusDays(7)).rangeToList()
+				val period = (startRange..startRange.plusDays(7)).toList()
 				val result: MutableList<TaskAndUniqueIdWithSubject> = mutableListOf()
 				period.forEach { date ->
 					if (date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach

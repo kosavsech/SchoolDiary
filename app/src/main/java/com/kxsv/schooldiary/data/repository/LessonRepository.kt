@@ -9,9 +9,14 @@ import java.time.LocalDate
 
 interface LessonRepository {
 	
-	fun getLessonsStream(): Flow<List<LessonEntity>>
+	fun observeAll(): Flow<List<LessonEntity>>
 	
-	fun getLessonStream(lessonId: Long): Flow<LessonEntity>
+	fun observeById(lessonId: Long): Flow<LessonEntity>
+	
+	fun observeDayAndLessonsWithSubjectByDateRange(
+		startRange: LocalDate,
+		endRange: LocalDate,
+	): Flow<Map<LocalDate, List<LessonWithSubject>>>
 	
 	suspend fun getAll(): List<LessonEntity>
 	

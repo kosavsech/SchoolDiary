@@ -53,9 +53,9 @@ class MainActivity : ComponentActivity() {
 		)
 		
 		setContent {
-			SchoolDiaryTheme {
+			SchoolDiaryTheme() {
 				NavGraph(
-					startDestination = splashViewModel.startDestination.value,
+					startRoute = splashViewModel.startDestination.value,
 					activity = this
 				)
 			}

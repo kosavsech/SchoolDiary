@@ -1,9 +1,10 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.kxsv.schooldiary.ui.main.app_bars.topbar
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.Icon
-import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Cached
@@ -20,8 +21,11 @@ import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -180,7 +184,6 @@ fun TasksTopAppBar(
 				Icon(
 					imageVector = Icons.Default.Sort,
 					contentDescription = stringResource(R.string.grades_sort_type),
-					tint = Color.White
 				)
 				DropdownMenu(
 					expanded = expanded,
@@ -227,6 +230,24 @@ fun GradesTopAppBar(
 }
 
 @Composable
+fun MainTopAppBar(
+	openDrawer: () -> Unit,
+) {
+	TopAppBar(
+		title = { Text(text = stringResource(id = R.string.main_menu_title)) },
+		navigationIcon = {
+			IconButton(onClick = openDrawer) {
+				Icon(
+					imageVector = Icons.Filled.Menu,
+					contentDescription = stringResource(id = R.string.open_drawer)
+				)
+			}
+		},
+		modifier = Modifier.fillMaxWidth(),
+	)
+}
+
+@Composable
 fun EduPerformanceTopAppBar(
 	openDrawer: () -> Unit,
 ) {
@@ -253,13 +274,21 @@ fun ScheduleTopAppBar(
 		title = { Text(text = stringResource(R.string.timetable)) },
 		navigationIcon = {
 			IconButton(onClick = openDrawer) {
-				Icon(Icons.Filled.Menu, stringResource(id = R.string.open_drawer))
+				Icon(
+					imageVector = Icons.Filled.Menu,
+					contentDescription = stringResource(id = R.string.open_drawer),
+					tint = MaterialTheme.colorScheme.onSurface
+				)
 			}
 		},
 		// TODO: add action to switch screens of day/week view mode
 		actions = {
 			IconButton(onClick = onFetchSchedule) {
-				Icon(Icons.Filled.CloudDownload, stringResource(id = R.string.fetch_schedule))
+				Icon(
+					imageVector = Icons.Filled.CloudDownload,
+					contentDescription = stringResource(id = R.string.fetch_schedule),
+					tint = MaterialTheme.colorScheme.onSurface
+				)
 			}
 			ScheduleMoreActions(
 				onChangePattern = onChangePattern,
@@ -269,6 +298,7 @@ fun ScheduleTopAppBar(
 		},
 		modifier = Modifier.fillMaxWidth()
 	)
+	
 }
 
 @Composable
@@ -281,7 +311,6 @@ private fun GradesMoreActions(
 		Icon(
 			imageVector = Icons.Default.Sort,
 			contentDescription = stringResource(R.string.grades_sort_type),
-			tint = Color.White
 		)
 		DropdownMenu(
 			expanded = expanded,
@@ -294,7 +323,6 @@ private fun GradesMoreActions(
 					Icon(
 						Icons.Default.Event,
 						stringResource(R.string.mark_date_sort),
-						tint = Color.Black
 					)
 				}
 			)
@@ -305,7 +333,6 @@ private fun GradesMoreActions(
 					Icon(
 						Icons.Default.Cached,
 						stringResource(R.string.mark_fetch_date_sort),
-						tint = Color.Black
 					)
 				}
 			)
@@ -324,7 +351,7 @@ private fun ScheduleMoreActions(
 		Icon(
 			imageVector = Icons.Default.MoreVert,
 			contentDescription = stringResource(R.string.more_actions),
-			tint = Color.White
+			tint = MaterialTheme.colorScheme.onSurface
 		)
 		DropdownMenu(
 			expanded = expanded.value,
@@ -337,7 +364,6 @@ private fun ScheduleMoreActions(
 					Icon(
 						Icons.Default.Schedule,
 						stringResource(R.string.change_pattern),
-						tint = Color.Black
 					)
 				}
 			)
@@ -359,7 +385,6 @@ private fun ScheduleMoreActions(
 					Icon(
 						Icons.Default.DateRange,
 						stringResource(R.string.copy_schedule_date_range),
-						tint = Color.Black
 					)
 				}
 			)

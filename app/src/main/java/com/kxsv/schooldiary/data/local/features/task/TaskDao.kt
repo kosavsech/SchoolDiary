@@ -15,6 +15,16 @@ interface TaskDao {
 	@Query("SELECT * FROM ${DatabaseConstants.TASK_TABLE_NAME}")
 	fun observeAllWithSubject(): Flow<List<TaskWithSubject>>
 	
+	@Transaction
+	@Query(
+		"SELECT * FROM ${DatabaseConstants.TASK_TABLE_NAME} WHERE " +
+				"dueDate >= :startRange AND dueDate <= :endRange"
+	)
+	fun observeAllWithSubjectForDateRange(
+		startRange: LocalDate,
+		endRange: LocalDate,
+	): Flow<List<TaskWithSubject>>
+	
 	@Query("SELECT * FROM ${DatabaseConstants.TASK_TABLE_NAME} WHERE taskId = :taskId")
 	fun observeById(taskId: Long): Flow<TaskEntity>
 	

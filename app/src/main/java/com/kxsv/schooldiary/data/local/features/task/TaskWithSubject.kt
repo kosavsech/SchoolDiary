@@ -12,5 +12,5 @@ data class TaskWithSubject(
 		parentColumn = "subjectMasterId",
 		entityColumn = "subjectId",
 	)
-	val subject: SubjectEntity?,
+	val subject: SubjectEntity,
 )

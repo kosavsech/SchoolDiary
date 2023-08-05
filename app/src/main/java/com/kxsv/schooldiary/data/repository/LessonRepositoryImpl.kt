@@ -25,12 +25,19 @@ class LessonRepositoryImpl @Inject constructor(
 //	@IoDispatcher private val dispatcher: CoroutineDispatcher,
 ) : LessonRepository {
 	
-	override fun getLessonsStream(): Flow<List<LessonEntity>> {
+	override fun observeAll(): Flow<List<LessonEntity>> {
 		return lessonDataSource.observeAll()
 	}
 	
-	override fun getLessonStream(lessonId: Long): Flow<LessonEntity> {
+	override fun observeById(lessonId: Long): Flow<LessonEntity> {
 		return lessonDataSource.observeById(lessonId)
+	}
+	
+	override fun observeDayAndLessonsWithSubjectByDateRange(
+		startRange: LocalDate,
+		endRange: LocalDate,
+	): Flow<Map<LocalDate, List<LessonWithSubject>>> {
+		return lessonDataSource.observeDayAndLessonsWithSubjectByDateRange(startRange, endRange)
 	}
 	
 	override suspend fun getAll(): List<LessonEntity> {

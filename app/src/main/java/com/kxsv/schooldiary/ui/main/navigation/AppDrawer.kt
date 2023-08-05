@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.EmojiEvents
+import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.ManageHistory
 import androidx.compose.material.icons.rounded.PermContactCalendar
 import androidx.compose.material.icons.rounded.Schedule
@@ -36,6 +37,7 @@ import com.kxsv.schooldiary.ui.screens.appCurrentDestinationAsState
 import com.kxsv.schooldiary.ui.screens.destinations.DayScheduleScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.EduPerformanceScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.GradesScreenDestination
+import com.kxsv.schooldiary.ui.screens.destinations.MainScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.PatternsScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.SubjectsScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.TasksScreenDestination
@@ -50,14 +52,13 @@ enum class NavigationDrawerDestination(
 	val icon: ImageVector? = null,
 	@StringRes val label: Int? = null,
 ) {
+	Main(MainScreenDestination, Icons.Rounded.Home, R.string.main_menu_title),
 	Timetable(DayScheduleScreenDestination, Icons.Rounded.Schedule, R.string.timetable),
 	Grades(GradesScreenDestination, Icons.Rounded.EmojiEvents, R.string.grades_title),
 	Agenda(TasksScreenDestination, Icons.Rounded.Task, R.string.tasks_title),
 	Spacer,
 	ReportCard(
-		EduPerformanceScreenDestination,
-		Icons.Rounded.Summarize,
-		R.string.report_card_title
+		EduPerformanceScreenDestination, Icons.Rounded.Summarize, R.string.report_card_title
 	),
 	TimePatterns(PatternsScreenDestination, Icons.Rounded.ManageHistory, R.string.patterns_list),
 	Spacer2,

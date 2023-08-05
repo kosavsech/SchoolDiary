@@ -1,5 +1,6 @@
 package com.kxsv.schooldiary.ui.screens.schedule
 
+import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -683,7 +684,23 @@ private fun ClassItem(
 	}
 }
 
-@Preview(device = "id:pixel_4", showSystemUi = true, showBackground = true)
+private val previewCurrentPattern = listOf(
+	PatternStrokeEntity(
+		startTime = LocalTime.of(8, 30),
+		endTime = LocalTime.of(9, 15),
+		index = 0,
+	),
+	PatternStrokeEntity(
+		startTime = LocalTime.of(9, 30),
+		endTime = LocalTime.of(10, 15),
+		index = 1
+	),
+)
+
+@Preview(
+	device = "id:pixel_4", showSystemUi = true, showBackground = true,
+	uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL
+)
 @Composable
 private fun DayScheduleContentPreview() {
 	Surface {
@@ -726,13 +743,7 @@ private fun DayScheduleContentPreview() {
 				),
 			),
 			selectedDate = LocalDate.now(),
-			currentPattern = listOf(
-				PatternStrokeEntity(startTime = LocalTime.of(8, 30), endTime = LocalTime.of(9, 15)),
-				PatternStrokeEntity(
-					startTime = LocalTime.of(9, 30),
-					endTime = LocalTime.of(10, 15)
-				),
-			),
+			currentPattern = previewCurrentPattern,
 			onRefresh = {},
 			changeDate = {},
 			scheduleChoose = { }
@@ -740,7 +751,10 @@ private fun DayScheduleContentPreview() {
 	}
 }
 
-@Preview(device = "id:pixel_4", showSystemUi = true, showBackground = true)
+@Preview(
+	device = "id:pixel_4", showSystemUi = true, showBackground = true,
+	uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL
+)
 @Composable
 private fun LessonDialogPreview() {
 	Surface {
@@ -750,13 +764,7 @@ private fun LessonDialogPreview() {
 				lesson = LessonEntity(index = 0)
 			),
 			selectedDate = LocalDate.now(),
-			currentPattern = listOf(
-				PatternStrokeEntity(startTime = LocalTime.of(8, 30), endTime = LocalTime.of(9, 15)),
-				PatternStrokeEntity(
-					startTime = LocalTime.of(9, 30),
-					endTime = LocalTime.of(10, 15)
-				),
-			),
+			currentPattern = previewCurrentPattern,
 			onDeleteClass = {},
 			onEditClass = { _, _ -> },
 			unselectClass = {},

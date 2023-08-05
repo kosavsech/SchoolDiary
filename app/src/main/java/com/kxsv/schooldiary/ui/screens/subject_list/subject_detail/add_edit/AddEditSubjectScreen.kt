@@ -15,9 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ContentAlpha
-import androidx.compose.material.Icon
 import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Text
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
@@ -25,10 +23,12 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Divider
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -37,7 +37,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
@@ -93,7 +92,7 @@ fun AddEditSubjectScreen(
 					val result = viewModel.saveSubject()
 					if (result != null) navigator.navigateBackWithResult(result)
 				}) {
-					Icon(Icons.Filled.Done, stringResource(R.string.save_subject))
+					Icon(Icons.Default.Done, stringResource(R.string.save_subject))
 				}
 			}
 		}
@@ -222,7 +221,7 @@ private fun AddEditSubjectContent(
 			Divider(
 				Modifier
 					.fillMaxWidth()
-					.align(CenterHorizontally)
+					.align(Alignment.CenterHorizontally)
 			)
 			
 			OutlinedTextField(
@@ -245,7 +244,7 @@ private fun AddEditSubjectContent(
 			Divider(
 				Modifier
 					.fillMaxWidth()
-					.align(CenterHorizontally)
+					.align(Alignment.CenterHorizontally)
 			)
 			
 			OutlinedTextField(

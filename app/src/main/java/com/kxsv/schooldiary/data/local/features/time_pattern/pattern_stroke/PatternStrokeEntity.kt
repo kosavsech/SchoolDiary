@@ -21,6 +21,7 @@ import java.time.LocalTime
 	]
 )
 data class PatternStrokeEntity(
+	val index: Int,
 	@ColumnInfo(index = true)
 	val patternMasterId: Long? = null,
 	val startTime: LocalTime,

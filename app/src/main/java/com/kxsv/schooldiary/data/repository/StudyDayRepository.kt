@@ -7,9 +7,9 @@ import java.time.LocalDate
 
 interface StudyDayRepository {
 	
-	fun getStudyDaysStream(): Flow<List<StudyDayEntity>>
+	fun observeStudyDays(): Flow<List<StudyDayEntity>>
 	
-	fun getStudyDayStream(studyDayId: Long): Flow<StudyDayEntity>
+	fun observeStudyDay(studyDayId: Long): Flow<StudyDayEntity>
 	
 	suspend fun getAll(): List<StudyDayEntity>
 	

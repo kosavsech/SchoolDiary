@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
@@ -47,6 +48,7 @@ import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.Patt
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.PatternSelectionTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.PatternsScreenNavActions
 import com.kxsv.schooldiary.ui.screens.destinations.AddEditPatternScreenDestination
+import com.kxsv.schooldiary.ui.screens.patterns.add_edit_pattern.fromLocalTime
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -55,8 +57,6 @@ import com.ramcosta.composedestinations.result.ResultBackNavigator
 import com.ramcosta.composedestinations.result.ResultRecipient
 import kotlinx.parcelize.Parcelize
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 
 
 @Parcelize
@@ -217,21 +217,15 @@ private fun TimeStrokes(
 			.padding(4.dp)
 	) {
 		Column {
-			strokes.forEachIndexed { index, patternStroke ->
-				Row {
-					Text(text = (index + 1).toString())
-					Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.list_item_padding)))
-					Text(
-						text = patternStroke.startTime.format(
-							DateTimeFormatter.ofLocalizedTime(
-								FormatStyle.SHORT
-							)
-						) + " - " + patternStroke.endTime.format(
-							DateTimeFormatter.ofLocalizedTime(
-								FormatStyle.SHORT
-							)
+			strokes.forEach { stroke ->
+				key(stroke) {
+					Row {
+						Text(text = (stroke.index + 1).toString())
+						Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.list_item_padding)))
+						Text(
+							text = fromLocalTime(stroke.startTime) + " - " + fromLocalTime(stroke.endTime),
 						)
-					)
+					}
 				}
 			}
 		}
@@ -251,31 +245,38 @@ private fun PatternsSelectionPreview() {
 					listOf(
 						PatternStrokeEntity(
 							startTime = LocalTime.of(8, 30),
-							endTime = LocalTime.of(9, 15)
+							endTime = LocalTime.of(9, 15),
+							index = 80
 						),
 						PatternStrokeEntity(
 							startTime = LocalTime.of(9, 30),
-							endTime = LocalTime.of(10, 15)
+							endTime = LocalTime.of(10, 15),
+							index = 1
 						),
 						PatternStrokeEntity(
 							startTime = LocalTime.of(10, 30),
-							endTime = LocalTime.of(11, 15)
+							endTime = LocalTime.of(11, 15),
+							index = 2
 						),
 						PatternStrokeEntity(
 							startTime = LocalTime.of(11, 25),
-							endTime = LocalTime.of(12, 10)
+							endTime = LocalTime.of(12, 10),
+							index = 3
 						),
 						PatternStrokeEntity(
 							startTime = LocalTime.of(12, 30),
-							endTime = LocalTime.of(13, 15)
+							endTime = LocalTime.of(13, 15),
+							index = 4
 						),
 						PatternStrokeEntity(
 							startTime = LocalTime.of(13, 30),
-							endTime = LocalTime.of(14, 20)
+							endTime = LocalTime.of(14, 20),
+							index = 5
 						),
 						PatternStrokeEntity(
 							startTime = LocalTime.of(14, 30),
-							endTime = LocalTime.of(15, 15)
+							endTime = LocalTime.of(15, 15),
+							index = 6
 						),
 					)
 				),

@@ -13,7 +13,7 @@ object ListExtensionFunctions {
 		return newList
 	}
 	
-	private fun <T> copyRefresh(elements: Collection<T>): MutableList<T> {
+	fun <T> copyRefresh(elements: Collection<T>): MutableList<T> {
 		val newList: MutableList<T> = mutableListOf()
 		newList.addAll(elements)
 		return newList

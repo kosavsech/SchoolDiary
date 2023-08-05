@@ -14,11 +14,11 @@ class StudyDayRepositoryImpl @Inject constructor(
 	//@DefaultDispatcher private val dispatcher: CoroutineDispatcher,
 ) : StudyDayRepository {
 	
-	override fun getStudyDaysStream(): Flow<List<StudyDayEntity>> {
+	override fun observeStudyDays(): Flow<List<StudyDayEntity>> {
 		return studyDayDataSource.observeAll()
 	}
 	
-	override fun getStudyDayStream(studyDayId: Long): Flow<StudyDayEntity> {
+	override fun observeStudyDay(studyDayId: Long): Flow<StudyDayEntity> {
 		return studyDayDataSource.observeById(studyDayId)
 	}
 	

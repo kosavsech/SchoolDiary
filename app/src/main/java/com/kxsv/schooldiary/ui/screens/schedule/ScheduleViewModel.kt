@@ -26,8 +26,8 @@ import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.ui.screens.patterns.PatternSelectionResult
 import com.kxsv.schooldiary.util.ListExtensionFunctions.copyExclusively
 import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
-import com.kxsv.schooldiary.util.Utils.rangeToList
 import com.kxsv.schooldiary.util.Utils.timestampToLocalDate
+import com.kxsv.schooldiary.util.Utils.toList
 import com.kxsv.schooldiary.util.remote.NetworkException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
@@ -254,9 +254,9 @@ class ScheduleViewModel @Inject constructor(
 			throw RuntimeException("copyScheduleToRange() was called but refRange is null.")
 		_uiState.update { it.copy(isLoading = true) }
 		
-		val copyFromDays = uiState.value.refRange!!.rangeToList()
+		val copyFromDays = uiState.value.refRange!!.toList()
 		// limiter to stop copying, if copyFromDays is ended
-		val copyToDays = uiState.value.destRange!!.rangeToList(limiter = copyFromDays.size.toLong())
+		val copyToDays = uiState.value.destRange!!.toList(limiter = copyFromDays.size.toLong())
 		
 		for ((index, toDate) in copyToDays.withIndex()) {
 			viewModelScope.launch(ioDispatcher) {

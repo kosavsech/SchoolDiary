@@ -30,7 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -200,7 +199,8 @@ private fun LoginContent(
 					Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding)))
 					Text(
 						text = stringResource(id = errorMessage),
-						style = MaterialTheme.typography.bodyLarge.copy(color = Color.Red)
+						color = MaterialTheme.colorScheme.error,
+						style = MaterialTheme.typography.bodyLarge
 					)
 				}
 				Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.vertical_margin)))

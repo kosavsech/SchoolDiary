@@ -14,6 +14,11 @@ interface TaskRepository {
 	
 	fun observeAllWithSubject(): Flow<List<TaskWithSubject>>
 	
+	fun observeAllWithSubjectForDateRange(
+		startRange: LocalDate,
+		endRange: LocalDate,
+	): Flow<List<TaskWithSubject>>
+	
 	fun observeTask(taskId: Long): Flow<TaskEntity>
 	
 	fun observeTaskWithSubject(taskId: Long): Flow<TaskWithSubject>

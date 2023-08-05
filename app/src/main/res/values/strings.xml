@@ -43,8 +43,8 @@
     <string name="btn_cancel">Cancel</string>
     <string name="endtime_picker_hint">Pick end time</string>
     <string name="starttime_picker_hint">Pick start time</string>
-    <string name="set_start_time">Set start time</string>
-    <string name="set_end_time">Set end time</string>
+    <string name="start_time_label">Start time</string>
+    <string name="end_time_label">End time</string>
     <string name="successfully_saved_pattern_message">Pattern saved</string>
     <string name="successfully_added_pattern_message">Pattern added</string>
     <string name="teacher_icon">Teacher icon</string>
@@ -158,4 +158,15 @@
     <string name="successfully_saved_teacher_message">Teacher saved</string>
     <string name="successfully_added_teacher_message">Teacher added</string>
     <string name="btn_add">Add</string>
+    <string name="main_menu_title">Main menu</string>
+    <string name="right_now_label">Right now</string>
+    <string name="next_lessons_label">Next lessons</string>
+    <string name="end_time_duplicate">End time equal to  is already present in this pattern</string>
+    <string name="stroke_index_duplicate">Index equal to  is already present in this pattern</string>
+    <string name="start_time_duplicate">Start time equal to  is already present in this pattern</string>
+    <string name="too_low_index">Too low index for such time</string>
+    <string name="too_high_index">Too high index for such time</string>
+    <string name="create_pattern_stroke">Create stroke:</string>
+    <string name="edit_pattern_stroke">Edit stroke:</string>
+    <string name="btn_show_more">Show more</string>
 </resources>

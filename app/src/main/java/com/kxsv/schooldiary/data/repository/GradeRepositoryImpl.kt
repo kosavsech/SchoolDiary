@@ -11,7 +11,7 @@ import com.kxsv.schooldiary.data.remote.grade.GradeParser
 import com.kxsv.schooldiary.di.util.DefaultDispatcher
 import com.kxsv.schooldiary.di.util.IoDispatcher
 import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
-import com.kxsv.schooldiary.util.Utils.rangeToList
+import com.kxsv.schooldiary.util.Utils.toList
 import com.kxsv.schooldiary.util.remote.NetworkException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
@@ -83,7 +83,7 @@ class GradeRepositoryImpl @Inject constructor(
 				val newGradesFound: MutableList<GradeWithSubject> = mutableListOf()
 				// todo change to NOW
 				val startRange = LocalDate.of(2023, 2, 19)
-				val period = (startRange..startRange.plusDays(14)).rangeToList()
+				val period = (startRange..startRange.plusDays(14)).toList()
 				period.forEach { date ->
 					if (date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
 					async {

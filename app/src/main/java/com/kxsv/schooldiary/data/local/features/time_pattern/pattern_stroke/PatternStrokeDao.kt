@@ -7,19 +7,19 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface PatternStrokeDao {
 	
-	@Query("SELECT * FROM $PATTERN_STROKE_TABLE_NAME ORDER BY startTime ASC")
+	@Query("SELECT * FROM $PATTERN_STROKE_TABLE_NAME ORDER BY `index` ASC")
 	fun observeAll(): Flow<List<PatternStrokeEntity>>
 	
-	@Query("SELECT * FROM $PATTERN_STROKE_TABLE_NAME WHERE patternMasterId = :patternId ORDER BY startTime ASC")
+	@Query("SELECT * FROM $PATTERN_STROKE_TABLE_NAME WHERE patternMasterId = :patternId ORDER BY `index` ASC")
 	fun observeAllByPatternId(patternId: Long): Flow<List<PatternStrokeEntity>>
 	
-	@Query("SELECT * FROM $PATTERN_STROKE_TABLE_NAME WHERE strokeId = :id ORDER BY startTime ASC")
+	@Query("SELECT * FROM $PATTERN_STROKE_TABLE_NAME WHERE strokeId = :id ORDER BY `index` ASC")
 	fun observeById(id: Int): Flow<PatternStrokeEntity>
 	
 	@Query("SELECT * FROM $PATTERN_STROKE_TABLE_NAME ORDER BY startTime ASC")
 	suspend fun getAll(): List<PatternStrokeEntity>
 	
-	@Query("SELECT * FROM $PATTERN_STROKE_TABLE_NAME WHERE patternMasterId = :patternId ORDER BY startTime ASC")
+	@Query("SELECT * FROM $PATTERN_STROKE_TABLE_NAME WHERE patternMasterId = :patternId ORDER BY `index` ASC")
 	suspend fun getAllByPatternId(patternId: Long): List<PatternStrokeEntity>
 	
 	@Query("SELECT * FROM $PATTERN_STROKE_TABLE_NAME WHERE strokeId = :id")

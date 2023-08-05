@@ -49,11 +49,10 @@ class TimePatternRepositoryImpl @Inject constructor(
 		strokes: List<PatternStrokeEntity>,
 	): Long {
 		val patternId = createPattern(TimePatternEntity(name = name))
-		val newStrokes: MutableList<PatternStrokeEntity> = mutableListOf()
-		strokes.forEach { stroke ->
-			newStrokes.add(stroke.copy(patternMasterId = patternId))
-		}
+		val newStrokes = strokes.map { it.copy(patternMasterId = patternId) }
+		
 		strokesDataSource.upsertAll(newStrokes)
+		
 		return patternId
 	}
 	
@@ -62,10 +61,9 @@ class TimePatternRepositoryImpl @Inject constructor(
 		strokes: List<PatternStrokeEntity>,
 	) {
 		patternDataSource.upsert(pattern)
-		val newStrokes: MutableList<PatternStrokeEntity> = mutableListOf()
-		strokes.forEach { stroke ->
-			newStrokes.add(stroke.copy(patternMasterId = pattern.patternId))
-		}
+		strokesDataSource.deleteAllByPatternId(pattern.patternId)
+		val newStrokes = strokes.map { it.copy(patternMasterId = pattern.patternId) }
+		
 		strokesDataSource.upsertAll(newStrokes)
 	}
 	

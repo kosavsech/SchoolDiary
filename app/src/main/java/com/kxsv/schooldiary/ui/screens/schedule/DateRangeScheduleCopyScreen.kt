@@ -210,7 +210,7 @@ fun DateRangeScheduleCopyContent(
 		Box(
 			modifier = modifier
 				.fillMaxSize()
-				.background(Color.White),
+				.background(MaterialTheme.colorScheme.secondaryContainer),
 		) {
 			Column {
 				val state = rememberCalendarState(
@@ -443,7 +443,6 @@ private fun MonthHeader(
 				modifier = Modifier.weight(1f),
 				textAlign = TextAlign.Center,
 				fontSize = 12.sp,
-				color = Color.White,
 				text = dayOfWeek.displayText(uppercase = true),
 				fontWeight = FontWeight.Light,
 			)

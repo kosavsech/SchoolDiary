@@ -6,14 +6,15 @@ import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternEntity
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
-import com.kxsv.schooldiary.data.repository.PatternStrokeRepository
 import com.kxsv.schooldiary.data.repository.TimePatternRepository
+import com.kxsv.schooldiary.di.util.IoDispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.util.ListExtensionFunctions.copyExclusively
-import com.kxsv.schooldiary.util.ListExtensionFunctions.copyInclusively
+import com.kxsv.schooldiary.util.ListExtensionFunctions.copyRefresh
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,19 +27,20 @@ import javax.inject.Inject
 data class AddEditPatternUiState(
 	val name: String = "",
 	val strokes: MutableList<PatternStrokeEntity> = mutableListOf(),
-	val startTime: LocalTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES),
 	// TODO: configure this behaviour
+	val startTime: LocalTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES),
 	val endTime: LocalTime = startTime.plusMinutes(45),
+	val index: Int = 1,
 	val isLoading: Boolean = false,
+	val errorMessage: Int? = null,
 	val userMessage: Int? = null,
-	val isStrokeDialogShown: Boolean = false,
-	val stroke: PatternStrokeEntity? = null,
+	val strokeToUpdate: PatternStrokeEntity? = null,
 )
 
 @HiltViewModel
 class AddEditPatternViewModel @Inject constructor(
 	private val patternRepository: TimePatternRepository,
-	private val strokeRepository: PatternStrokeRepository,
+	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 	savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 	
@@ -52,64 +54,80 @@ class AddEditPatternViewModel @Inject constructor(
 		if (patternId != null) loadPattern(patternId)
 	}
 	
-	fun saveStroke() = viewModelScope.launch {
-		val newStrokes: MutableList<PatternStrokeEntity>
-		if (uiState.value.stroke != null) {
-			newStrokes = copyExclusively(
-				targetItem = uiState.value.stroke!!,
-				elements = uiState.value.strokes
-			)
-			val updatedStroke = uiState.value.stroke!!.copy(
+	fun saveStroke(): Boolean {
+		val stroke = if (uiState.value.strokeToUpdate != null) {
+			PatternStrokeEntity(
 				startTime = uiState.value.startTime,
-				endTime = uiState.value.endTime
+				endTime = uiState.value.endTime,
+				index = (uiState.value.index - 1),
+				strokeId = uiState.value.strokeToUpdate!!.strokeId
 			)
-			newStrokes.add(updatedStroke)
 		} else {
-			val stroke =
-				PatternStrokeEntity(
-					startTime = uiState.value.startTime,
-					endTime = uiState.value.endTime
-				)
-			newStrokes = copyInclusively(stroke, uiState.value.strokes)
+			PatternStrokeEntity(
+				startTime = uiState.value.startTime,
+				endTime = uiState.value.endTime,
+				index = (uiState.value.index - 1)
+			)
 		}
+		val newStrokes = copyRefresh(uiState.value.strokes)
+		newStrokes.remove(uiState.value.strokeToUpdate)
+		
+		val isIndexDuplicate = newStrokes.firstOrNull { it.index == stroke.index }
+		if (isIndexDuplicate != null) {
+			_uiState.update { it.copy(errorMessage = R.string.stroke_index_duplicate) }
+			return false
+		}
+		
+		val isStartTimeDuplicate =
+			newStrokes.firstOrNull { it.startTime == stroke.startTime } != null
+		if (isStartTimeDuplicate) {
+			_uiState.update { it.copy(errorMessage = R.string.start_time_duplicate) }
+			return false
+		}
+		
+		val isEndTimeDuplicate = newStrokes.firstOrNull { it.endTime == stroke.endTime } != null
+		if (isEndTimeDuplicate) {
+			_uiState.update { it.copy(errorMessage = R.string.end_time_duplicate) }
+			return false
+		}
+		
+		newStrokes.forEach { listStroke ->
+			if (stroke.startTime.isAfter(listStroke.startTime) && stroke.index < listStroke.index) {
+				_uiState.update { it.copy(errorMessage = R.string.too_low_index) }
+				return false
+			}
+			if (stroke.startTime.isBefore(listStroke.startTime) && stroke.index > listStroke.index) {
+				_uiState.update { it.copy(errorMessage = R.string.too_high_index) }
+				return false
+			}
+		}
+		
+		newStrokes.add(stroke)
+		newStrokes.sortBy { it.index }
 		
 		_uiState.update {
 			it.copy(
-				isStrokeDialogShown = false,
-				stroke = null,
+				strokeToUpdate = null,
+				errorMessage = null,
 				strokes = newStrokes,
-				startTime = it.endTime.plusMinutes(10),
-				endTime = it.endTime.plusMinutes(55),
+				startTime = it.endTime.plusMinutes(15),
+				endTime = it.endTime.plusMinutes(60),
+				index = it.index + 1
 			)
 		}
+		return true
 	}
 	
-	fun deleteStroke(stroke: PatternStrokeEntity) = viewModelScope.launch {
-		if (stroke.strokeId != 0) strokeRepository.deleteStrokeById(stroke.strokeId)
-		
+	fun deleteStroke(stroke: PatternStrokeEntity) {
 		val newStrokes = copyExclusively(stroke, uiState.value.strokes)
-		_uiState.update {
-			it.copy(
-				strokes = newStrokes
-			)
-		}
+		newStrokes.sortBy { it.index }
+		_uiState.update { it.copy(strokes = newStrokes) }
 		showSnackbarMessage(R.string.successfully_deleted_stroke)
 	}
 	
-	fun savePattern(): Int? {
-		if (uiState.value.strokes.isEmpty()) {
-			_uiState.update {
-				it.copy(userMessage = R.string.empty_pattern_message)
-			}
-			return null
-		}
-		
-		return if (patternId == null) {
-			createNewPattern()
-			ADD_RESULT_OK
-		} else {
-			updatePattern()
-			EDIT_RESULT_OK
+	private fun showSnackbarMessage(message: Int) {
+		_uiState.update {
+			it.copy(userMessage = message)
 		}
 	}
 	
@@ -117,25 +135,6 @@ class AddEditPatternViewModel @Inject constructor(
 		_uiState.update {
 			it.copy(userMessage = null)
 		}
-	}
-	
-	fun hideStrokeDialog() {
-		_uiState.update {
-			it.copy(
-				isStrokeDialogShown = false,
-				startTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES),
-				endTime = it.startTime.plusMinutes(45),
-			)
-		}
-	}
-	
-	fun showStrokeDialog() {
-		_uiState.update {
-			it.copy(
-				isStrokeDialogShown = true,
-			)
-		}
-		
 	}
 	
 	fun updateEndTime(endTime: LocalTime) {
@@ -162,31 +161,46 @@ class AddEditPatternViewModel @Inject constructor(
 		}
 	}
 	
+	fun updateIndex(newIndex: Int) {
+		_uiState.update { it.copy(index = newIndex) }
+	}
+	
 	fun onStrokeClick(stroke: PatternStrokeEntity) {
 		_uiState.update {
 			it.copy(
-				isStrokeDialogShown = true,
 				startTime = stroke.startTime,
 				endTime = stroke.endTime,
-				stroke = stroke
+				index = (stroke.index + 1),
+				strokeToUpdate = stroke
 			)
 		}
 	}
 	
-	private fun showSnackbarMessage(message: Int) {
-		_uiState.update {
-			it.copy(userMessage = message)
+	fun savePattern(): Int? {
+		if (uiState.value.strokes.isEmpty()) {
+			_uiState.update {
+				it.copy(userMessage = R.string.empty_pattern_message)
+			}
+			return null
+		}
+		
+		return if (patternId == null) {
+			createNewPattern()
+			ADD_RESULT_OK
+		} else {
+			updatePattern()
+			EDIT_RESULT_OK
 		}
 	}
 	
-	private fun createNewPattern() = viewModelScope.launch {
+	private fun createNewPattern() = viewModelScope.launch(ioDispatcher) {
 		patternRepository.createPatternWithStrokes(uiState.value.name, uiState.value.strokes)
 	}
 	
 	private fun updatePattern() {
 		if (patternId == null) throw RuntimeException("updatePatternWithStrokes() was called but pattern is new.")
 		
-		viewModelScope.launch {
+		viewModelScope.launch(ioDispatcher) {
 			patternRepository.updatePatternWithStrokes(
 				TimePatternEntity(
 					name = uiState.value.name,
@@ -198,11 +212,9 @@ class AddEditPatternViewModel @Inject constructor(
 	}
 	
 	private fun loadPattern(patternId: Long) {
-		_uiState.update {
-			it.copy(isLoading = true)
-		}
+		_uiState.update { it.copy(isLoading = true) }
 		
-		viewModelScope.launch {
+		viewModelScope.launch(ioDispatcher) {
 			patternRepository.getPatternWithStrokes(patternId).let { timePattern ->
 				if (timePattern != null) {
 					_uiState.update {

@@ -1,9 +1,12 @@
 package com.kxsv.schooldiary.util
 
 import android.util.Log
+import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
+import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import java.util.Locale
@@ -14,6 +17,44 @@ private const val TAG = "Utils"
 const val ROUND_RULE = 0.6
 
 object Utils {
+	fun List<PatternStrokeEntity>.getIndexByTime(currentTime: LocalTime): Int? {
+		val result = this.firstOrNull {
+			currentTime.isAfter(it.startTime) && currentTime.isBefore(it.endTime)
+		}
+		return result?.index
+	}
+	
+	fun List<PatternStrokeEntity>.getIndexOfClosestLessonToTime(currentTime: LocalTime): Int? {
+		val result = this.firstOrNull {
+			currentTime.isBefore(it.startTime)
+		}
+		return result?.index
+	}
+	
+	/**
+	 * Gets next [n] lessons after [index]
+	 *
+	 * @param n how much lessons to take
+	 * @param index after which index
+	 * @return
+	 */
+	fun Map<Int, SubjectEntity>.getNextLessonsAfterIndex(n: Int, index: Int?): List<Int>? {
+		val subList = if (index != null) {
+			this.filter { it.key > index }.keys.toList()
+		} else {
+			this.keys.toList()
+		}
+		if (subList.isEmpty()) return null
+		
+		val result = mutableListOf<Int>()
+		subList.forEach {
+			if (result.size == n) return@forEach
+			result.add(it)
+		}
+		
+		return result
+	}
+	
 	fun timestampToLocalDate(value: Long?): LocalDate? = value?.let {
 		Instant.ofEpochSecond(it).atZone(ZoneId.of("Europe/Moscow")).toLocalDate()
 	}
@@ -216,7 +257,7 @@ object Utils {
 		return result
 	}
 	
-	fun ClosedRange<LocalDate>.rangeToList(limiter: Long? = null): List<LocalDate> {
+	fun ClosedRange<LocalDate>.toList(limiter: Long? = null): List<LocalDate> {
 		val dates = mutableListOf(this.start)
 		var daysAdded = 1L
 		while (daysAdded <= ChronoUnit.DAYS.between(this.start, this.endInclusive)) {
