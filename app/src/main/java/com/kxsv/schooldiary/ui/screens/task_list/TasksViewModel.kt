@@ -64,8 +64,7 @@ class TasksViewModel @Inject constructor(
 	
 	private val _filteredTasksAsync = _dateFilterType
 		.combine(_tasksDoneFilteredFlow) { dateFilterType, tasks ->
-//			val today = LocalDate.now()
-			val today = LocalDate.of(2023, 2, 15)
+			val today = LocalDate.now()
 			when (dateFilterType) {
 				TasksDateFilterType.YESTERDAY -> {
 					tasks.filter {

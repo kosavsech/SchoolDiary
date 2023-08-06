@@ -57,13 +57,15 @@ class TaskDetailViewModel @Inject constructor(
 		
 	}.stateIn(viewModelScope, WhileUiSubscribed, TaskDetailUiState(isLoading = true))
 	
-	fun deleteTask() = viewModelScope.launch {
+	fun deleteTask() = viewModelScope.launch(ioDispatcher) {
 		taskRepository.deleteTask(taskId)
 	}
 	
-	fun completeTask() = viewModelScope.launch {
+	fun completeTask() = viewModelScope.launch(ioDispatcher) {
 		if (uiState.value.taskWithSubject?.taskEntity == null) throw IllegalStateException("Task entity shouldn't be null when completing task.")
-		taskRepository.updateTask(uiState.value.taskWithSubject!!.taskEntity.copy(isDone = true))
+		val taskToUpdate =
+			uiState.value.taskWithSubject!!.taskEntity.let { it.copy(isDone = !it.isDone) }
+		taskRepository.updateTask(taskToUpdate)
 	}
 	
 	fun snackbarMessageShown() {

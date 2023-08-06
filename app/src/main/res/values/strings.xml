@@ -169,4 +169,5 @@
     <string name="create_pattern_stroke">Create stroke:</string>
     <string name="edit_pattern_stroke">Edit stroke:</string>
     <string name="btn_show_more">Show more</string>
+    <string name="no_task_for_this_day">No task for this day</string>
 </resources>

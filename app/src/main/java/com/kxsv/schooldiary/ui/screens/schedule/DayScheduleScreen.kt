@@ -174,6 +174,8 @@ fun DayScheduleScreen(
 				Icon(Icons.Default.Add, stringResource(R.string.add_schedule_item))
 			}
 		},
+		containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 1f),
+		contentColor = MaterialTheme.colorScheme.onBackground
 	) { paddingValues ->
 		
 		val dialogState: MaterialDialogState = rememberMaterialDialogState()
@@ -386,7 +388,6 @@ fun ScheduleComparisonTable(
 					textAlign = TextAlign.Center,
 					modifier = Modifier.padding(8.dp),
 					maxLines = 1,
-					fontWeight = FontWeight.Black,
 				)
 			}
 			
@@ -453,8 +454,7 @@ private fun Table(
 				}) {
 					(0..lineCount).forEach { index ->
 						Surface(
-							border = BorderStroke(1.dp, Color.Gray),
-							contentColor = Color.Black,
+							border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
 							modifier = Modifier.width(cellWidth(columnIndex))
 						) {
 							if (index == 0) {
@@ -536,7 +536,6 @@ private fun CalendarLine(
 			endDate = endDate,
 			firstVisibleWeekDate = selectedDate,
 		)
-		// Draw light content on dark background.
 		CompositionLocalProvider(LocalContentColor provides darkColors().onSurface) {
 			WeekCalendar(
 				modifier = Modifier.padding(vertical = 4.dp),
@@ -571,11 +570,11 @@ private fun Day(
 			.width(screenWidth / 7)
 			.padding(2.dp)
 			.clip(RoundedCornerShape(20.dp))
-			.background(color = Color.DarkGray)
+			.background(color = MaterialTheme.colorScheme.surfaceVariant)
 			.border(
 				shape = RoundedCornerShape(20.dp),
 				width = if (selected) 2.dp else 0.dp,
-				color = if (selected) Color.Cyan else Color.Transparent,
+				color = if (selected) MaterialTheme.colorScheme.outline else Color.Transparent,
 			)
 			.wrapContentHeight()
 			.clickable { onClick(date) },
@@ -699,7 +698,7 @@ private val previewCurrentPattern = listOf(
 
 @Preview(
 	device = "id:pixel_4", showSystemUi = true, showBackground = true,
-	uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL
+	uiMode = Configuration.UI_MODE_NIGHT_YES
 )
 @Composable
 private fun DayScheduleContentPreview() {

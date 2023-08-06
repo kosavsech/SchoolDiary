@@ -34,7 +34,6 @@ import com.kxsv.schooldiary.ui.main.app_bars.topbar.GradesTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.GradesScreenNavActions
 import com.kxsv.schooldiary.util.Mark
 import com.kxsv.schooldiary.util.Mark.Companion.getStringValueFrom
-import com.kxsv.schooldiary.util.ui.GradesSortType
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
@@ -64,19 +63,19 @@ fun GradesScreen(
 	viewModel: GradesViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState,
 ) {
+	val uiState = viewModel.uiState.collectAsState().value
 	val navigator = GradesScreenNavActions(destinationsNavigator = destinationsNavigator)
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		topBar = {
 			GradesTopAppBar(
 				openDrawer = { coroutineScope.launch { drawerState.open() } },
-				onSortByMarkDate = { viewModel.sortGrades(GradesSortType.MARK_DATE) },
-				onSortByFetchDate = { viewModel.sortGrades(GradesSortType.FETCH_DATE) }
+				currentSortType = uiState.sortType,
+				onSortChoose = { viewModel.sortGrades(it) },
 			)
 		},
 		modifier = Modifier.fillMaxSize(),
 	) { paddingValues ->
-		val uiState = viewModel.uiState.collectAsState().value
 		
 		GradesContent(
 			loading = uiState.isLoading,

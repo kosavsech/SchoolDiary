@@ -1,8 +1,9 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class)
 
 package com.kxsv.schooldiary.ui.main.app_bars.topbar
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
@@ -23,7 +24,9 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -33,19 +36,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import com.kxsv.schooldiary.R
+import com.kxsv.schooldiary.util.ui.GradesSortType
 import com.kxsv.schooldiary.util.ui.TasksDoneFilterType
 
 @Composable
 fun AddEditPatternTopAppBar(@StringRes title: Int, onBack: () -> Unit) {
 	TopAppBar(
 		title = { Text(text = stringResource(id = title)) },
-		navigationIcon = {
-			IconButton(onClick = onBack) {
-				Icon(Icons.Filled.ArrowBack, stringResource(id = R.string.menu_back))
-			}
-		},
+		navigationIcon = { BackIconButton(onBack) },
 		modifier = Modifier.fillMaxWidth()
 	)
 }
@@ -54,11 +55,7 @@ fun AddEditPatternTopAppBar(@StringRes title: Int, onBack: () -> Unit) {
 fun AddEditScheduleTopAppBar(onBack: () -> Unit) {
 	TopAppBar(
 		title = {},
-		navigationIcon = {
-			IconButton(onClick = onBack) {
-				Icon(Icons.Filled.ArrowBack, stringResource(id = R.string.menu_back))
-			}
-		},
+		navigationIcon = { BackIconButton(onBack) },
 		modifier = Modifier.fillMaxWidth()
 	)
 }
@@ -67,11 +64,7 @@ fun AddEditScheduleTopAppBar(onBack: () -> Unit) {
 fun AddEditSubjectTopAppBar(onBack: () -> Unit) {
 	TopAppBar(
 		title = {},
-		navigationIcon = {
-			IconButton(onClick = onBack) {
-				Icon(Icons.Filled.ArrowBack, stringResource(id = R.string.menu_back))
-			}
-		},
+		navigationIcon = { BackIconButton(onBack) },
 		modifier = Modifier.fillMaxWidth()
 	)
 }
@@ -84,17 +77,17 @@ fun AddEditTaskTopAppBar(
 ) {
 	TopAppBar(
 		title = {},
-		navigationIcon = {
-			IconButton(onClick = onBack) {
-				Icon(Icons.Filled.ArrowBack, stringResource(id = R.string.menu_back))
-			}
-		},
+		navigationIcon = { BackIconButton(onBack) },
 		actions = {
 			IconButton(
 				onClick = fetchNet,
 				enabled = fetchEnabled
 			) {
-				Icon(Icons.Filled.CloudDownload, stringResource(id = R.string.fetch_task))
+				Icon(
+					imageVector = Icons.Filled.CloudDownload,
+					contentDescription = stringResource(id = R.string.fetch_task),
+					tint = LocalContentColor.current
+				)
 			}
 		},
 		modifier = Modifier.fillMaxWidth()
@@ -105,11 +98,7 @@ fun AddEditTaskTopAppBar(
 fun AddEditGradeTopAppBar(onBack: () -> Unit) {
 	TopAppBar(
 		title = {},
-		navigationIcon = {
-			IconButton(onClick = onBack) {
-				Icon(Icons.Filled.ArrowBack, stringResource(id = R.string.menu_back))
-			}
-		},
+		navigationIcon = { BackIconButton(onBack) },
 		modifier = Modifier.fillMaxWidth()
 	)
 }
@@ -118,11 +107,7 @@ fun AddEditGradeTopAppBar(onBack: () -> Unit) {
 fun PatternSelectionTopAppBar(onBack: () -> Unit) {
 	TopAppBar(
 		title = { Text(text = stringResource(id = R.string.pattern_selection_title)) },
-		navigationIcon = {
-			IconButton(onClick = onBack) {
-				Icon(Icons.Filled.ArrowBack, stringResource(id = R.string.menu_back))
-			}
-		},
+		navigationIcon = { BackIconButton(onBack) },
 		modifier = Modifier.fillMaxWidth()
 	)
 }
@@ -131,11 +116,7 @@ fun PatternSelectionTopAppBar(onBack: () -> Unit) {
 fun PatternsTopAppBar(openDrawer: () -> Unit) {
 	TopAppBar(
 		title = { Text(text = stringResource(id = R.string.patterns_title)) },
-		navigationIcon = {
-			IconButton(onClick = openDrawer) {
-				Icon(Icons.Filled.Menu, stringResource(id = R.string.open_drawer))
-			}
-		},
+		navigationIcon = { DrawerIconButton(openDrawer) },
 		modifier = Modifier.fillMaxWidth()
 	)
 }
@@ -144,11 +125,7 @@ fun PatternsTopAppBar(openDrawer: () -> Unit) {
 fun TeachersTopAppBar(openDrawer: () -> Unit) {
 	TopAppBar(
 		title = { Text(text = stringResource(id = R.string.teachers_title)) },
-		navigationIcon = {
-			IconButton(onClick = openDrawer) {
-				Icon(Icons.Filled.Menu, stringResource(id = R.string.open_drawer))
-			}
-		},
+		navigationIcon = { DrawerIconButton(openDrawer) },
 		modifier = Modifier.fillMaxWidth()
 	)
 }
@@ -157,13 +134,35 @@ fun TeachersTopAppBar(openDrawer: () -> Unit) {
 fun SubjectsTopAppBar(openDrawer: () -> Unit) {
 	TopAppBar(
 		title = { Text(text = stringResource(id = R.string.subjects_title)) },
-		navigationIcon = {
-			IconButton(onClick = openDrawer) {
-				Icon(Icons.Filled.Menu, stringResource(id = R.string.open_drawer))
-			}
-		},
+		navigationIcon = { DrawerIconButton(openDrawer) },
 		modifier = Modifier.fillMaxWidth(),
 	)
+}
+
+@Composable
+private fun BackIconButton(
+	onBack: () -> Unit,
+) {
+	IconButton(onClick = onBack) {
+		Icon(
+			imageVector = Icons.Filled.ArrowBack,
+			contentDescription = stringResource(id = R.string.menu_back),
+			tint = LocalContentColor.current
+		)
+	}
+}
+
+@Composable
+private fun DrawerIconButton(
+	openDrawer: () -> Unit,
+) {
+	IconButton(onClick = openDrawer) {
+		Icon(
+			imageVector = Icons.Filled.Menu,
+			contentDescription = stringResource(id = R.string.open_drawer),
+			tint = LocalContentColor.current
+		)
+	}
 }
 
 @Composable
@@ -173,11 +172,7 @@ fun TasksTopAppBar(
 ) {
 	TopAppBar(
 		title = { Text(text = stringResource(id = R.string.agenda_title)) },
-		navigationIcon = {
-			IconButton(onClick = openDrawer) {
-				Icon(Icons.Filled.Menu, stringResource(id = R.string.open_drawer))
-			}
-		},
+		navigationIcon = { DrawerIconButton(openDrawer) },
 		actions = {
 			var expanded by remember { mutableStateOf(false) }
 			IconButton(onClick = { expanded = true }) {
@@ -209,20 +204,16 @@ fun TasksTopAppBar(
 @Composable
 fun GradesTopAppBar(
 	openDrawer: () -> Unit,
-	onSortByMarkDate: () -> Unit,
-	onSortByFetchDate: () -> Unit,
+	currentSortType: GradesSortType,
+	onSortChoose: (GradesSortType) -> Unit,
 ) {
 	TopAppBar(
 		title = { Text(text = stringResource(id = R.string.grades_title)) },
-		navigationIcon = {
-			IconButton(onClick = openDrawer) {
-				Icon(Icons.Filled.Menu, stringResource(id = R.string.open_drawer))
-			}
-		},
+		navigationIcon = { DrawerIconButton(openDrawer) },
 		actions = {
 			GradesMoreActions(
-				onSortByMarkDate = onSortByMarkDate,
-				onSortByFetchDate = onSortByFetchDate
+				currentSortType = currentSortType,
+				onSortChoose = onSortChoose,
 			)
 		},
 		modifier = Modifier.fillMaxWidth(),
@@ -235,14 +226,7 @@ fun MainTopAppBar(
 ) {
 	TopAppBar(
 		title = { Text(text = stringResource(id = R.string.main_menu_title)) },
-		navigationIcon = {
-			IconButton(onClick = openDrawer) {
-				Icon(
-					imageVector = Icons.Filled.Menu,
-					contentDescription = stringResource(id = R.string.open_drawer)
-				)
-			}
-		},
+		navigationIcon = { DrawerIconButton(openDrawer) },
 		modifier = Modifier.fillMaxWidth(),
 	)
 }
@@ -253,11 +237,7 @@ fun EduPerformanceTopAppBar(
 ) {
 	TopAppBar(
 		title = { Text(text = stringResource(id = R.string.report_card_title)) },
-		navigationIcon = {
-			IconButton(onClick = openDrawer) {
-				Icon(Icons.Filled.Menu, stringResource(id = R.string.open_drawer))
-			}
-		},
+		navigationIcon = { DrawerIconButton(openDrawer) },
 		modifier = Modifier.fillMaxWidth(),
 	)
 }
@@ -272,22 +252,14 @@ fun ScheduleTopAppBar(
 ) {
 	TopAppBar(
 		title = { Text(text = stringResource(R.string.timetable)) },
-		navigationIcon = {
-			IconButton(onClick = openDrawer) {
-				Icon(
-					imageVector = Icons.Filled.Menu,
-					contentDescription = stringResource(id = R.string.open_drawer),
-					tint = MaterialTheme.colorScheme.onSurface
-				)
-			}
-		},
+		navigationIcon = { DrawerIconButton(openDrawer) },
 		// TODO: add action to switch screens of day/week view mode
 		actions = {
 			IconButton(onClick = onFetchSchedule) {
 				Icon(
 					imageVector = Icons.Filled.CloudDownload,
 					contentDescription = stringResource(id = R.string.fetch_schedule),
-					tint = MaterialTheme.colorScheme.onSurface
+					tint = LocalContentColor.current
 				)
 			}
 			ScheduleMoreActions(
@@ -301,41 +273,64 @@ fun ScheduleTopAppBar(
 	
 }
 
+enum class GradeSortTypeItem(
+	val sortType: GradesSortType,
+	val icon: ImageVector,
+	@StringRes val label: Int,
+) {
+	MarkDate(
+		sortType = GradesSortType.MARK_DATE,
+		icon = Icons.Default.Event,
+		label = R.string.mark_date_sort_type
+	),
+	FetchDate(
+		sortType = GradesSortType.FETCH_DATE,
+		icon = Icons.Default.Cached,
+		label = R.string.mark_fetch_date_sort_type
+	)
+}
+
 @Composable
 private fun GradesMoreActions(
-	onSortByMarkDate: () -> Unit,
-	onSortByFetchDate: () -> Unit,
+	currentSortType: GradesSortType,
+	onSortChoose: (GradesSortType) -> Unit,
 ) {
 	var expanded by remember { mutableStateOf(false) }
 	IconButton(onClick = { expanded = true }) {
 		Icon(
 			imageVector = Icons.Default.Sort,
 			contentDescription = stringResource(R.string.grades_sort_type),
+			tint = MaterialTheme.colorScheme.onSurface
 		)
 		DropdownMenu(
 			expanded = expanded,
 			onDismissRequest = { expanded = false },
 		) {
-			DropdownMenuItem(
-				text = { Text(text = stringResource(R.string.mark_date_sort_type)) },
-				onClick = { onSortByMarkDate(); expanded = false },
-				leadingIcon = {
-					Icon(
-						Icons.Default.Event,
-						stringResource(R.string.mark_date_sort),
+			GradeSortTypeItem.values().forEach {
+				val isSelected = currentSortType == it.sortType
+				val backgroundModifier = if (isSelected) {
+					Modifier.background(MaterialTheme.colorScheme.outlineVariant)
+				} else Modifier
+				DropdownMenuItem(
+					text = { Text(text = stringResource(it.label)) },
+					onClick = { onSortChoose(it.sortType); expanded = false },
+					enabled = !isSelected,
+					modifier = Modifier.then(backgroundModifier),
+					leadingIcon = {
+						Icon(
+							imageVector = it.icon,
+							contentDescription = "",
+							tint = LocalContentColor.current
+						)
+					},
+					colors = MenuDefaults.itemColors(
+						textColor = MaterialTheme.colorScheme.onSurface,
+						disabledTextColor = MaterialTheme.colorScheme.onSurface,
+						leadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+						disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
 					)
-				}
-			)
-			DropdownMenuItem(
-				text = { Text(text = stringResource(R.string.mark_fetch_date_sort_type)) },
-				onClick = { onSortByFetchDate(); expanded = false },
-				leadingIcon = {
-					Icon(
-						Icons.Default.Cached,
-						stringResource(R.string.mark_fetch_date_sort),
-					)
-				}
-			)
+				)
+			}
 		}
 	}
 }
@@ -396,11 +391,7 @@ private fun ScheduleMoreActions(
 fun CopyScheduleForDayTopAppBar(date: String? = "", onBack: () -> Unit) {
 	TopAppBar(
 		title = { if (date != null) Text(text = "Copy lesson to $date") },
-		navigationIcon = {
-			IconButton(onClick = onBack) {
-				Icon(Icons.Filled.ArrowBack, stringResource(id = R.string.menu_back))
-			}
-		},
+		navigationIcon = { BackIconButton(onBack) },
 		modifier = Modifier.fillMaxWidth()
 	)
 }
@@ -409,11 +400,7 @@ fun CopyScheduleForDayTopAppBar(date: String? = "", onBack: () -> Unit) {
 fun SubjectDetailTopAppBar(title: String, onBack: () -> Unit, onDelete: () -> Unit) {
 	TopAppBar(
 		title = { Text(text = title) },
-		navigationIcon = {
-			IconButton(onClick = onBack) {
-				Icon(Icons.Filled.ArrowBack, stringResource(id = R.string.menu_back))
-			}
-		},
+		navigationIcon = { BackIconButton(onBack) },
 		actions = {
 			IconButton(onClick = onDelete) {
 				Icon(Icons.Filled.Delete, stringResource(id = R.string.menu_back))
@@ -431,16 +418,25 @@ fun TaskDetailTopAppBar(onBack: () -> Unit, onDelete: () -> Unit, onEdit: () -> 
 			IconButton(onClick = onBack) {
 				Icon(
 					imageVector = Icons.Filled.Close,
-					contentDescription = stringResource(id = R.string.task_topbar_close)
+					contentDescription = stringResource(id = R.string.task_topbar_close),
+					tint = LocalContentColor.current
 				)
 			}
 		},
 		actions = {
 			IconButton(onClick = onEdit) {
-				Icon(Icons.Filled.Edit, stringResource(id = R.string.edit_task))
+				Icon(
+					imageVector = Icons.Filled.Edit,
+					contentDescription = stringResource(id = R.string.edit_task),
+					tint = LocalContentColor.current
+				)
 			}
 			IconButton(onClick = onDelete) {
-				Icon(Icons.Filled.Delete, stringResource(id = R.string.menu_back))
+				Icon(
+					imageVector = Icons.Filled.Delete,
+					contentDescription = stringResource(id = R.string.menu_back),
+					tint = LocalContentColor.current
+				)
 			}
 		},
 		modifier = Modifier.fillMaxWidth()

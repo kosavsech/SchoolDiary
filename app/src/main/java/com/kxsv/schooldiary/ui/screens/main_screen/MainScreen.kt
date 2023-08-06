@@ -1,6 +1,7 @@
 package com.kxsv.schooldiary.ui.screens.main_screen
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,16 +10,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyGridScope
-import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowRightAlt
 import androidx.compose.material.icons.filled.ViewDay
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.Circle
@@ -30,6 +28,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -39,14 +38,19 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -70,6 +74,7 @@ import com.ramcosta.composedestinations.annotation.RootNavGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -100,6 +105,12 @@ fun MainScreen(
 		val onScheduleShowMore = remember {
 			{ navigator.onScheduleShowMore() }
 		}
+		val onTaskChecked = remember<(Long, Boolean) -> Unit> {
+			{ id, isDone -> viewModel.completeTask(id = id, isDone = isDone) }
+		}
+		val onTaskClicked = remember<(Long) -> Unit> {
+			{ navigator.onTaskClicked(taskId = it) }
+		}
 		val onTasksShowMore = remember<(LocalDate) -> Unit> {
 			{ navigator.onTasksShowMore(date = it) }
 		}
@@ -111,6 +122,8 @@ fun MainScreen(
 			isLoading = uiState.isLoading,
 			itemList = uiState.itemList,
 			onScheduleShowMore = onScheduleShowMore,
+			onTaskChecked = onTaskChecked,
+			onTaskClicked = onTaskClicked,
 			onTasksShowMore = onTasksShowMore,
 			onNavigate = onNavigate
 		)
@@ -125,11 +138,13 @@ data class MainScreenItem(
 )
 
 @Composable
-fun MainScreenContent(
+private fun MainScreenContent(
 	modifier: Modifier,
 	isLoading: Boolean,
 	itemList: List<MainScreenItem>,
 	onScheduleShowMore: () -> Unit,
+	onTaskClicked: (Long) -> Unit,
+	onTaskChecked: (Long, Boolean) -> Unit,
 	onTasksShowMore: (LocalDate) -> Unit,
 	onNavigate: (String) -> Unit,
 ) {
@@ -139,34 +154,37 @@ fun MainScreenContent(
 		empty = itemList.isEmpty(),
 		isContentScrollable = true
 	) {
-		Column(
-			modifier = Modifier.verticalScroll(rememberScrollState())
-		) {
+		Column {
 			ChipSection(onNavigate = onNavigate)
-			
-			Spacer(modifier = Modifier.padding(vertical = dimensionResource(id = R.dimen.vertical_margin)))
-			
-			itemList.forEach {
-				if (it.date == LocalDate.now()) {
-					key(it.date, it.classes, it.pattern) {
-						CurrentDay(
-							classes = it.classes,
-							currentPattern = it.pattern,
-							onScheduleShowMore = onScheduleShowMore,
-						)
-						Spacer(modifier = Modifier.padding(vertical = dimensionResource(id = R.dimen.vertical_margin)))
+			Column(
+				modifier = Modifier
+					.verticalScroll(rememberScrollState())
+					.padding(horizontal = dimensionResource(id = R.dimen.horizontal_margin))
+			) {
+				itemList.forEach {
+					if (it.date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
+					if (it.date == LocalDate.now()) {
+						key(it.date, it.classes, it.pattern) {
+							CurrentDay(
+								classes = it.classes,
+								currentPattern = it.pattern,
+								onScheduleShowMore = onScheduleShowMore,
+							)
+						}
+					} else {
+						key(it.date, it.classes, it.pattern, it.tasks) {
+							ScheduleDay(
+								date = it.date,
+								classes = it.classes,
+								tasks = it.tasks,
+								currentPattern = it.pattern,
+								onTasksShowMore = { onTasksShowMore(it.date) },
+								onTaskClicked = onTaskClicked,
+								onTaskChecked = onTaskChecked
+							)
+						}
 					}
-				} else {
-					key(it.date, it.classes, it.pattern) {
-						ScheduleDay(
-							date = it.date,
-							classes = it.classes,
-							tasks = it.tasks,
-							currentPattern = it.pattern,
-							onTasksShowMore = { onTasksShowMore(it.date) }
-						)
-						Spacer(modifier = Modifier.padding(vertical = dimensionResource(id = R.dimen.vertical_margin)))
-					}
+					Spacer(modifier = Modifier.padding(vertical = dimensionResource(id = R.dimen.vertical_margin)))
 				}
 			}
 		}
@@ -194,7 +212,7 @@ private fun ChipSection(
 		modifier = Modifier
 			.fillMaxWidth()
 			.horizontalScroll(rememberScrollState())
-			.padding(vertical = dimensionResource(R.dimen.list_item_padding)),
+			.padding(vertical = dimensionResource(R.dimen.vertical_margin)),
 		verticalAlignment = Alignment.CenterVertically,
 		horizontalArrangement = Arrangement.SpaceBetween
 	) {
@@ -268,23 +286,45 @@ private fun CurrentDay(
 }
 
 @Composable
-fun ScheduleDay(
+private fun ScheduleDay(
 	date: LocalDate,
 	classes: Map<Int, SubjectEntity>,
 	tasks: List<TaskWithSubject>,
 	currentPattern: List<PatternStrokeEntity>,
+	onTaskChecked: (Long, Boolean) -> Unit,
+	onTaskClicked: (Long) -> Unit,
 	onTasksShowMore: () -> Unit,
 ) {
-	Column {
+	Column(
+		modifier = Modifier
+	) {
 		DayHeader(date = date)
 		
-		TasksGrid(tasks = tasks)
+		TasksOverview(
+			tasks = tasks,
+			onTaskChecked = onTaskChecked,
+			onTaskClicked = onTaskClicked
+		)
 		
-		Divider(modifier = Modifier.padding(vertical = dimensionResource(id = R.dimen.vertical_margin)))
-		Button(onClick = onTasksShowMore) {
+		Divider()
+		
+		Row(
+			modifier = Modifier
+				.fillMaxWidth()
+				.clickable { onTasksShowMore() }
+				.padding(vertical = dimensionResource(id = R.dimen.vertical_margin)),
+			horizontalArrangement = Arrangement.Start,
+			verticalAlignment = Alignment.CenterVertically
+		) {
 			Text(
 				text = stringResource(id = R.string.btn_show_more),
-				style = MaterialTheme.typography.labelMedium
+				style = MaterialTheme.typography.bodyMedium
+			)
+			Spacer(modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.list_item_padding)))
+			Icon(
+				imageVector = Icons.Default.ArrowRightAlt,
+				contentDescription = stringResource(id = R.string.btn_show_more),
+				tint = LocalContentColor.current
 			)
 		}
 		
@@ -301,39 +341,81 @@ fun ScheduleDay(
 }
 
 @Composable
-fun TasksGrid(tasks: List<TaskWithSubject>) {
-	LazyHorizontalGrid(
-		modifier = Modifier.heightIn(max = 200.dp),
-		rows = GridCells.Adaptive(
-			minSize = 60.dp
-		)
-	) {
-		tasks.forEachIndexed { index, taskEntity ->
-			TasksGridItem(index, taskEntity)
-		}
-	}
-}
-
-fun LazyGridScope.TasksGridItem(
-	index: Int,
-	taskEntity: TaskWithSubject,
+private fun TasksOverview(
+	tasks: List<TaskWithSubject>,
+	onTaskChecked: (Long, Boolean) -> Unit,
+	onTaskClicked: (Long) -> Unit,
 ) {
-	item {
-		key(taskEntity) {
-			Row {
-				Text(text = index.toString())
-				Column {
-					Text(text = taskEntity.taskEntity.title)
-					Text(text = taskEntity.subject.getName())
-				}
-				Checkbox(
-					checked = taskEntity.taskEntity.isDone,
-					onCheckedChange = null
+	Column(modifier = Modifier.fillMaxWidth()) {
+		if (tasks.isEmpty()) {
+			Text(
+				text = stringResource(R.string.no_task_for_this_day),
+				style = MaterialTheme.typography.displayMedium
+			)
+		}
+		tasks.forEachIndexed { index, taskEntity ->
+			if (index >= 5) return@Column
+			key(index, taskEntity) {
+				TasksOverviewItem(
+					index = index,
+					taskEntity = taskEntity,
+					onTaskChecked = onTaskChecked,
+					onTaskClicked = onTaskClicked
 				)
 			}
 		}
 	}
 }
+
+@Composable
+private fun TasksOverviewItem(
+	index: Int,
+	taskEntity: TaskWithSubject,
+	onTaskChecked: (Long, Boolean) -> Unit,
+	onTaskClicked: (Long) -> Unit,
+) {
+	Row(
+		modifier = Modifier
+			.fillMaxWidth()
+			.clickable { onTaskClicked(taskEntity.taskEntity.taskId) },
+		horizontalArrangement = Arrangement.SpaceBetween,
+		verticalAlignment = Alignment.CenterVertically
+	) {
+		// to remove delay of check change
+		var isChecked by remember { mutableStateOf(taskEntity.taskEntity.isDone) }
+		Row(verticalAlignment = Alignment.Top) {
+			Text(
+				text = (index + 1).toString(),
+				style = MaterialTheme.typography.titleMedium,
+			)
+			Spacer(modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.list_item_padding)))
+			Column {
+				val textDecoration = if (isChecked) {
+					TextDecoration.LineThrough
+				} else {
+					null
+				}
+				Text(
+					text = taskEntity.taskEntity.title,
+					style = MaterialTheme.typography.titleMedium,
+					textDecoration = textDecoration
+				)
+				Text(
+					text = taskEntity.subject.getName(),
+					style = MaterialTheme.typography.labelMedium,
+				)
+			}
+		}
+		Checkbox(
+			checked = isChecked,
+			onCheckedChange = {
+				isChecked = it
+				onTaskChecked(taskEntity.taskEntity.taskId, it)
+			}
+		)
+	}
+}
+
 
 @Composable
 private fun LessonInfo(
@@ -371,24 +453,17 @@ private fun DayHeader(
 			.fillMaxWidth()
 			.wrapContentHeight()
 			.padding(
-				horizontal = dimensionResource(R.dimen.horizontal_margin),
 				vertical = dimensionResource(R.dimen.vertical_margin)
 			),
 		verticalAlignment = Alignment.CenterVertically,
 		horizontalArrangement = Arrangement.SpaceBetween,
 	) {
 		val dayOfWeekText = when (date) {
-			LocalDate.now() -> {
-				stringResource(id = R.string.today_filter)
-			}
+			LocalDate.now() -> stringResource(id = R.string.today_filter)
 			
-			LocalDate.now().plusDays(1) -> {
-				stringResource(id = R.string.tomorrow_filter)
-			}
+			LocalDate.now().plusDays(1) -> stringResource(id = R.string.tomorrow_filter)
 			
-			else -> {
-				date.dayOfWeek.getDisplayName(TextStyle.FULL_STANDALONE, Locale.ENGLISH)
-			}
+			else -> date.dayOfWeek.getDisplayName(TextStyle.FULL_STANDALONE, Locale.ENGLISH)
 		}
 		Text(
 			text = dayOfWeekText,
@@ -586,34 +661,40 @@ private fun LessonShort(
 		),
 		verticalAlignment = Alignment.CenterVertically,
 	) {
-		val text = if (startTime != null && endTime != null) {
-			fromLocalTime(startTime) + " - " + fromLocalTime(
-				endTime
-			)
+		val timingText = if (startTime != null && endTime != null) {
+			fromLocalTime(startTime) + " - " + fromLocalTime(endTime)
 		} else {
 			"No pattern stroke"
 		}
 		Text(
-			text = text,
-			style = MaterialTheme.typography.labelSmall
+			text = timingText,
+			style = MaterialTheme.typography.labelSmall,
+			modifier = Modifier.weight(0.45f)
 		)
-		Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.list_item_padding) / 2))
-		Icon(
-			imageVector = Icons.Outlined.Circle,
-			contentDescription = "Lesson name",
-			modifier = Modifier.size(12.dp)
-		)
-		Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.list_item_padding)))
-		Text(
-			text = subjectEntity.getName(),
-			style = MaterialTheme.typography.bodySmall
-		)
+		Row(
+			modifier = Modifier.weight(1f),
+			verticalAlignment = Alignment.CenterVertically,
+		) {
+			Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.list_item_padding) / 2))
+			Icon(
+				imageVector = Icons.Outlined.Circle,
+				contentDescription = "Lesson name",
+				modifier = Modifier.size(12.dp)
+			)
+			Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.list_item_padding)))
+			Text(
+				text = subjectEntity.getName(),
+				style = MaterialTheme.typography.bodySmall,
+				maxLines = 1,
+				overflow = TextOverflow.Ellipsis
+			)
+		}
 	}
 }
 
 @Composable
 @Preview
-fun LessonDetailedPreview() {
+private fun LessonDetailedPreview() {
 	Surface {
 		LessonDetailed(
 			label = R.string.right_now_label,
@@ -630,7 +711,7 @@ fun LessonDetailedPreview() {
 
 @Composable
 @Preview
-fun LessonBriefPreview() {
+private fun LessonBriefPreview() {
 	Surface {
 		LessonBrief(
 			subjectEntity = SubjectEntity(
@@ -684,19 +765,38 @@ private val previewCurrentPattern = listOf(
 private val previewClasses = mapOf(
 	Pair(1, SubjectEntity("Русский язык", "210")),
 	Pair(2, SubjectEntity("Иностранный язык (Английский)", "316")),
-	Pair(3, SubjectEntity("Иностранный язык (Немецкий)", "316")),
+	Pair(3, SubjectEntity("Основы безопасности жизнедеятельности", "316")),
 	Pair(4, SubjectEntity("Алгебра", "310")),
-	Pair(5, SubjectEntity("Литература", "210")),
+	Pair(9, SubjectEntity("Литература", "210")),
+)
+private val previewTasks = listOf<TaskWithSubject>(
+
 )
 
 @Composable
 @Preview
-fun CurrentDayPreview() {
+private fun CurrentDayPreview() {
 	Surface {
 		CurrentDay(
 			classes = previewClasses,
 			currentPattern = previewCurrentPattern,
 			onScheduleShowMore = {}
+		)
+	}
+}
+
+@Preview
+@Composable
+private fun ScheduleDayPreview() {
+	Surface {
+		ScheduleDay(
+			date = LocalDate.now(),
+			classes = previewClasses,
+			tasks = previewTasks,
+			currentPattern = previewCurrentPattern,
+			onTaskChecked = { _, _ -> },
+			onTaskClicked = {},
+			onTasksShowMore = {}
 		)
 	}
 }

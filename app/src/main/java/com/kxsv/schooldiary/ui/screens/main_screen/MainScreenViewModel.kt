@@ -3,6 +3,7 @@ package com.kxsv.schooldiary.ui.screens.main_screen
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.repository.LessonRepository
 import com.kxsv.schooldiary.data.repository.PatternStrokeRepository
@@ -37,7 +38,7 @@ private const val TAG = "MainScreenViewModel"
 
 @HiltViewModel
 class MainScreenViewModel @Inject constructor(
-	taskRepository: TaskRepository,
+	private val taskRepository: TaskRepository,
 	private val lessonRepository: LessonRepository,
 	private val studyDayRepository: StudyDayRepository,
 	private val strokeRepository: PatternStrokeRepository,
@@ -115,5 +116,11 @@ class MainScreenViewModel @Inject constructor(
 	
 	private fun showSnackbarMessage(message: Int) {
 		_uiState.update { it.copy(userMessage = message) }
+	}
+	
+	fun completeTask(id: Long, isDone: Boolean) = viewModelScope.launch(ioDispatcher) {
+		val taskToUpdate = taskRepository.getById(id)?.copy(isDone = isDone)
+			?: return@launch showSnackbarMessage(R.string.task_not_found)
+		taskRepository.updateTask(taskToUpdate)
 	}
 }

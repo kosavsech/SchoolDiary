@@ -77,7 +77,7 @@ class TaskRepositoryImpl @Inject constructor(
 		// todo change to NOW
 		return withContext(ioDispatcher) {
 			withTimeout(15000L) {
-				val startRange = LocalDate.of(2023, 2, 11)
+				val startRange = LocalDate.now()
 				val period = (startRange..startRange.plusDays(7)).toList()
 				val result: MutableList<TaskAndUniqueIdWithSubject> = mutableListOf()
 				period.forEach { date ->

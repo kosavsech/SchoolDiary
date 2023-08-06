@@ -12,7 +12,7 @@ import com.kxsv.schooldiary.app.workers.GradeSyncWorker
 import com.kxsv.schooldiary.app.workers.TaskSyncWorker
 import com.kxsv.schooldiary.ui.main.navigation.NavGraph
 import com.kxsv.schooldiary.ui.screens.login.SplashViewModel
-import com.kxsv.schooldiary.ui.theme.SchoolDiaryTheme
+import com.kxsv.schooldiary.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -53,7 +53,7 @@ class MainActivity : ComponentActivity() {
 		)
 		
 		setContent {
-			SchoolDiaryTheme() {
+			AppTheme() {
 				NavGraph(
 					startRoute = splashViewModel.startDestination.value,
 					activity = this
