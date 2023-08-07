@@ -41,6 +41,7 @@ import com.kxsv.schooldiary.ui.main.app_bars.bottombar.TasksBottomAppBar
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.TasksTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.TasksScreenNavActions
 import com.kxsv.schooldiary.ui.screens.grade_list.MY_URI
+import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
@@ -136,17 +137,17 @@ private fun TasksContent(
 						verticalAlignment = Bottom
 					) {
 						val titleText =
-							if (key == LocalDate.now()) {
+							if (key == Utils.currentDate) {
 								"Today"
-							} else if (ChronoUnit.DAYS.between(LocalDate.now(), key) == 1L) {
+							} else if (ChronoUnit.DAYS.between(Utils.currentDate, key) == 1L) {
 								"Tomorrow"
-							} else if (ChronoUnit.DAYS.between(LocalDate.now(), key) == -1L) {
+							} else if (ChronoUnit.DAYS.between(Utils.currentDate, key) == -1L) {
 								"Yesterday"
-							} else if (key.isAfter(LocalDate.now())) {
-								ChronoUnit.DAYS.between(LocalDate.now(), key)
+							} else if (key.isAfter(Utils.currentDate)) {
+								ChronoUnit.DAYS.between(Utils.currentDate, key)
 									.toString() + " days"
 							} else {
-								ChronoUnit.DAYS.between(key, LocalDate.now())
+								ChronoUnit.DAYS.between(key, Utils.currentDate)
 									.toString() + " days ago"
 							}
 						Text(

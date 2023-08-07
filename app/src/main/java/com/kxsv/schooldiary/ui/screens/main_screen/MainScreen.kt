@@ -66,6 +66,7 @@ import com.kxsv.schooldiary.ui.screens.destinations.GradesScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.TasksScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.TypedDestination
 import com.kxsv.schooldiary.ui.screens.patterns.add_edit_pattern.fromLocalTime
+import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.getIndexByTime
 import com.kxsv.schooldiary.util.Utils.getNextLessonsAfterIndex
 import com.kxsv.schooldiary.util.ui.LoadingContent
@@ -81,6 +82,8 @@ import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.time.temporal.ChronoUnit
 import java.util.Locale
+
+private const val TAG = "MainScreen"
 
 @RootNavGraph(start = true)
 @Destination
@@ -102,11 +105,16 @@ fun MainScreen(
 	) { paddingValues ->
 		val uiState = viewModel.uiState.collectAsState().value
 		
+		val loadNetworkSchedule = remember<() -> Unit> {
+			{ viewModel.retrieveSchedule() }
+		}
 		val onScheduleShowMore = remember {
 			{ navigator.onScheduleShowMore() }
 		}
 		val onTaskChecked = remember<(Long, Boolean) -> Unit> {
-			{ id, isDone -> viewModel.completeTask(id = id, isDone = isDone) }
+			{ id, isDone ->
+				viewModel.completeTask(id = id, isDone = isDone)
+			}
 		}
 		val onTaskClicked = remember<(Long) -> Unit> {
 			{ navigator.onTaskClicked(taskId = it) }
@@ -121,6 +129,7 @@ fun MainScreen(
 			modifier = Modifier.padding(paddingValues),
 			isLoading = uiState.isLoading,
 			itemList = uiState.itemList,
+			onRefresh = loadNetworkSchedule,
 			onScheduleShowMore = onScheduleShowMore,
 			onTaskChecked = onTaskChecked,
 			onTaskClicked = onTaskClicked,
@@ -142,6 +151,7 @@ private fun MainScreenContent(
 	modifier: Modifier,
 	isLoading: Boolean,
 	itemList: List<MainScreenItem>,
+	onRefresh: () -> Unit,
 	onScheduleShowMore: () -> Unit,
 	onTaskClicked: (Long) -> Unit,
 	onTaskChecked: (Long, Boolean) -> Unit,
@@ -152,7 +162,8 @@ private fun MainScreenContent(
 		modifier = modifier,
 		loading = isLoading,
 		empty = itemList.isEmpty(),
-		isContentScrollable = true
+		isContentScrollable = true,
+		onRefresh = onRefresh
 	) {
 		Column {
 			ChipSection(onNavigate = onNavigate)
@@ -163,7 +174,7 @@ private fun MainScreenContent(
 			) {
 				itemList.forEach {
 					if (it.date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
-					if (it.date == LocalDate.now()) {
+					if (it.date == Utils.currentDate) {
 						key(it.date, it.classes, it.pattern) {
 							CurrentDay(
 								classes = it.classes,
@@ -241,7 +252,7 @@ private fun CurrentDay(
 	onScheduleShowMore: () -> Unit,
 ) {
 	Column {
-		DayHeader(date = LocalDate.now())
+		DayHeader(date = Utils.currentDate)
 		val currentTime = LocalTime.now()
 		
 		val currentLessonIndex = currentPattern.getIndexByTime(currentTime)
@@ -253,8 +264,8 @@ private fun CurrentDay(
 					label = R.string.right_now_label,
 					labelIcon = Icons.Outlined.CircleNotifications,
 					subjectEntity = currentLesson,
-					startTime = currentPattern[currentLessonIndex].startTime,
-					endTime = currentPattern[currentLessonIndex].endTime,
+					startTime = currentPattern.getOrNull(currentLessonIndex)?.startTime,
+					endTime = currentPattern.getOrNull(currentLessonIndex)?.endTime,
 				)
 				Divider(modifier = Modifier.padding(vertical = dimensionResource(id = R.dimen.vertical_margin)))
 			}
@@ -263,27 +274,29 @@ private fun CurrentDay(
 		val nextFourLessonsIndices =
 			classes.getNextLessonsAfterIndex(n = 4, index = currentLessonIndex)
 		
+		// FIXME: index out of bound
 		nextFourLessonsIndices?.forEach { lessonIndex ->
 			LessonInfo(
 				isDetailed = (lessonIndex == nextFourLessonsIndices.first()),
 				label = R.string.next_lessons_label,
 				labelIcon = Icons.Default.ViewDay,
 				subjectEntity = classes[lessonIndex]!!,
-				startTime = currentPattern[lessonIndex].startTime,
-				endTime = currentPattern[lessonIndex].endTime,
+				startTime = currentPattern.getOrNull(lessonIndex)?.startTime,
+				endTime = currentPattern.getOrNull(lessonIndex)?.endTime,
 			)
+			
 			Spacer(modifier = Modifier.padding(vertical = dimensionResource(id = R.dimen.list_item_padding)))
 		}
-		
-		Divider(modifier = Modifier.padding(vertical = dimensionResource(id = R.dimen.vertical_margin)))
-		Button(onClick = onScheduleShowMore) {
-			Text(
-				text = stringResource(id = R.string.btn_show_more),
-				style = MaterialTheme.typography.labelMedium
-			)
-		}
+	}
+	Divider(modifier = Modifier.padding(vertical = dimensionResource(id = R.dimen.vertical_margin)))
+	Button(onClick = onScheduleShowMore) {
+		Text(
+			text = stringResource(id = R.string.btn_show_more),
+			style = MaterialTheme.typography.labelMedium
+		)
 	}
 }
+
 
 @Composable
 private fun ScheduleDay(
@@ -423,8 +436,8 @@ private fun LessonInfo(
 	label: Int,
 	labelIcon: ImageVector,
 	subjectEntity: SubjectEntity,
-	startTime: LocalTime,
-	endTime: LocalTime,
+	startTime: LocalTime?,
+	endTime: LocalTime?,
 ) {
 	if (isDetailed) {
 		LessonDetailed(
@@ -459,9 +472,9 @@ private fun DayHeader(
 		horizontalArrangement = Arrangement.SpaceBetween,
 	) {
 		val dayOfWeekText = when (date) {
-			LocalDate.now() -> stringResource(id = R.string.today_filter)
+			Utils.currentDate -> stringResource(id = R.string.today_filter)
 			
-			LocalDate.now().plusDays(1) -> stringResource(id = R.string.tomorrow_filter)
+			Utils.currentDate.plusDays(1) -> stringResource(id = R.string.tomorrow_filter)
 			
 			else -> date.dayOfWeek.getDisplayName(TextStyle.FULL_STANDALONE, Locale.ENGLISH)
 		}
@@ -481,8 +494,8 @@ private fun LessonDetailed(
 	label: Int,
 	labelIcon: ImageVector,
 	subjectEntity: SubjectEntity,
-	startTime: LocalTime,
-	endTime: LocalTime,
+	startTime: LocalTime?,
+	endTime: LocalTime?,
 ) {
 	Column(
 		modifier = Modifier.padding(
@@ -529,14 +542,28 @@ private fun LessonDetailed(
 					imageVector = Icons.Outlined.AccessTime,
 					contentDescription = "Time until lesson start/end"
 				)
-				val currentTime = LocalTime.now()
-				val untilLesson = if (currentTime.isAfter(startTime))
-					currentTime.until(endTime, ChronoUnit.MINUTES)
-				else
-					currentTime.until(startTime, ChronoUnit.MINUTES)
+				// todo create current time in uiState and update it every minute
+				val untilLesson = remember(LocalTime.now(), startTime, endTime) {
+					if (startTime != null && endTime != null) {
+						if (LocalTime.now().isAfter(startTime))
+							LocalTime.now().until(endTime, ChronoUnit.MINUTES)
+						else
+							LocalTime.now().until(startTime, ChronoUnit.MINUTES)
+					} else {
+						null
+					}
+				}
 				Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.list_item_padding) / 2))
+				val untilLessonText: String = if (untilLesson == null) {
+					stringResource(R.string.no_pattern_stroke)
+				} else {
+					remember(untilLesson) {
+						untilLesson.toString() + "m"
+					}
+				}
+				
 				Text(
-					text = untilLesson.toString() + "m",
+					text = untilLessonText,
 					style = MaterialTheme.typography.bodyMedium
 				)
 			}
@@ -547,13 +574,16 @@ private fun LessonDetailed(
 			verticalAlignment = Alignment.CenterVertically
 		) {
 			Row {
-				val text = startTime.format(
-					DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH)
-				) + " - " +
-						endTime.format(
-							DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH)
-						)
-				
+				val text = if (startTime != null && endTime != null) {
+					startTime.format(
+						DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH)
+					) + " - " +
+							endTime.format(
+								DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH)
+							)
+				} else {
+					stringResource(R.string.no_pattern_stroke)
+				}
 				Text(
 					text = text,
 					style = MaterialTheme.typography.bodyMedium
@@ -576,25 +606,36 @@ private fun LessonDetailed(
 				}
 			}
 		}
-		val timeOfLessonPassed = startTime.until(LocalTime.now(), ChronoUnit.MINUTES).toFloat()
-		if (timeOfLessonPassed > 0) {
-			Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding) / 2))
-			val lessonDuration = startTime.until(endTime, ChronoUnit.MINUTES)
-			LinearProgressIndicator(
-				progress = (timeOfLessonPassed / lessonDuration),
-				modifier = Modifier
-					.fillMaxWidth()
-					.height(dimensionResource(R.dimen.list_item_padding) / 1.4f)
-			)
+		
+		val timeOfLessonPassed = remember(LocalTime.now(), startTime) {
+			startTime?.until(LocalTime.now(), ChronoUnit.MINUTES)?.toFloat()
 		}
+		val lessonDuration = remember(endTime, startTime) {
+			startTime?.until(endTime, ChronoUnit.MINUTES)?.toFloat()
+		}
+		val progress = remember(timeOfLessonPassed, lessonDuration) {
+			if (timeOfLessonPassed != null && lessonDuration != null && timeOfLessonPassed > 0) {
+				(timeOfLessonPassed / lessonDuration)
+			} else {
+				0F
+			}
+		}
+		Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding) / 2))
+		LinearProgressIndicator(
+			progress = progress,
+			modifier = Modifier
+				.fillMaxWidth()
+				.height(dimensionResource(R.dimen.list_item_padding) / 1.4f)
+		)
 	}
+	
 }
 
 @Composable
 private fun LessonBrief(
 	subjectEntity: SubjectEntity,
-	startTime: LocalTime,
-	endTime: LocalTime,
+	startTime: LocalTime?,
+	endTime: LocalTime?,
 ) {
 	Column(
 		modifier = Modifier.padding(
@@ -622,7 +663,11 @@ private fun LessonBrief(
 			verticalAlignment = Alignment.CenterVertically
 		) {
 			Row {
-				val text = fromLocalTime(startTime) + " - " + fromLocalTime(endTime)
+				val text = if (startTime != null && endTime != null) {
+					fromLocalTime(startTime) + " - " + fromLocalTime(endTime)
+				} else {
+					stringResource(R.string.no_pattern_stroke)
+				}
 				Text(
 					text = text,
 					style = MaterialTheme.typography.bodyMedium
@@ -664,7 +709,7 @@ private fun LessonShort(
 		val timingText = if (startTime != null && endTime != null) {
 			fromLocalTime(startTime) + " - " + fromLocalTime(endTime)
 		} else {
-			"No pattern stroke"
+			stringResource(R.string.no_pattern_stroke)
 		}
 		Text(
 			text = timingText,

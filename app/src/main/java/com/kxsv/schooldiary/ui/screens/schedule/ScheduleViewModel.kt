@@ -25,6 +25,7 @@ import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.ui.screens.patterns.PatternSelectionResult
 import com.kxsv.schooldiary.util.ListExtensionFunctions.copyExclusively
+import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
 import com.kxsv.schooldiary.util.Utils.timestampToLocalDate
 import com.kxsv.schooldiary.util.Utils.toList
@@ -54,7 +55,7 @@ data class DayScheduleUiState(
 	val fetchedClasses: Map<Int, LessonWithSubject>? = null,
 	val currentTimings: List<PatternStrokeEntity> = emptyList(),
 	val classDetailed: LessonWithSubject? = null,
-	val selectedDate: LocalDate = LocalDate.now(), // unique for DayScheduleScreen
+	val selectedDate: LocalDate = Utils.currentDate, // unique for DayScheduleScreen
 	val selectedRefCalendarDay: CalendarDay? = null, // unique for DayScheduleCopyScreen
 	val refRange: ClosedRange<LocalDate>? = null,
 	val destRange: ClosedRange<LocalDate>? = null,
@@ -85,7 +86,7 @@ class ScheduleViewModel @Inject constructor(
 	private var scheduleRetrieveJob: Job? = null
 	
 	init {
-		onDayChangeUpdate(date = timestampToLocalDate(dateStamp) ?: LocalDate.now())
+		onDayChangeUpdate(date = timestampToLocalDate(dateStamp) ?: Utils.currentDate)
 	}
 	
 	fun snackbarMessageShown() {
@@ -465,7 +466,7 @@ class ScheduleViewModel @Inject constructor(
 	
 	/**
 	 * Copies remote lessons from [selected reference day][com.kxsv.schooldiary.ui.screens.schedule.DayScheduleUiState.selectedRefCalendarDay] which are cached in [classes][com.kxsv.schooldiary.ui.screens.schedule.DayScheduleUiState.classes]
-	 * because of lessons preview in [DayScheduleCopyScreen] to [current day][com.kxsv.schooldiary.ui.screens.schedule.DayScheduleUiState.selectedDate].
+	 * to show lessons preview in [DayScheduleCopyScreen] for [current day][com.kxsv.schooldiary.ui.screens.schedule.DayScheduleUiState.selectedDate].
 	 * Does not make network calls, so time efficient.
 	 *
 	 * @param shouldCopyPattern determines whether the method will copy applied pattern id from

@@ -5,6 +5,7 @@ import com.kxsv.schooldiary.data.local.features.lesson.LessonEntity
 import com.kxsv.schooldiary.data.local.features.lesson.LessonWithSubject
 import com.kxsv.schooldiary.data.local.features.study_day.StudyDayDao
 import com.kxsv.schooldiary.data.local.features.subject.SubjectDao
+import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.remote.lesson.LessonDto
 import com.kxsv.schooldiary.data.repository.StudyDayRepository
 import com.kxsv.schooldiary.data.repository.SubjectRepository
@@ -58,6 +59,25 @@ suspend fun List<LessonDto>.toLessonEntities(
 	} catch (e: RuntimeException) {
 		Log.e(TAG, "List<LessonDto>.toGradeEntities: classes are empty because", e)
 		emptyList()
+	}
+}
+
+suspend fun List<LessonDto>.toSubjectEntitiesIndexed(
+	subjectRepository: SubjectRepository,
+	studyDayRepository: StudyDayRepository,
+): Map<Int, SubjectEntity> {
+	return try {
+		val newMap = mutableMapOf<Int, SubjectEntity>()
+		this.forEach {
+			val localedClass = it.toLocalWithSubject(subjectRepository, studyDayRepository)
+			newMap[it.index] = localedClass.subject
+		}
+		newMap
+	} catch (e: RuntimeException) {
+		Log.e(
+			TAG, "List<LessonDto>.toSubjectEntitiesIndexed: classes are empty because", e
+		)
+		emptyMap()
 	}
 }
 

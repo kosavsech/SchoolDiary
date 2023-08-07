@@ -86,7 +86,7 @@ class LoginViewModel @Inject constructor(
 				processAuthError(authError = e.mapToNetworkError())
 				Log.e(TAG, "onLoginClick: exception on onLoginClick", e)
 			} catch (e: IOException) {
-				Log.e(TAG, "onLoginClick: exception on response parseTerm", e)
+				Log.e(TAG, "onLoginClick: exception on connection execute", e)
 			} catch (e: Exception) {
 				Log.e(TAG, "onLoginClick: exception", e)
 			}

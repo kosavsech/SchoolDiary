@@ -25,7 +25,7 @@ class MainScreenNavActions(
 	fun onScheduleShowMore() {
 		destinationsNavigator.navigate(
 			DayScheduleScreenDestination(
-				datestamp = Utils.localDateToTimestamp(LocalDate.now())
+				datestamp = Utils.localDateToTimestamp(Utils.currentDate)
 			)
 		)
 	}

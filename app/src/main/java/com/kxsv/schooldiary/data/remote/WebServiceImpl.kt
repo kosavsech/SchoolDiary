@@ -30,6 +30,7 @@ class WebServiceImpl @Inject constructor(
 	 * @throws NetworkException.NotLoggedInException
 	 * @throws NetworkException.AccessTemporarilyBlockedException
 	 * @throws NetworkException.BlankInputException
+	 * @throws IOException on error
 	 */
 	override suspend fun eduTatarAuth(login: String, password: String) {
 		Log.i(TAG, "eduTatarAuth() called with login: $login, password: $password")

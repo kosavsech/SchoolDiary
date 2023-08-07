@@ -17,6 +17,8 @@ private const val TAG = "Utils"
 const val ROUND_RULE = 0.6
 
 object Utils {
+	val currentDate = LocalDate.of(2023, 5, 15)
+	
 	fun List<PatternStrokeEntity>.getIndexByTime(currentTime: LocalTime): Int? {
 		val result = this.firstOrNull {
 			currentTime.isAfter(it.startTime) && currentTime.isBefore(it.endTime)

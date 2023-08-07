@@ -74,6 +74,7 @@ import com.kxsv.schooldiary.ui.screens.destinations.DateRangeScheduleCopyScreenD
 import com.kxsv.schooldiary.ui.screens.destinations.DayScheduleCopyScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.PatternSelectionScreenDestination
 import com.kxsv.schooldiary.ui.screens.patterns.PatternSelectionResult
+import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.localDateToTimestamp
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.kxsv.schooldiary.util.ui.displayText
@@ -523,7 +524,7 @@ private fun CalendarLine(
 	changeDate: (LocalDate) -> Unit,
 	selectedDate: LocalDate,
 ) {
-	val currentDate = remember { LocalDate.now() }
+	val currentDate = remember { Utils.currentDate }
 	val startDate = remember { currentDate.minusDays(600) }
 	val endDate = remember { currentDate.plusDays(600) }
 	Column(

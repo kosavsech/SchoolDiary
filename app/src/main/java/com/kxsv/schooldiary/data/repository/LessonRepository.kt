@@ -20,6 +20,11 @@ interface LessonRepository {
 	
 	suspend fun getAll(): List<LessonEntity>
 	
+	suspend fun getDayAndLessonsWithSubjectByDateRange(
+		startRange: LocalDate,
+		endRange: LocalDate,
+	): Map<LocalDate, List<LessonWithSubject>>
+	
 	suspend fun fetchLessonsByDate(localDate: LocalDate): List<LessonDto>
 	
 	suspend fun getAllByMasterId(studyDayId: Long): List<LessonEntity>

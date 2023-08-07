@@ -44,6 +44,13 @@ class LessonRepositoryImpl @Inject constructor(
 		return lessonDataSource.getAll()
 	}
 	
+	override suspend fun getDayAndLessonsWithSubjectByDateRange(
+		startRange: LocalDate,
+		endRange: LocalDate,
+	): Map<LocalDate, List<LessonWithSubject>> {
+		return lessonDataSource.getDayAndLessonsWithSubjectByDateRange(startRange, endRange)
+	}
+	
 	/**
 	 * @throws NetworkException.NotLoggedInException
 	 */

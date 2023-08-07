@@ -14,6 +14,7 @@ import com.kxsv.schooldiary.di.util.IoDispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.screens.navArgs
+import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
 import com.kxsv.schooldiary.util.remote.NetworkException
 import com.kxsv.schooldiary.util.ui.Async
@@ -38,7 +39,7 @@ data class AddEditTaskUiState(
 	val title: String = "",
 	val description: String = "",
 	val subject: SubjectEntity? = null,
-	val dueDate: LocalDate = LocalDate.now().plusDays(1),
+	val dueDate: LocalDate = Utils.currentDate.plusDays(1),
 	val availableSubjects: List<SubjectEntity> = emptyList(),
 	val fetchedVariants: List<TaskDto>? = null,
 	val isLoading: Boolean = false,

@@ -17,6 +17,7 @@ import com.kxsv.schooldiary.data.remote.task.TaskDto
 import com.kxsv.schooldiary.data.remote.task.TaskParser
 import com.kxsv.schooldiary.di.util.ApplicationScope
 import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.toList
 import com.kxsv.schooldiary.util.remote.NetworkException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -77,7 +78,7 @@ class TaskRepositoryImpl @Inject constructor(
 		// todo change to NOW
 		return withContext(ioDispatcher) {
 			withTimeout(15000L) {
-				val startRange = LocalDate.now()
+				val startRange = Utils.currentDate
 				val period = (startRange..startRange.plusDays(7)).toList()
 				val result: MutableList<TaskAndUniqueIdWithSubject> = mutableListOf()
 				period.forEach { date ->

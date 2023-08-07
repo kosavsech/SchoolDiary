@@ -44,6 +44,7 @@ import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditScheduleTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AddEditLessonScreenNavActions
+import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -300,7 +301,7 @@ private fun DatePickerDialog(
 	onDateChanged: (LocalDate) -> Unit,
 	date: LocalDate?,
 ) {
-	val initialDate = date ?: LocalDate.now()
+	val initialDate = date ?: Utils.currentDate
 	
 	MaterialDialog(
 		dialogState = dialogState,
@@ -358,7 +359,7 @@ private fun AddEditScheduleContentPreview() {
 			pickedSubject = SubjectEntity("Русский язык", "210"),
 			classIndex = "",
 //			index = 0,
-			classDate = LocalDate.now(),
+			classDate = Utils.currentDate,
 //			lesson = null,
 			subjects = listOf(
 				SubjectEntity("Русский язык", "210"),

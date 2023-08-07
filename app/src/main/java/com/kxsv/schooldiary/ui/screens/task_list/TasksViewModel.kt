@@ -9,6 +9,7 @@ import com.kxsv.schooldiary.data.repository.TaskRepository
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
+import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.ui.Async
 import com.kxsv.schooldiary.util.ui.TasksDateFilterType
 import com.kxsv.schooldiary.util.ui.TasksDoneFilterType
@@ -64,7 +65,7 @@ class TasksViewModel @Inject constructor(
 	
 	private val _filteredTasksAsync = _dateFilterType
 		.combine(_tasksDoneFilteredFlow) { dateFilterType, tasks ->
-			val today = LocalDate.now()
+			val today = Utils.currentDate
 			when (dateFilterType) {
 				TasksDateFilterType.YESTERDAY -> {
 					tasks.filter {

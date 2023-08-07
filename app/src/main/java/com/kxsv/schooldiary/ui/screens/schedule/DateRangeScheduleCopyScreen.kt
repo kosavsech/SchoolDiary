@@ -58,6 +58,7 @@ import com.kizitonwose.calendar.core.previousMonth
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.CopyScheduleForDayTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.ScheduleNavGraph
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.DateRangeScheduleCopyScreenNavActions
+import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.ui.ContinuousSelectionHelper.getSelection
 import com.kxsv.schooldiary.util.ui.DateSelection
 import com.kxsv.schooldiary.util.ui.backgroundHighlight
@@ -131,7 +132,7 @@ fun DateRangeScheduleCopyScreen(
 				}
 			},
 			isSelectingReference = uiState.refRange == null,
-			selectedDay = LocalDate.now()
+			selectedDay = Utils.currentDate
 		)
 		
 		DateRangeScheduleCopyDialog(
@@ -202,7 +203,7 @@ fun DateRangeScheduleCopyContent(
 	val currentMonth = remember(selectedDay) { YearMonth.from(selectedDay) }
 	val startMonth = remember { currentMonth.minusMonths(24) }
 	val endMonth = remember { currentMonth.plusMonths(24) }
-	val today = remember { LocalDate.now() }
+	val today = remember { Utils.currentDate }
 	val daysOfWeek = remember { daysOfWeek() }
 	var selection by remember { mutableStateOf(DateSelection()) }
 	
