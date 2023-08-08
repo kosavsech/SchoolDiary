@@ -84,7 +84,7 @@ class GradeRepositoryImpl @Inject constructor(
 				val newGradesFound: MutableList<GradeWithSubject> = mutableListOf()
 				// todo change to NOW
 				val startRange = Utils.currentDate
-				val period = (startRange..startRange.plusDays(14)).toList()
+				val period = (startRange.minusDays(14)..startRange).toList()
 				period.forEach { date ->
 					if (date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
 					async {

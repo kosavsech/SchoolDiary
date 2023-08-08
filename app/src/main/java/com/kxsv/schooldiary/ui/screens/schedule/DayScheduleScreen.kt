@@ -97,7 +97,6 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
-
 data class DayScheduleScreenNavArgs(
 	val datestamp: Long?,
 	val showComparison: Boolean?,
