@@ -97,6 +97,7 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
+
 data class DayScheduleScreenNavArgs(
 	val datestamp: Long?,
 	val showComparison: Boolean?,
@@ -133,6 +134,7 @@ fun DayScheduleScreen(
 			is NavResult.Canceled -> {}
 			is NavResult.Value -> {
 				viewModel.showEditResultMessage(result.value)
+				viewModel.loadLocalScheduleOnDate(uiState.selectedDate)
 			}
 		}
 	}
@@ -163,16 +165,12 @@ fun DayScheduleScreen(
 	Scaffold(
 		topBar = {
 			ScheduleTopAppBar(
-				onChangePattern = {
-					coroutineScope.launch {
-						navigator.onChangePattern()
-					}
-				},
+				onChangePattern = { navigator.onChangePattern() },
 				onCopyDaySchedule = { navigator.onCopyDaySchedule() },
 				onCopyDateRangeSchedule = { navigator.onCopyDateRangeSchedule() },
 				onFetchSchedule = {
 					coroutineScope.launch {
-						if (!viewModel.isScheduleRemote()) {
+						if (viewModel.isScheduleRemote()) {
 							viewModel.localiseCachedNetClasses()
 						} else {
 							viewModel.fetchSchedule()
@@ -189,7 +187,10 @@ fun DayScheduleScreen(
 				onClick = {
 					coroutineScope.launch {
 						if (viewModel.isScheduleRemote()) viewModel.localiseCachedNetClasses()
-						navigator.onAddEditClass(localDateToTimestamp(uiState.selectedDate)!!, null)
+						navigator.onAddEditClass(
+							datestamp = localDateToTimestamp(uiState.selectedDate)!!,
+							lessonId = null
+						)
 					}
 				}
 			) {
@@ -199,8 +200,20 @@ fun DayScheduleScreen(
 		containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 1f),
 		contentColor = MaterialTheme.colorScheme.onBackground
 	) { paddingValues ->
-		
 		val dialogState: MaterialDialogState = rememberMaterialDialogState()
+		
+		val onRefresh = remember {
+			{ viewModel.onDayChangeUpdate(null) }
+		}
+		val changeDate = remember<(LocalDate) -> Unit> {
+			{ viewModel.onDayChangeUpdate(it) }
+		}
+		val scheduleChoose = remember<(Int) -> Unit> {
+			{ viewModel.scheduleChoose(it) }
+		}
+		val onClassClick = remember<(LessonWithSubject) -> Unit> {
+			{ viewModel.selectClass(it); dialogState.show() }
+		}
 		DayScheduleContent(
 			modifier = Modifier.padding(paddingValues),
 			loading = uiState.isLoading,
@@ -208,21 +221,33 @@ fun DayScheduleScreen(
 			fetchedClasses = uiState.fetchedClasses,
 			selectedDate = uiState.selectedDate,
 			currentPattern = uiState.currentTimings,
-			onRefresh = { viewModel.onDayChangeUpdate(uiState.selectedDate) },
-			changeDate = { viewModel.onDayChangeUpdate(it) },
-			scheduleChoose = { viewModel.scheduleChoose(it) },
-			onClassClick = { viewModel.selectClass(it); dialogState.show() }
+			onRefresh = onRefresh,
+			changeDate = changeDate,
+			scheduleChoose = scheduleChoose,
+			onClassClick = onClassClick
 		)
 		
+		val onDeleteClass = remember<(LessonWithSubject) -> Unit> {
+			{ viewModel.deleteClass(it) }
+		}
+		val onEditClass = remember<(Long) -> Unit> {
+			{ lessonId -> navigator.onAddEditClass(0, lessonId) }
+		}
+		val unselectClass = remember {
+			{ viewModel.unselectClass() }
+		}
+		val getIdForClassFromNet = remember<suspend () -> Long?> {
+			{ viewModel.getIdForClassFromNet() }
+		}
 		LessonDialog(
+			dialogState = dialogState,
 			classDetailed = uiState.classDetailed,
 			selectedDate = uiState.selectedDate,
 			currentPattern = uiState.currentTimings,
-			onDeleteClass = { viewModel.deleteClass(it) },
-			onEditClass = { datestamp, lessonId -> navigator.onAddEditClass(datestamp, lessonId) },
-			unselectClass = { viewModel.unselectClass() },
-			getIdForClassFromNet = { viewModel.getIdForClassFromNet() },
-			dialogState = dialogState
+			onDeleteClass = onDeleteClass,
+			onEditClass = onEditClass,
+			unselectClass = unselectClass,
+			getIdForClassFromNet = getIdForClassFromNet
 		)
 		
 		uiState.userMessage?.let { userMessage ->
@@ -242,14 +267,14 @@ fun DayScheduleScreen(
 
 @Composable
 private fun LessonDialog(
+	dialogState: MaterialDialogState,
 	classDetailed: LessonWithSubject?,
 	selectedDate: LocalDate,
 	currentPattern: List<PatternStrokeEntity>,
 	onDeleteClass: (LessonWithSubject) -> Unit,
-	onEditClass: (Long, Long?) -> Unit,
+	onEditClass: (Long) -> Unit,
 	unselectClass: () -> Unit,
-	getIdForClassFromNet: suspend () -> Long,
-	dialogState: MaterialDialogState,
+	getIdForClassFromNet: suspend () -> Long?,
 ) {
 	if (classDetailed != null) {
 		MaterialDialog(
@@ -296,9 +321,10 @@ private fun LessonDialog(
 						onClick = {
 							coroutineScope.launch {
 								if (classDetailed.lesson.lessonId == 0L) {
-									onEditClass(0, getIdForClassFromNet())
+									val lessonId = getIdForClassFromNet()
+									if (lessonId != null) onEditClass(lessonId)
 								} else {
-									onEditClass(0, classDetailed.lesson.lessonId)
+									onEditClass(classDetailed.lesson.lessonId)
 								}
 								
 								dialogState.hide()
@@ -780,6 +806,7 @@ private fun DayScheduleContentPreview() {
 private fun LessonDialogPreview() {
 	Surface {
 		LessonDialog(
+			dialogState = rememberMaterialDialogState(true),
 			classDetailed = LessonWithSubject(
 				subject = SubjectEntity(fullName = "Английский язык", cabinet = "316"),
 				lesson = LessonEntity(index = 0)
@@ -787,10 +814,8 @@ private fun LessonDialogPreview() {
 			selectedDate = LocalDate.now(),
 			currentPattern = previewCurrentPattern,
 			onDeleteClass = {},
-			onEditClass = { _, _ -> },
-			unselectClass = {},
-			getIdForClassFromNet = { 0 },
-			dialogState = rememberMaterialDialogState(true)
-		)
+			onEditClass = {},
+			unselectClass = {}
+		) { 0 }
 	}
 }

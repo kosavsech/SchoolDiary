@@ -82,17 +82,13 @@ class AddEditLessonViewModel @Inject constructor(
 	
 	fun updateDate(date: LocalDate) {
 		_uiState.update {
-			it.copy(
-				classDate = date
-			)
+			it.copy(classDate = date)
 		}
 	}
 	
 	fun updateIndex(index: String) {
 		_uiState.update {
-			it.copy(
-				classIndex = index
-			)
+			it.copy(classIndex = index)
 		}
 	}
 	
