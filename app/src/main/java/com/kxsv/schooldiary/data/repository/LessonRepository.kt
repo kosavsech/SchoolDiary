@@ -14,7 +14,7 @@ interface LessonRepository {
 	
 	fun observeById(lessonId: Long): Flow<LessonEntity>
 	
-	fun observeDayAndLessonsWithSubjectByDateRange(
+	fun observeAllWithSubjectForDateRange(
 		startRange: LocalDate,
 		endRange: LocalDate,
 	): Flow<Map<LocalDate, List<LessonWithSubject>>>

@@ -48,11 +48,11 @@ class LessonRepositoryImpl @Inject constructor(
 		return lessonDataSource.observeById(lessonId)
 	}
 	
-	override fun observeDayAndLessonsWithSubjectByDateRange(
+	override fun observeAllWithSubjectForDateRange(
 		startRange: LocalDate,
 		endRange: LocalDate,
 	): Flow<Map<LocalDate, List<LessonWithSubject>>> {
-		return lessonDataSource.observeDayAndLessonsWithSubjectByDateRange(startRange, endRange)
+		return lessonDataSource.observeAllWithSubjectForDateRange(startRange, endRange)
 	}
 	
 	override suspend fun getAll(): List<LessonEntity> {

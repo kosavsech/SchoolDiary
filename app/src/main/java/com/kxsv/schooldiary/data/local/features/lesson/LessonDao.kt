@@ -25,7 +25,7 @@ interface LessonDao {
 				"WHERE $STUDY_DAY_TABLE_NAME.date >= :startRange AND $STUDY_DAY_TABLE_NAME.date <= :endRange " +
 				"ORDER BY $STUDY_DAY_TABLE_NAME.date ASC"
 	)
-	fun observeDayAndLessonsWithSubjectByDateRange(
+	fun observeAllWithSubjectForDateRange(
 		startRange: LocalDate,
 		endRange: LocalDate,
 	): Flow<Map<LocalDate, List<LessonWithSubject>>>

@@ -105,8 +105,8 @@ fun MainScreen(
 	) { paddingValues ->
 		val uiState = viewModel.uiState.collectAsState().value
 		
-		val loadNetworkSchedule = remember<() -> Unit> {
-			{ viewModel.retrieveSchedule() }
+		val loadNetworkSchedule = remember {
+			{ }
 		}
 		val onScheduleShowMore = remember {
 			{ navigator.onScheduleShowMore() }
@@ -141,9 +141,9 @@ fun MainScreen(
 
 data class MainScreenItem(
 	val date: LocalDate,
-	val classes: Map<Int, SubjectEntity>,
-	val tasks: List<TaskWithSubject>,
-	val pattern: List<PatternStrokeEntity>,
+	val classes: Map<Int, SubjectEntity> = emptyMap(),
+	val tasks: List<TaskWithSubject> = emptyList(),
+	val pattern: List<PatternStrokeEntity> = emptyList(),
 )
 
 @Composable

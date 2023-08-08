@@ -3,6 +3,7 @@ package com.kxsv.schooldiary.data.repository
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeDao
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -17,6 +18,13 @@ class PatternStrokeRepositoryImpl @Inject constructor(
 	
 	override fun getStrokesStreamByPatternId(patternId: Long): Flow<List<PatternStrokeEntity>> {
 		return localDataSource.observeAllByPatternId(patternId)
+	}
+	
+	override fun observeAllWithStrokesForDateRange(
+		startRange: LocalDate,
+		endRange: LocalDate,
+	): Flow<Map<LocalDate, List<PatternStrokeEntity>>> {
+		return localDataSource.observeAllForDateRange(startRange, endRange)
 	}
 	
 	override fun getStrokeStream(id: Int): Flow<PatternStrokeEntity> {
