@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.Bottom
 import androidx.compose.ui.Modifier
@@ -89,11 +90,15 @@ fun TasksScreen(
 		modifier = Modifier.fillMaxSize(),
 	) { paddingValues ->
 		
+		val onRefresh = remember<() -> Unit> {
+			{ viewModel.refresh() }
+		}
 		TasksContent(
+			modifier = Modifier.padding(paddingValues),
 			isLoading = uiState.isLoading,
 			tasksGroups = uiState.tasks,
 			onTaskClick = { taskId -> navigator.onTaskClick(taskId) },
-			modifier = Modifier.padding(paddingValues)
+			onRefresh = onRefresh
 		)
 		
 		// Check for user messages to display on the screen
@@ -109,10 +114,11 @@ fun TasksScreen(
 
 @Composable
 private fun TasksContent(
+	modifier: Modifier,
 	isLoading: Boolean,
 	tasksGroups: Map<LocalDate, List<TaskWithSubject>>,
 	onTaskClick: (Long) -> Unit,
-	modifier: Modifier,
+	onRefresh: () -> Unit,
 ) {
 	LoadingContent(
 		modifier = modifier,
@@ -120,7 +126,7 @@ private fun TasksContent(
 		empty = tasksGroups.isEmpty(),
 		emptyContent = { Text(text = "No tasks yet") },
 		isContentScrollable = true,
-		onRefresh = { /*TODO*/ }
+		onRefresh = onRefresh
 	) {
 		LazyColumn(
 			contentPadding = PaddingValues(

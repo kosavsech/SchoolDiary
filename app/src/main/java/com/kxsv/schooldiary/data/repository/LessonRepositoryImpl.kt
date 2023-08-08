@@ -1,19 +1,33 @@
 package com.kxsv.schooldiary.data.repository
 
+import android.util.Log
 import com.kxsv.schooldiary.data.local.features.lesson.LessonDao
 import com.kxsv.schooldiary.data.local.features.lesson.LessonEntity
 import com.kxsv.schooldiary.data.local.features.lesson.LessonWithStudyDay
 import com.kxsv.schooldiary.data.local.features.lesson.LessonWithSubject
 import com.kxsv.schooldiary.data.local.features.study_day.StudyDayDao
 import com.kxsv.schooldiary.data.local.features.study_day.StudyDayEntity
+import com.kxsv.schooldiary.data.local.features.subject.SubjectDao
+import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
+import com.kxsv.schooldiary.data.mapper.save
+import com.kxsv.schooldiary.data.mapper.toSubjectEntitiesIndexed
 import com.kxsv.schooldiary.data.remote.WebService
 import com.kxsv.schooldiary.data.remote.lesson.LessonDto
 import com.kxsv.schooldiary.data.remote.lesson.ScheduleParser
+import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.util.Utils
+import com.kxsv.schooldiary.util.Utils.toList
 import com.kxsv.schooldiary.util.remote.NetworkException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import java.time.DayOfWeek
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.collections.set
 
 private const val TAG = "LessonRepositoryImpl"
 
@@ -22,7 +36,8 @@ class LessonRepositoryImpl @Inject constructor(
 	private val lessonDataSource: LessonDao,
 	private val webService: WebService,
 	private val studyDayDataSource: StudyDayDao,
-//	@IoDispatcher private val dispatcher: CoroutineDispatcher,
+	private val subjectDataSource: SubjectDao,
+	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : LessonRepository {
 	
 	override fun observeAll(): Flow<List<LessonEntity>> {
@@ -54,9 +69,103 @@ class LessonRepositoryImpl @Inject constructor(
 	/**
 	 * @throws NetworkException.NotLoggedInException
 	 */
-	override suspend fun fetchLessonsByDate(localDate: LocalDate): List<LessonDto> {
+	override suspend fun fetchLessonsOnDate(localDate: LocalDate): List<LessonDto> {
 		val dayInfo = webService.getDayInfo(localDate)
 		return ScheduleParser().parse(dayInfo, localDate)
+	}
+	
+	override suspend fun fetchSoonSchedule(): Map<LocalDate, Utils.ScheduleCompareResult> {
+		return withContext(ioDispatcher) {
+			withTimeout(15000L) {
+				val startRange = Utils.currentDate
+				val endRange = startRange.plusDays(7)
+				val newSchedules: MutableMap<LocalDate, Utils.ScheduleCompareResult> =
+					mutableMapOf()
+				
+				(startRange..endRange).toList().forEach { date ->
+					if (date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
+					@Suppress("DeferredResultUnused")
+					async {
+						val compareResult = fetchCompareSchedule(date = date)
+						if (compareResult != null) newSchedules[date] = compareResult
+					}
+				}
+				
+				return@withTimeout newSchedules
+			}
+		}
+	}
+	
+	/**
+	 * Fetch schedule on date
+	 *
+	 * @param date
+	 * @return [Utils.ScheduleCompareResult]([isNew][Utils.ScheduleCompareResult.isNew] = [true][Boolean])
+	 * if no local schedule on [date], [ScheduleCompareResult]([isSameAs][com.kxsv.schooldiary.data.repository.LessonRepositoryImpl.ScheduleCompareResult.isSameAs] = [true][Boolean])
+	 * if local schedule is equal to fetched, ([isSameAs][Utils.ScheduleCompareResult.isDifferent] = [false][Boolean]),
+	 * if not
+	 */
+	private suspend fun fetchCompareSchedule(date: LocalDate): Utils.ScheduleCompareResult? {
+		return withContext(ioDispatcher) {
+			val dayInfo = async { webService.getDayInfo(date) }
+			
+			val localSchedule = async {
+				val mappedLocalSchedule = mutableMapOf<Int, SubjectEntity>()
+				lessonDataSource.getAllWithSubjectByDate(date).forEach {
+					mappedLocalSchedule[it.lesson.index] = it.subject
+				}
+				mappedLocalSchedule
+			}
+			val remoteSchedule = async {
+				ScheduleParser()
+					.parse(dayInfo = dayInfo.await(), localDate = date)
+			}
+			
+			if (localSchedule.await().isEmpty()) {
+				Log.d(TAG, "fetchCompareSchedule: new schedule saved for date = $date")
+				remoteSchedule.await().save(lessonDataSource, subjectDataSource, studyDayDataSource)
+				return@withContext Utils.ScheduleCompareResult(isNew = true, isDifferent = false)
+			} else {
+				val local = localSchedule.await()
+				val remoteIndexed = remoteSchedule.await()
+					.toSubjectEntitiesIndexed(subjectDataSource, studyDayDataSource)
+				
+				if (local.isSameAs(remoteIndexed)) {
+					Log.d(TAG, "fetchCompareSchedule: schedule is same for date = $date")
+					return@withContext null
+				} else {
+					Log.d(TAG, "fetchCompareSchedule: schedule is different for date = $date")
+					return@withContext Utils.ScheduleCompareResult(
+						isNew = false,
+						isDifferent = true
+					)
+				}
+				
+			}
+		}
+	}
+	
+	private fun Map<Int, SubjectEntity>.isSameAs(other: Map<Int, SubjectEntity>?): Boolean {
+		if (other === this) return true
+		if (other !is Map<*, *>) return false
+		if (size != other.size) return false
+		
+		return other.entries.all { lessonFromOther ->
+			this.containsLesson(lessonFromOther)
+		}
+	}
+	
+	private fun Map<Int, SubjectEntity>.containsLesson(entry: Map.Entry<Int, SubjectEntity>?): Boolean {
+		if (entry !is Map.Entry<*, *>) return false
+		val key = entry.key
+		val value = entry.value
+		val ourValue = get(key)
+		
+		if (value != ourValue) {
+			return false
+		}
+		
+		return true
 	}
 	
 	override suspend fun getAllByMasterId(studyDayId: Long): List<LessonEntity> {

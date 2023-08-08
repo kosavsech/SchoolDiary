@@ -54,7 +54,7 @@ class TaskSyncWorker @AssistedInject constructor(
 					.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
 				PackageManager.PERMISSION_GRANTED
 			) {
-				Log.d(TAG, "DEBUG $newTaskEntities")
+				Log.d(TAG, "DEBUG newTaskEntities: $newTaskEntities")
 				if (newTaskEntities.isNotEmpty()) {
 					notificationManager.notify(3, createSummaryNotification())
 					newTaskEntities.forEach {

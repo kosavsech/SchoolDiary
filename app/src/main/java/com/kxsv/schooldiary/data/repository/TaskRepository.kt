@@ -5,6 +5,7 @@ import com.kxsv.schooldiary.data.local.features.task.TaskAndUniqueIdWithSubject
 import com.kxsv.schooldiary.data.local.features.task.TaskEntity
 import com.kxsv.schooldiary.data.local.features.task.TaskWithSubject
 import com.kxsv.schooldiary.data.remote.task.TaskDto
+import com.kxsv.schooldiary.util.remote.NetworkException
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
@@ -25,7 +26,11 @@ interface TaskRepository {
 	
 	suspend fun getTasks(): List<TaskEntity>
 	
-	suspend fun fetchSoonTasks(): MutableList<TaskAndUniqueIdWithSubject>
+	/**
+	 * @throws NetworkException.NotLoggedInException
+	 * @return List of new tasks, which were not cached before
+	 */
+	suspend fun fetchSoonTasks(): List<TaskAndUniqueIdWithSubject>
 	
 	suspend fun fetchTaskVariantsByDate(date: LocalDate, subject: SubjectEntity): List<TaskDto>
 	

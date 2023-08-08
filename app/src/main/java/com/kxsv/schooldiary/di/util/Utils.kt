@@ -29,3 +29,11 @@ annotation class TaskNotification
 @Retention(AnnotationRetention.RUNTIME)
 @Qualifier
 annotation class TaskSummaryNotification
+
+@Retention(AnnotationRetention.RUNTIME)
+@Qualifier
+annotation class ScheduleNotification
+
+@Retention(AnnotationRetention.RUNTIME)
+@Qualifier
+annotation class ScheduleSummaryNotification

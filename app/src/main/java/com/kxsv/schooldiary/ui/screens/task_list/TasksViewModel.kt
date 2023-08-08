@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.task.TaskWithSubject
 import com.kxsv.schooldiary.data.repository.TaskRepository
+import com.kxsv.schooldiary.di.util.IoDispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
@@ -15,6 +16,7 @@ import com.kxsv.schooldiary.util.ui.TasksDateFilterType
 import com.kxsv.schooldiary.util.ui.TasksDoneFilterType
 import com.kxsv.schooldiary.util.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -22,8 +24,10 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlin.math.roundToInt
 
 
 data class TasksUiState(
@@ -39,7 +43,8 @@ private const val TAG = "TasksViewModel"
 
 @HiltViewModel
 class TasksViewModel @Inject constructor(
-	taskRepository: TaskRepository,
+	private val taskRepository: TaskRepository,
+	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
 	private val _dateFilterType = MutableStateFlow(TasksDateFilterType.ALL)
@@ -154,6 +159,19 @@ class TasksViewModel @Inject constructor(
 			EDIT_RESULT_OK -> showSnackbarMessage(R.string.successfully_saved_subject_message)
 			ADD_RESULT_OK -> showSnackbarMessage(R.string.successfully_added_subject_message)
 			DELETE_RESULT_OK -> showSnackbarMessage(R.string.successfully_deleted_subject_message)
+		}
+	}
+	
+	fun refresh() = viewModelScope.launch(ioDispatcher) {
+		Utils.measurePerformanceInMS(
+			logger = { time, _ ->
+				Log.i(
+					"SyncWorker", "refresh: new performance is" +
+							" ${(time / 10f).roundToInt() / 100f} S"
+				)
+			}
+		) {
+			taskRepository.fetchSoonTasks()
 		}
 	}
 	

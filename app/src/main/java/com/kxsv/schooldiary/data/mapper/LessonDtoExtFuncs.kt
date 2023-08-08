@@ -1,9 +1,11 @@
 package com.kxsv.schooldiary.data.mapper
 
 import android.util.Log
+import com.kxsv.schooldiary.data.local.features.lesson.LessonDao
 import com.kxsv.schooldiary.data.local.features.lesson.LessonEntity
 import com.kxsv.schooldiary.data.local.features.lesson.LessonWithSubject
 import com.kxsv.schooldiary.data.local.features.study_day.StudyDayDao
+import com.kxsv.schooldiary.data.local.features.study_day.StudyDayEntity
 import com.kxsv.schooldiary.data.local.features.subject.SubjectDao
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.remote.lesson.LessonDto
@@ -70,6 +72,25 @@ suspend fun List<LessonDto>.toSubjectEntitiesIndexed(
 		val newMap = mutableMapOf<Int, SubjectEntity>()
 		this.forEach {
 			val localedClass = it.toLocalWithSubject(subjectRepository, studyDayRepository)
+			newMap[it.index] = localedClass.subject
+		}
+		newMap
+	} catch (e: RuntimeException) {
+		Log.e(
+			TAG, "List<LessonDto>.toSubjectEntitiesIndexed: classes are empty because", e
+		)
+		emptyMap()
+	}
+}
+
+suspend fun List<LessonDto>.toSubjectEntitiesIndexed(
+	subjectDataSource: SubjectDao,
+	studyDayDataSource: StudyDayDao,
+): Map<Int, SubjectEntity> {
+	return try {
+		val newMap = mutableMapOf<Int, SubjectEntity>()
+		this.forEach {
+			val localedClass = it.toLocalWithSubject(subjectDataSource, studyDayDataSource)
 			newMap[it.index] = localedClass.subject
 		}
 		newMap
@@ -164,6 +185,72 @@ suspend fun List<LessonDto>.toLocalWithSubject(
 		val newMap = mutableMapOf<Int, LessonWithSubject>()
 		this.forEach {
 			val localedClass = it.toLocalWithSubject(subjectDataSource, studyDayDataSource)
+			newMap[it.index] = localedClass
+		}
+		newMap
+	} catch (e: RuntimeException) {
+		Log.e(
+			TAG, "List<LessonDto>.toLocalWithSubject: classes are empty because", e
+		)
+		emptyMap()
+	}
+}
+
+suspend fun LessonDto.saveAsLocalWithSubject(
+	lessonsDataSource: LessonDao,
+	subjectDataSource: SubjectDao,
+	studyDayDataSource: StudyDayDao,
+): LessonWithSubject {
+	try {
+		val existedSubject = subjectDataSource.getByName(subjectAncestorName)
+		
+		val subject = if (existedSubject != null) {
+			existedSubject
+		} else {
+			val subject = SubjectEntity(fullName = subjectAncestorName)
+			val subjectId = subjectDataSource.upsert(subject)
+			
+			subject.copy(subjectId = subjectId)
+		}
+		
+		val studyDay = studyDayDataSource.getByDate(date)
+		val localizedClass = LessonWithSubject(
+			lesson = LessonEntity(
+				index = index,
+				subjectAncestorId = subject.subjectId,
+			),
+			subject = subject,
+		)
+		
+		val studyDayId =
+			studyDay?.studyDayId ?: studyDayDataSource.upsert(StudyDayEntity(date = date))
+		val finalLocalizedClass =
+			localizedClass.copy(lesson = localizedClass.lesson.copy(studyDayMasterId = studyDayId))
+		
+		lessonsDataSource.upsert(finalLocalizedClass.lesson)
+		return finalLocalizedClass
+	} catch (e: Exception) {
+		throw RuntimeException("Failed to saveAsLocalWithSubject due to", e)
+	}
+}
+
+/**
+ * Caches given [LessonsDtos][this] to room db
+ *
+ * @param subjectDataSource
+ * @param studyDayDataSource
+ * @return
+ */
+suspend fun List<LessonDto>.save(
+	lessonsDataSource: LessonDao,
+	subjectDataSource: SubjectDao,
+	studyDayDataSource: StudyDayDao,
+): Map<Int, LessonWithSubject> {
+	return try {
+		val newMap = mutableMapOf<Int, LessonWithSubject>()
+		this.forEach {
+			val localedClass =
+				it.saveAsLocalWithSubject(lessonsDataSource, subjectDataSource, studyDayDataSource)
 			newMap[it.index] = localedClass
 		}
 		newMap

@@ -78,8 +78,8 @@ class MainScreenViewModel @Inject constructor(
 	
 	private val _uiState = MutableStateFlow(MainUiState())
 	val uiState = combine(
-		_uiState, _tasks
-	) { state, tasks ->
+		_uiState, _tasks, /*_classes*/
+	) { state, tasks /*classes*/ ->
 		val itemList = mutableListOf<MainScreenItem>()
 		(startRange..endRange).toList().forEach { itemDate ->
 			val itemWithTasks = state.itemList.find { it.date == itemDate }?.let {
@@ -202,7 +202,7 @@ class MainScreenViewModel @Inject constructor(
 				)
 			}) {
 				withTimeout(15000L) {
-					lessonRepository.fetchLessonsByDate(date)
+					lessonRepository.fetchLessonsOnDate(date)
 						.toSubjectEntitiesIndexed(
 							subjectRepository = subjectRepository,
 							studyDayRepository = studyDayRepository

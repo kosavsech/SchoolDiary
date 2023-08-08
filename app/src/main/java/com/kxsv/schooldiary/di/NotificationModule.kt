@@ -11,9 +11,13 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.di.util.GradeNotification
 import com.kxsv.schooldiary.di.util.GradeSummaryNotification
 import com.kxsv.schooldiary.di.util.NotificationsConstants.FETCHED_GRADES_GROUP_ID
+import com.kxsv.schooldiary.di.util.NotificationsConstants.FETCHED_SCHEDULE_GROUP_ID
 import com.kxsv.schooldiary.di.util.NotificationsConstants.FETCHED_TASKS_GROUP_ID
 import com.kxsv.schooldiary.di.util.NotificationsConstants.GRADE_CHANNEL_ID
+import com.kxsv.schooldiary.di.util.NotificationsConstants.SCHEDULE_CHANNEL_ID
 import com.kxsv.schooldiary.di.util.NotificationsConstants.TASK_CHANNEL_ID
+import com.kxsv.schooldiary.di.util.ScheduleNotification
+import com.kxsv.schooldiary.di.util.ScheduleSummaryNotification
 import com.kxsv.schooldiary.di.util.TaskNotification
 import com.kxsv.schooldiary.di.util.TaskSummaryNotification
 import com.kxsv.schooldiary.ui.main.MainActivity
@@ -151,6 +155,37 @@ object NotificationModule {
 					.setSummaryText("New tasks were fetched")
 			)
 			.setGroup(FETCHED_TASKS_GROUP_ID)
+			.setGroupSummary(true)
+	}
+	
+	@Singleton
+	@Provides
+	@ScheduleNotification
+	fun provideScheduleNotificationBuilder(
+		@ApplicationContext context: Context,
+	): Notification.Builder {
+		return Notification.Builder(context, SCHEDULE_CHANNEL_ID)
+			.setSmallIcon(R.mipmap.ic_launcher)
+			.setVisibility(Notification.VISIBILITY_PUBLIC)
+			.setAutoCancel(true)
+			.setGroup(FETCHED_SCHEDULE_GROUP_ID)
+	}
+	
+	@Singleton
+	@Provides
+	@ScheduleSummaryNotification
+	fun provideScheduleSummaryNotificationBuilder(
+		@ApplicationContext context: Context,
+	): Notification.Builder {
+		return Notification.Builder(context, SCHEDULE_CHANNEL_ID)
+			.setSmallIcon(R.mipmap.ic_launcher)
+			.setVisibility(Notification.VISIBILITY_PUBLIC)
+			.setAutoCancel(false)
+			.setStyle(
+				Notification.InboxStyle()
+					.setSummaryText("New schedules were fetched")
+			)
+			.setGroup(FETCHED_SCHEDULE_GROUP_ID)
 			.setGroupSummary(true)
 	}
 	

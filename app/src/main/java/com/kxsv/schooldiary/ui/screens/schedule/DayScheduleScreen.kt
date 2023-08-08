@@ -1,5 +1,6 @@
 package com.kxsv.schooldiary.ui.screens.schedule
 
+import android.content.Intent
 import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -73,12 +74,15 @@ import com.kxsv.schooldiary.ui.screens.destinations.AddEditLessonScreenDestinati
 import com.kxsv.schooldiary.ui.screens.destinations.DateRangeScheduleCopyScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.DayScheduleCopyScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.PatternSelectionScreenDestination
+import com.kxsv.schooldiary.ui.screens.grade_list.MY_URI
 import com.kxsv.schooldiary.ui.screens.patterns.PatternSelectionResult
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.localDateToTimestamp
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.kxsv.schooldiary.util.ui.displayText
+import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.FULL_ROUTE_PLACEHOLDER
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.result.NavResult
 import com.ramcosta.composedestinations.result.ResultRecipient
@@ -95,12 +99,21 @@ import java.time.format.FormatStyle
 
 data class DayScheduleScreenNavArgs(
 	val datestamp: Long?,
+	val showComparison: Boolean?,
 )
 
 private const val TAG = "DayScheduleScreen"
 
 @ScheduleNavGraph(start = true)
-@Destination(navArgsDelegate = DayScheduleScreenNavArgs::class)
+@Destination(
+	navArgsDelegate = DayScheduleScreenNavArgs::class,
+	deepLinks = [
+		DeepLink(
+			action = Intent.ACTION_VIEW,
+			uriPattern = "$MY_URI/$FULL_ROUTE_PLACEHOLDER"
+		)
+	]
+)
 @Composable
 fun DayScheduleScreen(
 	lessonAddEditResult: ResultRecipient<AddEditLessonScreenDestination, Int>,
@@ -157,7 +170,15 @@ fun DayScheduleScreen(
 				},
 				onCopyDaySchedule = { navigator.onCopyDaySchedule() },
 				onCopyDateRangeSchedule = { navigator.onCopyDateRangeSchedule() },
-				onFetchSchedule = { viewModel.fetchSchedule() },
+				onFetchSchedule = {
+					coroutineScope.launch {
+						if (!viewModel.isScheduleRemote()) {
+							viewModel.localiseCachedNetClasses()
+						} else {
+							viewModel.fetchSchedule()
+						}
+					}
+				},
 				openDrawer = { coroutineScope.launch { drawerState.open() } }
 			)
 		},

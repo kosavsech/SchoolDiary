@@ -310,4 +310,9 @@ object Utils {
 			)
 		}
 	}
+	
+	data class ScheduleCompareResult(
+		val isNew: Boolean,
+		val isDifferent: Boolean,
+	)
 }

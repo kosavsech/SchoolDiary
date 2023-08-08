@@ -78,15 +78,18 @@ class ScheduleViewModel @Inject constructor(
 	
 	private val navArgs: DayScheduleScreenNavArgs = savedStateHandle.navArgs()
 	private val dateStamp: Long? = navArgs.datestamp
+	private val showComparison: Boolean? = navArgs.showComparison
 	
 	// todo observe current classes as flow
 	private val _uiState = MutableStateFlow(DayScheduleUiState())
 	val uiState: StateFlow<DayScheduleUiState> = _uiState.asStateFlow()
 	
 	private var scheduleRetrieveJob: Job? = null
+	private var scheduleFetchJob: Job? = null
 	
 	init {
 		onDayChangeUpdate(date = timestampToLocalDate(dateStamp) ?: Utils.currentDate)
+		if (showComparison == true) fetchSchedule()
 	}
 	
 	fun snackbarMessageShown() {
@@ -447,7 +450,7 @@ class ScheduleViewModel @Inject constructor(
 				"copyNetSchedule: uiState.value.classes = ${uiState.value.classes}"
 			)
 			val localizedNetClasses =
-				lessonRepository.fetchLessonsByDate(fromDate)
+				lessonRepository.fetchLessonsOnDate(fromDate)
 					.toLessonEntities(cloneDayId, subjectRepository, studyDayRepository)
 			
 			lessonRepository.upsertAll(localizedNetClasses)
@@ -537,7 +540,7 @@ class ScheduleViewModel @Inject constructor(
 				)
 			}) {
 				withTimeout(10000L) {
-					lessonRepository.fetchLessonsByDate(date)
+					lessonRepository.fetchLessonsOnDate(date)
 						.toLocalWithSubject(subjectRepository, studyDayRepository)
 				}
 			}
@@ -604,8 +607,7 @@ class ScheduleViewModel @Inject constructor(
 			try {
 				val studyDay = getCurrentStudyDayForced()
 				
-				val classes =
-					if (isFetched) uiState.value.fetchedClasses else uiState.value.classes
+				val classes = if (isFetched) uiState.value.fetchedClasses else uiState.value.classes
 				if (classes.isNullOrEmpty()) throw IllegalArgumentException("Shouldn't be called with empty classes")
 				
 				lessonRepository.deleteAllByDayId(studyDay.studyDayId)
@@ -661,28 +663,24 @@ class ScheduleViewModel @Inject constructor(
 	 */
 	fun fetchSchedule() {
 		_uiState.update { it.copy(isLoading = true) }
-		scheduleRetrieveJob?.cancel()
-		scheduleRetrieveJob = viewModelScope.launch(ioDispatcher) {
+		scheduleFetchJob?.cancel()
+		scheduleFetchJob = viewModelScope.launch(ioDispatcher) {
 			try {
-				if (isScheduleRemote()) {
-					localiseCachedNetClasses()
+				val fetchedClasses = measurePerformanceInMS(logger = { time, result ->
+					Log.i(
+						TAG, "fetchSchedule: getDayInfo() performance is $time ms" +
+								"\nreturned: classes $result"
+					)
+				}) {
+					withTimeout(10000L) {
+						lessonRepository.fetchLessonsOnDate(uiState.value.selectedDate)
+							.toLocalWithSubject(subjectRepository, studyDayRepository)
+					}
+				}
+				if (fetchedClasses.isNotEmpty()) {
+					_uiState.update { it.copy(fetchedClasses = fetchedClasses) }
 				} else {
-					val fetchedClasses = measurePerformanceInMS(logger = { time, result ->
-						Log.i(
-							TAG, "fetchSchedule: getDayInfo() performance is $time ms" +
-									"\nreturned: classes $result"
-						)
-					}) {
-						withTimeout(10000L) {
-							lessonRepository.fetchLessonsByDate(uiState.value.selectedDate)
-								.toLocalWithSubject(subjectRepository, studyDayRepository)
-						}
-					}
-					if (fetchedClasses.isNotEmpty()) {
-						_uiState.update { it.copy(fetchedClasses = fetchedClasses) }
-					} else {
-						showSnackbarMessage(R.string.absent_net_schedule)
-					}
+					showSnackbarMessage(R.string.absent_net_schedule)
 				}
 			} catch (e: NetworkException) {
 				Log.e(TAG, "fetchSchedule: exception on login", e)
@@ -717,11 +715,11 @@ class ScheduleViewModel @Inject constructor(
 						it.copy(classes = mappedClasses, isLoading = false)
 					}
 				} else {
-					Log.i(TAG, "retrieveSchedule: loaded studyDay, searching for lesson in Net")
+					Log.i(TAG, "retrieveSchedule: loaded studyDay. But searching for lesson in Net")
 					initializeNetworkScheduleOnDate(date)
 				}
 			} else {
-				Log.i(TAG, "retrieveSchedule: studyDay is NULL, searching for lesson in Net")
+				Log.i(TAG, "retrieveSchedule: NULL studyDay. Searching for lesson in Net")
 				initializeNetworkScheduleOnDate(date)
 			}
 			updateTimingsOnStudyDay(dayWithClasses?.studyDay)

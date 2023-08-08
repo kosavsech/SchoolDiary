@@ -1,7 +1,6 @@
 package com.kxsv.schooldiary.data.local.features.lesson
 
 import androidx.room.*
-import com.kxsv.schooldiary.data.local.features.DatabaseConstants
 import com.kxsv.schooldiary.data.local.features.DatabaseConstants.LESSON_TABLE_NAME
 import com.kxsv.schooldiary.data.local.features.DatabaseConstants.STUDY_DAY_TABLE_NAME
 import kotlinx.coroutines.flow.Flow
@@ -59,8 +58,14 @@ interface LessonDao {
 	): Map<LocalDate, List<LessonWithSubject>>
 	
 	@Transaction
-	@Query("SELECT * FROM ${DatabaseConstants.LESSON_TABLE_NAME} WHERE studyDayMasterId = :studyDayId ORDER BY `index` ASC")
-	suspend fun getAllWithSubjectByDate(studyDayId: Long): List<LessonWithSubject>
+	@RewriteQueriesToDropUnusedColumns
+	@Query(
+		"SELECT * FROM $LESSON_TABLE_NAME " +
+				"JOIN $STUDY_DAY_TABLE_NAME ON $STUDY_DAY_TABLE_NAME.studyDayId = $LESSON_TABLE_NAME.studyDayMasterId " +
+				"WHERE $STUDY_DAY_TABLE_NAME.date == :date " +
+				"ORDER BY `index`"
+	)
+	suspend fun getAllWithSubjectByDate(date: LocalDate): List<LessonWithSubject>
 	
 	@Query("SELECT * FROM $LESSON_TABLE_NAME WHERE lessonId = :scheduleId")
 	suspend fun getById(scheduleId: Long): LessonEntity?

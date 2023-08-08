@@ -54,12 +54,12 @@ class GradeSyncWorker @AssistedInject constructor(
 					.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
 				PackageManager.PERMISSION_GRANTED
 			) {
-				Log.d(TAG, "DEBUG $newGradeEntities")
+				Log.d(TAG, "DEBUG newGradeEntities: $newGradeEntities")
 				if (newGradeEntities.isNotEmpty()) {
-					notificationManager.notify(2, createSummaryNotification())
+					notificationManager.notify(1, createSummaryNotification())
 					newGradeEntities.forEach {
 						notificationManager.notify(
-							it.grade.gradeId, 1, createNotification(gradeEntity = it)
+							it.grade.gradeId, 2, createNotification(gradeEntity = it)
 						)
 					}
 				}
