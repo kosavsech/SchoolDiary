@@ -8,10 +8,6 @@ interface UserPreferencesRepository {
 	
 	fun observePatternId(): Flow<Long>
 	
-	fun observeScheduleRefRangeStartId(): Flow<Long>
-	
-	fun observeScheduleRefRangeEndId(): Flow<Long>
-	
 	fun observeEduLogin(): Flow<String?>
 	
 	fun observeEduPassword(): Flow<String?>
@@ -27,14 +23,6 @@ interface UserPreferencesRepository {
 	suspend fun getPatternId(): Long
 	
 	suspend fun setPatternId(id: Long)
-	
-	suspend fun getScheduleRefRangeStartId(): Long
-	
-	suspend fun setScheduleRefRangeStartId(id: Long)
-	
-	suspend fun getScheduleRefRangeEndId(): Long
-	
-	suspend fun setScheduleRefRangeEndId(id: Long)
 	
 	suspend fun getEduLogin(): String?
 	

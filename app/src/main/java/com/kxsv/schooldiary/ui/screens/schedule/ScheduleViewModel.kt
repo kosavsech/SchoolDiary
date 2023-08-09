@@ -322,7 +322,7 @@ class ScheduleViewModel @Inject constructor(
 	}
 	
 	fun onDayChangeUpdate(date: LocalDate?) {
-		_uiState.update { it.copy(isLoading = true, classes = emptyMap()) }
+		_uiState.update { it.copy(isLoading = true, classes = emptyMap(), fetchedClasses = null) }
 		if (date != null) _uiState.update { it.copy(selectedDate = date) }
 		retrieveScheduleOnDate(date = uiState.value.selectedDate)
 	}

@@ -12,6 +12,7 @@ import androidx.compose.material.icons.rounded.ManageHistory
 import androidx.compose.material.icons.rounded.PermContactCalendar
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.School
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Summarize
 import androidx.compose.material.icons.rounded.Task
 import androidx.compose.material3.Divider
@@ -39,6 +40,7 @@ import com.kxsv.schooldiary.ui.screens.destinations.EduPerformanceScreenDestinat
 import com.kxsv.schooldiary.ui.screens.destinations.GradesScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.MainScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.PatternsScreenDestination
+import com.kxsv.schooldiary.ui.screens.destinations.SettingsScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.SubjectsScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.TasksScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.TeachersScreenDestination
@@ -63,7 +65,9 @@ enum class NavigationDrawerDestination(
 	TimePatterns(PatternsScreenDestination, Icons.Rounded.ManageHistory, R.string.patterns_list),
 	Spacer2,
 	Subjects(SubjectsScreenDestination, Icons.Rounded.School, R.string.subjects_title),
-	Teachers(TeachersScreenDestination, Icons.Rounded.PermContactCalendar, R.string.teachers_title)
+	Teachers(TeachersScreenDestination, Icons.Rounded.PermContactCalendar, R.string.teachers_title),
+	Spacer3,
+	Settings(SettingsScreenDestination, Icons.Rounded.Settings, R.string.settings_title)
 }
 
 @Composable

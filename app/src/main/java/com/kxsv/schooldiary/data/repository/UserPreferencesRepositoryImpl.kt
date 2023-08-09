@@ -25,18 +25,6 @@ class UserPreferencesRepositoryImpl @Inject constructor(
 		}
 	}
 	
-	override fun observeScheduleRefRangeStartId(): Flow<Long> {
-		return dataStore.data.map {
-			it.scheduleRefRangeStartId
-		}
-	}
-	
-	override fun observeScheduleRefRangeEndId(): Flow<Long> {
-		return dataStore.data.map {
-			it.scheduleRefRangeEndId
-		}
-	}
-	
 	override fun observeEduLogin(): Flow<String?> {
 		return dataStore.data.map {
 			it.eduLogin
@@ -78,26 +66,6 @@ class UserPreferencesRepositoryImpl @Inject constructor(
 	override suspend fun setPatternId(id: Long) {
 		dataStore.updateData {
 			it.copy(defaultPatternId = id)
-		}
-	}
-	
-	override suspend fun getScheduleRefRangeStartId(): Long {
-		return dataStore.data.first().scheduleRefRangeStartId
-	}
-	
-	override suspend fun setScheduleRefRangeStartId(id: Long) {
-		dataStore.updateData {
-			it.copy(scheduleRefRangeStartId = id)
-		}
-	}
-	
-	override suspend fun getScheduleRefRangeEndId(): Long {
-		return dataStore.data.first().scheduleRefRangeEndId
-	}
-	
-	override suspend fun setScheduleRefRangeEndId(id: Long) {
-		dataStore.updateData {
-			it.copy(scheduleRefRangeEndId = id)
 		}
 	}
 	

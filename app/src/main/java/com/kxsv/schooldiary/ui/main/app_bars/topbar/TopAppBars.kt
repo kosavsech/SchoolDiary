@@ -243,6 +243,17 @@ fun EduPerformanceTopAppBar(
 }
 
 @Composable
+fun SettingsTopAppBar(
+	openDrawer: () -> Unit,
+) {
+	TopAppBar(
+		title = { Text(text = stringResource(id = R.string.settings_title)) },
+		navigationIcon = { DrawerIconButton(openDrawer) },
+		modifier = Modifier.fillMaxWidth(),
+	)
+}
+
+@Composable
 fun ScheduleTopAppBar(
 	onChangePattern: () -> Unit,
 	onCopyDaySchedule: () -> Unit,
