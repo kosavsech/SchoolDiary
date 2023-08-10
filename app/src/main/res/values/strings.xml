@@ -175,10 +175,10 @@
     <string name="lesson_not_found">Didn\'t find lesson with studyDayMasterId() and index()</string>
     <string name="settings_title">Settings</string>
     <string name="default_target_mark_not_found">Default target mark not found</string>
-    <string name="login_suppression_not_found">Login suppresion not found</string>
+    <string name="login_suppression_not_found">Login suppression not found</string>
     <string name="loading_settings_error">Error while loading settings</string>
     <string name="default_target_mark">Default target mark</string>
-    <string name="login_suppression">Suppress login promt dialog</string>
+    <string name="login_suppression">Login prompt suppression</string>
     <string name="not_found">Not found</string>
     <string name="enter_default_target_mark_dialog_title">Enter default target mark:</string>
 </resources>

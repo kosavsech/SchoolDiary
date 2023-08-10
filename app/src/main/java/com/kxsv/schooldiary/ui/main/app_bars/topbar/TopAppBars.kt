@@ -147,7 +147,7 @@ private fun BackIconButton(
 		Icon(
 			imageVector = Icons.Filled.ArrowBack,
 			contentDescription = stringResource(id = R.string.menu_back),
-			tint = LocalContentColor.current
+			tint = MaterialTheme.colorScheme.onSurfaceVariant
 		)
 	}
 }
@@ -160,7 +160,7 @@ private fun DrawerIconButton(
 		Icon(
 			imageVector = Icons.Filled.Menu,
 			contentDescription = stringResource(id = R.string.open_drawer),
-			tint = LocalContentColor.current
+			tint = MaterialTheme.colorScheme.onSurfaceVariant
 		)
 	}
 }
