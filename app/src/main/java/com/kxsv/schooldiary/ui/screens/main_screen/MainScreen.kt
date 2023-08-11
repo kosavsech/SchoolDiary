@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
+import com.kxsv.schooldiary.data.local.features.task.TaskEntity
 import com.kxsv.schooldiary.data.local.features.task.TaskWithSubject
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.MainTopAppBar
@@ -66,6 +67,7 @@ import com.kxsv.schooldiary.ui.screens.destinations.GradesScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.TasksScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.TypedDestination
 import com.kxsv.schooldiary.ui.screens.patterns.add_edit_pattern.fromLocalTime
+import com.kxsv.schooldiary.ui.theme.AppTheme
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.getIndexByTime
 import com.kxsv.schooldiary.util.Utils.getNextLessonsAfterIndex
@@ -396,7 +398,10 @@ private fun TasksOverviewItem(
 	) {
 		// to remove delay of check change
 		var isChecked by remember { mutableStateOf(taskEntity.taskEntity.isDone) }
-		Row(verticalAlignment = Alignment.Top) {
+		Row(
+			verticalAlignment = Alignment.Top,
+			modifier = Modifier.weight(1f)
+		) {
 			Text(
 				text = (index + 1).toString(),
 				style = MaterialTheme.typography.titleMedium,
@@ -411,7 +416,7 @@ private fun TasksOverviewItem(
 				Text(
 					text = taskEntity.taskEntity.title,
 					style = MaterialTheme.typography.titleMedium,
-					textDecoration = textDecoration
+					textDecoration = textDecoration,
 				)
 				Text(
 					text = taskEntity.subject.getName(),
@@ -424,7 +429,7 @@ private fun TasksOverviewItem(
 			onCheckedChange = {
 				isChecked = it
 				onTaskChecked(taskEntity.taskEntity.taskId, it)
-			}
+			},
 		)
 	}
 }
@@ -737,39 +742,6 @@ private fun LessonShort(
 	}
 }
 
-@Composable
-@Preview
-private fun LessonDetailedPreview() {
-	Surface {
-		LessonDetailed(
-			label = R.string.right_now_label,
-			labelIcon = Icons.Outlined.CircleNotifications,
-			subjectEntity = SubjectEntity(
-				fullName = "Английский язык",
-				cabinet = "316"
-			),
-			startTime = LocalTime.of(12, 10),
-			endTime = LocalTime.of(12, 55),
-		)
-	}
-}
-
-@Composable
-@Preview
-private fun LessonBriefPreview() {
-	Surface {
-		LessonBrief(
-			subjectEntity = SubjectEntity(
-				fullName = "Английский язык",
-				cabinet = "316"
-			),
-			startTime = LocalTime.of(12, 10),
-			endTime = LocalTime.of(12, 55),
-		)
-	}
-}
-
-
 private val previewCurrentPattern = listOf(
 	PatternStrokeEntity(
 		startTime = LocalTime.of(8, 30),
@@ -807,41 +779,67 @@ private val previewCurrentPattern = listOf(
 		index = 6
 	),
 )
-private val previewClasses = mapOf(
+private val previewClasses1 = mapOf(
 	Pair(1, SubjectEntity("Русский язык", "210")),
 	Pair(2, SubjectEntity("Иностранный язык (Английский)", "316")),
 	Pair(3, SubjectEntity("Основы безопасности жизнедеятельности", "316")),
 	Pair(4, SubjectEntity("Алгебра", "310")),
 	Pair(9, SubjectEntity("Литература", "210")),
 )
-private val previewTasks = listOf<TaskWithSubject>(
-
+private val previewClasses2 = mapOf(
+	Pair(1, SubjectEntity("Иностранный язык(немецкий)", "210")),
+	Pair(2, SubjectEntity("Обществознание", "310")),
+	Pair(3, SubjectEntity("Иностранный язык (Английский)", "316")),
+	Pair(4, SubjectEntity("История", "316")),
+	Pair(6, SubjectEntity("Геометрия", "210")),
+)
+private val previewTasks1 = listOf<TaskWithSubject>(
+	TaskWithSubject(
+		taskEntity = TaskEntity(
+			title = "стр 52-53 выучить, записи в тетради-подготовка к СР по астрономии, параграф 30+ конспекты тренировочных заданий уроков 46,47,49,50 на РЭШ",
+			description = "",
+			dueDate = LocalDate.now().plusDays(1),
+			subjectMasterId = 1
+		),
+		SubjectEntity("Физика", subjectId = 1)
+	),
+	TaskWithSubject(
+		taskEntity = TaskEntity(
+			title = "короче короткое задание там да",
+			description = "",
+			dueDate = LocalDate.now().plusDays(1),
+			subjectMasterId = 2
+		),
+		SubjectEntity("Русский язык", subjectId = 2)
+	)
 )
 
-@Composable
-@Preview
-private fun CurrentDayPreview() {
-	Surface {
-		CurrentDay(
-			classes = previewClasses,
-			currentPattern = previewCurrentPattern,
-			onScheduleShowMore = {}
-		)
-	}
-}
+private val previewItems = listOf<MainScreenItem>(
+	MainScreenItem(LocalDate.now().plusDays(0), previewClasses1),
+	MainScreenItem(LocalDate.now().plusDays(1), previewClasses2, previewTasks1),
+	MainScreenItem(LocalDate.now().plusDays(2), previewClasses2),
+	MainScreenItem(LocalDate.now().plusDays(3), previewClasses1),
+	MainScreenItem(LocalDate.now().plusDays(4), previewClasses1),
+	MainScreenItem(LocalDate.now().plusDays(5), previewClasses1),
+	MainScreenItem(LocalDate.now().plusDays(6), previewClasses1),
+)
 
 @Preview
 @Composable
-private fun ScheduleDayPreview() {
-	Surface {
-		ScheduleDay(
-			date = LocalDate.now(),
-			classes = previewClasses,
-			tasks = previewTasks,
-			currentPattern = previewCurrentPattern,
-			onTaskChecked = { _, _ -> },
-			onTaskClicked = {},
-			onTasksShowMore = {}
-		)
+private fun MainScreenContentPreview() {
+	AppTheme(darkTheme = true) {
+		Surface {
+			MainScreenContent(
+				modifier = Modifier,
+				isLoading = false,
+				itemList = previewItems,
+				onRefresh = {},
+				onScheduleShowMore = {},
+				onTaskClicked = {},
+				onTaskChecked = { _, _ -> },
+				onTasksShowMore = {},
+				onNavigate = {}
+			)
+		}
 	}
 }

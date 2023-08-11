@@ -181,4 +181,5 @@
     <string name="login_suppression">Login prompt suppression</string>
     <string name="not_found">Not found</string>
     <string name="enter_default_target_mark_dialog_title">Enter default target mark:</string>
+    <string name="no_teachers_yet">No teachers yet</string>
 </resources>

@@ -15,8 +15,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.IconButton
 import androidx.compose.material.LocalTextStyle
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -26,10 +24,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -178,6 +180,7 @@ fun AddEditPatternScreen(
 	}
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddEditPatternContent(
 	modifier: Modifier = Modifier,
@@ -267,7 +270,6 @@ private fun AddEditStrokeDialog(
 	MaterialDialog(
 		dialogState = dialogState,
 		onCloseRequest = { dialogState.hide() },
-		backgroundColor = androidx.compose.material3.MaterialTheme.colorScheme.surface,
 		buttons = {
 			positiveButton(
 				text = stringResource(R.string.btn_save),
@@ -280,7 +282,8 @@ private fun AddEditStrokeDialog(
 				text = stringResource(R.string.btn_cancel),
 				onClick = { dialogState.hide() })
 		},
-		autoDismiss = false
+		autoDismiss = false,
+		backgroundColor = MaterialTheme.colorScheme.surface
 	) {
 		val res = if (strokeToUpdate == null) {
 			R.string.create_pattern_stroke
@@ -446,7 +449,7 @@ private fun TimePickerDialog(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MaterialDialogScope.input3(
+fun MaterialDialogScope.input3(
 	modifier: Modifier = Modifier,
 	label: String,
 	placeholder: String = "",
@@ -462,7 +465,7 @@ private fun MaterialDialogScope.input3(
 	singleLine: Boolean = false,
 	maxLines: Int = Int.MAX_VALUE,
 	interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-	colors: androidx.compose.material3.TextFieldColors = androidx.compose.material3.TextFieldDefaults.textFieldColors(),
+	colors: TextFieldColors = TextFieldDefaults.textFieldColors(),
 	textFieldStyle: TextFieldStyle = TextFieldStyle.Filled,
 	waitForPositiveButton: Boolean = true,
 	errorMessage: String = "",
@@ -498,15 +501,15 @@ private fun MaterialDialogScope.input3(
 			readOnly = readOnly,
 			textStyle = textStyle,
 			label = {
-				androidx.compose.material.Text(
+				Text(
 					label,
-					color = androidx.compose.material.MaterialTheme.colors.onBackground.copy(0.8f)
+					color = MaterialTheme.colorScheme.onBackground.copy(0.8f)
 				)
 			},
 			placeholder = {
-				androidx.compose.material.Text(
+				Text(
 					placeholder,
-					color = androidx.compose.material.MaterialTheme.colors.onBackground.copy(0.5f)
+					color = MaterialTheme.colorScheme.onBackground.copy(0.5f)
 				)
 			},
 			leadingIcon = leadingIcon,
@@ -523,10 +526,10 @@ private fun MaterialDialogScope.input3(
 		)
 		
 		if (!valid) {
-			androidx.compose.material.Text(
+			Text(
 				errorMessage,
 				fontSize = 14.sp,
-				color = androidx.compose.material.MaterialTheme.colors.error,
+				color = MaterialTheme.colorScheme.error,
 				modifier = Modifier
 					.align(Alignment.End)
 					.testTag("dialog_input_error")
@@ -562,12 +565,12 @@ private fun TextFieldWithStyle(
 	singleLine: Boolean = false,
 	maxLines: Int = Int.MAX_VALUE,
 	interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-	colors: androidx.compose.material3.TextFieldColors = androidx.compose.material3.TextFieldDefaults.textFieldColors(),
+	colors: TextFieldColors = TextFieldDefaults.textFieldColors(),
 	style: TextFieldStyle = TextFieldStyle.Filled,
 ) {
 	when (style) {
 		TextFieldStyle.Filled -> {
-			androidx.compose.material3.TextField(
+			TextField(
 				value = value,
 				onValueChange = onValueChange,
 				modifier = modifier,
@@ -590,7 +593,7 @@ private fun TextFieldWithStyle(
 		}
 		
 		TextFieldStyle.Outlined -> {
-			androidx.compose.material3.OutlinedTextField(
+			OutlinedTextField(
 				value = value,
 				onValueChange = onValueChange,
 				modifier = modifier,

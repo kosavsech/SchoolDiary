@@ -2,6 +2,7 @@ package com.kxsv.schooldiary.ui.screens.teacher_list
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -140,7 +141,18 @@ private fun TeachersContent(
 		modifier = modifier,
 		loading = isLoading,
 		empty = teacherEntities.isEmpty(),
-		isContentScrollable = true
+		isContentScrollable = true,
+		emptyContent = {
+			Box(
+				modifier = Modifier.fillMaxSize(),
+			) {
+				Text(
+					text = stringResource(R.string.no_teachers_yet),
+					style = MaterialTheme.typography.displayMedium,
+					modifier = Modifier.align(Alignment.Center)
+				)
+			}
+		}
 	) {
 		LazyColumn(
 			contentPadding = PaddingValues(vertical = dimensionResource(R.dimen.vertical_margin)),
