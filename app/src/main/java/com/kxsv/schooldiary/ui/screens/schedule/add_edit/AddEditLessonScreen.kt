@@ -1,7 +1,17 @@
 package com.kxsv.schooldiary.ui.screens.schedule.add_edit
 
 import android.content.res.Configuration
+import androidx.annotation.StringRes
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.InteractionSource
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,9 +19,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.MaterialTheme.colors
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Done
@@ -21,6 +32,8 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -28,13 +41,23 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -56,7 +79,6 @@ import com.vanpra.composematerialdialogs.listItemsSingleChoice
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 data class AddEditLessonDestinationNavArgs(
@@ -78,31 +100,43 @@ fun AddEditLessonScreen(
 	val navigator = AddEditLessonScreenNavActions(
 		destinationsNavigator = destinationsNavigator, resultBackNavigator = resultBackNavigator
 	)
-	
+	val saveLesson = remember {
+		{ viewModel.saveLesson() }
+	}
 	Scaffold(
 		modifier = Modifier.fillMaxSize(),
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		topBar = { AddEditScheduleTopAppBar { navigator.popBackStack() } },
 		floatingActionButton = {
-			FloatingActionButton(onClick = viewModel::saveLesson) {
+			FloatingActionButton(onClick = {
+				saveLesson()
+			}) {
 				Icon(Icons.Filled.Done, stringResource(R.string.save_schedule))
 			}
 			
 		}
 	) { paddingValues ->
 		
+		val clearErrorMessage = remember {
+			{ viewModel.clearErrorMessage() }
+		}
+		val loadAvailableSubjects = remember {
+			{ viewModel.loadAvailableSubjects() }
+		}
 		AddEditLessonContent(
+			modifier = Modifier.padding(paddingValues),
 			isLoading = uiState.isLoading,
+			errorMessage = uiState.errorMessage,
 			pickedSubject = uiState.pickedSubject,
 			classIndex = uiState.classIndex,
 			classDate = uiState.classDate,
 			subjects = uiState.availableSubjects,
 			initialSubjectSelection = uiState.initialSubjectSelection,
-			onSubjectDialogShown = viewModel::loadAvailableSubjects,
+			clearErrorMessage = clearErrorMessage,
+			onSubjectDialogShown = loadAvailableSubjects,
 			onSubjectChanged = viewModel::saveSelectedSubject,
 			onDateChanged = viewModel::updateDate,
-			onIndexUpdate = viewModel::updateIndex,
-			modifier = Modifier.padding(paddingValues)
+			onIndexUpdate = viewModel::updateIndex
 		)
 		
 		LaunchedEffect(uiState.isClassSaved) {
@@ -127,22 +161,21 @@ fun AddEditLessonScreen(
 	}
 }
 
-private fun localDateToTimestamp(date: LocalDate): Long =
-	date.atStartOfDay(ZoneId.systemDefault()).toEpochSecond()
-
 @Composable
 private fun AddEditLessonContent(
+	modifier: Modifier = Modifier,
 	isLoading: Boolean,
+	@StringRes errorMessage: Int?,
 	pickedSubject: SubjectEntity?,
 	classIndex: String,
 	classDate: LocalDate?,
 	subjects: List<SubjectEntity>,
 	initialSubjectSelection: Int?,
+	clearErrorMessage: () -> Unit,
 	onSubjectDialogShown: () -> Unit,
 	onSubjectChanged: (Int) -> Unit,
 	onDateChanged: (LocalDate) -> Unit,
 	onIndexUpdate: (String) -> Unit,
-	modifier: Modifier = Modifier,
 ) {
 	LoadingContent(
 		loading = isLoading,
@@ -152,7 +185,6 @@ private fun AddEditLessonContent(
 		Column(
 			modifier
 				.fillMaxWidth()
-				.padding(dimensionResource(id = R.dimen.horizontal_margin))
 		) {
 			SubjectRow(
 				isLoading = isLoading,
@@ -176,49 +208,121 @@ private fun AddEditLessonContent(
 					.fillMaxWidth()
 					.align(Alignment.CenterHorizontally)
 			)
-			ClassNumberRow(classIndex, onIndexUpdate)
+			ClassNumberRow(
+				index = classIndex,
+				onIndexUpdate = onIndexUpdate,
+				clearErrorMessage = clearErrorMessage,
+				errorMessage = errorMessage
+			)
 		}
 	}
 }
 
+@Composable
+private fun animateBorderStrokeAsState(
+	isError: Boolean,
+	interactionSource: InteractionSource,
+): State<BorderStroke> {
+	val focused by interactionSource.collectIsFocusedAsState()
+	val targetValue = when {
+		isError -> MaterialTheme.colorScheme.error
+		else -> Color.Transparent
+	}
+	val indicatorColor = animateColorAsState(
+		targetValue, tween(durationMillis = 150),
+		label = "indicatorColor"
+	)
+	val targetThickness = if (focused) 2.dp else 1.dp
+	val animatedThickness = animateDpAsState(
+		targetThickness, tween(durationMillis = 150),
+		label = "animatedThickness"
+	)
+	return rememberUpdatedState(
+		BorderStroke(animatedThickness.value, SolidColor(indicatorColor.value))
+	)
+}
 
 @Composable
 private fun ClassNumberRow(
 	index: String,
 	onIndexUpdate: (String) -> Unit,
+	clearErrorMessage: () -> Unit,
+	@StringRes errorMessage: Int?,
 ) {
-	val textFieldColors =
-		androidx.compose.material.TextFieldDefaults.outlinedTextFieldColors(
-			focusedBorderColor = Color.Transparent,
-			unfocusedBorderColor = Color.Transparent,
-			cursorColor = colors.secondary.copy(
-				alpha = ContentAlpha.high
-			)
-		)
-	Row(
-		modifier = Modifier
-			.fillMaxWidth(),
-		verticalAlignment = Alignment.CenterVertically
+	val textFieldColors = OutlinedTextFieldDefaults.colors(
+		cursorColor = colors.secondary.copy(alpha = ContentAlpha.high),
+		focusedBorderColor = Color.Transparent,
+		unfocusedBorderColor = Color.Transparent,
+		errorBorderColor = Color.Transparent,
+		errorContainerColor = Color.Transparent,
+	)
+	LaunchedEffect(key1 = index) {
+		if (errorMessage != null) {
+			clearErrorMessage()
+		}
+	}
+	val focusManager = LocalFocusManager.current
+	val interactionSource = remember { MutableInteractionSource() }
+	val isValid by remember(errorMessage) { mutableStateOf(errorMessage == null) }
+	val borderStroke =
+		animateBorderStrokeAsState(isError = !isValid, interactionSource = interactionSource)
+	
+	Column(
+		modifier = Modifier.fillMaxWidth(),
 	) {
-		Icon(
-			Icons.Default.Schedule,
-			stringResource(R.string.picked_class_number),
-			Modifier.size(18.dp)
-		)
-		OutlinedTextField(
-			value = index,
-			modifier = Modifier.fillMaxWidth(),
-			onValueChange = onIndexUpdate,
-			placeholder = {
-				Text(
-					text = stringResource(id = R.string.pick_index_hint),
-					style = MaterialTheme.typography.titleMedium
+		Box(
+			Modifier
+				.border(borderStroke.value, MaterialTheme.shapes.extraSmall)
+				.padding(horizontal = dimensionResource(id = R.dimen.horizontal_margin))
+		) {
+			Row(
+				modifier = Modifier.fillMaxWidth(),
+				verticalAlignment = Alignment.CenterVertically
+			) {
+				Icon(
+					imageVector = Icons.Default.Schedule,
+					contentDescription = stringResource(R.string.picked_class_number),
+					modifier = Modifier.size(18.dp)
 				)
-			},
-			textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-			maxLines = 1,
-			colors = textFieldColors
-		)
+				OutlinedTextField(
+					value = index,
+					modifier = Modifier.fillMaxWidth(),
+					onValueChange = onIndexUpdate,
+					placeholder = {
+						Text(
+							text = stringResource(id = R.string.pick_index_hint),
+							style = MaterialTheme.typography.titleMedium
+						)
+					},
+					textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+					maxLines = 1,
+					colors = textFieldColors,
+					keyboardOptions = KeyboardOptions(
+						imeAction = ImeAction.Done,
+						autoCorrect = false,
+						capitalization = KeyboardCapitalization.None,
+						keyboardType = KeyboardType.Decimal
+					),
+					keyboardActions = KeyboardActions(
+						onDone = {
+							focusManager.clearFocus()
+						}
+					),
+					isError = !isValid,
+					interactionSource = interactionSource
+				)
+			}
+		}
+		if (!isValid && errorMessage != null) {
+			Text(
+				text = stringResource(errorMessage),
+				style = MaterialTheme.typography.labelMedium,
+				color = MaterialTheme.colorScheme.error,
+				modifier = Modifier
+					.padding(horizontal = dimensionResource(id = R.dimen.horizontal_margin))
+					.align(Alignment.End)
+			)
+		}
 	}
 }
 
@@ -234,7 +338,7 @@ private fun DateRow(
 		modifier = Modifier
 			.fillMaxWidth()
 			.clickable { datePickerDialog.show() }
-			.padding(vertical = dimensionResource(R.dimen.vertical_margin)),
+			.padding(dimensionResource(R.dimen.vertical_margin)),
 		verticalAlignment = Alignment.CenterVertically
 	) {
 		Icon(
@@ -272,7 +376,7 @@ private fun SubjectRow(
 				onSubjectDialogShown()
 				subjectDialog.show()
 			}
-			.padding(vertical = dimensionResource(R.dimen.vertical_margin)),
+			.padding(dimensionResource(id = R.dimen.horizontal_margin)),
 		verticalAlignment = Alignment.CenterVertically
 	) {
 		Icon(
@@ -356,11 +460,12 @@ private fun AddEditScheduleContentPreview() {
 		AddEditLessonContent(
 			isLoading = false,
 //			date = null,
+			errorMessage = null,
 			pickedSubject = SubjectEntity("Русский язык", "210"),
-			classIndex = "",
 //			index = 0,
-			classDate = Utils.currentDate,
+			classIndex = "",
 //			lesson = null,
+			classDate = Utils.currentDate,
 			subjects = listOf(
 				SubjectEntity("Русский язык", "210"),
 				SubjectEntity("Геометрия", "310"),
@@ -369,6 +474,7 @@ private fun AddEditScheduleContentPreview() {
 				SubjectEntity("Английский язык", "316"),
 			),
 			initialSubjectSelection = null,
+			clearErrorMessage = {},
 			onSubjectDialogShown = {},
 			onSubjectChanged = {},
 			onDateChanged = {},
@@ -386,6 +492,6 @@ private fun DatePickerPreview() {
 	DatePickerDialog(
 		dialogState = rememberMaterialDialogState(true),
 		onDateChanged = {},
-		date = null
+		date = LocalDate.now().minusDays(1)
 	)
 }

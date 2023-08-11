@@ -182,4 +182,6 @@
     <string name="not_found">Not found</string>
     <string name="enter_default_target_mark_dialog_title">Enter default target mark:</string>
     <string name="no_teachers_yet">No teachers yet</string>
+    <string name="wrong_input_format_for_class_index">You\'ve entered non-integer character(s)</string>
+    <string name="wrong_input_value_for_class_index">Be sure that index is at least 1 and less than 10</string>
 </resources>

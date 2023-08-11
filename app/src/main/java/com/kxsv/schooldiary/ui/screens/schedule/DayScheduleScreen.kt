@@ -329,14 +329,14 @@ private fun LessonDialog(
 								dialogState.hide()
 							}
 						},
-						modifier = Modifier.fillMaxWidth(0.45f)
+						modifier = Modifier.weight(0.45f)
 					) {
 						Text(text = stringResource(R.string.btn_edit))
 					}
-					Spacer(modifier = Modifier.fillMaxWidth(0.18181819f))
+					Spacer(modifier = Modifier.weight(0.1f))
 					FilledTonalButton(
 						onClick = { onDeleteClass(classDetailed) },
-						modifier = Modifier.fillMaxWidth()
+						modifier = Modifier.weight(0.45f)
 					) {
 						Text(text = stringResource(R.string.btn_delete))
 					}

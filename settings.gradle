@@ -17,3 +17,5 @@ rootProject.name = "SchoolDiary"
 include ':app'
 include ':ychart-mod'
 include ':segmentedprogressbar'
+include ':dialogs-core'
+include ':dialogs-datetime'

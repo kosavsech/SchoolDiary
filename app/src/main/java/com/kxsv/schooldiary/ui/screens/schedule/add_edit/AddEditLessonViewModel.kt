@@ -9,9 +9,11 @@ import com.kxsv.schooldiary.data.local.features.lesson.LessonEntity
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.repository.LessonRepository
 import com.kxsv.schooldiary.data.repository.SubjectRepository
+import com.kxsv.schooldiary.di.util.IoDispatcher
 import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.util.Utils.timestampToLocalDate
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,6 +30,7 @@ data class AddEditScheduleUiState(
 	val classIndex: String = "",
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
+	val errorMessage: Int? = null,
 	val isClassSaved: Boolean = false,
 )
 
@@ -35,6 +38,7 @@ data class AddEditScheduleUiState(
 class AddEditLessonViewModel @Inject constructor(
 	private val lessonRepository: LessonRepository,
 	private val subjectRepository: SubjectRepository,
+	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 	savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 	
@@ -66,7 +70,20 @@ class AddEditLessonViewModel @Inject constructor(
 			}
 			return
 		}
-		
+		if (uiState.value.classIndex.toIntOrNull() == null) {
+			_uiState.update {
+				it.copy(errorMessage = R.string.wrong_input_format_for_class_index)
+			}
+			return
+		} else {
+			val classIndex = uiState.value.classIndex.toInt()
+			if (classIndex < 1 || classIndex > 9) {
+				_uiState.update {
+					it.copy(errorMessage = R.string.wrong_input_value_for_class_index)
+				}
+				return
+			}
+		}
 		if (lessonId == null) {
 			createNewClass()
 		} else {
@@ -77,6 +94,12 @@ class AddEditLessonViewModel @Inject constructor(
 	fun snackbarMessageShown() {
 		_uiState.update {
 			it.copy(userMessage = null)
+		}
+	}
+	
+	fun clearErrorMessage() {
+		_uiState.update {
+			it.copy(errorMessage = null)
 		}
 	}
 	
@@ -107,7 +130,7 @@ class AddEditLessonViewModel @Inject constructor(
 			it.copy(isLoading = true)
 		}
 		
-		viewModelScope.launch {
+		viewModelScope.launch(ioDispatcher) {
 			subjectRepository.getSubjects().let { subjects ->
 				val updatedSelectedSubjectIndex: Int =
 					subjects.binarySearch(uiState.value.pickedSubject, compareBy { it?.subjectId })
@@ -123,7 +146,7 @@ class AddEditLessonViewModel @Inject constructor(
 		}
 	}
 	
-	private fun createNewClass() = viewModelScope.launch {
+	private fun createNewClass() = viewModelScope.launch(ioDispatcher) {
 		lessonRepository.createLesson(
 			lesson = LessonEntity(
 				index = uiState.value.classIndex.toInt() - 1,
@@ -137,7 +160,7 @@ class AddEditLessonViewModel @Inject constructor(
 	private fun updateClass() {
 		if (lessonId == null) throw RuntimeException("updateClass() was called but class is new.")
 		
-		viewModelScope.launch {
+		viewModelScope.launch(ioDispatcher) {
 			lessonRepository.updateLesson(
 				lesson = LessonEntity(
 					index = uiState.value.classIndex.toInt() - 1,
@@ -157,7 +180,7 @@ class AddEditLessonViewModel @Inject constructor(
 			it.copy(isLoading = true)
 		}
 		
-		viewModelScope.launch {
+		viewModelScope.launch(ioDispatcher) {
 			lessonRepository.getLessonWithSubject(subjectId)?.let { scheduleWithSubject ->
 				_uiState.update {
 					it.copy(

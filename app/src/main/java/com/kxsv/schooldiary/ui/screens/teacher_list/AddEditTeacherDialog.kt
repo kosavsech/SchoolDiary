@@ -12,9 +12,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.ui.screens.patterns.add_edit_pattern.input3
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.MaterialDialogState
+import com.vanpra.composematerialdialogs.input
 import com.vanpra.composematerialdialogs.title
 
 
@@ -55,7 +55,7 @@ fun AddEditTeacherDialog(
 			res = R.string.add_teacher,
 			color = MaterialTheme.colorScheme.onSurface
 		)
-		input3(
+		input(
 			label = stringResource(R.string.first_name_hint),
 			prefill = firstName,
 			onInput = { updateFirstName(it) },
@@ -73,7 +73,7 @@ fun AddEditTeacherDialog(
 				}
 			),
 		)
-		input3(
+		input(
 			label = stringResource(R.string.last_name_hint),
 			prefill = lastName,
 			onInput = { updateLastName(it) },
@@ -91,7 +91,7 @@ fun AddEditTeacherDialog(
 				}
 			),
 		)
-		input3(
+		input(
 			label = stringResource(R.string.patronymic_hint),
 			prefill = patronymic,
 			onInput = { updatePatronymic(it) },
@@ -113,7 +113,7 @@ fun AddEditTeacherDialog(
 				},
 			),
 		)
-		input3(
+		input(
 			label = stringResource(R.string.phone_number_hint),
 			prefill = phoneNumber,
 			onInput = { updatePhoneNumber(it) },

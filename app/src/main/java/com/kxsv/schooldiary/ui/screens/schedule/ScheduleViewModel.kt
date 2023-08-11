@@ -226,7 +226,6 @@ class ScheduleViewModel @Inject constructor(
 		)
 		val newStudyDayId = studyDayRepository.create(newStudyDay)
 		if (newStudyDayId == 0L) throw RuntimeException("StudyDayEntity wasn't created for some reason")
-		if (uiState.value.studyDay == null) throw RuntimeException("StudyDayEntity wasn't created for some reason")
 		_uiState.update {
 			it.copy(studyDay = newStudyDay.copy(studyDayId = newStudyDayId))
 		}
