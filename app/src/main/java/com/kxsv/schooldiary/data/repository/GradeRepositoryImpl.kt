@@ -88,9 +88,9 @@ class GradeRepositoryImpl @Inject constructor(
 				period.forEach { date ->
 					if (date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
 					async {
-						val gradesWithSubjectLocalised =
-							fetchGradeByDate(date).toGradesWithSubject(subjectDataSource = subjectDataSource)
-						newGradesFound.addAll(updateDatabase(gradesWithSubjectLocalised))
+						val gradesWithSubject = fetchGradeByDate(date)
+							.toGradesWithSubject(subjectDataSource = subjectDataSource)
+						newGradesFound.addAll(updateDatabase(gradesWithSubject))
 					}
 				}
 				return@withTimeout newGradesFound
@@ -111,12 +111,11 @@ class GradeRepositoryImpl @Inject constructor(
 	}
 	
 	override suspend fun create(grade: GradeEntity): String {
-		val gradeId =
-			generateGradeId(
-				date = grade.date,
-				index = grade.index,
-				lessonIndex = grade.lessonIndex
-			)
+		val gradeId = generateGradeId(
+			date = grade.date,
+			index = grade.index,
+			lessonIndex = grade.lessonIndex
+		)
 		gradeDataSource.upsert(grade.copy(gradeId = gradeId))
 		return gradeId
 	}
@@ -137,12 +136,12 @@ class GradeRepositoryImpl @Inject constructor(
 		gradeDataSource.deleteById(gradeId)
 	}
 	
-	private suspend fun updateDatabase(gradeEntities: List<GradeWithSubject>): List<GradeWithSubject> {
+	private suspend fun updateDatabase(fetchedGradeEntities: List<GradeWithSubject>): List<GradeWithSubject> {
 		return coroutineScope {
 			val newGradesFound: MutableList<GradeWithSubject> = mutableListOf()
-			for (gradeEntity in gradeEntities) {
-				launch {
-					val gradeFound = measurePerformanceInMS(
+			for (fetchedGradeEntity in fetchedGradeEntities) {
+				launch(ioDispatcher) {
+					val isGradeExisted = measurePerformanceInMS(
 						{ time, result ->
 							Log.e(
 								TAG,
@@ -150,23 +149,16 @@ class GradeRepositoryImpl @Inject constructor(
 							)
 						}
 					) {
-						gradeDataSource.getById(gradeEntity.grade.gradeId) != null
+						gradeDataSource.getById(fetchedGradeEntity.grade.gradeId) != null
 					}
-					Log.i(
-						TAG,
-						"updateDatabase: gradeFound = $gradeFound and id = ${gradeEntity.grade.gradeId}"
-					)
-					if (gradeFound) {
-						update(gradeEntity.grade)
-					} else {
-						create(gradeEntity.grade)
-						newGradesFound.add(gradeEntity)
-						Log.i(TAG, "updateDatabase: FOUND NEW GRADE ${gradeEntity.grade}")
+					gradeDataSource.upsert(fetchedGradeEntity.grade)
+					if (!isGradeExisted) {
+						newGradesFound.add(fetchedGradeEntity)
+						Log.i(TAG, "updateDatabase: FOUND NEW GRADE:\n${fetchedGradeEntity.grade}")
 					}
 				}
 			}
 			newGradesFound
 		}
-		
 	}
 }

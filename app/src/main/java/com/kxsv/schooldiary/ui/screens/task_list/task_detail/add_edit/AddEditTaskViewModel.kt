@@ -186,7 +186,7 @@ class AddEditTaskViewModel @Inject constructor(
 			val fetchedVariants = measurePerformanceInMS(logger = { time, result ->
 				Log.d(TAG, "fetchNet: time = $time MS\nresult = $result")
 			}) {
-				taskRepository.fetchTaskVariantsByDate(
+				taskRepository.fetchTaskVariantsForSubjectByDate(
 					date = uiState.value.dueDate,
 					subject = uiState.value.subject!!
 				)

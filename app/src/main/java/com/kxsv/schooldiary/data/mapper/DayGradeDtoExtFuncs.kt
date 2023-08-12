@@ -1,6 +1,6 @@
 package com.kxsv.schooldiary.data.mapper
 
-import com.kxsv.schooldiary.data.DataUtils
+import com.kxsv.schooldiary.data.DataUtils.generateGradeId
 import com.kxsv.schooldiary.data.local.features.grade.GradeEntity
 import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
 import com.kxsv.schooldiary.data.local.features.subject.SubjectDao
@@ -31,11 +31,7 @@ suspend fun DayGradeDto.toGradeEntity(
 			typeOfWork = typeOfWork,
 			index = index,
 			lessonIndex = lessonIndex,
-			gradeId = DataUtils.generateGradeId(
-				date = date,
-				index = index,
-				lessonIndex = lessonIndex
-			)
+			gradeId = generateGradeId()
 		)
 		
 	} catch (e: NoSuchElementException) {
@@ -72,11 +68,7 @@ suspend fun DayGradeDto.toGradeWithSubject(
 				typeOfWork = typeOfWork,
 				index = index,
 				lessonIndex = lessonIndex,
-				gradeId = DataUtils.generateGradeId(
-					date = date,
-					index = index,
-					lessonIndex = lessonIndex
-				)
+				gradeId = generateGradeId()
 			),
 			subject = subject
 		)

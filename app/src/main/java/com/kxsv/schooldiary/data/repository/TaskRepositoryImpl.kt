@@ -105,16 +105,16 @@ class TaskRepositoryImpl @Inject constructor(
 			val dayWithClasses = async { lessonDataSource.getAllWithSubjectByDate(date) }
 			val dayInfo = async { webService.getDayInfo(date) }
 			
-			val classes = if (dayWithClasses.await().isNotEmpty()) {
+			val classes = if (dayWithClasses.await().isEmpty()) {
+				ScheduleParser()
+					.parse(dayInfo = dayInfo.await(), localDate = date)
+					.toSubjectEntitiesIndexed(subjectDataSource, studyDayDataSource)
+			} else {
 				val newMap = mutableMapOf<Int, SubjectEntity>()
 				dayWithClasses.await().forEach {
 					newMap[it.lesson.index] = it.subject
 				}
 				newMap
-			} else {
-				ScheduleParser()
-					.parse(dayInfo = dayInfo.await(), localDate = date)
-					.toSubjectEntitiesIndexed(subjectDataSource, studyDayDataSource)
 			}
 			
 			classes.forEach { subjectIndexed ->
@@ -222,7 +222,7 @@ class TaskRepositoryImpl @Inject constructor(
 	/**
 	 * @throws NetworkException.NotLoggedInException
 	 */
-	override suspend fun fetchTaskVariantsByDate(
+	override suspend fun fetchTaskVariantsForSubjectByDate(
 		date: LocalDate,
 		subject: SubjectEntity,
 	): List<TaskDto> {
