@@ -77,6 +77,7 @@ import com.kizitonwose.calendar.core.CalendarDay
 import com.kizitonwose.calendar.core.CalendarMonth
 import com.kizitonwose.calendar.core.DayPosition
 import com.kxsv.schooldiary.R
+import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.ui.ContinuousSelectionHelper.isInDateBetweenSelection
 import com.kxsv.schooldiary.util.ui.ContinuousSelectionHelper.isOutDateBetweenSelection

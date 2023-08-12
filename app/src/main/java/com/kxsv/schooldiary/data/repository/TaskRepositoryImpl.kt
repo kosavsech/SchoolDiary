@@ -13,14 +13,14 @@ import com.kxsv.schooldiary.data.mapper.toSubjectEntitiesIndexed
 import com.kxsv.schooldiary.data.mapper.toTaskEntities
 import com.kxsv.schooldiary.data.mapper.toTasksAndUniqueIdWithSubject
 import com.kxsv.schooldiary.data.remote.WebService
-import com.kxsv.schooldiary.data.remote.lesson.ScheduleParser
-import com.kxsv.schooldiary.data.remote.task.TaskDto
-import com.kxsv.schooldiary.data.remote.task.TaskParser
+import com.kxsv.schooldiary.data.remote.dtos.TaskDto
+import com.kxsv.schooldiary.data.remote.parsers.LessonParser
+import com.kxsv.schooldiary.data.remote.parsers.TaskParser
+import com.kxsv.schooldiary.data.util.remote.NetworkException
 import com.kxsv.schooldiary.di.util.ApplicationScope
 import com.kxsv.schooldiary.di.util.IoDispatcher
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.toList
-import com.kxsv.schooldiary.util.remote.NetworkException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
@@ -106,7 +106,7 @@ class TaskRepositoryImpl @Inject constructor(
 			val dayInfo = async { webService.getDayInfo(date) }
 			
 			val classes = if (dayWithClasses.await().isEmpty()) {
-				ScheduleParser()
+				LessonParser()
 					.parse(dayInfo = dayInfo.await(), localDate = date)
 					.toSubjectEntitiesIndexed(subjectDataSource, studyDayDataSource)
 			} else {

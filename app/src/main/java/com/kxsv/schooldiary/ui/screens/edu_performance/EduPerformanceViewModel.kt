@@ -4,9 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceWithSubject
 import com.kxsv.schooldiary.data.repository.EduPerformanceRepository
+import com.kxsv.schooldiary.data.util.EduPerformancePeriod
+import com.kxsv.schooldiary.data.util.remote.NetworkException
 import com.kxsv.schooldiary.di.util.IoDispatcher
-import com.kxsv.schooldiary.util.remote.NetworkException
-import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
 import com.kxsv.schooldiary.util.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -23,7 +23,7 @@ data class EduPerformanceUiState(
 	val eduPerformanceList: List<EduPerformanceWithSubject> = emptyList(),
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
-	val period: EduPerformancePeriod = EduPerformancePeriod.FOURTH_TERM,
+	val period: EduPerformancePeriod = EduPerformancePeriod.FOURTH,
 )
 
 @HiltViewModel
@@ -32,7 +32,7 @@ class EduPerformanceViewModel @Inject constructor(
 	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
-	private val _period = MutableStateFlow(EduPerformancePeriod.FOURTH_TERM)
+	private val _period = MutableStateFlow(EduPerformancePeriod.FOURTH)
 	
 	@OptIn(ExperimentalCoroutinesApi::class)
 	private val _eduPerformanceAsync = _period

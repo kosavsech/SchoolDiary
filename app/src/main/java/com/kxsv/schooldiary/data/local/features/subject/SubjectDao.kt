@@ -27,8 +27,8 @@ interface SubjectDao {
 	@Query("SELECT * FROM $SUBJECT_TABLE_NAME WHERE subjectId = :subjectId")
 	suspend fun getById(subjectId: Long): SubjectEntity?
 	
-	@Query("SELECT * FROM $SUBJECT_TABLE_NAME WHERE fullName = :subjectName")
-	suspend fun getByName(subjectName: String): SubjectEntity?
+	@Query("SELECT * FROM $SUBJECT_TABLE_NAME WHERE fullName = :fullSubjectName")
+	suspend fun getByName(fullSubjectName: String): SubjectEntity?
 	
 	@Transaction
 	@Query("SELECT * FROM $SUBJECT_TABLE_NAME WHERE subjectId = :subjectId")

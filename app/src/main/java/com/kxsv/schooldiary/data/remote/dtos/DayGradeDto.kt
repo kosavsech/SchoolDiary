@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.data.remote.grade
+package com.kxsv.schooldiary.data.remote.dtos
 
 import com.kxsv.schooldiary.util.Mark
 import java.time.LocalDate

@@ -40,7 +40,8 @@ import com.kxsv.schooldiary.data.local.features.grade.GradeEntity
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.subject.SubjectWithTeachers
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
-import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity.Companion.fullName
+import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity.Companion.shortName
+import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.SubjectDetailTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.SubjectDetailScreenNavActions
@@ -52,7 +53,6 @@ import com.kxsv.schooldiary.util.Utils.calculateRealizableBadMarks
 import com.kxsv.schooldiary.util.Utils.getLowerBoundForMark
 import com.kxsv.schooldiary.util.Utils.roundTo
 import com.kxsv.schooldiary.util.Utils.stringRoundTo
-import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.kxsv.schooldiary.util.ui.TermSelector
 import com.kxsv.ychart_mod.common.model.PlotType
@@ -521,7 +521,7 @@ private fun SubjectInfo(
 			var teachersText = ""
 			teachers.forEachIndexed { index, teacher ->
 				teachersText += (if (index != 0) ", " else "")
-				teachersText += teacher.fullName()
+				teachersText += teacher.shortName()
 				if (index == 2) return@forEachIndexed
 			}
 			if (teachersText.isNotEmpty()) {

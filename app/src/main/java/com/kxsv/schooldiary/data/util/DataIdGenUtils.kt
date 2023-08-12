@@ -1,11 +1,12 @@
-package com.kxsv.schooldiary.data
+package com.kxsv.schooldiary.data.util
 
-import com.kxsv.schooldiary.data.remote.grade.DayGradeDto
-import com.kxsv.schooldiary.data.remote.task.TaskDto
+import com.kxsv.schooldiary.data.remote.dtos.DayGradeDto
+import com.kxsv.schooldiary.data.remote.dtos.EduPerformanceDto
+import com.kxsv.schooldiary.data.remote.dtos.TaskDto
 import java.time.LocalDate
 import java.time.ZoneId
 
-object DataUtils {
+object DataIdGenUtils {
 	private val zoneForIdGen = ZoneId.of("Europe/Moscow")
 	
 	fun generateGradeId(date: LocalDate, index: Int, lessonIndex: Int): String {
@@ -13,6 +14,10 @@ object DataUtils {
 		val gradeIndex = index.toString()
 		val lessonIndexString = lessonIndex.toString()
 		return (dateStamp + "_" + gradeIndex + "_" + lessonIndexString)
+	}
+	
+	fun generateTeacherId(teacherFullName: String): String {
+		return teacherFullName.trim().lowercase().replace(" ", "_")
 	}
 	
 	fun DayGradeDto.generateGradeId(): String {
@@ -26,5 +31,9 @@ object DataUtils {
 		val lessonIndex: String = lessonIndex.toString()
 		
 		return (dateStamp + "_" + subjectId + "_" + lessonIndex)
+	}
+	
+	fun EduPerformanceDto.generateEduPerformanceId(): String {
+		return (subjectAncestorName + "_" + period.toString())
 	}
 }

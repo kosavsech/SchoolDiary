@@ -31,7 +31,7 @@ data class AddEditSubjectUiState(
 	val fullName: String = "",
 	val displayName: String = "",
 	val cabinet: String = "",
-	val selectedTeachersIds: Set<Int> = emptySet(),
+	val selectedTeachersIds: Set<String> = emptySet(),
 	val availableTeachers: List<TeacherEntity> = emptyList(),
 	
 	val firstName: String = "",
@@ -166,8 +166,8 @@ class AddEditSubjectViewModel @Inject constructor(
 	private fun createNewTeacher() = viewModelScope.launch(ioDispatcher) {
 		teacherRepository.createTeacher(
 			TeacherEntity(
-				firstName = uiState.value.firstName,
 				lastName = uiState.value.lastName,
+				firstName = uiState.value.firstName,
 				patronymic = uiState.value.patronymic,
 				phoneNumber = uiState.value.phoneNumber
 			)
@@ -190,7 +190,7 @@ class AddEditSubjectViewModel @Inject constructor(
 		_uiState.update { it.copy(phoneNumber = newPhoneNumber) }
 	}
 	
-	fun updateSelectedTeachers(newSelectedTeachersIds: Set<Int>) {
+	fun updateSelectedTeachers(newSelectedTeachersIds: Set<String>) {
 		Log.i(TAG, "updateSelectedTeachers: newSelectedTeachersIds $newSelectedTeachersIds")
 		_uiState.update { it.copy(selectedTeachersIds = newSelectedTeachersIds) }
 	}

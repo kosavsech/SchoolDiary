@@ -8,7 +8,7 @@ import com.kxsv.schooldiary.data.local.features.study_day.StudyDayDao
 import com.kxsv.schooldiary.data.local.features.study_day.StudyDayEntity
 import com.kxsv.schooldiary.data.local.features.subject.SubjectDao
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
-import com.kxsv.schooldiary.data.remote.lesson.LessonDto
+import com.kxsv.schooldiary.data.remote.dtos.LessonDto
 import com.kxsv.schooldiary.data.repository.StudyDayRepository
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 
@@ -20,16 +20,9 @@ suspend fun LessonDto.toLessonEntity(
 	studyDayRepository: StudyDayRepository,
 ): LessonEntity {
 	try {
-		val existedSubject = subjectRepository.getSubjectByName(subjectAncestorName)
+		val subject = subjectRepository.getSubjectByName(subjectAncestorName)
+			?: throw NoSuchElementException("There is no subject with name $subjectAncestorName")
 		
-		val subject = if (existedSubject != null) {
-			existedSubject
-		} else {
-			val subject = SubjectEntity(fullName = subjectAncestorName)
-			val subjectId = subjectRepository.createSubject(subject, emptySet())
-			
-			subject.copy(subjectId = subjectId)
-		}
 		
 		val studyDayMasterId = if (overrideStudyDayMasterId != null) {
 			overrideStudyDayMasterId
@@ -84,16 +77,9 @@ suspend fun LessonDto.toLessonWithSubject(
 	studyDayRepository: StudyDayRepository,
 ): LessonWithSubject {
 	try {
-		val existedSubject = subjectRepository.getSubjectByName(subjectAncestorName)
+		val subject = subjectRepository.getSubjectByName(subjectAncestorName)
+			?: throw NoSuchElementException("There is no subject with name $subjectAncestorName")
 		
-		val subject = if (existedSubject != null) {
-			existedSubject
-		} else {
-			val subject = SubjectEntity(fullName = subjectAncestorName)
-			val subjectId = subjectRepository.createSubject(subject, emptySet())
-			
-			subject.copy(subjectId = subjectId)
-		}
 		
 		val studyDayMasterId = if (overrideStudyDayMasterId != null) {
 			overrideStudyDayMasterId
@@ -122,16 +108,9 @@ suspend fun LessonDto.toLessonWithSubject(
 	studyDayDataSource: StudyDayDao,
 ): LessonWithSubject {
 	try {
-		val existedSubject = subjectDataSource.getByName(subjectAncestorName)
+		val subject = subjectDataSource.getByName(subjectAncestorName)
+			?: throw NoSuchElementException("There is no subject with name $subjectAncestorName")
 		
-		val subject = if (existedSubject != null) {
-			existedSubject
-		} else {
-			val subject = SubjectEntity(fullName = subjectAncestorName)
-			val subjectId = subjectDataSource.upsert(subject)
-			
-			subject.copy(subjectId = subjectId)
-		}
 		
 		val studyDayMasterId = if (overrideStudyDayMasterId != null) {
 			overrideStudyDayMasterId
@@ -201,9 +180,9 @@ suspend fun List<LessonDto>.toLessonsWithSubjectIndexed(
 suspend fun List<LessonDto>.toSubjectEntitiesIndexed(
 	subjectRepository: SubjectRepository,
 	studyDayRepository: StudyDayRepository,
-): Map<Int, SubjectEntity> {
+): Map<Int, SubjectEntity?> {
 	return try {
-		val newMap = mutableMapOf<Int, SubjectEntity>()
+		val newMap = mutableMapOf<Int, SubjectEntity?>()
 		this.forEach {
 			val localedClass = it.toLessonWithSubject(
 				subjectRepository = subjectRepository,
@@ -249,16 +228,8 @@ suspend fun LessonDto.saveAsLessonWithSubject(
 	studyDayDataSource: StudyDayDao,
 ): LessonWithSubject {
 	try {
-		val existedSubject = subjectDataSource.getByName(subjectAncestorName)
-		
-		val subject = if (existedSubject != null) {
-			existedSubject
-		} else {
-			val subject = SubjectEntity(fullName = subjectAncestorName)
-			val subjectId = subjectDataSource.upsert(subject)
-			
-			subject.copy(subjectId = subjectId)
-		}
+		val subject = subjectDataSource.getByName(subjectAncestorName)
+			?: throw NoSuchElementException("There is no subject with name $subjectAncestorName")
 		
 		val studyDayMasterId = if (overrideStudyDayMasterId != null) {
 			overrideStudyDayMasterId

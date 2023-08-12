@@ -12,12 +12,12 @@ import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.mapper.save
 import com.kxsv.schooldiary.data.mapper.toSubjectEntitiesIndexed
 import com.kxsv.schooldiary.data.remote.WebService
-import com.kxsv.schooldiary.data.remote.lesson.LessonDto
-import com.kxsv.schooldiary.data.remote.lesson.ScheduleParser
+import com.kxsv.schooldiary.data.remote.dtos.LessonDto
+import com.kxsv.schooldiary.data.remote.parsers.LessonParser
+import com.kxsv.schooldiary.data.util.remote.NetworkException
 import com.kxsv.schooldiary.di.util.IoDispatcher
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.toList
-import com.kxsv.schooldiary.util.remote.NetworkException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
@@ -71,7 +71,7 @@ class LessonRepositoryImpl @Inject constructor(
 	 */
 	override suspend fun fetchLessonsOnDate(localDate: LocalDate): List<LessonDto> {
 		val dayInfo = webService.getDayInfo(localDate)
-		return ScheduleParser().parse(dayInfo, localDate)
+		return LessonParser().parse(dayInfo, localDate)
 	}
 	
 	override suspend fun fetchSoonSchedule(): Map<LocalDate, Utils.ScheduleCompareResult> {
@@ -117,7 +117,7 @@ class LessonRepositoryImpl @Inject constructor(
 				mappedLocalSchedule
 			}
 			val remoteSchedule = async {
-				ScheduleParser()
+				LessonParser()
 					.parse(dayInfo = dayInfo.await(), localDate = date)
 			}
 			

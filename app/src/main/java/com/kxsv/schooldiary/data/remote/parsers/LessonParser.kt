@@ -1,10 +1,11 @@
-package com.kxsv.schooldiary.data.remote.lesson
+package com.kxsv.schooldiary.data.remote.parsers
 
-import com.kxsv.schooldiary.util.remote.NetLessonColumn
+import com.kxsv.schooldiary.data.remote.dtos.LessonDto
+import com.kxsv.schooldiary.data.util.remote.NetLessonColumn
 import org.jsoup.select.Elements
 import java.time.LocalDate
 
-class ScheduleParser {
+class LessonParser {
 	fun parse(dayInfo: Elements, localDate: LocalDate): List<LessonDto> {
 		val schedule = mutableListOf<LessonDto>()
 		dayInfo.forEachIndexed { index, lesson ->

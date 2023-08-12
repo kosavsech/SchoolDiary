@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.data.remote.lesson
+package com.kxsv.schooldiary.data.remote.dtos
 
 import java.time.LocalDate
 

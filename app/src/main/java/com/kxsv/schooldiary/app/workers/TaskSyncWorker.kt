@@ -14,11 +14,11 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.kxsv.schooldiary.data.local.features.task.TaskAndUniqueIdWithSubject
 import com.kxsv.schooldiary.data.repository.TaskRepository
+import com.kxsv.schooldiary.data.util.remote.NetworkException
 import com.kxsv.schooldiary.di.util.NotificationsConstants
 import com.kxsv.schooldiary.di.util.NotificationsConstants.FETCHED_TASKS_GROUP_ID
 import com.kxsv.schooldiary.di.util.NotificationsConstants.FETCHED_TASKS_SUMMARY_ID
 import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
-import com.kxsv.schooldiary.util.remote.NetworkException
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.TimeoutCancellationException

@@ -6,8 +6,8 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.kxsv.schooldiary.data.local.features.DatabaseConstants
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
+import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import com.kxsv.schooldiary.util.Mark
-import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
 
 @Entity(
 	tableName = DatabaseConstants.EDU_PERFORMANCE_TABLE_NAME,

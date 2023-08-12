@@ -4,13 +4,14 @@ import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceDa
 import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceEntity
 import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceWithSubject
 import com.kxsv.schooldiary.data.local.features.subject.SubjectDao
+import com.kxsv.schooldiary.data.mapper.toEduPerformanceEntities
 import com.kxsv.schooldiary.data.remote.WebService
-import com.kxsv.schooldiary.data.remote.edu_performance.EduPerformanceDto
-import com.kxsv.schooldiary.data.remote.edu_performance.EduPerformanceParser
+import com.kxsv.schooldiary.data.remote.dtos.EduPerformanceDto
+import com.kxsv.schooldiary.data.remote.parsers.EduPerformanceParser
+import com.kxsv.schooldiary.data.util.EduPerformancePeriod
+import com.kxsv.schooldiary.data.util.remote.NetworkException
 import com.kxsv.schooldiary.di.util.ApplicationScope
 import com.kxsv.schooldiary.di.util.IoDispatcher
-import com.kxsv.schooldiary.util.remote.NetworkException
-import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -31,22 +32,22 @@ class EduPerformanceRepositoryImpl @Inject constructor(
 	
 	override fun observeAll(): Flow<List<EduPerformanceEntity>> {
 		return eduPerformanceDataSource.observeAll()
-    }
-    
-    override fun observeAllWithSubject(): Flow<List<EduPerformanceWithSubject>> {
-        return eduPerformanceDataSource.observeAllWithSubject()
-    }
-    
-    override fun observeEduPerformance(eduPerformanceId: String): Flow<EduPerformanceEntity> {
-        return eduPerformanceDataSource.observeById(eduPerformanceId)
-    }
-    
-    override fun observeEduPerformanceBySubject(
-        subjectId: Long,
-        period: EduPerformancePeriod
-    ): Flow<EduPerformanceEntity> {
-	    return eduPerformanceDataSource.observeBySubjectId(subjectId, period)
-    }
+	}
+	
+	override fun observeAllWithSubject(): Flow<List<EduPerformanceWithSubject>> {
+		return eduPerformanceDataSource.observeAllWithSubject()
+	}
+	
+	override fun observeEduPerformance(eduPerformanceId: String): Flow<EduPerformanceEntity> {
+		return eduPerformanceDataSource.observeById(eduPerformanceId)
+	}
+	
+	override fun observeEduPerformanceBySubject(
+		subjectId: Long,
+		period: EduPerformancePeriod,
+	): Flow<EduPerformanceEntity> {
+		return eduPerformanceDataSource.observeBySubjectId(subjectId, period)
+	}
 	
 	override fun observeAllWithSubjectForPeriod(period: EduPerformancePeriod): Flow<List<EduPerformanceWithSubject>> {
 		return eduPerformanceDataSource.observeAllWithSubjectByPeriod(period)
@@ -59,26 +60,26 @@ class EduPerformanceRepositoryImpl @Inject constructor(
 	/**
 	 * @throws NetworkException.NotLoggedInException
 	 */
-	override suspend fun fetchEduPerformanceByTerm(term: String): List<EduPerformanceDto> {
-		val rows = webService.getTermEduPerformance(term)
-		return if (term != "year") EduPerformanceParser().parseTerm(rows, term)
-		else EduPerformanceParser().parseYear(rows)
+	override suspend fun fetchEduPerformanceByTerm(term: EduPerformancePeriod): List<EduPerformanceDto> {
+		val rows = webService.getTermEduPerformance(term.value)
+		return if (term != EduPerformancePeriod.YEAR) {
+			EduPerformanceParser().parseTerm(rows, term)
+		} else {
+			EduPerformanceParser().parseYear(rows)
+		}
 	}
 	
 	/**
 	 * @throws NetworkException.NotLoggedInException
 	 */
 	override suspend fun fetchEduPerformance(): Unit = withContext(ioDispatcher) {
-		for (termIndex in 1..4) {
+		for (termIndex in 0..4) {
 			async {
-				val performanceEntities =
-					fetchEduPerformanceByTerm(termIndex.toString()).toEduPerformanceEntities()
+				val term = EduPerformancePeriod.values()[termIndex]
+				val performanceEntities = fetchEduPerformanceByTerm(term = term)
+					.toEduPerformanceEntities(subjectDataSource)
 				updateDatabase(performanceEntities)
 			}
-		}
-		async {
-			val performanceEntities = fetchEduPerformanceByTerm("year").toEduPerformanceEntities()
-			updateDatabase(performanceEntities)
 		}
 	}
 	
@@ -108,36 +109,5 @@ class EduPerformanceRepositoryImpl @Inject constructor(
 				eduPerformanceDataSource.upsert(performanceEntity)
 			}
 		}
-	
-	private suspend fun EduPerformanceDto.toEduPerformanceEntity(): EduPerformanceEntity {
-		try {
-			val subjectMasterId =
-				subjectDataSource.getByName(subjectAncestorName)?.subjectId
-					?: throw NoSuchElementException("Not found subject with name $subjectAncestorName")
-			// TODO: add prompt to create subject with such name, or create it forcibly
-			return EduPerformanceEntity(
-				subjectMasterId = subjectMasterId,
-				marks = marks,
-				finalMark = finalMark,
-				examMark = examMark,
-				period = period,
-				eduPerformanceId = generateEduPerformanceId(subjectAncestorName, period)
-			)
-			
-		} catch (e: NoSuchElementException) {
-			throw RuntimeException("Failed to convert network to local", e)
-		}
-	}
-	
-	private suspend fun List<EduPerformanceDto>.toEduPerformanceEntities() =
-		map { it.toEduPerformanceEntity() }
-	
-	
-	private fun generateEduPerformanceId(
-		subjectAncestorName: String,
-		period: EduPerformancePeriod,
-	): String {
-		return (subjectAncestorName + "_" + period.toString())
-	}
 	
 }

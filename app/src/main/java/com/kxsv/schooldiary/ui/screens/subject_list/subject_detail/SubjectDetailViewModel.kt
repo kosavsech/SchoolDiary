@@ -11,13 +11,13 @@ import com.kxsv.schooldiary.data.repository.EduPerformanceRepository
 import com.kxsv.schooldiary.data.repository.GradeRepository
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
+import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import com.kxsv.schooldiary.di.util.IoDispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.util.ui.Async
-import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
 import com.kxsv.schooldiary.util.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -38,7 +38,7 @@ data class SubjectDetailUiState(
 	val subjectWithTeachers: SubjectWithTeachers? = null,
 	val grades: List<GradeEntity> = emptyList(),
 	val eduPerformance: EduPerformanceEntity? = null,
-	val period: EduPerformancePeriod = EduPerformancePeriod.FOURTH_TERM,
+	val period: EduPerformancePeriod = EduPerformancePeriod.FOURTH,
 	val targetMark: Double = 0.0,
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
@@ -63,7 +63,7 @@ class SubjectDetailViewModel @Inject constructor(
 	val navArgs: SubjectDetailScreenNavArgs = savedStateHandle.navArgs()
 	val subjectId = navArgs.subjectId
 	
-	private val _period = MutableStateFlow(EduPerformancePeriod.FOURTH_TERM)
+	private val _period = MutableStateFlow(EduPerformancePeriod.FOURTH)
 	
 	private val _subjectWithTeachersAsync = subjectRepository.observeSubjectWithTeachers(subjectId)
 	

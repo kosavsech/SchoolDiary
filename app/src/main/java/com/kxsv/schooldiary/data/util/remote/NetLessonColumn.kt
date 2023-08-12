@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.util.remote
+package com.kxsv.schooldiary.data.util.remote
 
 enum class NetLessonColumn {
 	TIMINGS,

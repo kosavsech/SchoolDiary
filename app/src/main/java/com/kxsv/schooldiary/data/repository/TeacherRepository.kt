@@ -8,19 +8,25 @@ interface TeacherRepository {
 	
 	fun observeTeachers(): Flow<List<TeacherEntity>>
 	
-	fun getTeacherStream(teacherId: Int): Flow<TeacherEntity>
+	fun getTeacherStream(teacherId: String): Flow<TeacherEntity>
 	
 	suspend fun getTeachers(): List<TeacherEntity>
 	
-	suspend fun getTeacher(teacherId: Int): TeacherEntity?
-
-    suspend fun getTeacherWithSubjects(teacherId: Int): TeacherWithSubjects?
+	suspend fun getById(teacherId: String): TeacherEntity?
 	
-	suspend fun createTeacher(teacher: TeacherEntity)
+	suspend fun getByFullName(
+		lastName: String,
+		firstName: String,
+		patronymic: String,
+	): TeacherEntity?
+	
+	suspend fun getTeacherWithSubjects(teacherId: String): TeacherWithSubjects?
+	
+	suspend fun createTeacher(teacher: TeacherEntity): String
 	
 	suspend fun updateTeacher(teacher: TeacherEntity)
-
-    suspend fun deleteTeachers()
-
-    suspend fun deleteTeacher(teacherId: Int)
+	
+	suspend fun deleteTeachers()
+	
+	suspend fun deleteTeacher(teacherId: String)
 }

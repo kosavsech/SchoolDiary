@@ -1,6 +1,4 @@
-package com.kxsv.schooldiary.data.remote.utils
-
-import com.kxsv.schooldiary.util.remote.NetworkException
+package com.kxsv.schooldiary.data.util.remote
 
 object RemoteUtils {
 	fun handleErrorResponse(result: String) {

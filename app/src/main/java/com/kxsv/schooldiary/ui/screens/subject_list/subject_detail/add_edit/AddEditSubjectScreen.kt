@@ -46,7 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
-import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity.Companion.fullName
+import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity.Companion.shortName
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditSubjectTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AddEditSubjectScreenNavActions
 import com.kxsv.schooldiary.ui.screens.teacher_list.AddEditTeacherDialog
@@ -98,7 +98,7 @@ fun AddEditSubjectScreen(
 		}
 	) { paddingValues ->
 		
-		val onCheckedChange = remember<(Set<Int>) -> Unit> {
+		val onCheckedChange = remember<(Set<String>) -> Unit> {
 			{ viewModel.updateSelectedTeachers(it) }
 		}
 		val updateFullName = remember<(String) -> Unit> {
@@ -178,9 +178,9 @@ private fun AddEditSubjectContent(
 	displayName: String,
 	cabinet: String,
 	availableTeachers: List<TeacherEntity>,
-	selectedTeachersIds: Set<Int>,
+	selectedTeachersIds: Set<String>,
 	onCreateTeacher: () -> Unit,
-	onCheckedChange: (Set<Int>) -> Unit,
+	onCheckedChange: (Set<String>) -> Unit,
 	onFullNameChanged: (String) -> Unit,
 	onDisplayNameChanged: (String) -> Unit,
 	onCabinetChanged: (String) -> Unit,
@@ -282,7 +282,7 @@ private fun AddEditSubjectContent(
 						var text = ""
 						selectedTeacherEntities.forEachIndexed { index, teacher ->
 							text += (if (index != 0) ", " else "")
-							text += teacher.fullName()
+							text += teacher.shortName()
 						}
 						return@remember text
 					}
@@ -321,14 +321,14 @@ private fun AddEditSubjectContent(
 fun MaterialDialogScope.ModdedListItemsMultiChoice(
 	list: List<TeacherEntity>,
 	state: LazyListState = rememberLazyListState(),
-	selectedTeachersIds: Set<Int> = setOf(),
-	onCheckedChange: (indices: Set<Int>) -> Unit = {},
+	selectedTeachersIds: Set<String> = setOf(),
+	onCheckedChange: (Set<String>) -> Unit = {},
 ) {
 	var dialogSelectedTeachersIds by remember { mutableStateOf(selectedTeachersIds) }
 	
 	DialogCallback { onCheckedChange(dialogSelectedTeachersIds) }
 	
-	val onChecked = { teacherEntityId: Int ->
+	val onChecked = { teacherEntityId: String ->
 		/* Have to create temp var as mutableState doesn't trigger on adding to set */
 		val newSelectedTeachersIds = dialogSelectedTeachersIds.toMutableSet()
 		if (teacherEntityId in dialogSelectedTeachersIds) {
@@ -378,7 +378,7 @@ private fun MultiChoiceItem(
 				.width(32.dp)
 		)
 		Text(
-			item.fullName(),
+			item.shortName(),
 			color = MaterialTheme.colorScheme.onSurface,
 			style = MaterialTheme.typography.bodyMedium
 		)

@@ -12,6 +12,8 @@ import com.kxsv.schooldiary.data.repository.StudyDayRepository
 import com.kxsv.schooldiary.data.repository.StudyDayRepositoryImpl
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.data.repository.SubjectRepositoryImpl
+import com.kxsv.schooldiary.data.repository.SubjectTeacherRepository
+import com.kxsv.schooldiary.data.repository.SubjectTeacherRepositoryImpl
 import com.kxsv.schooldiary.data.repository.TaskRepository
 import com.kxsv.schooldiary.data.repository.TaskRepositoryImpl
 import com.kxsv.schooldiary.data.repository.TeacherRepository
@@ -69,5 +71,9 @@ abstract class RepositoryModule {
 	@Binds
 	@Singleton
 	abstract fun bindTaskRepository(repository: TaskRepositoryImpl): TaskRepository
+	
+	@Binds
+	@Singleton
+	abstract fun bindSubjectTeacherRepository(repository: SubjectTeacherRepositoryImpl): SubjectTeacherRepository
 }
 

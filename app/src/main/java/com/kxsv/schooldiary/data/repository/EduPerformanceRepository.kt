@@ -2,8 +2,8 @@ package com.kxsv.schooldiary.data.repository
 
 import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceEntity
 import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceWithSubject
-import com.kxsv.schooldiary.data.remote.edu_performance.EduPerformanceDto
-import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
+import com.kxsv.schooldiary.data.remote.dtos.EduPerformanceDto
+import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import kotlinx.coroutines.flow.Flow
 
 interface EduPerformanceRepository {
@@ -23,7 +23,7 @@ interface EduPerformanceRepository {
 	
 	suspend fun getEduPerformances(): List<EduPerformanceEntity>
 	
-	suspend fun fetchEduPerformanceByTerm(term: String): List<EduPerformanceDto>
+	suspend fun fetchEduPerformanceByTerm(term: EduPerformancePeriod): List<EduPerformanceDto>
 	
 	/**
 	 * @throws NetworkException.NotLoggedInException

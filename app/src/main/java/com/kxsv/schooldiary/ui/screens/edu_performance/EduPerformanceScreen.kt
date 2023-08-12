@@ -35,13 +35,13 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceWithSubject
+import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.EduPerformanceTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.EduPerformanceScreenNavActions
 import com.kxsv.schooldiary.util.Mark
 import com.kxsv.schooldiary.util.Mark.Companion.getStringValueFrom
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.stringRoundTo
-import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.kxsv.schooldiary.util.ui.TermSelector
 import com.ramcosta.composedestinations.annotation.Destination
@@ -132,7 +132,7 @@ private fun PerformanceRow(
 	performanceWithSubject: EduPerformanceWithSubject,
 	onEduPerformanceClick: (Long) -> Unit,
 ) {
-	if (performanceWithSubject.eduPerformance.period != EduPerformancePeriod.YEAR_PERIOD) {
+	if (performanceWithSubject.eduPerformance.period != EduPerformancePeriod.YEAR) {
 		Row(
 			verticalAlignment = Alignment.CenterVertically,
 			horizontalArrangement = Arrangement.SpaceBetween,

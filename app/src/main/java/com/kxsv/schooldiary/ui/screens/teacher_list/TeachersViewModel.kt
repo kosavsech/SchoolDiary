@@ -27,7 +27,7 @@ data class TeachersUiState(
 	val firstName: String = "",
 	val lastName: String = "",
 	val patronymic: String = "",
-	val teacherId: Int? = null,
+	val teacherId: String = "",
 	val phoneNumber: String = "",
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
@@ -70,8 +70,8 @@ class TeachersViewModel @Inject constructor(
 		_uiState.update { it.copy(userMessage = null) }
 	}
 	
-	fun deleteTeacher(teacherId: Int) {
-		if (teacherId == 0) throw RuntimeException("deleteTeacher() was called but no teacher id is provided.")
+	fun deleteTeacher(teacherId: String) {
+		if (teacherId == "") throw RuntimeException("deleteTeacher() was called but no teacher id is provided.")
 		viewModelScope.launch(ioDispatcher) {
 			teacherRepository.deleteTeacher(teacherId)
 			showEditResultMessage(DELETE_RESULT_OK)
@@ -87,7 +87,7 @@ class TeachersViewModel @Inject constructor(
 	}
 	
 	fun saveTeacher() {
-		if (uiState.value.teacherId == null) {
+		if (uiState.value.teacherId == "") {
 			createNewTeacher()
 			showEditResultMessage(ADD_RESULT_OK)
 		} else {
@@ -105,7 +105,7 @@ class TeachersViewModel @Inject constructor(
 				lastName = "",
 				patronymic = "",
 				phoneNumber = "",
-				teacherId = null
+				teacherId = ""
 			)
 		}
 	}
@@ -113,23 +113,23 @@ class TeachersViewModel @Inject constructor(
 	private fun createNewTeacher() = viewModelScope.launch(ioDispatcher) {
 		teacherRepository.createTeacher(
 			TeacherEntity(
-				firstName = uiState.value.firstName,
-				lastName = uiState.value.lastName,
-				patronymic = uiState.value.patronymic,
-				phoneNumber = uiState.value.phoneNumber
+				lastName = uiState.value.lastName.trim(),
+				firstName = uiState.value.firstName.trim(),
+				patronymic = uiState.value.patronymic.trim(),
+				phoneNumber = uiState.value.phoneNumber.trim()
 			)
 		)
 	}
 	
 	private fun updateTeacher() = viewModelScope.launch(ioDispatcher) {
-		if (uiState.value.teacherId == null) throw RuntimeException("updateTeacher() was called but no teacher is new.")
-		teacherRepository.createTeacher(
+		if (uiState.value.teacherId == "") throw RuntimeException("updateTeacher() was called but no teacher is new.")
+		teacherRepository.updateTeacher(
 			TeacherEntity(
-				firstName = uiState.value.firstName,
-				lastName = uiState.value.lastName,
-				patronymic = uiState.value.patronymic,
-				phoneNumber = uiState.value.phoneNumber,
-				teacherId = uiState.value.teacherId!!
+				lastName = uiState.value.lastName.trim(),
+				firstName = uiState.value.firstName.trim(),
+				patronymic = uiState.value.patronymic.trim(),
+				phoneNumber = uiState.value.phoneNumber.trim(),
+				teacherId = uiState.value.teacherId
 			)
 		)
 	}

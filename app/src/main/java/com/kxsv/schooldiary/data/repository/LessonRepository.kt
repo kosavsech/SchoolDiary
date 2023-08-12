@@ -3,7 +3,7 @@ package com.kxsv.schooldiary.data.repository
 import com.kxsv.schooldiary.data.local.features.lesson.LessonEntity
 import com.kxsv.schooldiary.data.local.features.lesson.LessonWithStudyDay
 import com.kxsv.schooldiary.data.local.features.lesson.LessonWithSubject
-import com.kxsv.schooldiary.data.remote.lesson.LessonDto
+import com.kxsv.schooldiary.data.remote.dtos.LessonDto
 import com.kxsv.schooldiary.util.Utils
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate

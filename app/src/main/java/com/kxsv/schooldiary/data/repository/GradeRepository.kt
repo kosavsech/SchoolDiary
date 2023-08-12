@@ -2,7 +2,9 @@ package com.kxsv.schooldiary.data.repository
 
 import com.kxsv.schooldiary.data.local.features.grade.GradeEntity
 import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
-import com.kxsv.schooldiary.data.remote.grade.DayGradeDto
+import com.kxsv.schooldiary.data.remote.dtos.DayGradeDto
+import com.kxsv.schooldiary.data.remote.dtos.TeacherDto
+import com.kxsv.schooldiary.data.util.remote.NetworkException
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
@@ -22,9 +24,12 @@ interface GradeRepository {
 	
 	suspend fun getGrades(): List<GradeEntity>
 	
-	suspend fun fetchGradeByDate(localDate: LocalDate): List<DayGradeDto>
+	suspend fun fetchGradesByDate(localDate: LocalDate): Pair<Map<TeacherDto, Set<String>>, List<DayGradeDto>>
 	
-	suspend fun fetchRecentGrades(): List<GradeWithSubject>
+	/**
+	 * @throws NetworkException.NotLoggedInException
+	 */
+	suspend fun fetchRecentGradesWithTeachers(): Pair<MutableList<DayGradeDto>, MutableMap<TeacherDto, MutableSet<String>>>
 	
 	suspend fun getGradesWithSubjects(): List<GradeWithSubject>
 	

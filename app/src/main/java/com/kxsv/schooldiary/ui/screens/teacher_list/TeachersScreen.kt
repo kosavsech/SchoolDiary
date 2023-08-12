@@ -36,7 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
-import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity.Companion.fullName
+import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity.Companion.shortName
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.TeachersTopAppBar
 import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.ramcosta.composedestinations.annotation.Destination
@@ -75,7 +75,7 @@ fun TeachersScreen(
 				teacherDialogState.show()
 			}
 		}
-		val deleteTeacher = remember<(Int) -> Unit> {
+		val deleteTeacher = remember<(String) -> Unit> {
 			{ viewModel.deleteTeacher(it) }
 		}
 		TeachersContent(
@@ -134,7 +134,7 @@ private fun TeachersContent(
 	isLoading: Boolean,
 	teacherEntities: List<TeacherEntity>,
 	onTeacherClick: (TeacherEntity) -> Unit,
-	onDeleteClick: (Int) -> Unit,
+	onDeleteClick: (String) -> Unit,
 	modifier: Modifier = Modifier,
 ) {
 	LoadingContent(
@@ -188,7 +188,7 @@ private fun TeacherItem(
 				.padding(horizontal = dimensionResource(R.dimen.horizontal_margin))
 		) {
 			Text(
-				text = teacherEntity.fullName(),
+				text = teacherEntity.shortName(),
 				style = MaterialTheme.typography.bodyLarge,
 			)
 			if (teacherEntity.phoneNumber.isNotBlank()) {
@@ -215,26 +215,26 @@ private fun TeachersContentPreview() {
 			isLoading = false,
 			teacherEntities = listOf(
 				TeacherEntity(
-					firstName = "Ivan",
 					lastName = "Stepanov",
+					firstName = "Ivan",
 					patronymic = "Petrovich",
 					phoneNumber = "+756248932572"
 				),
 				TeacherEntity(
-					firstName = "Stepan",
 					lastName = "Ivanov",
+					firstName = "Stepan",
 					patronymic = "Vasilievich",
 					phoneNumber = ""
 				),
 				TeacherEntity(
-					firstName = "Oleg",
 					lastName = "Kostilev",
+					firstName = "Oleg",
 					patronymic = "Sergeevich",
 					phoneNumber = "+756248932572"
 				),
 				TeacherEntity(
-					firstName = "Alex",
 					lastName = "Simonov",
+					firstName = "Alex",
 					patronymic = "Yegorovich",
 					phoneNumber = "+756248932572"
 				),
@@ -250,8 +250,8 @@ private fun TeacherItemPreview() {
 	Surface {
 		TeacherItem(
 			teacherEntity = TeacherEntity(
-				firstName = "Ivan",
 				lastName = "Stepanov",
+				firstName = "Ivan",
 				patronymic = "Yegorovich",
 				phoneNumber = "+756248932572"
 			),

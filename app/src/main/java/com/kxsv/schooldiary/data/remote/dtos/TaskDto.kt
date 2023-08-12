@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.data.remote.task
+package com.kxsv.schooldiary.data.remote.dtos
 
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import java.time.LocalDate

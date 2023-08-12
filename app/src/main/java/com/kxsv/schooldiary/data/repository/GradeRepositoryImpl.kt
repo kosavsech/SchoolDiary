@@ -1,26 +1,20 @@
 package com.kxsv.schooldiary.data.repository
 
-import android.util.Log
-import com.kxsv.schooldiary.data.DataUtils.generateGradeId
 import com.kxsv.schooldiary.data.local.features.grade.GradeDao
 import com.kxsv.schooldiary.data.local.features.grade.GradeEntity
 import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
-import com.kxsv.schooldiary.data.local.features.subject.SubjectDao
-import com.kxsv.schooldiary.data.mapper.toGradesWithSubject
 import com.kxsv.schooldiary.data.remote.WebService
-import com.kxsv.schooldiary.data.remote.grade.DayGradeDto
-import com.kxsv.schooldiary.data.remote.grade.GradeParser
-import com.kxsv.schooldiary.di.util.DefaultDispatcher
+import com.kxsv.schooldiary.data.remote.dtos.DayGradeDto
+import com.kxsv.schooldiary.data.remote.dtos.TeacherDto
+import com.kxsv.schooldiary.data.remote.parsers.DayGradeParser
+import com.kxsv.schooldiary.data.util.DataIdGenUtils.generateGradeId
+import com.kxsv.schooldiary.data.util.remote.NetworkException
 import com.kxsv.schooldiary.di.util.IoDispatcher
 import com.kxsv.schooldiary.util.Utils
-import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
 import com.kxsv.schooldiary.util.Utils.toList
-import com.kxsv.schooldiary.util.remote.NetworkException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import java.time.DayOfWeek
@@ -34,8 +28,6 @@ private const val TAG = "GradeRepositoryImpl"
 class GradeRepositoryImpl @Inject constructor(
 	private val gradeDataSource: GradeDao,
 	private val webService: WebService,
-	private val subjectDataSource: SubjectDao,
-	@DefaultDispatcher private val dispatcher: CoroutineDispatcher,
 	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : GradeRepository {
 	
@@ -70,30 +62,35 @@ class GradeRepositoryImpl @Inject constructor(
 	/**
 	 * @throws NetworkException.NotLoggedInException
 	 */
-	override suspend fun fetchGradeByDate(localDate: LocalDate): List<DayGradeDto> {
+	override suspend fun fetchGradesByDate(localDate: LocalDate): Pair<Map<TeacherDto, Set<String>>, List<DayGradeDto>> {
 		val dayInfo = webService.getDayInfo(localDate)
-		return GradeParser().parse(dayInfo, localDate)
+		return DayGradeParser().parse(dayInfo, localDate)
 	}
 	
 	/**
 	 * @throws NetworkException.NotLoggedInException
 	 */
-	override suspend fun fetchRecentGrades(): List<GradeWithSubject> {
+	override suspend fun fetchRecentGradesWithTeachers(): Pair<MutableList<DayGradeDto>, MutableMap<TeacherDto, MutableSet<String>>> {
 		return withContext(ioDispatcher) {
 			withTimeout(15000L) {
-				val newGradesFound: MutableList<GradeWithSubject> = mutableListOf()
-				// todo change to NOW
+				val fetchedGrades: MutableList<DayGradeDto> = mutableListOf()
+				val fetchedTeachers: MutableMap<TeacherDto, MutableSet<String>> = mutableMapOf()
+				
 				val startRange = Utils.currentDate
-				val period = (startRange.minusDays(14)..startRange).toList()
-				period.forEach { date ->
+				(startRange.minusDays(14)..startRange).toList().forEach { date ->
 					if (date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
-					async {
-						val gradesWithSubject = fetchGradeByDate(date)
-							.toGradesWithSubject(subjectDataSource = subjectDataSource)
-						newGradesFound.addAll(updateDatabase(gradesWithSubject))
+					val teachersAndGradesWithSubject = async { fetchGradesByDate(date) }.await()
+					teachersAndGradesWithSubject.first.keys.forEach {
+						val subjectNames = fetchedTeachers.getOrDefault(it, mutableSetOf())
+						subjectNames.addAll(teachersAndGradesWithSubject.first.getValue(it))
+						fetchedTeachers[it] = subjectNames
 					}
+					
+					val gradesWithSubject = teachersAndGradesWithSubject.second
+					
+					fetchedGrades.addAll(gradesWithSubject)
 				}
-				return@withTimeout newGradesFound
+				Pair(fetchedGrades, fetchedTeachers)
 			}
 		}
 	}
@@ -134,31 +131,5 @@ class GradeRepositoryImpl @Inject constructor(
 	
 	override suspend fun deleteGrade(gradeId: String) {
 		gradeDataSource.deleteById(gradeId)
-	}
-	
-	private suspend fun updateDatabase(fetchedGradeEntities: List<GradeWithSubject>): List<GradeWithSubject> {
-		return coroutineScope {
-			val newGradesFound: MutableList<GradeWithSubject> = mutableListOf()
-			for (fetchedGradeEntity in fetchedGradeEntities) {
-				launch(ioDispatcher) {
-					val isGradeExisted = measurePerformanceInMS(
-						{ time, result ->
-							Log.e(
-								TAG,
-								"gradeDataSource.getById: $time ms\n found = $result",
-							)
-						}
-					) {
-						gradeDataSource.getById(fetchedGradeEntity.grade.gradeId) != null
-					}
-					gradeDataSource.upsert(fetchedGradeEntity.grade)
-					if (!isGradeExisted) {
-						newGradesFound.add(fetchedGradeEntity)
-						Log.i(TAG, "updateDatabase: FOUND NEW GRADE:\n${fetchedGradeEntity.grade}")
-					}
-				}
-			}
-			newGradesFound
-		}
 	}
 }

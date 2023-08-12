@@ -15,6 +15,8 @@ interface SubjectRepository {
 	
 	fun getSubjectWithGradesStream(subjectId: Long): Flow<SubjectWithGrades>
 	
+	suspend fun fetchSubjectNames(): MutableList<String>
+	
 	suspend fun getSubjects(): List<SubjectEntity>
 	
 	suspend fun getSubject(subjectId: Long): SubjectEntity?
@@ -25,9 +27,9 @@ interface SubjectRepository {
 	
 	suspend fun getSubjectWithTeachers(subjectId: Long): SubjectWithTeachers?
 	
-	suspend fun createSubject(subject: SubjectEntity, teachersIds: Set<Int>): Long
+	suspend fun createSubject(subject: SubjectEntity, teachersIds: Set<String>): Long
 	
-	suspend fun updateSubject(subject: SubjectEntity, teachersIds: Set<Int>?)
+	suspend fun updateSubject(subject: SubjectEntity, teachersIds: Set<String>?)
 	
 	suspend fun deleteAllSubjects()
 	

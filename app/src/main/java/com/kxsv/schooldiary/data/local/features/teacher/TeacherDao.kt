@@ -14,17 +14,24 @@ interface TeacherDao {
 	fun observeAll(): Flow<List<TeacherEntity>>
 	
 	@Query("SELECT * FROM $TEACHER_TABLE_NAME WHERE teacherId = :teacherId")
-	fun observeById(teacherId: Int): Flow<TeacherEntity>
+	fun observeById(teacherId: String): Flow<TeacherEntity>
 	
 	@Query("SELECT * FROM $TEACHER_TABLE_NAME ORDER BY patronymic ASC")
 	suspend fun getAll(): List<TeacherEntity>
 	
 	@Query("SELECT * FROM $TEACHER_TABLE_NAME WHERE teacherId = :teacherId")
-	suspend fun getById(teacherId: Int): TeacherEntity?
+	suspend fun getById(teacherId: String): TeacherEntity?
+	
+	@Query("SELECT * FROM $TEACHER_TABLE_NAME WHERE lastName = :lastName AND firstName = :firstName AND patronymic = :patronymic")
+	suspend fun getByFullName(
+		lastName: String,
+		firstName: String,
+		patronymic: String,
+	): TeacherEntity?
 	
 	@Transaction
 	@Query("SELECT * FROM $TEACHER_TABLE_NAME WHERE teacherId = :teacherId")
-	suspend fun getByIdWithSubjects(teacherId: Int): TeacherWithSubjects?
+	suspend fun getByIdWithSubjects(teacherId: String): TeacherWithSubjects?
 	
 	@Upsert
 	suspend fun upsertAll(teachers: List<TeacherEntity>)
@@ -36,5 +43,5 @@ interface TeacherDao {
 	suspend fun deleteAll()
 	
 	@Query("DELETE FROM $TEACHER_TABLE_NAME WHERE teacherId = :teacherId")
-	suspend fun deleteById(teacherId: Int)
+	suspend fun deleteById(teacherId: String)
 }

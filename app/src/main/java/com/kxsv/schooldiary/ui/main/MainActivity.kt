@@ -10,6 +10,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.kxsv.schooldiary.app.workers.GradeSyncWorker
 import com.kxsv.schooldiary.app.workers.ScheduleSyncWorker
+import com.kxsv.schooldiary.app.workers.SubjectsSyncWorker
 import com.kxsv.schooldiary.app.workers.TaskSyncWorker
 import com.kxsv.schooldiary.ui.main.navigation.NavGraph
 import com.kxsv.schooldiary.ui.screens.login.SplashViewModel
@@ -30,6 +31,7 @@ class MainActivity : ComponentActivity() {
 		val constraints = Constraints.Builder()
 			.setRequiredNetworkType(NetworkType.CONNECTED)
 			.build()
+		
 		// TODO: add user setting to edit this interval
 		val gradeSyncWorkRequest =
 			PeriodicWorkRequestBuilder<GradeSyncWorker>(360, TimeUnit.MINUTES)
@@ -47,7 +49,19 @@ class MainActivity : ComponentActivity() {
 				.setConstraints(constraints)
 				.build()
 		
+		// TODO: add user setting to edit this interval
+		val subjectsSyncWorkRequest =
+			PeriodicWorkRequestBuilder<SubjectsSyncWorker>(24, TimeUnit.HOURS)
+				.setConstraints(constraints)
+				.build()
+		
 		val workManager = WorkManager.getInstance(applicationContext)
+		workManager.enqueueUniquePeriodicWork(
+			"SubjectsSyncWorker",
+			ExistingPeriodicWorkPolicy.UPDATE,
+			subjectsSyncWorkRequest
+		)
+		
 		workManager.enqueueUniquePeriodicWork(
 			"RecentGradesSyncWorker",
 			ExistingPeriodicWorkPolicy.UPDATE,

@@ -1,9 +1,9 @@
 package com.kxsv.schooldiary.data.mapper
 
-import com.kxsv.schooldiary.data.DataUtils.generateUniqueTaskId
 import com.kxsv.schooldiary.data.local.features.task.TaskAndUniqueIdWithSubject
 import com.kxsv.schooldiary.data.local.features.task.TaskEntity
-import com.kxsv.schooldiary.data.remote.task.TaskDto
+import com.kxsv.schooldiary.data.remote.dtos.TaskDto
+import com.kxsv.schooldiary.data.util.DataIdGenUtils.generateUniqueTaskId
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 

@@ -2,7 +2,7 @@ package com.kxsv.schooldiary.data.local.features.edu_performance
 
 import androidx.room.*
 import com.kxsv.schooldiary.data.local.features.DatabaseConstants
-import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
+import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import kotlinx.coroutines.flow.Flow
 
 @Dao

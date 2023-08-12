@@ -6,6 +6,9 @@ import com.kxsv.schooldiary.data.local.features.subject.SubjectDao
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.subject.SubjectWithGrades
 import com.kxsv.schooldiary.data.local.features.subject.SubjectWithTeachers
+import com.kxsv.schooldiary.data.remote.WebService
+import com.kxsv.schooldiary.data.remote.parsers.SubjectParser
+import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -14,7 +17,7 @@ import javax.inject.Singleton
 class SubjectRepositoryImpl @Inject constructor(
 	private val subjectDataSource: SubjectDao,
 	private val subjectTeacherDataSource: SubjectTeacherDao,
-	//@DefaultDispatcher private val dispatcher: CoroutineDispatcher,
+	private val webService: WebService,
 ) : SubjectRepository {
 	
 	override fun observeAll(): Flow<List<SubjectEntity>> {
@@ -31,6 +34,11 @@ class SubjectRepositoryImpl @Inject constructor(
 	
 	override fun getSubjectWithGradesStream(subjectId: Long): Flow<SubjectWithGrades> {
 		return subjectDataSource.observeByIdWithGrades(subjectId)
+	}
+	
+	override suspend fun fetchSubjectNames(): MutableList<String> {
+		val termYearRows = webService.getTermEduPerformance(term = EduPerformancePeriod.YEAR.value)
+		return SubjectParser().parse(termYearRows)
 	}
 	
 	override suspend fun getSubjects(): List<SubjectEntity> {
@@ -53,7 +61,7 @@ class SubjectRepositoryImpl @Inject constructor(
 		return subjectDataSource.getByIdWithTeachers(subjectId)
 	}
 	
-	override suspend fun createSubject(subject: SubjectEntity, teachersIds: Set<Int>): Long {
+	override suspend fun createSubject(subject: SubjectEntity, teachersIds: Set<String>): Long {
 		val subjectId = subjectDataSource.upsert(subject)
 		
 		teachersIds.forEach { teacherId ->
@@ -64,7 +72,7 @@ class SubjectRepositoryImpl @Inject constructor(
 		return subjectId
 	}
 	
-	override suspend fun updateSubject(subject: SubjectEntity, teachersIds: Set<Int>?) {
+	override suspend fun updateSubject(subject: SubjectEntity, teachersIds: Set<String>?) {
 		subjectDataSource.upsert(subject)
 		
 		if (teachersIds != null) {

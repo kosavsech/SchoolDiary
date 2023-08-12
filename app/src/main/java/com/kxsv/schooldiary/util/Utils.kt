@@ -3,7 +3,7 @@ package com.kxsv.schooldiary.util
 import android.util.Log
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
-import com.kxsv.schooldiary.util.ui.EduPerformancePeriod
+import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -284,29 +284,29 @@ object Utils {
 	) {
 		companion object {
 			val allTerms = listOf(
-				PeriodButton(text = "First term", callbackPeriod = EduPerformancePeriod.FIRST_TERM),
+				PeriodButton(text = "First term", callbackPeriod = EduPerformancePeriod.FIRST),
 				PeriodButton(
 					text = "Second term",
-					callbackPeriod = EduPerformancePeriod.SECOND_TERM
+					callbackPeriod = EduPerformancePeriod.SECOND
 				),
-				PeriodButton(text = "Third term", callbackPeriod = EduPerformancePeriod.THIRD_TERM),
+				PeriodButton(text = "Third term", callbackPeriod = EduPerformancePeriod.THIRD),
 				PeriodButton(
 					text = "Fourth term",
-					callbackPeriod = EduPerformancePeriod.FOURTH_TERM
+					callbackPeriod = EduPerformancePeriod.FOURTH
 				),
 			)
 			val all = listOf(
-				PeriodButton(text = "First term", callbackPeriod = EduPerformancePeriod.FIRST_TERM),
+				PeriodButton(text = "First term", callbackPeriod = EduPerformancePeriod.FIRST),
 				PeriodButton(
 					text = "Second term",
-					callbackPeriod = EduPerformancePeriod.SECOND_TERM
+					callbackPeriod = EduPerformancePeriod.SECOND
 				),
-				PeriodButton(text = "Third term", callbackPeriod = EduPerformancePeriod.THIRD_TERM),
+				PeriodButton(text = "Third term", callbackPeriod = EduPerformancePeriod.THIRD),
 				PeriodButton(
 					text = "Fourth term",
-					callbackPeriod = EduPerformancePeriod.FOURTH_TERM
+					callbackPeriod = EduPerformancePeriod.FOURTH
 				),
-				PeriodButton(text = "Year", callbackPeriod = EduPerformancePeriod.YEAR_PERIOD),
+				PeriodButton(text = "Year", callbackPeriod = EduPerformancePeriod.YEAR),
 			)
 		}
 	}

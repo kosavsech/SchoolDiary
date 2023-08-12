@@ -17,6 +17,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.kxsv.schooldiary.data.repository.LessonRepository
+import com.kxsv.schooldiary.data.util.remote.NetworkException
 import com.kxsv.schooldiary.di.util.NotificationsConstants
 import com.kxsv.schooldiary.di.util.NotificationsConstants.FETCHED_SCHEDULE_GROUP_ID
 import com.kxsv.schooldiary.di.util.NotificationsConstants.FETCHED_SCHEDULE_SUMMARY_ID
@@ -24,7 +25,6 @@ import com.kxsv.schooldiary.ui.main.MainActivity
 import com.kxsv.schooldiary.ui.screens.destinations.DayScheduleScreenDestination
 import com.kxsv.schooldiary.ui.screens.grade_list.MY_URI
 import com.kxsv.schooldiary.util.Utils
-import com.kxsv.schooldiary.util.remote.NetworkException
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.TimeoutCancellationException
