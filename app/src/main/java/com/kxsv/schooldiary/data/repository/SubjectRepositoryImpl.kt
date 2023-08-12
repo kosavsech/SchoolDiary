@@ -53,7 +53,7 @@ class SubjectRepositoryImpl @Inject constructor(
 		return subjectDataSource.getByIdWithTeachers(subjectId)
 	}
 	
-	override suspend fun createSubject(subject: SubjectEntity, teachersIds: Set<Int>) {
+	override suspend fun createSubject(subject: SubjectEntity, teachersIds: Set<Int>): Long {
 		val subjectId = subjectDataSource.upsert(subject)
 		
 		teachersIds.forEach { teacherId ->
@@ -61,6 +61,7 @@ class SubjectRepositoryImpl @Inject constructor(
 				SubjectTeacher(subjectId = subjectId, teacherId = teacherId)
 			)
 		}
+		return subjectId
 	}
 	
 	override suspend fun updateSubject(subject: SubjectEntity, teachersIds: Set<Int>?) {

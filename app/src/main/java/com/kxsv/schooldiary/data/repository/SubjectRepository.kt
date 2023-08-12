@@ -25,7 +25,7 @@ interface SubjectRepository {
 	
 	suspend fun getSubjectWithTeachers(subjectId: Long): SubjectWithTeachers?
 	
-	suspend fun createSubject(subject: SubjectEntity, teachersIds: Set<Int>)
+	suspend fun createSubject(subject: SubjectEntity, teachersIds: Set<Int>): Long
 	
 	suspend fun updateSubject(subject: SubjectEntity, teachersIds: Set<Int>?)
 	

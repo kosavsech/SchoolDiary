@@ -11,7 +11,7 @@ import com.kxsv.schooldiary.data.local.features.lesson.LessonWithSubject
 import com.kxsv.schooldiary.data.local.features.study_day.StudyDayEntity
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import com.kxsv.schooldiary.data.mapper.toLessonEntities
-import com.kxsv.schooldiary.data.mapper.toLocalWithSubject
+import com.kxsv.schooldiary.data.mapper.toLessonsWithSubjectIndexed
 import com.kxsv.schooldiary.data.repository.LessonRepository
 import com.kxsv.schooldiary.data.repository.PatternStrokeRepository
 import com.kxsv.schooldiary.data.repository.StudyDayRepository
@@ -452,7 +452,7 @@ class ScheduleViewModel @Inject constructor(
 			val localizedNetClasses =
 				lessonRepository.fetchLessonsOnDate(fromDate)
 					.toLessonEntities(
-						studyDayMasterId = cloneDay.studyDayId,
+						overrideStudyDayMasterId = cloneDay.studyDayId,
 						subjectRepository = subjectRepository,
 						studyDayRepository = studyDayRepository
 					)
@@ -532,7 +532,7 @@ class ScheduleViewModel @Inject constructor(
 			}) {
 				withTimeout(10000L) {
 					lessonRepository.fetchLessonsOnDate(date)
-						.toLocalWithSubject(subjectRepository, studyDayRepository)
+						.toLessonsWithSubjectIndexed(subjectRepository, studyDayRepository)
 				}
 			}
 			_uiState.update { it.copy(classes = classes) }
@@ -665,7 +665,7 @@ class ScheduleViewModel @Inject constructor(
 				}) {
 					withTimeout(10000L) {
 						lessonRepository.fetchLessonsOnDate(uiState.value.selectedDate)
-							.toLocalWithSubject(subjectRepository, studyDayRepository)
+							.toLessonsWithSubjectIndexed(subjectRepository, studyDayRepository)
 					}
 				}
 				if (fetchedClasses.isNotEmpty()) {
