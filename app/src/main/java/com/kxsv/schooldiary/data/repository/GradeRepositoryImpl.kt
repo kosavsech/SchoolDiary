@@ -1,10 +1,12 @@
 package com.kxsv.schooldiary.data.repository
 
 import android.util.Log
+import com.kxsv.schooldiary.data.DataUtils.generateGradeId
 import com.kxsv.schooldiary.data.local.features.grade.GradeDao
 import com.kxsv.schooldiary.data.local.features.grade.GradeEntity
 import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
 import com.kxsv.schooldiary.data.local.features.subject.SubjectDao
+import com.kxsv.schooldiary.data.mapper.toGradesWithSubject
 import com.kxsv.schooldiary.data.remote.WebService
 import com.kxsv.schooldiary.data.remote.grade.DayGradeDto
 import com.kxsv.schooldiary.data.remote.grade.GradeParser
@@ -23,8 +25,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -89,7 +89,7 @@ class GradeRepositoryImpl @Inject constructor(
 					if (date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
 					async {
 						val gradesWithSubjectLocalised =
-							fetchGradeByDate(date).toGradesWithSubject()
+							fetchGradeByDate(date).toGradesWithSubject(subjectDataSource = subjectDataSource)
 						newGradesFound.addAll(updateDatabase(gradesWithSubjectLocalised))
 					}
 				}
@@ -168,63 +168,5 @@ class GradeRepositoryImpl @Inject constructor(
 			newGradesFound
 		}
 		
-	}
-	
-	private suspend fun DayGradeDto.toGradeEntity(): GradeEntity {
-		try {
-			val subjectMasterId =
-				subjectDataSource.getByName(subjectAncestorName)?.subjectId
-					?: throw NoSuchElementException("Not found subject with name $subjectAncestorName")
-			// TODO: add prompt to create subject with such name, or create it forcibly
-			return GradeEntity(
-				mark = mark,
-				date = date,
-				fetchDateTime = LocalDateTime.now(),
-				subjectMasterId = subjectMasterId,
-				typeOfWork = typeOfWork,
-				index = index,
-				lessonIndex = lessonIndex,
-				gradeId = generateGradeId(date = date, index = index, lessonIndex = lessonIndex)
-			)
-			
-		} catch (e: NoSuchElementException) {
-			throw RuntimeException("Failed to convert network to local", e)
-		}
-	}
-	
-	private suspend fun List<DayGradeDto>.toGradeEntities() = map { it.toGradeEntity() }
-	
-	private suspend fun DayGradeDto.toGradeWithSubject(): GradeWithSubject {
-		try {
-			val subjectEntity =
-				subjectDataSource.getByName(subjectAncestorName)
-					?: throw NoSuchElementException("Not found subject with name $subjectAncestorName")
-			// TODO: add prompt to create subject with such name, or create it forcibly
-			return GradeWithSubject(
-				grade = GradeEntity(
-					mark = mark,
-					date = date,
-					fetchDateTime = LocalDateTime.now(),
-					subjectMasterId = subjectEntity.subjectId,
-					typeOfWork = typeOfWork,
-					index = index,
-					lessonIndex = lessonIndex,
-					gradeId = generateGradeId(date = date, index = index, lessonIndex = lessonIndex)
-				),
-				subject = subjectEntity
-			)
-			
-		} catch (e: NoSuchElementException) {
-			throw RuntimeException("Failed to convert network to local", e)
-		}
-	}
-	
-	private suspend fun List<DayGradeDto>.toGradesWithSubject() = map { it.toGradeWithSubject() }
-	
-	private fun generateGradeId(date: LocalDate, index: Int, lessonIndex: Int): String {
-		val dateStamp = date.atStartOfDay(ZoneId.of("Europe/Moscow")).toEpochSecond().toString()
-		val gradeIndex = index.toString()
-		val lessonIndexString = lessonIndex.toString()
-		return (dateStamp + "_" + gradeIndex + "_" + lessonIndexString)
 	}
 }
