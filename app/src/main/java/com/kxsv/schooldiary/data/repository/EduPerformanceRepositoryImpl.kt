@@ -10,8 +10,9 @@ import com.kxsv.schooldiary.data.remote.dtos.EduPerformanceDto
 import com.kxsv.schooldiary.data.remote.parsers.EduPerformanceParser
 import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
+import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.ApplicationScope
-import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.di.util.Dispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -26,7 +27,7 @@ class EduPerformanceRepositoryImpl @Inject constructor(
 	private val eduPerformanceDataSource: EduPerformanceDao,
 	private val webService: WebService,
 	private val subjectDataSource: SubjectDao,
-	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 	@ApplicationScope private val scope: CoroutineScope,
 ) : EduPerformanceRepository {
 	

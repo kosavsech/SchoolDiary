@@ -15,7 +15,8 @@ import com.kxsv.schooldiary.data.remote.WebService
 import com.kxsv.schooldiary.data.remote.dtos.LessonDto
 import com.kxsv.schooldiary.data.remote.parsers.LessonParser
 import com.kxsv.schooldiary.data.remote.util.NetworkException
-import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.di.util.AppDispatchers
+import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.toList
 import kotlinx.coroutines.CoroutineDispatcher
@@ -37,7 +38,7 @@ class LessonRepositoryImpl @Inject constructor(
 	private val webService: WebService,
 	private val studyDayDataSource: StudyDayDao,
 	private val subjectDataSource: SubjectDao,
-	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : LessonRepository {
 	
 	override fun observeAll(): Flow<List<LessonEntity>> {

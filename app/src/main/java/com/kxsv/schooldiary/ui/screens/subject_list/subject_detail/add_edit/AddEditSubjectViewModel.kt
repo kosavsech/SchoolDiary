@@ -10,7 +10,8 @@ import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.data.repository.TeacherRepository
-import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.di.util.AppDispatchers
+import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.screens.navArgs
@@ -54,7 +55,7 @@ private const val TAG = "AddEditSubjectViewModel"
 class AddEditSubjectViewModel @Inject constructor(
 	private val subjectRepository: SubjectRepository,
 	private val teacherRepository: TeacherRepository,
-	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 	savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 	

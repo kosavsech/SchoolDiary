@@ -42,7 +42,7 @@ fun TasksBottomAppBar(
 	) {
 		var expanded by remember { mutableStateOf(false) }
 		val dataFilterOptions = TasksDateFilterType.values()
-		Row() {
+		Row {
 			ExposedDropdownMenuBox(
 				expanded = expanded,
 				onExpandedChange = { expanded = it }

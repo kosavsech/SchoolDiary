@@ -12,7 +12,8 @@ import com.kxsv.schooldiary.data.repository.GradeRepository
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
-import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.di.util.AppDispatchers
+import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
@@ -57,7 +58,7 @@ class SubjectDetailViewModel @Inject constructor(
 	private val userPreferencesRepository: UserPreferencesRepository,
 	gradeRepository: GradeRepository,
 	savedStateHandle: SavedStateHandle,
-	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
 	val navArgs: SubjectDetailScreenNavArgs = savedStateHandle.navArgs()

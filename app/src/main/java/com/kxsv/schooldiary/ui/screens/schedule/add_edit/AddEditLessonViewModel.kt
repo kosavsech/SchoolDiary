@@ -9,7 +9,8 @@ import com.kxsv.schooldiary.data.local.features.lesson.LessonEntity
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.repository.LessonRepository
 import com.kxsv.schooldiary.data.repository.SubjectRepository
-import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.di.util.AppDispatchers
+import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.util.Utils.timestampToLocalDate
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -38,7 +39,7 @@ data class AddEditScheduleUiState(
 class AddEditLessonViewModel @Inject constructor(
 	private val lessonRepository: LessonRepository,
 	private val subjectRepository: SubjectRepository,
-	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 	savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 	

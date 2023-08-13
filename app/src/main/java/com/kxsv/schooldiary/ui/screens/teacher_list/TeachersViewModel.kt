@@ -6,7 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
 import com.kxsv.schooldiary.data.repository.TeacherRepository
-import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.di.util.AppDispatchers
+import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
@@ -40,7 +41,7 @@ data class TeachersUiState(
 @HiltViewModel
 class TeachersViewModel @Inject constructor(
 	private val teacherRepository: TeacherRepository,
-	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
 	private val _teachersAsync = teacherRepository.observeTeachers()

@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.app.workers
+package com.kxsv.schooldiary.app.sync.workers
 
 import android.Manifest
 import android.app.Notification
@@ -14,7 +14,9 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
+import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkerParameters
+import com.kxsv.schooldiary.app.sync.initializers.SyncConstraints
 import com.kxsv.schooldiary.data.local.features.associative_tables.subject_teacher.SubjectTeacher
 import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
@@ -28,8 +30,10 @@ import com.kxsv.schooldiary.data.repository.SubjectTeacherRepository
 import com.kxsv.schooldiary.data.repository.TeacherRepository
 import com.kxsv.schooldiary.data.util.DataIdGenUtils.generateTeacherId
 import com.kxsv.schooldiary.data.util.Mark
-import com.kxsv.schooldiary.di.util.NotificationsConstants.FETCHED_GRADES_GROUP_ID
-import com.kxsv.schooldiary.di.util.NotificationsConstants.FETCHED_GRADES_SUMMARY_ID
+import com.kxsv.schooldiary.di.util.AppDispatchers.IO
+import com.kxsv.schooldiary.di.util.Dispatcher
+import com.kxsv.schooldiary.di.util.GradeNotification
+import com.kxsv.schooldiary.di.util.GradeSummaryNotification
 import com.kxsv.schooldiary.di.util.NotificationsConstants.GRADE_CHANNEL_ID
 import com.kxsv.schooldiary.util.Utils
 import dagger.assisted.Assisted
@@ -38,23 +42,33 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
 private const val TAG = "GradeSyncWorker"
 
 @HiltWorker
 class GradeSyncWorker @AssistedInject constructor(
-	@Assisted private val subjectTeacherRepository: SubjectTeacherRepository,
-	@Assisted private val subjectRepository: SubjectRepository,
-	@Assisted private val gradeRepository: GradeRepository,
-	@Assisted private val teacherRepository: TeacherRepository,
-	@Assisted(FETCHED_GRADES_SUMMARY_ID) private val gradeSummaryNotificationBuilder: Notification.Builder,
-	@Assisted(FETCHED_GRADES_GROUP_ID) private val gradeNotificationBuilder: Notification.Builder,
-	@Assisted private val notificationManager: NotificationManager,
-	@Assisted private val ioDispatcher: CoroutineDispatcher,
-	@Assisted private val context: Context,
-	@Assisted params: WorkerParameters,
-) : CoroutineWorker(context, params) {
+	@Assisted private val appContext: Context,
+	@Assisted workerParams: WorkerParameters,
+	private val subjectTeacherRepository: SubjectTeacherRepository,
+	private val subjectRepository: SubjectRepository,
+	private val gradeRepository: GradeRepository,
+	private val teacherRepository: TeacherRepository,
+	@GradeSummaryNotification private val gradeSummaryNotificationBuilder: Notification.Builder,
+	@GradeNotification private val gradeNotificationBuilder: Notification.Builder,
+	private val notificationManager: NotificationManager,
+	@Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
+) : CoroutineWorker(appContext, workerParams) {
+	
+	companion object {
+		fun startUpSyncWork() =
+			PeriodicWorkRequestBuilder<DelegatingWorker>(360, TimeUnit.MINUTES)
+				.setConstraints(SyncConstraints)
+				.setInputData(GradeSyncWorker::class.delegatedData())
+//				.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+				.build()
+	}
 	
 	override suspend fun doWork(): Result {
 		try {
@@ -83,7 +97,7 @@ class GradeSyncWorker @AssistedInject constructor(
 						)
 						Handler(Looper.getMainLooper()).post {
 							Toast.makeText(
-								context,
+								appContext,
 								"SchoolDiary: Couldn't localize grade ${it.mark} on date ${it.date} for ${it.subjectAncestorName}.\n" + e.message,
 								Toast.LENGTH_LONG
 							).show()
@@ -104,7 +118,7 @@ class GradeSyncWorker @AssistedInject constructor(
 			}
 			
 			if (ActivityCompat
-					.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
+					.checkSelfPermission(appContext, Manifest.permission.POST_NOTIFICATIONS) ==
 				PackageManager.PERMISSION_GRANTED
 			) {
 				Log.d(TAG, "DEBUG newGradeEntities: $newGradeEntities")
@@ -257,7 +271,7 @@ class GradeSyncWorker @AssistedInject constructor(
 						)
 						Handler(Looper.getMainLooper()).post {
 							Toast.makeText(
-								context,
+								appContext,
 								"SchoolDiary: Failed link ${teacher.shortName()}) to $subjectName." + e.message,
 								Toast.LENGTH_LONG
 							).show()

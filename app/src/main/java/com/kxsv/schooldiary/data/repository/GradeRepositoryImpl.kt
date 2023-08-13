@@ -9,7 +9,8 @@ import com.kxsv.schooldiary.data.remote.dtos.TeacherDto
 import com.kxsv.schooldiary.data.remote.parsers.DayGradeParser
 import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.util.DataIdGenUtils.generateGradeId
-import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.di.util.AppDispatchers
+import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.toList
 import kotlinx.coroutines.CoroutineDispatcher
@@ -28,7 +29,7 @@ private const val TAG = "GradeRepositoryImpl"
 class GradeRepositoryImpl @Inject constructor(
 	private val gradeDataSource: GradeDao,
 	private val webService: WebService,
-	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : GradeRepository {
 	
 	override fun observeAllOrderedByMarkDate(): Flow<List<GradeEntity>> {

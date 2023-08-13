@@ -11,7 +11,7 @@ import javax.inject.Singleton
 @Singleton
 class StudyDayRepositoryImpl @Inject constructor(
 	private val studyDayDataSource: StudyDayDao,
-	//@DefaultDispatcher private val dispatcher: CoroutineDispatcher,
+	//@Dispatcher(AppDispatchers.Default) private val dispatcher: CoroutineDispatcher,
 ) : StudyDayRepository {
 	
 	override fun observeStudyDays(): Flow<List<StudyDayEntity>> {

@@ -11,7 +11,8 @@ import com.kxsv.schooldiary.data.remote.dtos.TaskDto
 import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.data.repository.TaskRepository
-import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.di.util.AppDispatchers
+import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.screens.navArgs
@@ -49,9 +50,9 @@ data class AddEditTaskUiState(
 @HiltViewModel
 class AddEditTaskViewModel @Inject constructor(
 	private val taskRepository: TaskRepository,
-	private val subjectRepository: SubjectRepository,
+	subjectRepository: SubjectRepository,
 	savedStateHandle: SavedStateHandle,
-	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
 	private val navArgs: AddEditTaskScreenNavArgs = savedStateHandle.navArgs()

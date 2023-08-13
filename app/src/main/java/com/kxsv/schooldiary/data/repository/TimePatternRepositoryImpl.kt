@@ -13,7 +13,7 @@ import javax.inject.Singleton
 class TimePatternRepositoryImpl @Inject constructor(
 	private val patternDataSource: TimePatternDao,
 	private val strokesDataSource: PatternStrokeDao,
-	//@DefaultDispatcher private val dispatcher: CoroutineDispatcher,
+	//@Dispatcher(AppDispatchers.Default) private val dispatcher: CoroutineDispatcher,
 ) : TimePatternRepository {
 	
 	override fun getPatternsStream(): Flow<List<TimePatternEntity>> {

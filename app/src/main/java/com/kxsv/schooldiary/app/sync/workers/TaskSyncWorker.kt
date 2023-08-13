@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.app.workers
+package com.kxsv.schooldiary.app.sync.workers
 
 import android.Manifest
 import android.app.Notification
@@ -11,32 +11,43 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
+import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkerParameters
+import com.kxsv.schooldiary.app.sync.initializers.SyncConstraints
 import com.kxsv.schooldiary.data.local.features.task.TaskAndUniqueIdWithSubject
 import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.repository.TaskRepository
 import com.kxsv.schooldiary.di.util.NotificationsConstants
-import com.kxsv.schooldiary.di.util.NotificationsConstants.FETCHED_TASKS_GROUP_ID
-import com.kxsv.schooldiary.di.util.NotificationsConstants.FETCHED_TASKS_SUMMARY_ID
+import com.kxsv.schooldiary.di.util.TaskNotification
+import com.kxsv.schooldiary.di.util.TaskSummaryNotification
 import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.TimeoutCancellationException
 import java.io.IOException
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
 private const val TAG = "TaskSyncWorker"
 
 @HiltWorker
 class TaskSyncWorker @AssistedInject constructor(
-	@Assisted private val taskRepository: TaskRepository,
-	@Assisted(FETCHED_TASKS_SUMMARY_ID) private val taskSummaryNotificationBuilder: Notification.Builder,
-	@Assisted(FETCHED_TASKS_GROUP_ID) private val taskNotificationBuilder: Notification.Builder,
-	@Assisted private val notificationManager: NotificationManager,
-	@Assisted private val context: Context,
-	@Assisted params: WorkerParameters,
-) : CoroutineWorker(context, params) {
+	@Assisted private val appContext: Context,
+	@Assisted workerParams: WorkerParameters,
+	private val taskRepository: TaskRepository,
+	@TaskSummaryNotification private val taskSummaryNotificationBuilder: Notification.Builder,
+	@TaskNotification private val taskNotificationBuilder: Notification.Builder,
+	private val notificationManager: NotificationManager,
+) : CoroutineWorker(appContext, workerParams) {
+	
+	companion object {
+		fun startUpSyncWork() =
+			PeriodicWorkRequestBuilder<DelegatingWorker>(360, TimeUnit.MINUTES)
+				.setConstraints(SyncConstraints)
+				.setInputData(TaskSyncWorker::class.delegatedData())
+				.build()
+	}
 	
 	override suspend fun doWork(): Result {
 		try {
@@ -51,7 +62,7 @@ class TaskSyncWorker @AssistedInject constructor(
 				taskRepository.fetchSoonTasks()
 			}
 			if (ActivityCompat
-					.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
+					.checkSelfPermission(appContext, Manifest.permission.POST_NOTIFICATIONS) ==
 				PackageManager.PERMISSION_GRANTED
 			) {
 				Log.d(TAG, "DEBUG newTaskEntities: $newTaskEntities")

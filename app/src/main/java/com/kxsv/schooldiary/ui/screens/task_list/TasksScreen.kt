@@ -230,7 +230,7 @@ private fun TaskItem(
 			verticalAlignment = Alignment.CenterVertically,
 		) {
 			Text(
-				text = taskWithSubject.subject?.getName() ?: "Not loaded subject",
+				text = taskWithSubject.subject.getName(),
 				style = MaterialTheme.typography.bodySmall,
 			)
 		}

@@ -6,7 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.task.TaskWithSubject
 import com.kxsv.schooldiary.data.repository.TaskRepository
-import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.di.util.AppDispatchers.IO
+import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.ui.util.Async
 import com.kxsv.schooldiary.ui.util.WhileUiSubscribed
@@ -32,7 +33,7 @@ data class TaskDetailUiState(
 class TaskDetailViewModel @Inject constructor(
 	private val taskRepository: TaskRepository,
 	savedStateHandle: SavedStateHandle,
-	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+	@Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
 	private var navArgs: TaskDetailScreenNavArgs = savedStateHandle.navArgs()

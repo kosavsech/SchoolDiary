@@ -1,16 +1,21 @@
 package com.kxsv.schooldiary.ui.screens.main_screen
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
 import com.kxsv.schooldiary.R
+import com.kxsv.schooldiary.app.sync.workers.ScheduleSyncWorker
+import com.kxsv.schooldiary.app.sync.workers.SubjectsSyncWorker
+import com.kxsv.schooldiary.app.sync.workers.TaskSyncWorker
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
-import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.repository.LessonRepository
 import com.kxsv.schooldiary.data.repository.PatternStrokeRepository
 import com.kxsv.schooldiary.data.repository.TaskRepository
 import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
-import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.di.util.AppDispatchers
+import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.util.WhileUiSubscribed
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.toList
@@ -20,6 +25,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -39,11 +45,12 @@ private const val TAG = "MainScreenViewModel"
 
 @HiltViewModel
 class MainScreenViewModel @Inject constructor(
-	private val lessonRepository: LessonRepository,
+	lessonRepository: LessonRepository,
 	private val taskRepository: TaskRepository,
 	private val strokeRepository: PatternStrokeRepository,
 	private val userPreferencesRepository: UserPreferencesRepository,
-	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+	private val workManager: WorkManager,
+	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
 	private val startRange = Utils.currentDate
@@ -104,18 +111,37 @@ class MainScreenViewModel @Inject constructor(
 	
 	fun refresh() {
 		_uiState.update { it.copy(isLoading = true) }
-		netFetchJob?.cancel()
+		workManager.cancelAllWorkByTag("main_screen_fetch")
+		val subjectsSyncRequest = OneTimeWorkRequest.Builder(SubjectsSyncWorker::class.java)
+			.addTag("main_screen_fetch")
+			.build()
+		
+		val scheduleSyncRequest = OneTimeWorkRequest.Builder(ScheduleSyncWorker::class.java)
+			.addTag("main_screen_fetch")
+			.build()
+		
+		val tasksSyncRequest = OneTimeWorkRequest.Builder(TaskSyncWorker::class.java)
+			.addTag("main_screen_fetch")
+			.build()
+		
+		val continuation = workManager
+			.beginUniqueWork(
+				"MainScreenFetchSubjectSync",
+				ExistingWorkPolicy.REPLACE,
+				subjectsSyncRequest
+			)
+			.then(listOf(scheduleSyncRequest, tasksSyncRequest))
+		
+		continuation.enqueue()
 		netFetchJob = viewModelScope.launch(ioDispatcher) {
-			try {
-				// todo add schedule fetch with notification
-//				lessonRepository.fetchSoonSchedule()
-				taskRepository.fetchSoonTasks()
-			} catch (e: NetworkException.NotLoggedInException) {
-				Log.e(TAG, "refresh: not logged in", e)
-			} finally {
-				_uiState.update { it.copy(isLoading = false) }
+			val workInfosFlow = workManager.getWorkInfosByTagFlow("main_screen_fetch")
+			workInfosFlow.collectLatest { workInfos ->
+				val allFinished = workInfos.all { it.state.isFinished }
+				if (allFinished) {
+					_uiState.update { it.copy(isLoading = false) }
+					netFetchJob?.cancel()
+				}
 			}
-			
 		}
 	}
 	

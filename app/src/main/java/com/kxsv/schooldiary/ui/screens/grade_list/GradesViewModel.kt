@@ -10,7 +10,8 @@ import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.repository.EduPerformanceRepository
 import com.kxsv.schooldiary.data.repository.GradeRepository
 import com.kxsv.schooldiary.data.repository.SubjectRepository
-import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.di.util.AppDispatchers
+import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
@@ -46,7 +47,7 @@ class GradesViewModel @Inject constructor(
 	private val gradeRepository: GradeRepository,
 	private val subjectRepository: SubjectRepository,
 	private val eduPerformanceRepository: EduPerformanceRepository,
-	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
 	private val _sortType = MutableStateFlow(GradesSortType.MARK_DATE)

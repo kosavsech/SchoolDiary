@@ -6,7 +6,8 @@ import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceWi
 import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.repository.EduPerformanceRepository
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
-import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.di.util.AppDispatchers
+import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.util.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -29,7 +30,7 @@ data class EduPerformanceUiState(
 @HiltViewModel
 class EduPerformanceViewModel @Inject constructor(
 	private val eduPerformanceRepository: EduPerformanceRepository,
-	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
 	private val _period = MutableStateFlow(EduPerformancePeriod.FOURTH)

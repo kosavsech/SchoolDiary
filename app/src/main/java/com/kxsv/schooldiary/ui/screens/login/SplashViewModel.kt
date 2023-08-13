@@ -7,7 +7,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
-import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.di.util.AppDispatchers
+import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.screens.NavGraphs
 import com.ramcosta.composedestinations.spec.Route
 import kotlinx.coroutines.CoroutineDispatcher
@@ -19,7 +20,7 @@ private const val TAG = "SplashViewModel"
 
 class SplashViewModel @Inject constructor(
 	private val userPreferencesRepository: UserPreferencesRepository,
-	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
 	private val _startDestination: MutableState<Route> = mutableStateOf(NavGraphs.login)

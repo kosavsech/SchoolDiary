@@ -30,8 +30,8 @@ interface PatternStrokeRepository {
 	suspend fun updateStrokes(patternStrokes: List<PatternStrokeEntity>)
 	
 	suspend fun updateStroke(patternStroke: PatternStrokeEntity)
-
-    suspend fun deleteAll()
-    
-    suspend fun deleteStrokeById(id: Int)
+	
+	suspend fun deleteAll()
+	
+	suspend fun deleteStrokeById(id: Int)
 }

@@ -31,7 +31,7 @@ object DataIdGenUtils {
 	fun TaskDto.generateUniqueTaskId(): String {
 		val dateStamp: String =
 			dueDate.atStartOfDay(zoneForIdGen).toEpochSecond().toString()
-		val subjectId: String = subject.subjectId.toString()
+		val subjectId: String = subject.subjectId
 		val lessonIndex: String = lessonIndex.toString()
 		
 		return (dateStamp + "_" + subjectId + "_" + lessonIndex)

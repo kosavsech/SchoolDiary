@@ -9,7 +9,7 @@ import javax.inject.Singleton
 
 @Singleton
 class PatternStrokeRepositoryImpl @Inject constructor(
-    private val localDataSource: PatternStrokeDao
+	private val localDataSource: PatternStrokeDao,
 ) : PatternStrokeRepository {
 	
 	override fun getStrokesStream(): Flow<List<PatternStrokeEntity>> {
@@ -58,13 +58,13 @@ class PatternStrokeRepositoryImpl @Inject constructor(
 	override suspend fun updateStroke(patternStroke: PatternStrokeEntity) {
 		return localDataSource.upsert(patternStroke)
 	}
-
-    override suspend fun deleteAll() {
-        return localDataSource.deleteAll()
-    }
-    
-    override suspend fun deleteStrokeById(id: Int) {
-        return localDataSource.deleteById(id)
-    }
-
+	
+	override suspend fun deleteAll() {
+		return localDataSource.deleteAll()
+	}
+	
+	override suspend fun deleteStrokeById(id: Int) {
+		return localDataSource.deleteById(id)
+	}
+	
 }

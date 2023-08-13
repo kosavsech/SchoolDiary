@@ -4,7 +4,8 @@ import android.util.Log
 import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.remote.util.RemoteUtils.handleErrorResponse
 import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
-import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.di.util.AppDispatchers
+import com.kxsv.schooldiary.di.util.Dispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import okio.IOException
@@ -20,7 +21,7 @@ private const val TAG = "WebServiceImpl"
 
 class WebServiceImpl @Inject constructor(
 	private val userPreferencesRepository: UserPreferencesRepository,
-	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : WebService {
 	
 	/**

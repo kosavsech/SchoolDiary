@@ -17,8 +17,9 @@ import com.kxsv.schooldiary.data.remote.dtos.TaskDto
 import com.kxsv.schooldiary.data.remote.parsers.LessonParser
 import com.kxsv.schooldiary.data.remote.parsers.TaskParser
 import com.kxsv.schooldiary.data.remote.util.NetworkException
+import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.ApplicationScope
-import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.toList
 import kotlinx.coroutines.CoroutineDispatcher
@@ -43,7 +44,7 @@ class TaskRepositoryImpl @Inject constructor(
 	private val subjectDataSource: SubjectDao,
 	private val studyDayDataSource: StudyDayDao,
 	private val lessonDataSource: LessonDao,
-	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 	@ApplicationScope private val scope: CoroutineScope,
 ) : TaskRepository {
 	

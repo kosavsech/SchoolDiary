@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.app.workers
+package com.kxsv.schooldiary.app.sync.workers
 
 import android.Manifest
 import android.app.Notification
@@ -15,13 +15,15 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
+import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkerParameters
 import com.kxsv.schooldiary.app.MainActivity
+import com.kxsv.schooldiary.app.sync.initializers.SyncConstraints
 import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.repository.LessonRepository
 import com.kxsv.schooldiary.di.util.NotificationsConstants
-import com.kxsv.schooldiary.di.util.NotificationsConstants.FETCHED_SCHEDULE_GROUP_ID
-import com.kxsv.schooldiary.di.util.NotificationsConstants.FETCHED_SCHEDULE_SUMMARY_ID
+import com.kxsv.schooldiary.di.util.ScheduleNotification
+import com.kxsv.schooldiary.di.util.ScheduleSummaryNotification
 import com.kxsv.schooldiary.ui.screens.destinations.DayScheduleScreenDestination
 import com.kxsv.schooldiary.ui.screens.grade_list.MY_URI
 import com.kxsv.schooldiary.util.Utils
@@ -31,19 +33,28 @@ import kotlinx.coroutines.TimeoutCancellationException
 import java.io.IOException
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
 private const val TAG = "ScheduleSyncWorker"
 
 @HiltWorker
 class ScheduleSyncWorker @AssistedInject constructor(
-	@Assisted private val lessonRepository: LessonRepository,
-	@Assisted(FETCHED_SCHEDULE_SUMMARY_ID) private val scheduleSummaryNotificationBuilder: Notification.Builder,
-	@Assisted(FETCHED_SCHEDULE_GROUP_ID) private val scheduleNotificationBuilder: Notification.Builder,
-	@Assisted private val notificationManager: NotificationManager,
-	@Assisted private val context: Context,
-	@Assisted params: WorkerParameters,
-) : CoroutineWorker(context, params) {
+	@Assisted private val appContext: Context,
+	@Assisted workerParams: WorkerParameters,
+	private val lessonRepository: LessonRepository,
+	@ScheduleSummaryNotification private val scheduleSummaryNotificationBuilder: Notification.Builder,
+	@ScheduleNotification private val scheduleNotificationBuilder: Notification.Builder,
+	private val notificationManager: NotificationManager,
+) : CoroutineWorker(appContext, workerParams) {
+	
+	companion object {
+		fun startUpSyncWork() =
+			PeriodicWorkRequestBuilder<DelegatingWorker>(360, TimeUnit.MINUTES)
+				.setConstraints(SyncConstraints)
+				.setInputData(ScheduleSyncWorker::class.delegatedData())
+				.build()
+	}
 	
 	override suspend fun doWork(): Result {
 		try {
@@ -57,7 +68,10 @@ class ScheduleSyncWorker @AssistedInject constructor(
 			) {
 				lessonRepository.fetchSoonSchedule()
 			}
-			if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+			if (ActivityCompat.checkSelfPermission(
+					appContext,
+					Manifest.permission.POST_NOTIFICATIONS
+				)
 				== PackageManager.PERMISSION_GRANTED
 			) {
 				Log.d(TAG, "DEBUG newSchedules: $newSchedules")
@@ -146,10 +160,10 @@ class ScheduleSyncWorker @AssistedInject constructor(
 		val clickIntent = Intent(
 			Intent.ACTION_VIEW,
 			uriForDayScheduleScreen,
-			context,
+			appContext,
 			MainActivity::class.java
 		)
-		val clickPendingIntent: PendingIntent = TaskStackBuilder.create(context).run {
+		val clickPendingIntent: PendingIntent = TaskStackBuilder.create(appContext).run {
 			addNextIntentWithParentStack(clickIntent)
 			getPendingIntent(5, PendingIntent.FLAG_IMMUTABLE)
 		}

@@ -21,11 +21,11 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -185,10 +185,10 @@ private fun AddEditPatternContent(
 				.fillMaxWidth()
 				.padding(dimensionResource(id = R.dimen.horizontal_margin))
 		) {
-			val textFieldColors = TextFieldDefaults.outlinedTextFieldColors(
+			val textFieldColors = OutlinedTextFieldDefaults.colors(
+				cursorColor = MaterialTheme.colorScheme.secondary.copy(alpha = ContentAlpha.high),
 				focusedBorderColor = Color.Transparent,
 				unfocusedBorderColor = Color.Transparent,
-				cursorColor = MaterialTheme.colorScheme.secondary.copy(alpha = ContentAlpha.high)
 			)
 			OutlinedTextField(
 				value = name,

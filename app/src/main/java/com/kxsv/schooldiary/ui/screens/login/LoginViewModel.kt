@@ -7,7 +7,8 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.remote.WebService
 import com.kxsv.schooldiary.data.remote.util.NetworkError
 import com.kxsv.schooldiary.data.remote.util.NetworkException
-import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.di.util.AppDispatchers
+import com.kxsv.schooldiary.di.util.Dispatcher
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,7 +32,7 @@ data class LoginUiState(
 @HiltViewModel
 class LoginViewModel @Inject constructor(
 	private val webService: WebService,
-	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
 	private val _uiState = MutableStateFlow(LoginUiState())

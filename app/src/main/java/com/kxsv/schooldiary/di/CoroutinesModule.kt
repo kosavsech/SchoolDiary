@@ -16,9 +16,9 @@
 
 package com.kxsv.schooldiary.di
 
+import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.ApplicationScope
-import com.kxsv.schooldiary.di.util.DefaultDispatcher
-import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.di.util.Dispatcher
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -35,17 +35,17 @@ import javax.inject.Singleton
 object CoroutinesModule {
 	
 	@Provides
-	@IoDispatcher
+	@Dispatcher(AppDispatchers.IO)
 	fun providesIODispatcher(): CoroutineDispatcher = Dispatchers.IO
 	
 	@Provides
-	@DefaultDispatcher
+	@Dispatcher(AppDispatchers.Default)
 	fun providesDefaultDispatcher(): CoroutineDispatcher = Dispatchers.Default
 	
 	@Provides
 	@Singleton
 	@ApplicationScope
 	fun providesCoroutineScope(
-		@DefaultDispatcher dispatcher: CoroutineDispatcher,
+		@Dispatcher(AppDispatchers.Default) dispatcher: CoroutineDispatcher,
 	): CoroutineScope = CoroutineScope(SupervisorJob() + dispatcher)
 }

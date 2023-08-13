@@ -4,11 +4,11 @@ import javax.inject.Qualifier
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
-annotation class IoDispatcher
+annotation class Dispatcher(val niaDispatcher: AppDispatchers)
 
-@Retention(AnnotationRetention.RUNTIME)
-@Qualifier
-annotation class DefaultDispatcher
+enum class AppDispatchers {
+	Default, IO,
+}
 
 @Retention(AnnotationRetention.RUNTIME)
 @Qualifier

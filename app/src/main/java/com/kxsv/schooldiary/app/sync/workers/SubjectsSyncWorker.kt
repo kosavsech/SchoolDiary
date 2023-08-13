@@ -1,14 +1,18 @@
-package com.kxsv.schooldiary.app.workers
+package com.kxsv.schooldiary.app.sync.workers
 
 import android.content.Context
 import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
+import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkerParameters
+import com.kxsv.schooldiary.app.sync.initializers.SyncConstraints
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.data.util.DataIdGenUtils
+import com.kxsv.schooldiary.di.util.AppDispatchers.IO
+import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.util.Utils
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -16,17 +20,26 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
 private const val TAG = "SubjectsSyncWorker"
 
 @HiltWorker
 class SubjectsSyncWorker @AssistedInject constructor(
-	@Assisted private val subjectRepository: SubjectRepository,
-	@Assisted private val context: Context,
-	@Assisted private val ioDispatcher: CoroutineDispatcher,
-	@Assisted params: WorkerParameters,
-) : CoroutineWorker(context, params) {
+	@Assisted private val appContext: Context,
+	@Assisted workerParams: WorkerParameters,
+	private val subjectRepository: SubjectRepository,
+	@Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
+) : CoroutineWorker(appContext, workerParams) {
+	
+	companion object {
+		fun startUpSyncWork() =
+			PeriodicWorkRequestBuilder<DelegatingWorker>(24, TimeUnit.HOURS)
+				.setConstraints(SyncConstraints)
+				.setInputData(SubjectsSyncWorker::class.delegatedData())
+				.build()
+	}
 	
 	override suspend fun doWork(): Result {
 		try {

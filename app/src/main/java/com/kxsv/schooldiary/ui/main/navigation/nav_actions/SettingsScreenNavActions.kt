@@ -4,6 +4,4 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
 class SettingsScreenNavActions(
 	override val destinationsNavigator: DestinationsNavigator,
-) : NavActions {
-
-}
+) : NavActions

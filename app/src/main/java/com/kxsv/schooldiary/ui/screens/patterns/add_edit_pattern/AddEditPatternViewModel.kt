@@ -7,7 +7,8 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternEntity
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import com.kxsv.schooldiary.data.repository.TimePatternRepository
-import com.kxsv.schooldiary.di.util.IoDispatcher
+import com.kxsv.schooldiary.di.util.AppDispatchers
+import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.screens.navArgs
@@ -40,7 +41,7 @@ data class AddEditPatternUiState(
 @HiltViewModel
 class AddEditPatternViewModel @Inject constructor(
 	private val patternRepository: TimePatternRepository,
-	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 	savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 	

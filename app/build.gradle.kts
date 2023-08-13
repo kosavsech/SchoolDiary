@@ -58,6 +58,7 @@ android {
 }
 
 dependencies {
+	implementation("androidx.startup:startup-runtime:1.1.1")
 	implementation("androidx.core:core-ktx:1.10.1")
 	implementation("androidx.appcompat:appcompat:1.6.1")
 	implementation(project(":dialogs-core"))
@@ -96,10 +97,11 @@ dependencies {
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 	
 	//Dagger - Hilt
-	implementation("com.google.dagger:hilt-android:2.47")
-	kapt("com.google.dagger:hilt-compiler:2.47")
 	implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
+	implementation("com.google.dagger:hilt-android:2.47")
 	implementation("androidx.hilt:hilt-work:1.0.0")
+	kapt("androidx.hilt:hilt-compiler:1.0.0")
+	kapt("com.google.dagger:hilt-compiler:2.47")
 	
 	// Room
 	val roomVersion = "2.5.2"
@@ -128,7 +130,9 @@ dependencies {
 	implementation("com.kizitonwose.calendar:compose:2.4.0-beta01")
 	
 	// WorkManager
-	implementation("androidx.work:work-runtime-ktx:2.8.1")
+	val workManagerVersion = "2.9.0-alpha02"
+	implementation("androidx.work:work-runtime:$workManagerVersion")
+//	implementation("androidx.work:work-runtime-ktx:$workManagerVersion")
 	
 	// compose-destinations
 	implementation("io.github.raamcosta.compose-destinations:core:1.9.51")
