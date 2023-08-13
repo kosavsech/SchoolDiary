@@ -24,7 +24,9 @@ interface TeacherRepository {
 	
 	suspend fun createTeacher(teacher: TeacherEntity): String
 	
-	suspend fun updateTeacher(teacher: TeacherEntity)
+	suspend fun upsert(teacher: TeacherEntity)
+	
+	suspend fun update(teacher: TeacherEntity)
 	
 	suspend fun deleteTeachers()
 	

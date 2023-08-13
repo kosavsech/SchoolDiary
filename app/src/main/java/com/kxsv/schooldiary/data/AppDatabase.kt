@@ -32,7 +32,7 @@ import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.Patt
 		GradeEntity::class, EduPerformanceEntity::class,
 		TaskEntity::class
 	],
-	version = 1,
+	version = 2,
 	exportSchema = false
 )
 @TypeConverters(Converters::class)

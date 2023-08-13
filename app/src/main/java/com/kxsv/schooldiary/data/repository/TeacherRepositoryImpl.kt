@@ -48,8 +48,12 @@ class TeacherRepositoryImpl @Inject constructor(
 		return teacherId
 	}
 	
-	override suspend fun updateTeacher(teacher: TeacherEntity) {
+	override suspend fun upsert(teacher: TeacherEntity) {
 		teacherDataSource.upsert(teacher)
+	}
+	
+	override suspend fun update(teacher: TeacherEntity) {
+		teacherDataSource.update(teacher)
 	}
 	
 	override suspend fun deleteTeachers() {

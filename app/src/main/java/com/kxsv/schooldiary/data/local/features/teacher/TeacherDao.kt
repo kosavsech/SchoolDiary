@@ -3,6 +3,7 @@ package com.kxsv.schooldiary.data.local.features.teacher
 import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Update
 import androidx.room.Upsert
 import com.kxsv.schooldiary.data.local.features.DatabaseConstants.TEACHER_TABLE_NAME
 import kotlinx.coroutines.flow.Flow
@@ -38,6 +39,9 @@ interface TeacherDao {
 	
 	@Upsert
 	suspend fun upsert(teacher: TeacherEntity)
+	
+	@Update
+	suspend fun update(teacher: TeacherEntity)
 	
 	@Query("DELETE FROM $TEACHER_TABLE_NAME")
 	suspend fun deleteAll()

@@ -235,7 +235,7 @@ class GradeSyncWorker @AssistedInject constructor(
 					Log.d(
 						TAG, "updateTeachersDatabase: upserted teacher(${newTeacher.lastName})"
 					)
-					teacherRepository.updateTeacher(newTeacher)
+					teacherRepository.upsert(newTeacher)
 					newTeacher
 				}
 				fetchedTeacher.value.forEach { subjectName ->

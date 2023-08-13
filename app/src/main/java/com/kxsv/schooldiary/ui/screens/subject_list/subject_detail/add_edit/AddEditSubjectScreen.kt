@@ -18,8 +18,8 @@ import androidx.compose.material.ContentAlpha
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Divider
 import androidx.compose.material3.FloatingActionButton
@@ -90,9 +90,11 @@ fun AddEditSubjectScreen(
 			Row {
 				FloatingActionButton(onClick = {
 					val result = viewModel.saveSubject()
-					if (result != null) navigator.navigateBackWithResult(result)
+					if (uiState.isSubjectSaved && result != null) {
+						navigator.navigateBackWithResult(result)
+					}
 				}) {
-					Icon(Icons.Default.Done, stringResource(R.string.save_subject))
+					Icon(Icons.Default.Save, stringResource(R.string.save_subject))
 				}
 			}
 		}
@@ -146,16 +148,22 @@ fun AddEditSubjectScreen(
 		val eraseData = remember {
 			{ viewModel.eraseData() }
 		}
+		val clearErrorMessage = remember {
+			{ viewModel.clearErrorMessage() }
+		}
 		AddEditTeacherDialog(
 			dialogState = teacherCreateDialog,
 			firstName = uiState.firstName,
 			lastName = uiState.lastName,
 			patronymic = uiState.patronymic,
 			phoneNumber = uiState.phoneNumber,
+			isTeacherSaved = uiState.isTeacherCreated,
+			errorMessage = uiState.errorMessage,
 			updateFirstName = updateFirstName,
 			updateLastName = updateLastName,
 			updatePatronymic = updatePatronymic,
 			updatePhoneNumber = updatePhoneNumber,
+			clearErrorMessage = clearErrorMessage,
 			onSaveClick = saveTeacher,
 			onCancelClick = eraseData
 		)

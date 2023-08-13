@@ -14,6 +14,7 @@ annotation class DefaultDispatcher
 @Qualifier
 annotation class ApplicationScope
 
+
 @Retention(AnnotationRetention.RUNTIME)
 @Qualifier
 annotation class GradeNotification

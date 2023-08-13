@@ -104,16 +104,22 @@ fun TeachersScreen(
 		val eraseData = remember {
 			{ viewModel.eraseData() }
 		}
+		val clearErrorMessage = remember {
+			{ viewModel.clearErrorMessage() }
+		}
 		AddEditTeacherDialog(
 			dialogState = teacherDialogState,
 			firstName = uiState.firstName,
 			lastName = uiState.lastName,
 			patronymic = uiState.patronymic,
 			phoneNumber = uiState.phoneNumber,
+			isTeacherSaved = uiState.isTeacherSaved,
+			errorMessage = uiState.errorMessage,
 			updateFirstName = updateFirstName,
 			updateLastName = updateLastName,
 			updatePatronymic = updatePatronymic,
 			updatePhoneNumber = updatePhoneNumber,
+			clearErrorMessage = clearErrorMessage,
 			onSaveClick = saveTeacher,
 			onCancelClick = eraseData
 		)

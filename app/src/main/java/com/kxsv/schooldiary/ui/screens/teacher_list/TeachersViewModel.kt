@@ -1,5 +1,6 @@
 package com.kxsv.schooldiary.ui.screens.teacher_list
 
+import android.database.sqlite.SQLiteConstraintException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
@@ -29,8 +30,11 @@ data class TeachersUiState(
 	val patronymic: String = "",
 	val teacherId: String = "",
 	val phoneNumber: String = "",
+	
+	val isTeacherSaved: Boolean = false,
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
+	val errorMessage: Int? = null,
 )
 
 @HiltViewModel
@@ -87,15 +91,25 @@ class TeachersViewModel @Inject constructor(
 	}
 	
 	fun saveTeacher() {
-		if (uiState.value.teacherId == "") {
-			createNewTeacher()
-			showEditResultMessage(ADD_RESULT_OK)
-		} else {
-			updateTeacher()
-			showEditResultMessage(EDIT_RESULT_OK)
+		viewModelScope.launch(ioDispatcher) {
+			try {
+				if (uiState.value.teacherId == "") {
+					createNewTeacher()
+					showEditResultMessage(ADD_RESULT_OK)
+				} else {
+					updateTeacher()
+					showEditResultMessage(EDIT_RESULT_OK)
+				}
+				_uiState.update { it.copy(isTeacherSaved = true) }
+			} catch (e: SQLiteConstraintException) {
+				_uiState.update {
+					it.copy(
+						errorMessage = R.string.full_name_is_reserved,
+						isTeacherSaved = false
+					)
+				}
+			}
 		}
-		
-		eraseData()
 	}
 	
 	fun eraseData() {
@@ -105,12 +119,13 @@ class TeachersViewModel @Inject constructor(
 				lastName = "",
 				patronymic = "",
 				phoneNumber = "",
-				teacherId = ""
+				teacherId = "",
+				isTeacherSaved = false
 			)
 		}
 	}
 	
-	private fun createNewTeacher() = viewModelScope.launch(ioDispatcher) {
+	private suspend fun createNewTeacher() {
 		teacherRepository.createTeacher(
 			TeacherEntity(
 				lastName = uiState.value.lastName.trim(),
@@ -121,9 +136,9 @@ class TeachersViewModel @Inject constructor(
 		)
 	}
 	
-	private fun updateTeacher() = viewModelScope.launch(ioDispatcher) {
-		if (uiState.value.teacherId == "") throw RuntimeException("updateTeacher() was called but no teacher is new.")
-		teacherRepository.updateTeacher(
+	private suspend fun updateTeacher() {
+		if (uiState.value.teacherId == "") throw RuntimeException("upsert() was called but no teacher is new.")
+		teacherRepository.update(
 			TeacherEntity(
 				lastName = uiState.value.lastName.trim(),
 				firstName = uiState.value.firstName.trim(),
@@ -159,6 +174,12 @@ class TeachersViewModel @Inject constructor(
 				phoneNumber = teacher.phoneNumber,
 				teacherId = teacher.teacherId
 			)
+		}
+	}
+	
+	fun clearErrorMessage() {
+		_uiState.update {
+			it.copy(errorMessage = null)
 		}
 	}
 	

@@ -1,11 +1,13 @@
 package com.kxsv.schooldiary.data.local.features.teacher
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.kxsv.schooldiary.data.local.features.DatabaseConstants
 
 @Entity(
-	tableName = DatabaseConstants.TEACHER_TABLE_NAME
+	tableName = DatabaseConstants.TEACHER_TABLE_NAME,
+	indices = [Index(value = ["lastName", "firstName", "patronymic"], unique = true)],
 )
 data class TeacherEntity(
 	val lastName: String,

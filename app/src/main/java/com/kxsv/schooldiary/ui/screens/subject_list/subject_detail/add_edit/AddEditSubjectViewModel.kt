@@ -1,5 +1,6 @@
 package com.kxsv.schooldiary.ui.screens.subject_list.subject_detail.add_edit
 
+import android.database.sqlite.SQLiteConstraintException
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -40,8 +41,11 @@ data class AddEditSubjectUiState(
 	val teacherId: Int? = null,
 	val phoneNumber: String = "",
 	
+	val isTeacherCreated: Boolean = false,
+	val isSubjectSaved: Boolean = false,
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
+	val errorMessage: Int? = null,
 )
 
 private const val TAG = "AddEditSubjectViewModel"
@@ -105,12 +109,26 @@ class AddEditSubjectViewModel @Inject constructor(
 			}
 			return null
 		}
-		
+		viewModelScope.launch(ioDispatcher) {
+			try {
+				if (subjectId == null) {
+					createNewSubject()
+				} else {
+					updateSubject()
+				}
+				_uiState.update { it.copy(isSubjectSaved = true) }
+			} catch (e: SQLiteConstraintException) {
+				_uiState.update {
+					it.copy(
+						userMessage = R.string.full_name_is_reserved,
+						isSubjectSaved = false
+					)
+				}
+			}
+		}
 		return if (subjectId == null) {
-			createNewSubject()
 			ADD_RESULT_OK
 		} else {
-			updateSubject()
 			EDIT_RESULT_OK
 		}
 	}
@@ -146,9 +164,20 @@ class AddEditSubjectViewModel @Inject constructor(
 	}
 	
 	fun saveNewTeacher() {
-		createNewTeacher()
-		showEditResultMessage(ADD_RESULT_OK)
-		eraseData()
+		viewModelScope.launch(ioDispatcher) {
+			try {
+				createNewTeacher()
+				showEditResultMessage(ADD_RESULT_OK)
+				_uiState.update { it.copy(isTeacherCreated = true) }
+			} catch (e: SQLiteConstraintException) {
+				_uiState.update {
+					it.copy(
+						errorMessage = R.string.full_name_is_reserved,
+						isTeacherCreated = false
+					)
+				}
+			}
+		}
 	}
 	
 	fun eraseData() {
@@ -163,7 +192,7 @@ class AddEditSubjectViewModel @Inject constructor(
 		}
 	}
 	
-	private fun createNewTeacher() = viewModelScope.launch(ioDispatcher) {
+	private suspend fun createNewTeacher() {
 		teacherRepository.createTeacher(
 			TeacherEntity(
 				lastName = uiState.value.lastName,
@@ -195,32 +224,28 @@ class AddEditSubjectViewModel @Inject constructor(
 		_uiState.update { it.copy(selectedTeachersIds = newSelectedTeachersIds) }
 	}
 	
-	private fun createNewSubject() {
-		viewModelScope.launch(ioDispatcher) {
-			subjectRepository.createSubject(
-				subject = SubjectEntity(
-					uiState.value.fullName.trim(),
-					uiState.value.displayName.nonEmptyTrim(),
-					uiState.value.cabinet.nonEmptyTrim()
-				),
-				teachersIds = uiState.value.selectedTeachersIds
-			)
-		}
+	private suspend fun createNewSubject() {
+		subjectRepository.createSubject(
+			subject = SubjectEntity(
+				uiState.value.fullName.trim(),
+				uiState.value.displayName.nonEmptyTrim(),
+				uiState.value.cabinet.nonEmptyTrim()
+			),
+			teachersIds = uiState.value.selectedTeachersIds
+		)
 	}
 	
-	private fun updateSubject() {
+	private suspend fun updateSubject() {
 		if (subjectId == null) throw RuntimeException("updateSubject() was called but subject is new.")
-		viewModelScope.launch(ioDispatcher) {
-			subjectRepository.updateSubject(
-				subject = SubjectEntity(
-					fullName = uiState.value.fullName.trim(),
-					cabinet = uiState.value.cabinet.nonEmptyTrim(),
-					displayName = uiState.value.displayName.nonEmptyTrim(),
-					subjectId = subjectId
-				),
-				teachersIds = uiState.value.selectedTeachersIds
-			)
-		}
+		subjectRepository.updateSubject(
+			subject = SubjectEntity(
+				fullName = uiState.value.fullName.trim(),
+				cabinet = uiState.value.cabinet.nonEmptyTrim(),
+				displayName = uiState.value.displayName.nonEmptyTrim(),
+				subjectId = subjectId
+			),
+			teachersIds = uiState.value.selectedTeachersIds
+		)
 	}
 	
 	private fun loadSubject(subjectId: String) {
@@ -249,6 +274,12 @@ class AddEditSubjectViewModel @Inject constructor(
 					}
 				}
 			}
+		}
+	}
+	
+	fun clearErrorMessage() {
+		_uiState.update {
+			it.copy(errorMessage = null)
 		}
 	}
 }
