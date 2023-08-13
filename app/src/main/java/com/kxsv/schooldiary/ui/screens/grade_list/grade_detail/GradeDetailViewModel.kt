@@ -5,8 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.repository.GradeRepository
+import com.kxsv.schooldiary.data.util.Mark.Companion.getStringValueFrom
 import com.kxsv.schooldiary.ui.screens.navArgs
-import com.kxsv.schooldiary.util.Mark.Companion.getStringValueFrom
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

@@ -30,11 +30,11 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.grade.GradeEntity
 import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
+import com.kxsv.schooldiary.data.util.Mark
+import com.kxsv.schooldiary.data.util.Mark.Companion.getStringValueFrom
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.GradesTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.GradesScreenNavActions
-import com.kxsv.schooldiary.util.Mark
-import com.kxsv.schooldiary.util.Mark.Companion.getStringValueFrom
-import com.kxsv.schooldiary.util.ui.LoadingContent
+import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.FULL_ROUTE_PLACEHOLDER

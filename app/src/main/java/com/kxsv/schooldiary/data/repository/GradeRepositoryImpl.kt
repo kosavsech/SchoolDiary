@@ -7,8 +7,8 @@ import com.kxsv.schooldiary.data.remote.WebService
 import com.kxsv.schooldiary.data.remote.dtos.DayGradeDto
 import com.kxsv.schooldiary.data.remote.dtos.TeacherDto
 import com.kxsv.schooldiary.data.remote.parsers.DayGradeParser
+import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.util.DataIdGenUtils.generateGradeId
-import com.kxsv.schooldiary.data.util.remote.NetworkException
 import com.kxsv.schooldiary.di.util.IoDispatcher
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.toList

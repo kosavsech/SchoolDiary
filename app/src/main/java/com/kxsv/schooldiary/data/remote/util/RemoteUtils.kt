@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.data.util.remote
+package com.kxsv.schooldiary.data.remote.util
 
 object RemoteUtils {
 	fun handleErrorResponse(result: String) {

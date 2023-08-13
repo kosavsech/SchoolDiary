@@ -5,8 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.remote.WebService
-import com.kxsv.schooldiary.data.util.remote.NetworkError
-import com.kxsv.schooldiary.data.util.remote.NetworkException
+import com.kxsv.schooldiary.data.remote.util.NetworkError
+import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.di.util.IoDispatcher
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher

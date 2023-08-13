@@ -1,9 +1,9 @@
 package com.kxsv.schooldiary.data.remote
 
 import android.util.Log
+import com.kxsv.schooldiary.data.remote.util.NetworkException
+import com.kxsv.schooldiary.data.remote.util.RemoteUtils.handleErrorResponse
 import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
-import com.kxsv.schooldiary.data.util.remote.NetworkException
-import com.kxsv.schooldiary.data.util.remote.RemoteUtils.handleErrorResponse
 import com.kxsv.schooldiary.di.util.IoDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext

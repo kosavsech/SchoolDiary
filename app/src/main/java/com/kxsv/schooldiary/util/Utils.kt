@@ -4,6 +4,7 @@ import android.util.Log
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
+import com.kxsv.schooldiary.data.util.Mark
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime

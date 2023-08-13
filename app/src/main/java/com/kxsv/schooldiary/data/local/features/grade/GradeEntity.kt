@@ -6,7 +6,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.kxsv.schooldiary.data.local.features.DatabaseConstants
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
-import com.kxsv.schooldiary.util.Mark
+import com.kxsv.schooldiary.data.util.Mark
 import java.time.LocalDate
 import java.time.LocalDateTime
 

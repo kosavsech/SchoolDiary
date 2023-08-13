@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.util.ui
+package com.kxsv.schooldiary.ui.util
 
 enum class GradesSortType {
 	MARK_DATE,

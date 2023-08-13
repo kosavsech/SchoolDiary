@@ -1,7 +1,7 @@
 package com.kxsv.schooldiary.data.remote.dtos
 
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
-import com.kxsv.schooldiary.util.Mark
+import com.kxsv.schooldiary.data.util.Mark
 
 data class EduPerformanceDto(
 	val subjectAncestorName: String,

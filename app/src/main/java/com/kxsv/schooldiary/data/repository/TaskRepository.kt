@@ -5,7 +5,7 @@ import com.kxsv.schooldiary.data.local.features.task.TaskAndUniqueIdWithSubject
 import com.kxsv.schooldiary.data.local.features.task.TaskEntity
 import com.kxsv.schooldiary.data.local.features.task.TaskWithSubject
 import com.kxsv.schooldiary.data.remote.dtos.TaskDto
-import com.kxsv.schooldiary.data.util.remote.NetworkException
+import com.kxsv.schooldiary.data.remote.util.NetworkException
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 

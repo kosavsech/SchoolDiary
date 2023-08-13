@@ -16,7 +16,7 @@
         android:theme="@style/Theme.SchoolDiary"
         tools:targetApi="31">
         <activity
-            android:name=".ui.main.MainActivity"
+            android:name=".app.MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/Theme.SchoolDiary">

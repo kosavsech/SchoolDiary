@@ -58,12 +58,12 @@ import com.kizitonwose.calendar.core.previousMonth
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.CopyScheduleForDayTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.ScheduleNavGraph
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.DateRangeScheduleCopyScreenNavActions
+import com.kxsv.schooldiary.ui.util.ContinuousSelectionHelper.getSelection
+import com.kxsv.schooldiary.ui.util.DateSelection
+import com.kxsv.schooldiary.ui.util.backgroundHighlight
+import com.kxsv.schooldiary.ui.util.displayText
+import com.kxsv.schooldiary.ui.util.rememberFirstCompletelyVisibleMonth
 import com.kxsv.schooldiary.util.Utils
-import com.kxsv.schooldiary.util.ui.ContinuousSelectionHelper.getSelection
-import com.kxsv.schooldiary.util.ui.DateSelection
-import com.kxsv.schooldiary.util.ui.backgroundHighlight
-import com.kxsv.schooldiary.util.ui.displayText
-import com.kxsv.schooldiary.util.ui.rememberFirstCompletelyVisibleMonth
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.result.ResultBackNavigator

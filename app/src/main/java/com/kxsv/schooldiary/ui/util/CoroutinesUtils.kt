@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.kxsv.schooldiary.util.ui
+package com.kxsv.schooldiary.ui.util
 
 import kotlinx.coroutines.flow.SharingStarted
 

@@ -68,8 +68,8 @@ import com.kxsv.schooldiary.data.local.features.lesson.LessonWithSubject
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.CopyScheduleForDayTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.ScheduleNavGraph
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.DayScheduleCopyScreenNavActions
-import com.kxsv.schooldiary.util.ui.displayText
-import com.kxsv.schooldiary.util.ui.rememberFirstCompletelyVisibleMonth
+import com.kxsv.schooldiary.ui.util.displayText
+import com.kxsv.schooldiary.ui.util.rememberFirstCompletelyVisibleMonth
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.result.ResultBackNavigator

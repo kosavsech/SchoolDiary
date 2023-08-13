@@ -16,7 +16,7 @@ import com.kxsv.schooldiary.data.remote.WebService
 import com.kxsv.schooldiary.data.remote.dtos.TaskDto
 import com.kxsv.schooldiary.data.remote.parsers.LessonParser
 import com.kxsv.schooldiary.data.remote.parsers.TaskParser
-import com.kxsv.schooldiary.data.util.remote.NetworkException
+import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.di.util.ApplicationScope
 import com.kxsv.schooldiary.di.util.IoDispatcher
 import com.kxsv.schooldiary.util.Utils

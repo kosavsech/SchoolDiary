@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.data
+package com.kxsv.schooldiary.data.local
 
 import androidx.room.Database
 import androidx.room.RoomDatabase

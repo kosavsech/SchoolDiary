@@ -44,7 +44,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.LoginDialogNavActions
-import com.kxsv.schooldiary.util.ui.Indicator
+import com.kxsv.schooldiary.ui.util.Indicator
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.spec.DestinationStyle

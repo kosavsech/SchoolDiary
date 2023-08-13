@@ -76,10 +76,10 @@ import com.kxsv.schooldiary.ui.screens.destinations.DayScheduleCopyScreenDestina
 import com.kxsv.schooldiary.ui.screens.destinations.PatternSelectionScreenDestination
 import com.kxsv.schooldiary.ui.screens.grade_list.MY_URI
 import com.kxsv.schooldiary.ui.screens.patterns.PatternSelectionResult
+import com.kxsv.schooldiary.ui.util.LoadingContent
+import com.kxsv.schooldiary.ui.util.displayText
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.localDateToTimestamp
-import com.kxsv.schooldiary.util.ui.LoadingContent
-import com.kxsv.schooldiary.util.ui.displayText
 import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.FULL_ROUTE_PLACEHOLDER

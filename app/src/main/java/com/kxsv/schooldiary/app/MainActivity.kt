@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.ui.main
+package com.kxsv.schooldiary.app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

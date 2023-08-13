@@ -4,7 +4,7 @@ import com.kxsv.schooldiary.data.local.features.grade.GradeEntity
 import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
 import com.kxsv.schooldiary.data.remote.dtos.DayGradeDto
 import com.kxsv.schooldiary.data.remote.dtos.TeacherDto
-import com.kxsv.schooldiary.data.util.remote.NetworkException
+import com.kxsv.schooldiary.data.remote.util.NetworkException
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 

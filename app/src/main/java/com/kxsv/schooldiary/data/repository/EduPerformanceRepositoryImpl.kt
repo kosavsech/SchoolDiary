@@ -8,8 +8,8 @@ import com.kxsv.schooldiary.data.mapper.toEduPerformanceEntities
 import com.kxsv.schooldiary.data.remote.WebService
 import com.kxsv.schooldiary.data.remote.dtos.EduPerformanceDto
 import com.kxsv.schooldiary.data.remote.parsers.EduPerformanceParser
+import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
-import com.kxsv.schooldiary.data.util.remote.NetworkException
 import com.kxsv.schooldiary.di.util.ApplicationScope
 import com.kxsv.schooldiary.di.util.IoDispatcher
 import kotlinx.coroutines.CoroutineDispatcher

@@ -13,8 +13,8 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.kxsv.schooldiary.data.local.features.task.TaskAndUniqueIdWithSubject
+import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.repository.TaskRepository
-import com.kxsv.schooldiary.data.util.remote.NetworkException
 import com.kxsv.schooldiary.di.util.NotificationsConstants
 import com.kxsv.schooldiary.di.util.NotificationsConstants.FETCHED_TASKS_GROUP_ID
 import com.kxsv.schooldiary.di.util.NotificationsConstants.FETCHED_TASKS_SUMMARY_ID

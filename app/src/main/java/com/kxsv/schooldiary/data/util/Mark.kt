@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.util
+package com.kxsv.schooldiary.data.util
 
 enum class Mark(val value: Int?, private val letterValue: Char?) {
 	ONE(1, null), TWO(2, null), THREE(3, null),

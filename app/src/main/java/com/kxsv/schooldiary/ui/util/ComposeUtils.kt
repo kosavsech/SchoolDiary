@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.kxsv.schooldiary.util.ui
+package com.kxsv.schooldiary.ui.util
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.VectorConverter
@@ -78,9 +78,9 @@ import com.kizitonwose.calendar.core.CalendarMonth
 import com.kizitonwose.calendar.core.DayPosition
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
+import com.kxsv.schooldiary.ui.util.ContinuousSelectionHelper.isInDateBetweenSelection
+import com.kxsv.schooldiary.ui.util.ContinuousSelectionHelper.isOutDateBetweenSelection
 import com.kxsv.schooldiary.util.Utils
-import com.kxsv.schooldiary.util.ui.ContinuousSelectionHelper.isInDateBetweenSelection
-import com.kxsv.schooldiary.util.ui.ContinuousSelectionHelper.isOutDateBetweenSelection
 import kotlinx.coroutines.flow.filterNotNull
 import java.time.DayOfWeek
 import java.time.LocalDate

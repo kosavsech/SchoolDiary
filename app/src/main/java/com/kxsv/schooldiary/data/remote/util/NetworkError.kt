@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.data.util.remote
+package com.kxsv.schooldiary.data.remote.util
 
 sealed class NetworkError {
 	object AccessTemporarilyBlocked : NetworkError()

@@ -1,6 +1,6 @@
 package com.kxsv.schooldiary.data.remote.dtos
 
-import com.kxsv.schooldiary.util.Mark
+import com.kxsv.schooldiary.data.util.Mark
 import java.time.LocalDate
 
 data class DayGradeDto(

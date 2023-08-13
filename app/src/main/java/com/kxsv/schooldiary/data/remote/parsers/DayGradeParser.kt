@@ -3,8 +3,8 @@ package com.kxsv.schooldiary.data.remote.parsers
 import android.util.Log
 import com.kxsv.schooldiary.data.remote.dtos.DayGradeDto
 import com.kxsv.schooldiary.data.remote.dtos.TeacherDto
-import com.kxsv.schooldiary.data.util.remote.NetLessonColumn
-import com.kxsv.schooldiary.util.Mark
+import com.kxsv.schooldiary.data.remote.util.NetLessonColumn
+import com.kxsv.schooldiary.data.util.Mark
 import org.jsoup.select.Elements
 import java.time.LocalDate
 

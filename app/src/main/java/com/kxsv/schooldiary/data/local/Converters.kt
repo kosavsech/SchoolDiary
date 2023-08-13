@@ -1,9 +1,9 @@
-package com.kxsv.schooldiary.data
+package com.kxsv.schooldiary.data.local
 
 import androidx.room.TypeConverter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.kxsv.schooldiary.util.Mark
+import com.kxsv.schooldiary.data.util.Mark
 import java.lang.reflect.Type
 import java.time.Instant
 import java.time.LocalDate

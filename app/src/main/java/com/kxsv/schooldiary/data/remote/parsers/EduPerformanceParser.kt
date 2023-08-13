@@ -3,7 +3,7 @@ package com.kxsv.schooldiary.data.remote.parsers
 import android.util.Log
 import com.kxsv.schooldiary.data.remote.dtos.EduPerformanceDto
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
-import com.kxsv.schooldiary.util.Mark
+import com.kxsv.schooldiary.data.util.Mark
 import org.jsoup.select.Elements
 
 private const val TAG = "EduPerformanceParser"

@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.util.ui
+package com.kxsv.schooldiary.ui.util
 
 sealed class Async<out T> {
 	object Loading : Async<Nothing>()

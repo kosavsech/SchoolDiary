@@ -1,7 +1,7 @@
 package com.kxsv.schooldiary.data.remote.parsers
 
 import com.kxsv.schooldiary.data.remote.dtos.LessonDto
-import com.kxsv.schooldiary.data.util.remote.NetLessonColumn
+import com.kxsv.schooldiary.data.remote.util.NetLessonColumn
 import org.jsoup.select.Elements
 import java.time.LocalDate
 

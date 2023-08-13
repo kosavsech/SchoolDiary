@@ -6,9 +6,9 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
+import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.data.util.DataIdGenUtils
-import com.kxsv.schooldiary.data.util.remote.NetworkException
 import com.kxsv.schooldiary.util.Utils
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject

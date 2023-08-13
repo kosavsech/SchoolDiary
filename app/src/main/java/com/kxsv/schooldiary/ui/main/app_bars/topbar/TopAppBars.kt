@@ -39,8 +39,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.util.ui.GradesSortType
-import com.kxsv.schooldiary.util.ui.TasksDoneFilterType
+import com.kxsv.schooldiary.ui.util.GradesSortType
+import com.kxsv.schooldiary.ui.util.TasksDoneFilterType
 
 @Composable
 fun AddEditPatternTopAppBar(@StringRes title: Int, onBack: () -> Unit) {

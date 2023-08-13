@@ -36,17 +36,17 @@ private const val TAG = "SchoolDiaryApp"
 class SchoolDiaryApp : Application(), Configuration.Provider {
 	
 	@Inject
-	lateinit var customSyncWorkerFactory: CustomSyncWorkerFactory
+	lateinit var customWorkerFactory: CustomWorkerFactory
 	
 	override fun getWorkManagerConfiguration(): Configuration =
 		Configuration.Builder()
 			.setMinimumLoggingLevel(Log.DEBUG)
-			.setWorkerFactory(customSyncWorkerFactory)
+			.setWorkerFactory(customWorkerFactory)
 			.build()
 	
 }
 
-class CustomSyncWorkerFactory @Inject constructor(
+class CustomWorkerFactory @Inject constructor(
 	private val subjectTeacherRepository: SubjectTeacherRepository,
 	private val gradeRepository: GradeRepository,
 	private val subjectRepository: SubjectRepository,

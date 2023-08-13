@@ -35,7 +35,7 @@ import com.kxsv.schooldiary.data.local.features.task.TaskEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.TaskDetailTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.TasksDetailNavActions
-import com.kxsv.schooldiary.util.ui.LoadingContent
+import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.result.ResultBackNavigator

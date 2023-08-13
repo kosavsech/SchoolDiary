@@ -43,8 +43,8 @@ import com.kxsv.schooldiary.ui.main.navigation.nav_actions.SettingsScreenNavActi
 import com.kxsv.schooldiary.ui.screens.settings.utils.SettingsItemType
 import com.kxsv.schooldiary.ui.screens.settings.utils.SettingsScreenItem
 import com.kxsv.schooldiary.ui.theme.AppTheme
+import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.util.Utils.stringRoundTo
-import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.vanpra.composematerialdialogs.MaterialDialog

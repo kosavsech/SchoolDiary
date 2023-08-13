@@ -2,7 +2,7 @@ package com.kxsv.schooldiary.di.data_modules
 
 import android.content.Context
 import androidx.room.Room
-import com.kxsv.schooldiary.data.AppDatabase
+import com.kxsv.schooldiary.data.local.AppDatabase
 import com.kxsv.schooldiary.data.local.features.associative_tables.subject_teacher.SubjectTeacherDao
 import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceDao
 import com.kxsv.schooldiary.data.local.features.grade.GradeDao

@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.net.toUri
 import com.kxsv.schooldiary.R
+import com.kxsv.schooldiary.app.MainActivity
 import com.kxsv.schooldiary.di.util.GradeNotification
 import com.kxsv.schooldiary.di.util.GradeSummaryNotification
 import com.kxsv.schooldiary.di.util.NotificationsConstants.FETCHED_GRADES_GROUP_ID
@@ -20,7 +21,6 @@ import com.kxsv.schooldiary.di.util.ScheduleNotification
 import com.kxsv.schooldiary.di.util.ScheduleSummaryNotification
 import com.kxsv.schooldiary.di.util.TaskNotification
 import com.kxsv.schooldiary.di.util.TaskSummaryNotification
-import com.kxsv.schooldiary.ui.main.MainActivity
 import com.kxsv.schooldiary.ui.screens.destinations.GradesScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.TasksScreenDestination
 import dagger.Module

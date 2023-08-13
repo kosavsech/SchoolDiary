@@ -50,7 +50,7 @@ import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity.Companion.
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditSubjectTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AddEditSubjectScreenNavActions
 import com.kxsv.schooldiary.ui.screens.teacher_list.AddEditTeacherDialog
-import com.kxsv.schooldiary.util.ui.LoadingContent
+import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.result.ResultBackNavigator

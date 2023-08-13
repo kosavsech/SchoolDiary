@@ -68,10 +68,10 @@ import com.kxsv.schooldiary.ui.screens.destinations.TasksScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.TypedDestination
 import com.kxsv.schooldiary.ui.screens.patterns.add_edit_pattern.fromLocalTime
 import com.kxsv.schooldiary.ui.theme.AppTheme
+import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.getIndexByTime
 import com.kxsv.schooldiary.util.Utils.getNextLessonsAfterIndex
-import com.kxsv.schooldiary.util.ui.LoadingContent
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootNavGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
