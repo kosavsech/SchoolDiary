@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -61,11 +62,15 @@ fun SubjectsScreen(
 	) { paddingValues ->
 		val uiState = viewModel.uiState.collectAsState().value
 		
+		val onRefresh = remember {
+			{ viewModel.refresh() }
+		}
 		SubjectsContent(
+			modifier = Modifier.padding(paddingValues),
 			loading = uiState.isLoading,
 			subjects = uiState.subjects,
 			onSubjectClick = { subjectId -> navigator.onSubjectClick(subjectId) },
-			modifier = Modifier.padding(paddingValues),
+			onRefresh = onRefresh,
 		)
 		
 		// Check for user messages to display on the screen
@@ -81,10 +86,11 @@ fun SubjectsScreen(
 
 @Composable
 private fun SubjectsContent(
+	modifier: Modifier,
 	loading: Boolean,
 	subjects: List<SubjectEntity>,
 	onSubjectClick: (String) -> Unit,
-	modifier: Modifier,
+	onRefresh: () -> Unit,
 ) {
 	LoadingContent(
 		modifier = modifier,
@@ -92,7 +98,7 @@ private fun SubjectsContent(
 		empty = subjects.isEmpty(),
 		emptyContent = { Text(text = "No subjects yet") },
 		isContentScrollable = true,
-		onRefresh = null
+		onRefresh = onRefresh
 	) {
 		LazyColumn(
 			contentPadding = PaddingValues(vertical = dimensionResource(R.dimen.list_item_padding)),
@@ -136,6 +142,7 @@ private fun SubjectItem(
 private fun SubjectsContentPreview() {
 	Surface {
 		SubjectsContent(
+			modifier = Modifier,
 			loading = false,
 			subjects = listOf(
 				SubjectEntity("Algebra", cabinet = "52"),
@@ -144,7 +151,7 @@ private fun SubjectsContentPreview() {
 				SubjectEntity("Algebra", cabinet = "75"),
 			),
 			onSubjectClick = {},
-			modifier = Modifier
+			onRefresh = {}
 		)
 	}
 }

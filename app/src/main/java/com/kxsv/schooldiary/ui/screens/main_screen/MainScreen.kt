@@ -107,8 +107,8 @@ fun MainScreen(
 	) { paddingValues ->
 		val uiState = viewModel.uiState.collectAsState().value
 		
-		val loadNetworkSchedule = remember {
-			{ }
+		val onRefresh = remember {
+			{ viewModel.refresh() }
 		}
 		val onScheduleShowMore = remember {
 			{ navigator.onScheduleShowMore() }
@@ -131,7 +131,7 @@ fun MainScreen(
 			modifier = Modifier.padding(paddingValues),
 			isLoading = uiState.isLoading,
 			itemList = uiState.itemList,
-			onRefresh = loadNetworkSchedule,
+			onRefresh = onRefresh,
 			onScheduleShowMore = onScheduleShowMore,
 			onTaskChecked = onTaskChecked,
 			onTaskClicked = onTaskClicked,

@@ -79,11 +79,11 @@ fun TeachersScreen(
 			{ viewModel.deleteTeacher(it) }
 		}
 		TeachersContent(
+			modifier = Modifier.padding(paddingValues),
 			isLoading = uiState.isLoading,
 			teacherEntities = uiState.teachers,
 			onTeacherClick = onTeacherClick,
 			onDeleteClick = deleteTeacher,
-			modifier = Modifier.padding(paddingValues)
 		)
 		
 		val saveTeacher = remember {
@@ -137,11 +137,11 @@ fun TeachersScreen(
 
 @Composable
 private fun TeachersContent(
+	modifier: Modifier = Modifier,
 	isLoading: Boolean,
 	teacherEntities: List<TeacherEntity>,
 	onTeacherClick: (TeacherEntity) -> Unit,
 	onDeleteClick: (String) -> Unit,
-	modifier: Modifier = Modifier,
 ) {
 	LoadingContent(
 		modifier = modifier,
@@ -245,7 +245,8 @@ private fun TeachersContentPreview() {
 					phoneNumber = "+756248932572"
 				),
 			),
-			onTeacherClick = {}, onDeleteClick = {}
+			onTeacherClick = {},
+			onDeleteClick = {},
 		)
 	}
 }

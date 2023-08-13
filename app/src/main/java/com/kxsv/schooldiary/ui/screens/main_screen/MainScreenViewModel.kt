@@ -15,6 +15,7 @@ import com.kxsv.schooldiary.util.Utils.toList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -34,11 +35,11 @@ data class MainUiState(
 
 @HiltViewModel
 class MainScreenViewModel @Inject constructor(
+	private val lessonRepository: LessonRepository,
 	private val taskRepository: TaskRepository,
 	private val strokeRepository: PatternStrokeRepository,
 	private val userPreferencesRepository: UserPreferencesRepository,
 	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
-	lessonRepository: LessonRepository,
 ) : ViewModel() {
 	
 	private val startRange = Utils.currentDate
@@ -88,10 +89,22 @@ class MainScreenViewModel @Inject constructor(
 		)
 	}.stateIn(viewModelScope, WhileUiSubscribed, MainUiState(isLoading = true))
 	
+	private var netFetchJob: Job? = null
+	
 	init {
 		viewModelScope.launch(ioDispatcher) {
 			defaultPattern =
 				strokeRepository.getStrokesByPatternId(userPreferencesRepository.getPatternId())
+		}
+	}
+	
+	fun refresh() {
+		_uiState.update { it.copy(isLoading = true) }
+		netFetchJob?.cancel()
+		netFetchJob = viewModelScope.launch(ioDispatcher) {
+			lessonRepository.fetchSoonSchedule()
+			taskRepository.fetchSoonTasks()
+			_uiState.update { it.copy(isLoading = false) }
 		}
 	}
 	
