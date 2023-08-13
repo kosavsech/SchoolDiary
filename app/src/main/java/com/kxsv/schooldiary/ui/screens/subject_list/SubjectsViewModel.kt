@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
+import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.data.util.DataIdGenUtils
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
@@ -95,39 +96,44 @@ class SubjectsViewModel @Inject constructor(
 		_uiState.update { it.copy(isLoading = true) }
 		fetchJob?.cancel()
 		fetchJob = viewModelScope.launch {
-			val subjectNames = Utils.measurePerformanceInMS(
-				logger = { time, _ ->
-					Log.i(
-						TAG, "fetchSubjectNames: performance is" +
-								" ${(time / 10f).roundToInt() / 100f} S"
-					)
+			try {
+				val subjectNames = Utils.measurePerformanceInMS(
+					logger = { time, _ ->
+						Log.i(
+							TAG, "fetchSubjectNames: performance is" +
+									" ${(time / 10f).roundToInt() / 100f} S"
+						)
+					}
+				) {
+					subjectRepository.fetchSubjectNames()
 				}
-			) {
-				subjectRepository.fetchSubjectNames()
-			}
-			Utils.measurePerformanceInMS(
-				logger = { time, _ -> Log.i(TAG, "updateDatabase: performance is $time MS") }
-			) {
-				val fetchedSubjects = subjectNames.map { SubjectEntity(fullName = it) }
-				fetchedSubjects.forEach { subject ->
-					val subjectId = DataIdGenUtils.generateSubjectId(subject.fullName)
-					val existedSubject = Utils.measurePerformanceInMS(
-						{ time, result ->
-							Log.d(
-								TAG, "getSubject(${subjectId}): $time ms\n found = $result"
-							)
+				Utils.measurePerformanceInMS(
+					logger = { time, _ -> Log.i(TAG, "updateDatabase: performance is $time MS") }
+				) {
+					val fetchedSubjects = subjectNames.map { SubjectEntity(fullName = it) }
+					fetchedSubjects.forEach { subject ->
+						val subjectId = DataIdGenUtils.generateSubjectId(subject.fullName)
+						val existedSubject = Utils.measurePerformanceInMS(
+							{ time, result ->
+								Log.d(
+									TAG, "getSubject(${subjectId}): $time ms\n found = $result"
+								)
+							}
+						) {
+							subjectRepository.getSubject(subjectId)
 						}
-					) {
-						subjectRepository.getSubject(subjectId)
-					}
-					if (existedSubject == null) {
-						val newSubject = subject.copy(subjectId = subjectId)
-						Log.i(TAG, "updateDatabase: FOUND NEW SUBJECT:\n${newSubject.fullName}")
-						subjectRepository.updateSubject(newSubject, null)
+						if (existedSubject == null) {
+							val newSubject = subject.copy(subjectId = subjectId)
+							Log.i(TAG, "updateDatabase: FOUND NEW SUBJECT:\n${newSubject.fullName}")
+							subjectRepository.updateSubject(newSubject, null)
+						}
 					}
 				}
+			} catch (e: NetworkException.NotLoggedInException) {
+				Log.e(TAG, "refresh: ", e)
+			} finally {
+				_uiState.update { it.copy(isLoading = false) }
 			}
-			_uiState.update { it.copy(isLoading = false) }
 		}
 	}
 }

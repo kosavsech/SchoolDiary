@@ -74,6 +74,9 @@ class LessonRepositoryImpl @Inject constructor(
 		return LessonParser().parse(dayInfo, localDate)
 	}
 	
+	/**
+	 * @throws NetworkException.NotLoggedInException
+	 */
 	override suspend fun fetchSoonSchedule(): Map<LocalDate, Utils.ScheduleCompareResult> {
 		return withContext(ioDispatcher) {
 			withTimeout(15000L) {

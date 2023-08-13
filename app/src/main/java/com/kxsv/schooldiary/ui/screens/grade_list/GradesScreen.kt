@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -77,12 +78,18 @@ fun GradesScreen(
 		modifier = Modifier.fillMaxSize(),
 	) { paddingValues ->
 		
+		val onGradeClick = remember<(String) -> Unit> {
+			{ gradeId -> navigator.onGradeClick(gradeId) }
+		}
+		val onRefresh = remember {
+			{ viewModel.fetchGrades() }
+		}
 		GradesContent(
+			modifier = Modifier.padding(paddingValues),
 			loading = uiState.isLoading,
 			grades = uiState.grades,
-			onGradeClick = { gradeId -> navigator.onGradeClick(gradeId) },
-			onRefresh = { viewModel.fetchGrades() },
-			modifier = Modifier.padding(paddingValues),
+			onGradeClick = onGradeClick,
+			onRefresh = onRefresh,
 		)
 		
 		// Check for user messages to display on the screen
@@ -107,6 +114,7 @@ fun GradesScreen(
 
 @Composable
 private fun GradesContent(
+	modifier: Modifier,
 	loading: Boolean,
 	grades: List<GradeWithSubject>,
 	// TODO
@@ -114,7 +122,6 @@ private fun GradesContent(
 	//  onRefresh: () -> Unit,
 	onGradeClick: (String) -> Unit,
 	onRefresh: () -> Unit,
-	modifier: Modifier,
 ) {
 	LoadingContent(
 		modifier = modifier,
@@ -175,6 +182,7 @@ private fun GradeItem(
 private fun SubjectsContentPreview() {
 	Surface {
 		GradesContent(
+			modifier = Modifier,
 			loading = false,
 			grades = listOf(
 				GradeWithSubject(
@@ -188,10 +196,8 @@ private fun SubjectsContentPreview() {
 					SubjectEntity("Английский язык")
 				)
 			),
-			onGradeClick = {},
-			onRefresh = {},
-			modifier = Modifier
-		)
+			onGradeClick = {}
+		) {}
 	}
 }
 

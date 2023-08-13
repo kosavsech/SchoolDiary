@@ -4,6 +4,7 @@ import com.kxsv.schooldiary.data.local.features.lesson.LessonEntity
 import com.kxsv.schooldiary.data.local.features.lesson.LessonWithStudyDay
 import com.kxsv.schooldiary.data.local.features.lesson.LessonWithSubject
 import com.kxsv.schooldiary.data.remote.dtos.LessonDto
+import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.util.Utils
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
@@ -26,8 +27,14 @@ interface LessonRepository {
 		endRange: LocalDate,
 	): Map<LocalDate, List<LessonWithSubject>>
 	
+	/**
+	 * @throws NetworkException.NotLoggedInException
+	 */
 	suspend fun fetchLessonsOnDate(localDate: LocalDate): List<LessonDto>
 	
+	/**
+	 * @throws NetworkException.NotLoggedInException
+	 */
 	suspend fun fetchSoonSchedule(): Map<LocalDate, Utils.ScheduleCompareResult>
 	
 	suspend fun getAllByMasterId(studyDayId: Long): List<LessonEntity>

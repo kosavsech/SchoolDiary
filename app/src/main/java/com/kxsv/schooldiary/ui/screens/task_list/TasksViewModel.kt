@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.task.TaskWithSubject
+import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.repository.TaskRepository
 import com.kxsv.schooldiary.di.util.IoDispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
@@ -159,15 +160,22 @@ class TasksViewModel @Inject constructor(
 	}
 	
 	fun refresh() = viewModelScope.launch(ioDispatcher) {
-		Utils.measurePerformanceInMS(
-			logger = { time, _ ->
-				Log.i(
-					"SyncWorker", "refresh: new performance is" +
-							" ${(time / 10f).roundToInt() / 100f} S"
-				)
+		_uiState.update { it.copy(isLoading = true) }
+		try {
+			Utils.measurePerformanceInMS(
+				logger = { time, _ ->
+					Log.i(
+						"SyncWorker", "refresh: new performance is" +
+								" ${(time / 10f).roundToInt() / 100f} S"
+					)
+				}
+			) {
+				taskRepository.fetchSoonTasks()
 			}
-		) {
-			taskRepository.fetchSoonTasks()
+		} catch (e: NetworkException.NotLoggedInException) {
+			Log.e(TAG, "refresh: ", e)
+		} finally {
+			_uiState.update { it.copy(isLoading = false) }
 		}
 	}
 	

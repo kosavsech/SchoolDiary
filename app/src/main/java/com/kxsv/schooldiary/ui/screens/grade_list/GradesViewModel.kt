@@ -5,9 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
+import com.kxsv.schooldiary.data.mapper.toGradeWithSubject
 import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.repository.EduPerformanceRepository
 import com.kxsv.schooldiary.data.repository.GradeRepository
+import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.di.util.IoDispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
@@ -28,6 +30,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.IOException
 import javax.inject.Inject
+import kotlin.math.roundToInt
 
 private const val TAG = "GradeTableViewModel"
 
@@ -41,6 +44,7 @@ data class GradesUiState(
 @HiltViewModel
 class GradesViewModel @Inject constructor(
 	private val gradeRepository: GradeRepository,
+	private val subjectRepository: SubjectRepository,
 	private val eduPerformanceRepository: EduPerformanceRepository,
 	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
@@ -68,7 +72,7 @@ class GradesViewModel @Inject constructor(
 	private var gradesFetchJob: Job? = null
 	
 	init {
-		loadLocalGrades()
+		fetchGrades()
 	}
 	
 	fun showEditResultMessage(result: Int) {
@@ -87,23 +91,70 @@ class GradesViewModel @Inject constructor(
 		_uiState.update { it.copy(userMessage = null) }
 	}
 	
-	private fun loadLocalGrades() = viewModelScope.launch(ioDispatcher) {
-		_uiState.update { it.copy(isLoading = true) }
-		val grades = measurePerformanceInMS(logger = { time, _ ->
-			Log.i(TAG, "loadLocalGrades: performance is $time ms")
-		}) { gradeRepository.getGradesWithSubjects() }
-		_uiState.update { it.copy(grades = grades, isLoading = false) }
-	}
-	
 	fun fetchGrades() {
 		_uiState.update { it.copy(isLoading = true) }
 		gradesFetchJob?.cancel()
 		gradesFetchJob = viewModelScope.launch(ioDispatcher) {
 			try {
-				measurePerformanceInMS({ time, _ ->
-					Log.i(TAG, "fetchGrades: loadGradesForDate() performance is $time ms")
-				}) {
-					// fetch all grades
+				val fetchedGradesWithTeachers = measurePerformanceInMS(
+					logger = { time, _ ->
+						Log.i(
+							TAG,
+							"fetchRecentGradesWithTeachers: performance is" +
+									" ${(time / 10f).roundToInt() / 100f} S"
+						)
+					}
+				) {
+					gradeRepository.fetchRecentGradesWithTeachers()
+				}
+				val newGradeEntities = measurePerformanceInMS(
+					logger = { time, _ ->
+						Log.i(
+							TAG,
+							"updateDatabase: performance is $time MS"
+						)
+					}
+				) {
+					val fetchedGradesLocalized = mutableListOf<GradeWithSubject>()
+					fetchedGradesWithTeachers.first.forEach {
+						try {
+							fetchedGradesLocalized.add(it.toGradeWithSubject(subjectRepository))
+						} catch (e: NoSuchElementException) {
+							Log.e(
+								TAG,
+								"updateTeachersDatabase: SchoolDiary: Couldn't localize grade ${it.mark}" +
+										" on date ${it.date} for ${it.subjectAncestorName}.", e
+							)
+							// todo
+							/*showSnackbarMessage(R.string.successfully_saved_grade_message)
+							Toast.makeText(
+								this.coroutineContext,
+								"SchoolDiary: Couldn't localize grade ${it.mark} on date ${it.date} for ${it.subjectAncestorName}.\n" + e.message,
+								Toast.LENGTH_LONG
+							).show()*/
+						}
+					}
+					for (fetchedGradeEntity in fetchedGradesLocalized) {
+						val gradeId = fetchedGradeEntity.grade.gradeId
+						val isGradeExisted = measurePerformanceInMS(
+							{ time, result ->
+								Log.d(
+									TAG,
+									"gradeDataSource.getById($gradeId): $time ms\n found = $result"
+								)
+							}
+						) {
+							
+							gradeRepository.getGrade(gradeId) != null
+						}
+						gradeRepository.update(fetchedGradeEntity.grade)
+						if (!isGradeExisted) {
+							Log.i(
+								TAG,
+								"updateDatabase: FOUND NEW GRADE:\n${fetchedGradeEntity.grade}"
+							)
+						}
+					}
 				}
 			} catch (e: NetworkException) {
 				Log.e(TAG, "fetchGrades: exception on login", e)
@@ -115,7 +166,7 @@ class GradesViewModel @Inject constructor(
 			} catch (e: Exception) {
 				Log.e(TAG, "fetchGrades: exception", e)
 			} finally {
-				loadLocalGrades()
+				_uiState.update { it.copy(isLoading = false) }
 			}
 		}
 	}

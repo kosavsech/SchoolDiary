@@ -1,9 +1,11 @@
 package com.kxsv.schooldiary.ui.screens.main_screen
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
+import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.repository.LessonRepository
 import com.kxsv.schooldiary.data.repository.PatternStrokeRepository
 import com.kxsv.schooldiary.data.repository.TaskRepository
@@ -32,6 +34,8 @@ data class MainUiState(
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
 )
+
+private const val TAG = "MainScreenViewModel"
 
 @HiltViewModel
 class MainScreenViewModel @Inject constructor(
@@ -102,9 +106,16 @@ class MainScreenViewModel @Inject constructor(
 		_uiState.update { it.copy(isLoading = true) }
 		netFetchJob?.cancel()
 		netFetchJob = viewModelScope.launch(ioDispatcher) {
-			lessonRepository.fetchSoonSchedule()
-			taskRepository.fetchSoonTasks()
-			_uiState.update { it.copy(isLoading = false) }
+			try {
+				// todo add schedule fetch with notification
+//				lessonRepository.fetchSoonSchedule()
+				taskRepository.fetchSoonTasks()
+			} catch (e: NetworkException.NotLoggedInException) {
+				Log.e(TAG, "refresh: not logged in", e)
+			} finally {
+				_uiState.update { it.copy(isLoading = false) }
+			}
+			
 		}
 	}
 	
