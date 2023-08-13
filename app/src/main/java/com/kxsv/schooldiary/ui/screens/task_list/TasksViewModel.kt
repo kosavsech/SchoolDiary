@@ -35,7 +35,7 @@ data class TasksUiState(
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
 	val userMessageArg: String? = null,
-	val dateFilterType: TasksDateFilterType = TasksDateFilterType.ALL,
+	val dateFilterType: TasksDateFilterType = TasksDateFilterType.NEXT_WEEK,
 	val doneFilterType: TasksDoneFilterType = TasksDoneFilterType.ALL,
 )
 
@@ -47,7 +47,7 @@ class TasksViewModel @Inject constructor(
 	@IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
-	private val _dateFilterType = MutableStateFlow(TasksDateFilterType.ALL)
+	private val _dateFilterType = MutableStateFlow(TasksDateFilterType.NEXT_WEEK)
 	
 	private val _doneFilterType = MutableStateFlow(TasksDoneFilterType.ALL)
 	
@@ -56,9 +56,7 @@ class TasksViewModel @Inject constructor(
 	private val _tasksDoneFilteredFlow = _doneFilterType
 		.combine(_allTasksFlow) { doneFilterType, tasks ->
 			when (doneFilterType) {
-				TasksDoneFilterType.ALL -> {
-					tasks
-				}
+				TasksDoneFilterType.ALL -> tasks
 				
 				TasksDoneFilterType.IS_NOT_DONE -> {
 					tasks.filterNot {
@@ -109,9 +107,7 @@ class TasksViewModel @Inject constructor(
 					}
 				}
 				
-				TasksDateFilterType.ALL -> {
-					tasks
-				}
+				TasksDateFilterType.ALL -> tasks
 			}
 		}.map { Async.Success(it) }
 		.catch<Async<List<TaskWithSubject>>> {
