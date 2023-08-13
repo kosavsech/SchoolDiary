@@ -47,7 +47,7 @@ class GradeRepositoryImpl @Inject constructor(
 		return gradeDataSource.observeAlleWithSubjectOrderedByFetchDate()
 	}
 	
-	override fun getGradesBySubjectIdStream(subjectId: Long): Flow<List<GradeEntity>> {
+	override fun getGradesBySubjectIdStream(subjectId: String): Flow<List<GradeEntity>> {
 		return gradeDataSource.observeAllBySubjectId(subjectId)
 	}
 	

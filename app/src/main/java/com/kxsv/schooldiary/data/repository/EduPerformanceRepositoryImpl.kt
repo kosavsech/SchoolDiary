@@ -43,7 +43,7 @@ class EduPerformanceRepositoryImpl @Inject constructor(
 	}
 	
 	override fun observeEduPerformanceBySubject(
-		subjectId: Long,
+		subjectId: String,
 		period: EduPerformancePeriod,
 	): Flow<EduPerformanceEntity> {
 		return eduPerformanceDataSource.observeBySubjectId(subjectId, period)

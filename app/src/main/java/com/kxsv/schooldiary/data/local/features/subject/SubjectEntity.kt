@@ -13,8 +13,8 @@ data class SubjectEntity(
 	val displayName: String? = null,
 	val targetMark: Double? = null,
 //    val tags: List<Tag>,
-	@PrimaryKey(autoGenerate = true)
-	val subjectId: Long = 0,
+	@PrimaryKey
+	val subjectId: String = "",
 ) {
 	fun getName(): String {
 		return if (!this.displayName.isNullOrBlank()) {

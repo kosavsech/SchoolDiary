@@ -6,7 +6,7 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 class EduPerformanceScreenNavActions(
 	override val destinationsNavigator: DestinationsNavigator,
 ) : NavActions {
-	fun onEduPerformanceClick(subjectId: Long) {
+	fun onEduPerformanceClick(subjectId: String) {
 		destinationsNavigator.navigate(
 			SubjectDetailScreenDestination(subjectId = subjectId)
 		)

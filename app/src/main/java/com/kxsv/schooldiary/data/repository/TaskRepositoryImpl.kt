@@ -238,7 +238,7 @@ class TaskRepositoryImpl @Inject constructor(
 		return taskDataSource.getById(taskId)
 	}
 	
-	override suspend fun getByDateAndSubject(date: LocalDate, subjectId: Long): List<TaskEntity> {
+	override suspend fun getByDateAndSubject(date: LocalDate, subjectId: String): List<TaskEntity> {
 		return taskDataSource.getByDateAndSubject(date = date, subjectId = subjectId)
 	}
 	

@@ -12,7 +12,7 @@ class SubjectDetailScreenNavActions(
 		resultBackNavigator.navigateBack(deleteResultOk)
 	}
 	
-	fun onEditSubject(subjectId: Long) {
+	fun onEditSubject(subjectId: String) {
 		destinationsNavigator.navigate(
 			AddEditSubjectScreenDestination(subjectId = subjectId)
 		)

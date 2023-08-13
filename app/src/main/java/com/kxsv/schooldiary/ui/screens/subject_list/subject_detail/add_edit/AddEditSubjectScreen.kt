@@ -61,7 +61,7 @@ import com.vanpra.composematerialdialogs.listItems
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 
 data class AddEditSubjectScreenNavArgs(
-	val subjectId: Long?,
+	val subjectId: String?,
 )
 
 @Destination(

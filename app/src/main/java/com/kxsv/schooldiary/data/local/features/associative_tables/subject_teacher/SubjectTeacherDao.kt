@@ -12,8 +12,8 @@ interface SubjectTeacherDao {
 	suspend fun deleteAll()
 	
 	@Query("DELETE FROM SubjectTeacher WHERE subjectId = :subjectId")
-	suspend fun deleteBySubjectId(subjectId: Long)
+	suspend fun deleteBySubjectId(subjectId: String)
 	
 	@Query("DELETE FROM SubjectTeacher WHERE teacherId = :teacherId")
-	suspend fun deleteByTeacherId(teacherId: Int)
+	suspend fun deleteByTeacherId(teacherId: String)
 }

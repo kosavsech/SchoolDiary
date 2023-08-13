@@ -25,6 +25,6 @@ import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
     ],
 )
 data class SubjectTeacher(
-    val subjectId: Long,
-    val teacherId: String,
+	val subjectId: String,
+	val teacherId: String,
 )

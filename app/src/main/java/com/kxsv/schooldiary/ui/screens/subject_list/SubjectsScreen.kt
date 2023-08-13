@@ -83,7 +83,7 @@ fun SubjectsScreen(
 private fun SubjectsContent(
 	loading: Boolean,
 	subjects: List<SubjectEntity>,
-	onSubjectClick: (Long) -> Unit,
+	onSubjectClick: (String) -> Unit,
 	modifier: Modifier,
 ) {
 	LoadingContent(
@@ -111,7 +111,7 @@ private fun SubjectsContent(
 @Composable
 private fun SubjectItem(
 	subject: SubjectEntity,
-	onSubjectClick: (Long) -> Unit,
+	onSubjectClick: (String) -> Unit,
 ) {
 	Row(
 		verticalAlignment = Alignment.CenterVertically,

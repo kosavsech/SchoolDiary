@@ -799,18 +799,18 @@ private val previewTasks1 = listOf<TaskWithSubject>(
 			title = "стр 52-53 выучить, записи в тетради-подготовка к СР по астрономии, параграф 30+ конспекты тренировочных заданий уроков 46,47,49,50 на РЭШ",
 			description = "",
 			dueDate = LocalDate.now().plusDays(1),
-			subjectMasterId = 1
+			subjectMasterId = "1"
 		),
-		SubjectEntity("Физика", subjectId = 1)
+		SubjectEntity("Физика", subjectId = "1")
 	),
 	TaskWithSubject(
 		taskEntity = TaskEntity(
 			title = "короче короткое задание там да",
 			description = "",
 			dueDate = LocalDate.now().plusDays(1),
-			subjectMasterId = 2
+			subjectMasterId = "2"
 		),
-		SubjectEntity("Русский язык", subjectId = 2)
+		SubjectEntity("Русский язык", subjectId = "2")
 	)
 )
 

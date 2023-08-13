@@ -33,7 +33,7 @@ data class LessonEntity(
 	@ColumnInfo(index = true)
 	val studyDayMasterId: Long? = null,
 	@ColumnInfo(index = true)
-	val subjectAncestorId: Long? = null,
+	val subjectAncestorId: String? = null,
 	@PrimaryKey(autoGenerate = true)
 	val lessonId: Long = 0,
 )

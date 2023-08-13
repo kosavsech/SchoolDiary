@@ -183,7 +183,7 @@ private fun SubjectsContentPreview() {
 						typeOfWork = "Самостоятельная работа",
 						date = LocalDate.now(),
 						fetchDateTime = LocalDateTime.now(),
-						subjectMasterId = 0,
+						subjectMasterId = "0",
 					),
 					SubjectEntity("Английский язык")
 				)
@@ -206,7 +206,7 @@ private fun SubjectItemPreview() {
 					typeOfWork = "Самостоятельная работа",
 					date = LocalDate.now(),
 					fetchDateTime = LocalDateTime.now(),
-					subjectMasterId = 0,
+					subjectMasterId = "0",
 				),
 				SubjectEntity("Английский язык")
 			),

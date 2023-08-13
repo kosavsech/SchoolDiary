@@ -73,7 +73,7 @@ import java.time.format.DateTimeFormatter
 import kotlin.math.floor
 
 data class SubjectDetailScreenNavArgs(
-	val subjectId: Long,
+	val subjectId: String,
 )
 
 private const val TAG = "SubjectDetailScreen"
@@ -112,7 +112,7 @@ fun SubjectDetailScreen(
 		val changePeriod = remember<(EduPerformancePeriod) -> Unit> {
 			{ viewModel.changePeriod(it) }
 		}
-		val editSubject = remember<(Long) -> Unit> {
+		val editSubject = remember<(String) -> Unit> {
 			{ navigator.onEditSubject(it) }
 		}
 		val showGradeDetails = remember<(String) -> Unit> {
@@ -169,7 +169,7 @@ private fun SubjectContent(
 	grades: List<GradeEntity>,
 	onPeriodChange: (EduPerformancePeriod) -> Unit,
 	onGradeClick: (String) -> Unit,
-	onEditSubject: (Long) -> Unit,
+	onEditSubject: (String) -> Unit,
 	onRefresh: () -> Unit,
 ) {
 	val screenPadding = Modifier.padding(
@@ -500,7 +500,7 @@ private fun SubjectInfo(
 	modifier: Modifier = Modifier,
 	subject: SubjectEntity,
 	teachers: List<TeacherEntity>,
-	onEditSubject: (Long) -> Unit,
+	onEditSubject: (String) -> Unit,
 ) {
 	ElevatedCard(
 		modifier = modifier

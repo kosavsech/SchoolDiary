@@ -27,7 +27,7 @@ data class GradeEntity(
 	val typeOfWork: String,
 	val date: LocalDate,
 	val fetchDateTime: LocalDateTime,
-	val subjectMasterId: Long,
+	val subjectMasterId: String,
 	val lessonIndex: Int = 0,
 	val index: Int = 0,
 	@PrimaryKey

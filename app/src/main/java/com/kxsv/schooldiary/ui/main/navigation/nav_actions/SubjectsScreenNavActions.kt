@@ -13,7 +13,7 @@ class SubjectsScreenNavActions(
 		)
 	}
 	
-	fun onSubjectClick(subjectId: Long) {
+	fun onSubjectClick(subjectId: String) {
 		destinationsNavigator.navigate(
 			SubjectDetailScreenDestination(subjectId = subjectId)
 		)

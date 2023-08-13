@@ -8,6 +8,7 @@ import com.kxsv.schooldiary.data.local.features.subject.SubjectWithGrades
 import com.kxsv.schooldiary.data.local.features.subject.SubjectWithTeachers
 import com.kxsv.schooldiary.data.remote.WebService
 import com.kxsv.schooldiary.data.remote.parsers.SubjectParser
+import com.kxsv.schooldiary.data.util.DataIdGenUtils.generateSubjectId
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
@@ -24,15 +25,15 @@ class SubjectRepositoryImpl @Inject constructor(
 		return subjectDataSource.observeAll()
 	}
 	
-	override fun getSubjectStream(subjectId: Long): Flow<SubjectEntity> {
+	override fun getSubjectStream(subjectId: String): Flow<SubjectEntity> {
 		return subjectDataSource.observeById(subjectId)
 	}
 	
-	override fun observeSubjectWithTeachers(subjectId: Long): Flow<SubjectWithTeachers?> {
+	override fun observeSubjectWithTeachers(subjectId: String): Flow<SubjectWithTeachers?> {
 		return subjectDataSource.observeByIdWithTeachers(subjectId)
 	}
 	
-	override fun getSubjectWithGradesStream(subjectId: Long): Flow<SubjectWithGrades> {
+	override fun getSubjectWithGradesStream(subjectId: String): Flow<SubjectWithGrades> {
 		return subjectDataSource.observeByIdWithGrades(subjectId)
 	}
 	
@@ -45,7 +46,7 @@ class SubjectRepositoryImpl @Inject constructor(
 		return subjectDataSource.getAll()
 	}
 	
-	override suspend fun getSubject(subjectId: Long): SubjectEntity? {
+	override suspend fun getSubject(subjectId: String): SubjectEntity? {
 		return subjectDataSource.getById(subjectId)
 	}
 	
@@ -53,16 +54,17 @@ class SubjectRepositoryImpl @Inject constructor(
 		return subjectDataSource.getByName(subjectName)
 	}
 	
-	override suspend fun getSubjectIdByName(subjectName: String): Long? {
+	override suspend fun getSubjectIdByName(subjectName: String): String? {
 		return subjectDataSource.getByName(subjectName)?.subjectId
 	}
 	
-	override suspend fun getSubjectWithTeachers(subjectId: Long): SubjectWithTeachers? {
+	override suspend fun getSubjectWithTeachers(subjectId: String): SubjectWithTeachers? {
 		return subjectDataSource.getByIdWithTeachers(subjectId)
 	}
 	
-	override suspend fun createSubject(subject: SubjectEntity, teachersIds: Set<String>): Long {
-		val subjectId = subjectDataSource.upsert(subject)
+	override suspend fun createSubject(subject: SubjectEntity, teachersIds: Set<String>): String {
+		val subjectId = generateSubjectId(subject.fullName)
+		subjectDataSource.upsert(subject.copy(subjectId = subjectId))
 		
 		teachersIds.forEach { teacherId ->
 			subjectTeacherDataSource.upsert(
@@ -89,7 +91,7 @@ class SubjectRepositoryImpl @Inject constructor(
 		subjectDataSource.deleteAll()
 	}
 	
-	override suspend fun deleteSubject(subjectId: Long) {
+	override suspend fun deleteSubject(subjectId: String) {
 		subjectDataSource.deleteById(subjectId)
 	}
 	

@@ -7,6 +7,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.repository.SubjectRepository
+import com.kxsv.schooldiary.data.util.DataIdGenUtils
 import com.kxsv.schooldiary.data.util.remote.NetworkException
 import com.kxsv.schooldiary.util.Utils
 import dagger.assisted.Assisted
@@ -45,9 +46,6 @@ class SubjectsSyncWorker @AssistedInject constructor(
 				val fetchedSubjects = subjectNames.map { SubjectEntity(fullName = it) }
 				updateDatabase(fetchedSubjects)
 			}
-			newSubjectsFound.forEach {
-				subjectRepository.createSubject(it, emptySet())
-			}
 			return Result.success()
 		} catch (e: Exception) {
 			when (e) {
@@ -78,19 +76,22 @@ class SubjectsSyncWorker @AssistedInject constructor(
 	private suspend fun updateDatabase(fetchedSubjects: List<SubjectEntity>): List<SubjectEntity> {
 		return withContext(ioDispatcher) {
 			val newSubjectsFound: MutableList<SubjectEntity> = mutableListOf()
-			for (subject in fetchedSubjects) {
-				val isGradeExisted = Utils.measurePerformanceInMS(
+			fetchedSubjects.forEach { subject ->
+				val subjectId = DataIdGenUtils.generateSubjectId(subject.fullName)
+				val existedSubject = Utils.measurePerformanceInMS(
 					{ time, result ->
 						Log.d(
 							TAG, "getSubjectByName(${subject.fullName}): $time ms\n found = $result"
 						)
 					}
 				) {
-					subjectRepository.getSubjectByName(subject.fullName) != null
+					subjectRepository.getSubject(subjectId)
 				}
-				if (!isGradeExisted) {
-					newSubjectsFound.add(subject)
-					Log.i(TAG, "updateDatabase: FOUND NEW SUBJECT:\n${subject.fullName}")
+				if (existedSubject == null) {
+					val newSubject = subject.copy(subjectId = subjectId)
+					Log.i(TAG, "updateDatabase: FOUND NEW SUBJECT:\n${newSubject.fullName}")
+					newSubjectsFound.add(newSubject)
+					subjectRepository.updateSubject(newSubject, null)
 				}
 			}
 			newSubjectsFound

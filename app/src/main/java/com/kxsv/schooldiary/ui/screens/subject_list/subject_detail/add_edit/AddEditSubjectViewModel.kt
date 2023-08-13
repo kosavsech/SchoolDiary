@@ -223,7 +223,7 @@ class AddEditSubjectViewModel @Inject constructor(
 		}
 	}
 	
-	private fun loadSubject(subjectId: Long) {
+	private fun loadSubject(subjectId: String) {
 		_uiState.update {
 			it.copy(isLoading = true)
 		}

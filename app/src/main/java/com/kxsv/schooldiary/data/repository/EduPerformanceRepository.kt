@@ -15,7 +15,7 @@ interface EduPerformanceRepository {
     fun observeEduPerformance(eduPerformanceId: String): Flow<EduPerformanceEntity>
     
     fun observeEduPerformanceBySubject(
-	    subjectId: Long,
+	    subjectId: String,
 	    period: EduPerformancePeriod,
     ): Flow<EduPerformanceEntity>
 	

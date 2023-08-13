@@ -39,7 +39,7 @@ interface TaskRepository {
 	
 	suspend fun getById(taskId: Long): TaskEntity?
 	
-	suspend fun getByDateAndSubject(date: LocalDate, subjectId: Long): List<TaskEntity>
+	suspend fun getByDateAndSubject(date: LocalDate, subjectId: String): List<TaskEntity>
 	
 	suspend fun getTaskWithSubject(taskId: Long): TaskWithSubject?
 	

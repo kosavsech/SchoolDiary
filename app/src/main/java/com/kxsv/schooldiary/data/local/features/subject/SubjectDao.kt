@@ -11,28 +11,28 @@ interface SubjectDao {
 	fun observeAll(): Flow<List<SubjectEntity>>
 	
 	@Query("SELECT * FROM $SUBJECT_TABLE_NAME WHERE subjectId = :subjectId")
-	fun observeById(subjectId: Long): Flow<SubjectEntity>
+	fun observeById(subjectId: String): Flow<SubjectEntity>
 	
 	@Transaction
 	@Query("SELECT * FROM $SUBJECT_TABLE_NAME WHERE subjectId = :subjectId")
-	fun observeByIdWithTeachers(subjectId: Long): Flow<SubjectWithTeachers>
+	fun observeByIdWithTeachers(subjectId: String): Flow<SubjectWithTeachers>
 	
 	@Transaction
 	@Query("SELECT * FROM $SUBJECT_TABLE_NAME WHERE subjectId = :subjectId")
-	fun observeByIdWithGrades(subjectId: Long): Flow<SubjectWithGrades>
+	fun observeByIdWithGrades(subjectId: String): Flow<SubjectWithGrades>
 	
 	@Query("SELECT * FROM $SUBJECT_TABLE_NAME")
 	suspend fun getAll(): List<SubjectEntity>
 	
 	@Query("SELECT * FROM $SUBJECT_TABLE_NAME WHERE subjectId = :subjectId")
-	suspend fun getById(subjectId: Long): SubjectEntity?
+	suspend fun getById(subjectId: String): SubjectEntity?
 	
 	@Query("SELECT * FROM $SUBJECT_TABLE_NAME WHERE fullName = :fullSubjectName")
 	suspend fun getByName(fullSubjectName: String): SubjectEntity?
 	
 	@Transaction
 	@Query("SELECT * FROM $SUBJECT_TABLE_NAME WHERE subjectId = :subjectId")
-	suspend fun getByIdWithTeachers(subjectId: Long): SubjectWithTeachers?
+	suspend fun getByIdWithTeachers(subjectId: String): SubjectWithTeachers?
 	
 	@Upsert
 	suspend fun upsertAll(subjects: List<SubjectEntity>)
@@ -44,5 +44,5 @@ interface SubjectDao {
 	suspend fun deleteAll()
 	
 	@Query("DELETE FROM $SUBJECT_TABLE_NAME WHERE subjectId = :subjectId")
-	suspend fun deleteById(subjectId: Long): Int
+	suspend fun deleteById(subjectId: String): Int
 }

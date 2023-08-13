@@ -20,6 +20,10 @@ object DataIdGenUtils {
 		return teacherFullName.trim().lowercase().replace(" ", "_")
 	}
 	
+	fun generateSubjectId(subjectFullName: String): String {
+		return subjectFullName.trim().lowercase().replace(" ", "_")
+	}
+	
 	fun DayGradeDto.generateGradeId(): String {
 		return generateGradeId(date, index, lessonIndex)
 	}

@@ -757,13 +757,13 @@ private fun DayScheduleContentPreview() {
 			classes = mapOf(
 				Pair(
 					1, LessonWithSubject(
-						LessonEntity(1, 0, 0),
+						LessonEntity(1, 0, "0"),
 						SubjectEntity("Русский язык", "210")
 					)
 				),
 				Pair(
 					3, LessonWithSubject(
-						LessonEntity(3, 0, 0),
+						LessonEntity(3, 0, "0"),
 						SubjectEntity("Английский языкАнглийский язык", "316")
 					)
 				),
@@ -771,19 +771,19 @@ private fun DayScheduleContentPreview() {
 			fetchedClasses = mapOf(
 				Pair(
 					2, LessonWithSubject(
-						LessonEntity(0, 0, 0),
+						LessonEntity(0, 0, "0"),
 						SubjectEntity("Английский языкАнглийский язык", "316")
 					)
 				),
 				Pair(
 					3, LessonWithSubject(
-						LessonEntity(1, 0, 0),
+						LessonEntity(1, 0, "0"),
 						SubjectEntity("Английский язык", "316")
 					)
 				),
 				Pair(
 					4, LessonWithSubject(
-						LessonEntity(2, 0, 0),
+						LessonEntity(2, 0, "0"),
 						SubjectEntity("Немецкий язык", "316")
 					)
 				),

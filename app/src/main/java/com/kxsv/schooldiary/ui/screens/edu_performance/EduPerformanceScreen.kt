@@ -87,7 +87,7 @@ private fun EduPerformanceContent(
 	loading: Boolean,
 	eduPerformanceList: List<EduPerformanceWithSubject>,
 	onPeriodChange: (EduPerformancePeriod) -> Unit,
-	onEduPerformanceClick: (Long) -> Unit,
+	onEduPerformanceClick: (String) -> Unit,
 	currentEduPerformancePeriod: EduPerformancePeriod,
 	onRefresh: () -> Unit,
 	modifier: Modifier,
@@ -130,7 +130,7 @@ private fun EduPerformanceContent(
 @Composable
 private fun PerformanceRow(
 	performanceWithSubject: EduPerformanceWithSubject,
-	onEduPerformanceClick: (Long) -> Unit,
+	onEduPerformanceClick: (String) -> Unit,
 ) {
 	if (performanceWithSubject.eduPerformance.period != EduPerformancePeriod.YEAR) {
 		Row(
