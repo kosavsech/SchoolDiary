@@ -4,9 +4,11 @@ import android.content.Context
 import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
+import androidx.work.ForegroundInfo
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkerParameters
 import com.kxsv.schooldiary.app.sync.initializers.SyncConstraints
+import com.kxsv.schooldiary.app.sync.initializers.syncForegroundInfo
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.repository.SubjectRepository
@@ -40,6 +42,9 @@ class SubjectsSyncWorker @AssistedInject constructor(
 				.setInputData(SubjectsSyncWorker::class.delegatedData())
 				.build()
 	}
+	
+	override suspend fun getForegroundInfo(): ForegroundInfo =
+		appContext.syncForegroundInfo()
 	
 	override suspend fun doWork(): Result {
 		try {

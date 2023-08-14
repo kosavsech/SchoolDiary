@@ -3,12 +3,16 @@ package com.kxsv.schooldiary.ui.screens.main_screen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequest
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import com.kxsv.schooldiary.R
+import com.kxsv.schooldiary.app.sync.initializers.SyncConstraints
+import com.kxsv.schooldiary.app.sync.workers.DelegatingWorker
 import com.kxsv.schooldiary.app.sync.workers.ScheduleSyncWorker
 import com.kxsv.schooldiary.app.sync.workers.SubjectsSyncWorker
 import com.kxsv.schooldiary.app.sync.workers.TaskSyncWorker
+import com.kxsv.schooldiary.app.sync.workers.delegatedData
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import com.kxsv.schooldiary.data.repository.LessonRepository
 import com.kxsv.schooldiary.data.repository.PatternStrokeRepository
@@ -42,6 +46,7 @@ data class MainUiState(
 )
 
 private const val TAG = "MainScreenViewModel"
+private const val UNIQUE_WORK_NAME = "MainScreenFetchSubjectSync"
 
 @HiltViewModel
 class MainScreenViewModel @Inject constructor(
@@ -111,33 +116,43 @@ class MainScreenViewModel @Inject constructor(
 	
 	fun refresh() {
 		_uiState.update { it.copy(isLoading = true) }
-		workManager.cancelAllWorkByTag("main_screen_fetch")
-		val subjectsSyncRequest = OneTimeWorkRequest.Builder(SubjectsSyncWorker::class.java)
-			.addTag("main_screen_fetch")
-			.build()
 		
-		val scheduleSyncRequest = OneTimeWorkRequest.Builder(ScheduleSyncWorker::class.java)
-			.addTag("main_screen_fetch")
-			.build()
+		val subjectsSyncRequest =
+			OneTimeWorkRequestBuilder<DelegatingWorker>()
+				.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+				.setConstraints(SyncConstraints)
+				.setInputData(SubjectsSyncWorker::class.delegatedData())
+				.build()
 		
-		val tasksSyncRequest = OneTimeWorkRequest.Builder(TaskSyncWorker::class.java)
-			.addTag("main_screen_fetch")
-			.build()
+		val scheduleSyncRequest =
+			OneTimeWorkRequestBuilder<DelegatingWorker>()
+				.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+				.setConstraints(SyncConstraints)
+				.setInputData(ScheduleSyncWorker::class.delegatedData())
+				.build()
+		
+		
+		val tasksSyncRequest =
+			OneTimeWorkRequestBuilder<DelegatingWorker>()
+				.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+				.setConstraints(SyncConstraints)
+				.setInputData(TaskSyncWorker::class.delegatedData())
+				.build()
 		
 		val continuation = workManager
 			.beginUniqueWork(
-				"MainScreenFetchSubjectSync",
-				ExistingWorkPolicy.REPLACE,
+				UNIQUE_WORK_NAME,
+				ExistingWorkPolicy.KEEP,
 				subjectsSyncRequest
 			)
 			.then(listOf(scheduleSyncRequest, tasksSyncRequest))
 		
 		continuation.enqueue()
 		netFetchJob = viewModelScope.launch(ioDispatcher) {
-			val workInfosFlow = workManager.getWorkInfosByTagFlow("main_screen_fetch")
+			val workInfosFlow = workManager.getWorkInfosForUniqueWorkFlow(UNIQUE_WORK_NAME)
 			workInfosFlow.collectLatest { workInfos ->
-				val allFinished = workInfos.all { it.state.isFinished }
-				if (allFinished) {
+				val isFinished = workInfos.all { it.state.isFinished }
+				if (isFinished) {
 					_uiState.update { it.copy(isLoading = false) }
 					netFetchJob?.cancel()
 				}

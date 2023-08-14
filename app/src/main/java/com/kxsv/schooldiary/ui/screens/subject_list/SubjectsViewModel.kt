@@ -1,31 +1,38 @@
 package com.kxsv.schooldiary.ui.screens.subject_list
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
+import androidx.work.WorkManager
 import com.kxsv.schooldiary.R
+import com.kxsv.schooldiary.app.sync.initializers.SyncConstraints
+import com.kxsv.schooldiary.app.sync.workers.DelegatingWorker
+import com.kxsv.schooldiary.app.sync.workers.SubjectsSyncWorker
+import com.kxsv.schooldiary.app.sync.workers.delegatedData
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
-import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.repository.SubjectRepository
-import com.kxsv.schooldiary.data.util.DataIdGenUtils
+import com.kxsv.schooldiary.di.util.AppDispatchers
+import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.util.Async
 import com.kxsv.schooldiary.ui.util.WhileUiSubscribed
-import com.kxsv.schooldiary.util.Utils
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.math.roundToInt
 
 data class SubjectsUiState(
 	val subjects: List<SubjectEntity> = emptyList(),
@@ -34,10 +41,13 @@ data class SubjectsUiState(
 )
 
 private const val TAG = "SubjectsViewModel"
+private const val UNIQUE_WORK_NAME = "SubjectsScreenFetchSync"
 
 @HiltViewModel
 class SubjectsViewModel @Inject constructor(
-	private val subjectRepository: SubjectRepository,
+	subjectRepository: SubjectRepository,
+	private val workManager: WorkManager,
+	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
 	private val _subjectsAsync =
@@ -94,45 +104,29 @@ class SubjectsViewModel @Inject constructor(
 	
 	fun refresh() {
 		_uiState.update { it.copy(isLoading = true) }
-		fetchJob?.cancel()
-		fetchJob = viewModelScope.launch {
-			try {
-				val subjectNames = Utils.measurePerformanceInMS(
-					logger = { time, _ ->
-						Log.i(
-							TAG, "fetchSubjectNames: performance is" +
-									" ${(time / 10f).roundToInt() / 100f} S"
-						)
-					}
-				) {
-					subjectRepository.fetchSubjectNames()
+		val subjectsSyncRequest =
+			OneTimeWorkRequestBuilder<DelegatingWorker>()
+				.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+				.setConstraints(SyncConstraints)
+				.setInputData(SubjectsSyncWorker::class.delegatedData())
+				.build()
+		
+		val continuation = workManager
+			.beginUniqueWork(
+				UNIQUE_WORK_NAME,
+				ExistingWorkPolicy.KEEP,
+				subjectsSyncRequest
+			)
+		
+		continuation.enqueue()
+		fetchJob = viewModelScope.launch(ioDispatcher) {
+			val workInfosFlow = workManager.getWorkInfosForUniqueWorkFlow(UNIQUE_WORK_NAME)
+			workInfosFlow.collectLatest { workInfos ->
+				val isFinished = workInfos.all { it.state.isFinished }
+				if (isFinished) {
+					_uiState.update { it.copy(isLoading = false) }
+					fetchJob?.cancel()
 				}
-				Utils.measurePerformanceInMS(
-					logger = { time, _ -> Log.i(TAG, "updateDatabase: performance is $time MS") }
-				) {
-					val fetchedSubjects = subjectNames.map { SubjectEntity(fullName = it) }
-					fetchedSubjects.forEach { subject ->
-						val subjectId = DataIdGenUtils.generateSubjectId(subject.fullName)
-						val existedSubject = Utils.measurePerformanceInMS(
-							{ time, result ->
-								Log.d(
-									TAG, "getSubject(${subjectId}): $time ms\n found = $result"
-								)
-							}
-						) {
-							subjectRepository.getSubject(subjectId)
-						}
-						if (existedSubject == null) {
-							val newSubject = subject.copy(subjectId = subjectId)
-							Log.i(TAG, "updateDatabase: FOUND NEW SUBJECT:\n${newSubject.fullName}")
-							subjectRepository.updateSubject(newSubject, null)
-						}
-					}
-				}
-			} catch (e: NetworkException.NotLoggedInException) {
-				Log.e(TAG, "refresh: ", e)
-			} finally {
-				_uiState.update { it.copy(isLoading = false) }
 			}
 		}
 	}

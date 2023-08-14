@@ -3,6 +3,7 @@ package com.kxsv.schooldiary.app.sync.workers
 import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
+import android.app.NotificationChannelGroup
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.TaskStackBuilder
@@ -11,14 +12,15 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.util.Log
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
+import androidx.work.ForegroundInfo
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkerParameters
 import com.kxsv.schooldiary.app.MainActivity
 import com.kxsv.schooldiary.app.sync.initializers.SyncConstraints
+import com.kxsv.schooldiary.app.sync.initializers.syncForegroundInfo
 import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.repository.LessonRepository
 import com.kxsv.schooldiary.di.util.NotificationsConstants
@@ -55,6 +57,9 @@ class ScheduleSyncWorker @AssistedInject constructor(
 				.setInputData(ScheduleSyncWorker::class.delegatedData())
 				.build()
 	}
+	
+	override suspend fun getForegroundInfo(): ForegroundInfo =
+		appContext.syncForegroundInfo()
 	
 	override suspend fun doWork(): Result {
 		try {
@@ -135,12 +140,16 @@ class ScheduleSyncWorker @AssistedInject constructor(
 	
 	private fun createNotification(schedule: Map.Entry<LocalDate, Utils.ScheduleCompareResult>): Notification {
 		createNotificationChannel()
-		val title = "Check it out!"
+		val title = if (schedule.value.isNew) {
+			"New schedule"
+		} else {
+			"Different schedule"
+		}
 		val text = if (schedule.value.isNew) {
-			"The new schedule fetched on date: " +
+			"Fetched on date: " +
 					schedule.key.format(DateTimeFormatter.ISO_LOCAL_DATE)
 		} else {
-			"The schedule differs from the saved one on date: " +
+			"Fetched on date: " +
 					schedule.key.format(DateTimeFormatter.ISO_LOCAL_DATE)
 		}
 		
@@ -169,23 +178,27 @@ class ScheduleSyncWorker @AssistedInject constructor(
 		}
 		
 		return scheduleNotificationBuilder
-			.setContentText(text)
 			.setContentTitle(title)
+			.setContentText(text)
 			.setContentIntent(clickPendingIntent)
 			.build()
 		
 	}
 	
 	private fun createNotificationChannel() {
+		notificationManager.createNotificationChannelGroup(
+			NotificationChannelGroup(NotificationsConstants.NETWORK_CHANNEL_ID, "Background sync")
+		)
 		val taskChannel = NotificationChannel(
 			NotificationsConstants.SCHEDULE_CHANNEL_ID,
-			"Schedule Channel",
+			"Fetched Schedule",
 			NotificationManager.IMPORTANCE_DEFAULT
-		)
+		).apply {
+			description =
+				"Notifies if new schedule were fetched or fetched schedule is differs from local one."
+			group = NotificationsConstants.NETWORK_CHANNEL_ID
+		}
 		
-		val notificationManager: NotificationManager? =
-			ContextCompat.getSystemService(applicationContext, NotificationManager::class.java)
-		
-		notificationManager?.createNotificationChannel(taskChannel)
+		notificationManager.createNotificationChannel(taskChannel)
 	}
 }

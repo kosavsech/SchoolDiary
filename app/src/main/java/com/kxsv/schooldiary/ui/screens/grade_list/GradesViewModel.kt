@@ -1,15 +1,18 @@
 package com.kxsv.schooldiary.ui.screens.grade_list
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
+import androidx.work.WorkManager
 import com.kxsv.schooldiary.R
+import com.kxsv.schooldiary.app.sync.initializers.SyncConstraints
+import com.kxsv.schooldiary.app.sync.workers.DelegatingWorker
+import com.kxsv.schooldiary.app.sync.workers.GradeSyncWorker
+import com.kxsv.schooldiary.app.sync.workers.delegatedData
 import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
-import com.kxsv.schooldiary.data.mapper.toGradeWithSubject
-import com.kxsv.schooldiary.data.remote.util.NetworkException
-import com.kxsv.schooldiary.data.repository.EduPerformanceRepository
 import com.kxsv.schooldiary.data.repository.GradeRepository
-import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
@@ -17,23 +20,18 @@ import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.util.GradesSortType
 import com.kxsv.schooldiary.ui.util.WhileUiSubscribed
-import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.io.IOException
 import javax.inject.Inject
-import kotlin.math.roundToInt
-
-private const val TAG = "GradeTableViewModel"
 
 data class GradesUiState(
 	val grades: List<GradeWithSubject> = emptyList(),
@@ -42,11 +40,13 @@ data class GradesUiState(
 	val sortType: GradesSortType = GradesSortType.MARK_DATE,
 )
 
+private const val TAG = "GradeTableViewModel"
+private const val UNIQUE_WORK_NAME = "GradesScreenFetchSync"
+
 @HiltViewModel
 class GradesViewModel @Inject constructor(
 	private val gradeRepository: GradeRepository,
-	private val subjectRepository: SubjectRepository,
-	private val eduPerformanceRepository: EduPerformanceRepository,
+	private val workManager: WorkManager,
 	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
@@ -70,7 +70,7 @@ class GradesViewModel @Inject constructor(
 		)
 	}.stateIn(viewModelScope, WhileUiSubscribed, GradesUiState())
 	
-	private var gradesFetchJob: Job? = null
+	private var fetchJob: Job? = null
 	
 	init {
 		fetchGrades()
@@ -94,80 +94,29 @@ class GradesViewModel @Inject constructor(
 	
 	fun fetchGrades() {
 		_uiState.update { it.copy(isLoading = true) }
-		gradesFetchJob?.cancel()
-		gradesFetchJob = viewModelScope.launch(ioDispatcher) {
-			try {
-				val fetchedGradesWithTeachers = measurePerformanceInMS(
-					logger = { time, _ ->
-						Log.i(
-							TAG,
-							"fetchRecentGradesWithTeachers: performance is" +
-									" ${(time / 10f).roundToInt() / 100f} S"
-						)
-					}
-				) {
-					gradeRepository.fetchRecentGradesWithTeachers()
+		val gradesSyncRequest =
+			OneTimeWorkRequestBuilder<DelegatingWorker>()
+				.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+				.setConstraints(SyncConstraints)
+				.setInputData(GradeSyncWorker::class.delegatedData())
+				.build()
+		
+		val continuation = workManager
+			.beginUniqueWork(
+				UNIQUE_WORK_NAME,
+				ExistingWorkPolicy.KEEP,
+				gradesSyncRequest
+			)
+		
+		continuation.enqueue()
+		fetchJob = viewModelScope.launch(ioDispatcher) {
+			val workInfosFlow = workManager.getWorkInfosForUniqueWorkFlow(UNIQUE_WORK_NAME)
+			workInfosFlow.collectLatest { workInfos ->
+				val isFinished = workInfos.all { it.state.isFinished }
+				if (isFinished) {
+					_uiState.update { it.copy(isLoading = false) }
+					fetchJob?.cancel()
 				}
-				val newGradeEntities = measurePerformanceInMS(
-					logger = { time, _ ->
-						Log.i(
-							TAG,
-							"updateDatabase: performance is $time MS"
-						)
-					}
-				) {
-					val fetchedGradesLocalized = mutableListOf<GradeWithSubject>()
-					fetchedGradesWithTeachers.first.forEach {
-						try {
-							fetchedGradesLocalized.add(it.toGradeWithSubject(subjectRepository))
-						} catch (e: NoSuchElementException) {
-							Log.e(
-								TAG,
-								"updateTeachersDatabase: SchoolDiary: Couldn't localize grade ${it.mark}" +
-										" on date ${it.date} for ${it.subjectAncestorName}.", e
-							)
-							// todo
-							/*showSnackbarMessage(R.string.successfully_saved_grade_message)
-							Toast.makeText(
-								this.coroutineContext,
-								"SchoolDiary: Couldn't localize grade ${it.mark} on date ${it.date} for ${it.subjectAncestorName}.\n" + e.message,
-								Toast.LENGTH_LONG
-							).show()*/
-						}
-					}
-					for (fetchedGradeEntity in fetchedGradesLocalized) {
-						val gradeId = fetchedGradeEntity.grade.gradeId
-						val isGradeExisted = measurePerformanceInMS(
-							{ time, result ->
-								Log.d(
-									TAG,
-									"gradeDataSource.getById($gradeId): $time ms\n found = $result"
-								)
-							}
-						) {
-							
-							gradeRepository.getGrade(gradeId) != null
-						}
-						gradeRepository.update(fetchedGradeEntity.grade)
-						if (!isGradeExisted) {
-							Log.i(
-								TAG,
-								"updateDatabase: FOUND NEW GRADE:\n${fetchedGradeEntity.grade}"
-							)
-						}
-					}
-				}
-			} catch (e: NetworkException) {
-				Log.e(TAG, "fetchGrades: exception on login", e)
-			} catch (e: IOException) {
-				Log.e(TAG, "fetchGrades: exception on response parseTerm", e)
-			} catch (e: TimeoutCancellationException) {
-				Log.e(TAG, "fetchGrades: connection timed-out", e)
-				// TODO: show message that couldn't connect to site
-			} catch (e: Exception) {
-				Log.e(TAG, "fetchGrades: exception", e)
-			} finally {
-				_uiState.update { it.copy(isLoading = false) }
 			}
 		}
 	}

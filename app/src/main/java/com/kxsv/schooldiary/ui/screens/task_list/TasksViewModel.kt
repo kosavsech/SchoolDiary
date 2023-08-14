@@ -3,9 +3,16 @@ package com.kxsv.schooldiary.ui.screens.task_list
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
+import androidx.work.WorkManager
 import com.kxsv.schooldiary.R
+import com.kxsv.schooldiary.app.sync.initializers.SyncConstraints
+import com.kxsv.schooldiary.app.sync.workers.DelegatingWorker
+import com.kxsv.schooldiary.app.sync.workers.TaskSyncWorker
+import com.kxsv.schooldiary.app.sync.workers.delegatedData
 import com.kxsv.schooldiary.data.local.features.task.TaskWithSubject
-import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.repository.TaskRepository
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.Dispatcher
@@ -19,9 +26,11 @@ import com.kxsv.schooldiary.ui.util.WhileUiSubscribed
 import com.kxsv.schooldiary.util.Utils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -29,7 +38,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
-import kotlin.math.roundToInt
 
 
 data class TasksUiState(
@@ -42,10 +50,12 @@ data class TasksUiState(
 )
 
 private const val TAG = "TasksViewModel"
+private const val UNIQUE_WORK_NAME = "TasksScreenFetchSync"
 
 @HiltViewModel
 class TasksViewModel @Inject constructor(
-	private val taskRepository: TaskRepository,
+	taskRepository: TaskRepository,
+	private val workManager: WorkManager,
 	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
@@ -122,6 +132,7 @@ class TasksViewModel @Inject constructor(
 			)
 		}
 	
+	private var fetchJob: Job? = null
 	
 	private val _uiState = MutableStateFlow(TasksUiState())
 	val uiState: StateFlow<TasksUiState> = combine(
@@ -162,21 +173,30 @@ class TasksViewModel @Inject constructor(
 	
 	fun refresh() = viewModelScope.launch(ioDispatcher) {
 		_uiState.update { it.copy(isLoading = true) }
-		try {
-			Utils.measurePerformanceInMS(
-				logger = { time, _ ->
-					Log.i(
-						"SyncWorker", "refresh: new performance is" +
-								" ${(time / 10f).roundToInt() / 100f} S"
-					)
+		val tasksSyncRequest =
+			OneTimeWorkRequestBuilder<DelegatingWorker>()
+				.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+				.setConstraints(SyncConstraints)
+				.setInputData(TaskSyncWorker::class.delegatedData())
+				.build()
+		
+		val continuation = workManager
+			.beginUniqueWork(
+				UNIQUE_WORK_NAME,
+				ExistingWorkPolicy.KEEP,
+				tasksSyncRequest
+			)
+		
+		continuation.enqueue()
+		fetchJob = viewModelScope.launch(ioDispatcher) {
+			val workInfosFlow = workManager.getWorkInfosForUniqueWorkFlow(UNIQUE_WORK_NAME)
+			workInfosFlow.collectLatest { workInfos ->
+				val isFinished = workInfos.all { it.state.isFinished }
+				if (isFinished) {
+					_uiState.update { it.copy(isLoading = false) }
+					fetchJob?.cancel()
 				}
-			) {
-				taskRepository.fetchSoonTasks()
 			}
-		} catch (e: NetworkException.NotLoggedInException) {
-			Log.e(TAG, "refresh: ", e)
-		} finally {
-			_uiState.update { it.copy(isLoading = false) }
 		}
 	}
 	

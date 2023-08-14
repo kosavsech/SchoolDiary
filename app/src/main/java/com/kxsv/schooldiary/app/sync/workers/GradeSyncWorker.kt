@@ -3,6 +3,7 @@ package com.kxsv.schooldiary.app.sync.workers
 import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
+import android.app.NotificationChannelGroup
 import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageManager
@@ -11,12 +12,13 @@ import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
+import androidx.work.ForegroundInfo
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkerParameters
 import com.kxsv.schooldiary.app.sync.initializers.SyncConstraints
+import com.kxsv.schooldiary.app.sync.initializers.syncForegroundInfo
 import com.kxsv.schooldiary.data.local.features.associative_tables.subject_teacher.SubjectTeacher
 import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
@@ -35,6 +37,7 @@ import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.di.util.GradeNotification
 import com.kxsv.schooldiary.di.util.GradeSummaryNotification
 import com.kxsv.schooldiary.di.util.NotificationsConstants.GRADE_CHANNEL_ID
+import com.kxsv.schooldiary.di.util.NotificationsConstants.NETWORK_CHANNEL_ID
 import com.kxsv.schooldiary.util.Utils
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -69,6 +72,9 @@ class GradeSyncWorker @AssistedInject constructor(
 //				.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
 				.build()
 	}
+	
+	override suspend fun getForegroundInfo(): ForegroundInfo =
+		appContext.syncForegroundInfo()
 	
 	override suspend fun doWork(): Result {
 		try {
@@ -177,22 +183,25 @@ class GradeSyncWorker @AssistedInject constructor(
 	private fun createNotification(gradeEntity: GradeWithSubject): Notification {
 		createNotificationChannel()
 		
-		val text = Mark.getStringValueFrom(gradeEntity.grade.mark) + " " + gradeEntity.grade.date
+		val text = Mark.getStringValueFrom(gradeEntity.grade.mark) + " | " + gradeEntity.grade.date
 		return gradeNotificationBuilder.setContentText(text)
 			.setContentTitle(gradeEntity.subject.getName()).build()
 	}
 	
 	private fun createNotificationChannel() {
+		notificationManager.createNotificationChannelGroup(
+			NotificationChannelGroup(NETWORK_CHANNEL_ID, "Background sync")
+		)
 		val gradeChannel = NotificationChannel(
 			GRADE_CHANNEL_ID,
-			"Grade Channel",
+			"Fetched Grades",
 			NotificationManager.IMPORTANCE_DEFAULT
-		)
+		).apply {
+			description = "Notifies if new grades were fetched."
+			group = NETWORK_CHANNEL_ID
+		}
 		
-		val notificationManager: NotificationManager? =
-			ContextCompat.getSystemService(applicationContext, NotificationManager::class.java)
-		
-		notificationManager?.createNotificationChannel(gradeChannel)
+		notificationManager.createNotificationChannel(gradeChannel)
 	}
 	
 	private suspend fun updateDatabase(fetchedGradeEntities: List<GradeWithSubject>): List<GradeWithSubject> {

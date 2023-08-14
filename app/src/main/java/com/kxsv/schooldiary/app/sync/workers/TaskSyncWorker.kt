@@ -3,21 +3,24 @@ package com.kxsv.schooldiary.app.sync.workers
 import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
+import android.app.NotificationChannelGroup
 import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
+import androidx.work.ForegroundInfo
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkerParameters
 import com.kxsv.schooldiary.app.sync.initializers.SyncConstraints
+import com.kxsv.schooldiary.app.sync.initializers.syncForegroundInfo
 import com.kxsv.schooldiary.data.local.features.task.TaskAndUniqueIdWithSubject
 import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.repository.TaskRepository
 import com.kxsv.schooldiary.di.util.NotificationsConstants
+import com.kxsv.schooldiary.di.util.NotificationsConstants.NETWORK_CHANNEL_ID
 import com.kxsv.schooldiary.di.util.TaskNotification
 import com.kxsv.schooldiary.di.util.TaskSummaryNotification
 import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
@@ -48,6 +51,9 @@ class TaskSyncWorker @AssistedInject constructor(
 				.setInputData(TaskSyncWorker::class.delegatedData())
 				.build()
 	}
+	
+	override suspend fun getForegroundInfo(): ForegroundInfo =
+		appContext.syncForegroundInfo()
 	
 	override suspend fun doWork(): Result {
 		try {
@@ -128,15 +134,19 @@ class TaskSyncWorker @AssistedInject constructor(
 	}
 	
 	private fun createNotificationChannel() {
+		notificationManager.createNotificationChannelGroup(
+			NotificationChannelGroup(NETWORK_CHANNEL_ID, "Background sync")
+		)
 		val taskChannel = NotificationChannel(
 			NotificationsConstants.TASK_CHANNEL_ID,
-			"Task Channel",
+			"Fetched Tasks",
 			NotificationManager.IMPORTANCE_DEFAULT
-		)
+		).apply {
+			description =
+				"Notifies about new grades which were fetched."
+			group = NETWORK_CHANNEL_ID
+		}
 		
-		val notificationManager: NotificationManager? =
-			ContextCompat.getSystemService(applicationContext, NotificationManager::class.java)
-		
-		notificationManager?.createNotificationChannel(taskChannel)
+		notificationManager.createNotificationChannel(taskChannel)
 	}
 }
