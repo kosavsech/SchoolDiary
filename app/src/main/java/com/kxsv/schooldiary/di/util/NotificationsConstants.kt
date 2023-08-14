@@ -1,7 +1,7 @@
 package com.kxsv.schooldiary.di.util
 
 object NotificationsConstants {
-	const val NETWORK_CHANNEL_ID = "com.kxsv.schooldiary.NETWORK_CHANNEL_ID"
+	const val NETWORK_CHANNEL_GROUP_ID = "com.kxsv.schooldiary.NETWORK_CHANNEL_GROUP_ID"
 	
 	const val GRADE_CHANNEL_ID = "com.kxsv.schooldiary.GRADE_CHANNEL_ID"
 	const val FETCHED_GRADES_GROUP_ID = "com.kxsv.schooldiary.FETCHED_GRADES_GROUP_ID"

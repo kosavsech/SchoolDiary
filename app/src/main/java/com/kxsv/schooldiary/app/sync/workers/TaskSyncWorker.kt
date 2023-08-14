@@ -20,7 +20,7 @@ import com.kxsv.schooldiary.data.local.features.task.TaskAndUniqueIdWithSubject
 import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.repository.TaskRepository
 import com.kxsv.schooldiary.di.util.NotificationsConstants
-import com.kxsv.schooldiary.di.util.NotificationsConstants.NETWORK_CHANNEL_ID
+import com.kxsv.schooldiary.di.util.NotificationsConstants.NETWORK_CHANNEL_GROUP_ID
 import com.kxsv.schooldiary.di.util.TaskNotification
 import com.kxsv.schooldiary.di.util.TaskSummaryNotification
 import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
@@ -135,7 +135,7 @@ class TaskSyncWorker @AssistedInject constructor(
 	
 	private fun createNotificationChannel() {
 		notificationManager.createNotificationChannelGroup(
-			NotificationChannelGroup(NETWORK_CHANNEL_ID, "Background sync")
+			NotificationChannelGroup(NETWORK_CHANNEL_GROUP_ID, "Background sync")
 		)
 		val taskChannel = NotificationChannel(
 			NotificationsConstants.TASK_CHANNEL_ID,
@@ -144,7 +144,7 @@ class TaskSyncWorker @AssistedInject constructor(
 		).apply {
 			description =
 				"Notifies about new grades which were fetched."
-			group = NETWORK_CHANNEL_ID
+			group = NETWORK_CHANNEL_GROUP_ID
 		}
 		
 		notificationManager.createNotificationChannel(taskChannel)

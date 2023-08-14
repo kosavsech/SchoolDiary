@@ -37,7 +37,7 @@ import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.di.util.GradeNotification
 import com.kxsv.schooldiary.di.util.GradeSummaryNotification
 import com.kxsv.schooldiary.di.util.NotificationsConstants.GRADE_CHANNEL_ID
-import com.kxsv.schooldiary.di.util.NotificationsConstants.NETWORK_CHANNEL_ID
+import com.kxsv.schooldiary.di.util.NotificationsConstants.NETWORK_CHANNEL_GROUP_ID
 import com.kxsv.schooldiary.util.Utils
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -190,7 +190,7 @@ class GradeSyncWorker @AssistedInject constructor(
 	
 	private fun createNotificationChannel() {
 		notificationManager.createNotificationChannelGroup(
-			NotificationChannelGroup(NETWORK_CHANNEL_ID, "Background sync")
+			NotificationChannelGroup(NETWORK_CHANNEL_GROUP_ID, "Background sync")
 		)
 		val gradeChannel = NotificationChannel(
 			GRADE_CHANNEL_ID,
@@ -198,7 +198,7 @@ class GradeSyncWorker @AssistedInject constructor(
 			NotificationManager.IMPORTANCE_DEFAULT
 		).apply {
 			description = "Notifies if new grades were fetched."
-			group = NETWORK_CHANNEL_ID
+			group = NETWORK_CHANNEL_GROUP_ID
 		}
 		
 		notificationManager.createNotificationChannel(gradeChannel)

@@ -187,7 +187,10 @@ class ScheduleSyncWorker @AssistedInject constructor(
 	
 	private fun createNotificationChannel() {
 		notificationManager.createNotificationChannelGroup(
-			NotificationChannelGroup(NotificationsConstants.NETWORK_CHANNEL_ID, "Background sync")
+			NotificationChannelGroup(
+				NotificationsConstants.NETWORK_CHANNEL_GROUP_ID,
+				"Background sync"
+			)
 		)
 		val taskChannel = NotificationChannel(
 			NotificationsConstants.SCHEDULE_CHANNEL_ID,
@@ -196,7 +199,7 @@ class ScheduleSyncWorker @AssistedInject constructor(
 		).apply {
 			description =
 				"Notifies if new schedule were fetched or fetched schedule is differs from local one."
-			group = NotificationsConstants.NETWORK_CHANNEL_ID
+			group = NotificationsConstants.NETWORK_CHANNEL_GROUP_ID
 		}
 		
 		notificationManager.createNotificationChannel(taskChannel)
