@@ -9,6 +9,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 import kotlin.math.ceil
@@ -18,7 +19,7 @@ private const val TAG = "Utils"
 const val ROUND_RULE = 0.6
 
 object Utils {
-	val currentDate = LocalDate.of(2023, 5, 15)
+	val currentDate: LocalDate = LocalDate.of(2023, 5, 15)
 	
 	fun List<PatternStrokeEntity>.getIndexByTime(currentTime: LocalTime): Int? {
 		val result = this.firstOrNull {
@@ -57,6 +58,10 @@ object Utils {
 		
 		return result
 	}
+	
+	fun fromLocalTime(localTime: LocalTime?): String? =
+		localTime?.format(DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH))
+	
 	
 	fun timestampToLocalDate(value: Long?): LocalDate? = value?.let {
 		Instant.ofEpochSecond(it).atZone(ZoneId.of("Europe/Moscow")).toLocalDate()

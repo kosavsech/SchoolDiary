@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -73,10 +74,14 @@ fun SettingsScreen(
 		modifier = Modifier.fillMaxSize(),
 	) { paddingValues ->
 		val uiState = viewModel.uiState.collectAsState().value
-		val inputDialogState = rememberMaterialDialogState(false)
+		val targetMarkDialogState = rememberMaterialDialogState(false)
+		val lessonDurationDialogState = rememberMaterialDialogState(false)
 		
 		val changeDefaultTargetMark = remember<(Double) -> Unit> {
 			{ viewModel.changeDefaultTargetMark(it) }
+		}
+		val changeDefaultLessonDuration = remember<(Long) -> Unit> {
+			{ viewModel.changeDefaultLessonDuration(it) }
 		}
 		val changeLoginSuppression = remember<(Boolean) -> Unit> {
 			{ viewModel.changeLoginSuppression(it) }
@@ -84,29 +89,64 @@ fun SettingsScreen(
 		SettingsContent(
 			modifier = Modifier.padding(paddingValues),
 			loading = uiState.isLoading,
-			inputDialogState = inputDialogState,
+			targetMarkDialogState = targetMarkDialogState,
+			lessonDurationDialogState = lessonDurationDialogState,
 			defaultTargetMark = uiState.defaultTargetMark,
+			defaultLessonDuration = uiState.defaultLessonDuration,
 			loginSuppression = uiState.suppressInitLogin,
 			onDefaultTargetMarkChange = changeDefaultTargetMark,
+			onDefaultLessonDurationChange = changeDefaultLessonDuration,
 			onLoginSuppressionChange = changeLoginSuppression
 		)
 		
-		InputDialog(
-			dialogState = inputDialogState,
+		TargetMarkDialog(
+			targetMarkDialogState = targetMarkDialogState,
 			defaultTargetMark = uiState.defaultTargetMark,
 			onInputSave = changeDefaultTargetMark,
+		)
+		LessonDurationDialog(
+			lessonDurationDialogState = lessonDurationDialogState,
+			defaultLessonDuration = uiState.defaultLessonDuration,
+			onInputSave = changeDefaultLessonDuration,
 		)
 	}
 }
 
 @Composable
-private fun InputDialog(
-	dialogState: MaterialDialogState,
+fun LessonDurationDialog(
+	lessonDurationDialogState: MaterialDialogState,
+	defaultLessonDuration: Long?,
+	onInputSave: (Long) -> Unit,
+) {
+	MaterialDialog(
+		dialogState = lessonDurationDialogState,
+		buttons = {
+			positiveButton(res = R.string.btn_save)
+			negativeButton(res = R.string.btn_cancel)
+		},
+	) {
+		title(res = R.string.enter_default_lesson_duration_dialog_title)
+		input(
+			label = "Default lesson duration",
+			prefill = defaultLessonDuration?.toString() ?: stringResource(id = R.string.not_found),
+			isTextValid = {
+				it.toLongOrNull() != null && (it.toLong() in 20..60)
+			},
+			errorMessage = "Ensure that duration is at least 20 and not more than 60",
+			onInput = { onInputSave(it.toLong()) },
+			waitForPositiveButton = true
+		)
+	}
+}
+
+@Composable
+private fun TargetMarkDialog(
+	targetMarkDialogState: MaterialDialogState,
 	defaultTargetMark: Double?,
 	onInputSave: (Double) -> Unit,
 ) {
 	MaterialDialog(
-		dialogState = dialogState,
+		dialogState = targetMarkDialogState,
 		buttons = {
 			positiveButton(res = R.string.btn_save)
 			negativeButton(res = R.string.btn_cancel)
@@ -132,23 +172,32 @@ private fun InputDialog(
 private fun SettingsContent(
 	modifier: Modifier,
 	loading: Boolean,
-	inputDialogState: MaterialDialogState,
+	targetMarkDialogState: MaterialDialogState,
+	lessonDurationDialogState: MaterialDialogState,
 	defaultTargetMark: Double?,
+	defaultLessonDuration: Long?,
 	loginSuppression: Boolean?,
 	onDefaultTargetMarkChange: (Double) -> Unit,
+	onDefaultLessonDurationChange: (Long) -> Unit,
 	onLoginSuppressionChange: (Boolean) -> Unit,
 ) {
 	val settingItems = listOf(
 		SettingsScreenItem(
-			label = R.string.default_target_mark,
-			type = SettingsItemType.Input(currentValue = defaultTargetMark?.toString()),
-			onValueChange = { onDefaultTargetMarkChange(it as Double) },
-			onClick = { inputDialogState.show() },
-		),
-		SettingsScreenItem(
 			label = R.string.login_suppression,
 			type = SettingsItemType.Toggleable(state = loginSuppression),
 			onValueChange = { onLoginSuppressionChange(it as Boolean) },
+		),
+		SettingsScreenItem(
+			label = R.string.default_target_mark,
+			type = SettingsItemType.Input(currentValue = defaultTargetMark?.toString()),
+			onValueChange = { onDefaultTargetMarkChange(it as Double) },
+			onClick = { targetMarkDialogState.show() },
+		),
+		SettingsScreenItem(
+			label = R.string.default_lesson_duration,
+			type = SettingsItemType.Input(currentValue = defaultLessonDuration?.toString()),
+			onValueChange = { onDefaultLessonDurationChange(it as Long) },
+			onClick = { lessonDurationDialogState.show() },
 		),
 	)
 	LoadingContent(
@@ -249,6 +298,7 @@ private fun SettingsContent(
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun SettingsContentPreview() {
+	var defaultLessonDuration by remember { mutableLongStateOf(45L) }
 	var defaultTargetMark by remember { mutableDoubleStateOf(4.6) }
 	var loginSuppression by remember { mutableStateOf(false) }
 	AppTheme(darkTheme = true) {
@@ -256,12 +306,14 @@ fun SettingsContentPreview() {
 			SettingsContent(
 				modifier = Modifier,
 				loading = false,
-				inputDialogState = rememberMaterialDialogState(false),
+				targetMarkDialogState = rememberMaterialDialogState(false),
+				lessonDurationDialogState = rememberMaterialDialogState(false),
 				defaultTargetMark = defaultTargetMark,
+				defaultLessonDuration = defaultLessonDuration,
 				loginSuppression = loginSuppression,
 				onDefaultTargetMarkChange = { defaultTargetMark = it },
-				onLoginSuppressionChange = { loginSuppression = it }
-			)
+				onDefaultLessonDurationChange = { defaultLessonDuration = it }
+			) { loginSuppression = it }
 		}
 	}
 }

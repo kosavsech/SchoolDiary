@@ -6,6 +6,8 @@ interface UserPreferencesRepository {
 	
 	fun observeTargetMark(): Flow<Double>
 	
+	fun observeLessonDuration(): Flow<Long>
+	
 	fun observePatternId(): Flow<Long>
 	
 	fun observeEduLogin(): Flow<String?>
@@ -19,6 +21,10 @@ interface UserPreferencesRepository {
 	suspend fun getTargetMark(): Double
 	
 	suspend fun setTargetMark(targetMark: Double)
+	
+	suspend fun getLessonDuration(): Long
+	
+	suspend fun setLessonDuration(lessonDuration: Long)
 	
 	suspend fun getPatternId(): Long
 	

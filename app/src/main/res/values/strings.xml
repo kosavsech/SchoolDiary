@@ -185,4 +185,9 @@
     <string name="wrong_input_format_for_class_index">You\'ve entered non-integer character(s)</string>
     <string name="wrong_input_value_for_class_index">Be sure that index is at least 1 and less than 10</string>
     <string name="full_name_is_reserved">Such full name already used</string>
+    <string name="default_lesson_duration_not_found">Default lesson duration not found</string>
+    <string name="enter_default_lesson_duration_dialog_title">Enter default lesson duration:</string>
+    <string name="default_lesson_duration">Default lesson duration</string>
+    <string name="not_set">Not set</string>
+    <string name="too_long_lesson">Lesson duration cannot be longer than hour</string>
 </resources>

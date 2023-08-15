@@ -73,7 +73,7 @@ import com.kxsv.schooldiary.ui.main.navigation.nav_actions.DayScheduleScreenNavA
 import com.kxsv.schooldiary.ui.screens.destinations.AddEditLessonScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.DateRangeScheduleCopyScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.DayScheduleCopyScreenDestination
-import com.kxsv.schooldiary.ui.screens.destinations.PatternSelectionScreenDestination
+import com.kxsv.schooldiary.ui.screens.destinations.PatternsScreenDestination
 import com.kxsv.schooldiary.ui.screens.grade_list.MY_URI
 import com.kxsv.schooldiary.ui.screens.patterns.PatternSelectionResult
 import com.kxsv.schooldiary.ui.util.LoadingContent
@@ -117,7 +117,7 @@ private const val TAG = "DayScheduleScreen"
 @Composable
 fun DayScheduleScreen(
 	lessonAddEditResult: ResultRecipient<AddEditLessonScreenDestination, Int>,
-	patternPickResult: ResultRecipient<PatternSelectionScreenDestination, PatternSelectionResult>,
+	patternPickResult: ResultRecipient<PatternsScreenDestination, PatternSelectionResult>,
 	dayScheduleCopyResult: ResultRecipient<DayScheduleCopyScreenDestination, DayScheduleCopyResult>,
 	dateRangeScheduleCopyResult: ResultRecipient<DateRangeScheduleCopyScreenDestination, DateRangeScheduleCopyResult>,
 	destinationsNavigator: DestinationsNavigator,

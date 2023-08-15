@@ -1,18 +1,20 @@
 package com.kxsv.schooldiary.ui.screens.patterns
 
+import android.os.Parcelable
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
@@ -31,6 +33,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -44,30 +48,44 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternEntity
 import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternWithStrokes
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
+import com.kxsv.schooldiary.ui.main.app_bars.topbar.PatternSelectionTopAppBar
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.PatternsTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.PatternsScreenNavActions
 import com.kxsv.schooldiary.ui.screens.destinations.AddEditPatternScreenDestination
-import com.kxsv.schooldiary.ui.screens.patterns.add_edit_pattern.fromLocalTime
 import com.kxsv.schooldiary.ui.util.LoadingContent
+import com.kxsv.schooldiary.util.Utils.fromLocalTime
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.result.NavResult
+import com.ramcosta.composedestinations.result.ResultBackNavigator
 import com.ramcosta.composedestinations.result.ResultRecipient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.parcelize.Parcelize
 import java.time.LocalTime
+
+@Parcelize
+data class PatternSelectionResult(
+	val patternId: Long,
+	val patternName: String,
+) : Parcelable
 
 @Destination
 @Composable
 fun PatternsScreen(
+	isSelectingMode: Boolean = false,
 	destinationsNavigator: DestinationsNavigator,
+	resultNavigator: ResultBackNavigator<PatternSelectionResult>,
 	patternAddEditResult: ResultRecipient<AddEditPatternScreenDestination, Int>,
 	drawerState: DrawerState,
 	viewModel: PatternsViewModel = hiltViewModel(),
 	coroutineScope: CoroutineScope,
 	snackbarHostState: SnackbarHostState,
 ) {
-	val navigator = PatternsScreenNavActions(destinationsNavigator = destinationsNavigator)
+	val navigator = PatternsScreenNavActions(
+		destinationsNavigator = destinationsNavigator,
+		resultNavigator = resultNavigator
+	)
 	patternAddEditResult.onNavResult { result ->
 		when (result) {
 			is NavResult.Canceled -> {}
@@ -77,7 +95,17 @@ fun PatternsScreen(
 		}
 	}
 	Scaffold(
-		topBar = { PatternsTopAppBar(openDrawer = { coroutineScope.launch { drawerState.open() } }) },
+		topBar = {
+			if (isSelectingMode) {
+				PatternSelectionTopAppBar(
+					onBack = { navigator.popBackStack() }
+				)
+			} else {
+				PatternsTopAppBar(
+					openDrawer = { coroutineScope.launch { drawerState.open() } }
+				)
+			}
+		},
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		modifier = Modifier.fillMaxSize(),
 		floatingActionButton = {
@@ -88,15 +116,28 @@ fun PatternsScreen(
 	) { paddingValues ->
 		val uiState = viewModel.uiState.collectAsState().value
 		
+		val editPattern = remember<(Long) -> Unit> {
+			{ patternId -> navigator.onAddEditPattern(patternId) }
+		}
+		val deletePattern = remember<(Long) -> Unit> {
+			{ patternId -> viewModel.deletePattern(patternId) }
+		}
+		val updateDefaultPatternId = remember<(Long) -> Unit> {
+			{ patternId -> viewModel.updateDefaultPatternId(patternId) }
+		}
+		val selectCustomPattern = remember<(TimePatternEntity) -> Unit> {
+			{ navigator.navigateBackWithResult(PatternSelectionResult(it.patternId, it.name)) }
+		}
 		PatternsContent(
+			modifier = Modifier.padding(paddingValues),
+			isSelectingMode = isSelectingMode,
 			loading = uiState.isLoading,
 			patterns = uiState.patterns,
-			//noPatternsLabel = 0,
 			defaultPatternId = uiState.defaultPatternId,
-			editPattern = { patternId -> navigator.onAddEditPattern(patternId) },
-			deletePattern = viewModel::deletePattern,
-			setDefaultPattern = viewModel::updateDefaultPatternId,
-			modifier = Modifier.padding(paddingValues),
+			editPattern = editPattern,
+			deletePattern = deletePattern,
+			setDefaultPattern = updateDefaultPatternId,
+			selectCustomPattern = selectCustomPattern
 		)
 		
 		uiState.userMessage?.let { userMessage ->
@@ -111,33 +152,36 @@ fun PatternsScreen(
 
 @Composable
 private fun PatternsContent(
+	modifier: Modifier,
+	isSelectingMode: Boolean,
 	loading: Boolean,
 	patterns: List<TimePatternWithStrokes>,
 	defaultPatternId: Long,
-//@StringRes noPatternsLabel: Int,
-	//onRefresh: () -> Unit,
 	editPattern: (Long) -> Unit,
 	deletePattern: (Long) -> Unit,
 	setDefaultPattern: (Long) -> Unit,
-	modifier: Modifier,
+	selectCustomPattern: (TimePatternEntity) -> Unit,
 ) {
 	LoadingContent(
+		modifier = modifier,
 		loading = loading,
 		empty = false,
+		isContentScrollable = true,
 		emptyContent = { Text(text = "empty content") },
-		onRefresh = { }
 	) {
-		LazyRow(
-			contentPadding = PaddingValues(horizontal = dimensionResource(R.dimen.horizontal_margin)),
-			modifier = modifier
+		LazyVerticalGrid(
+			columns = GridCells.Fixed(2),
+			modifier = Modifier.fillMaxSize()
 		) {
 			items(patterns) { pattern ->
 				PatternItem(
+					isSelectingMode = isSelectingMode,
 					pattern = pattern,
 					defaultPatternId = defaultPatternId,
-					editPattern = editPattern,
-					deletePattern = deletePattern,
-					setDefaultPattern = setDefaultPattern
+					editPattern = { editPattern(pattern.timePattern.patternId) },
+					deletePattern = { deletePattern(pattern.timePattern.patternId) },
+					setDefaultPattern = { setDefaultPattern(pattern.timePattern.patternId) },
+					selectCustomPattern = { selectCustomPattern(pattern.timePattern) }
 				)
 			}
 		}
@@ -146,73 +190,75 @@ private fun PatternsContent(
 
 @Composable
 private fun PatternItem(
+	isSelectingMode: Boolean,
 	pattern: TimePatternWithStrokes,
 	defaultPatternId: Long,
-	editPattern: (Long) -> Unit,
-	deletePattern: (Long) -> Unit,
-	setDefaultPattern: (Long) -> Unit,
+	editPattern: () -> Unit,
+	deletePattern: () -> Unit,
+	setDefaultPattern: () -> Unit,
+	selectCustomPattern: () -> Unit,
 ) {
 	Column(
 		verticalArrangement = Arrangement.SpaceBetween,
-		modifier = Modifier
-			.padding(
-				horizontal = dimensionResource(R.dimen.horizontal_margin),
-				vertical = dimensionResource(R.dimen.vertical_margin)
-			)
+		horizontalAlignment = Alignment.End,
+		modifier = Modifier.padding(dimensionResource(R.dimen.vertical_margin))
 	) {
-		Row(
-			verticalAlignment = Alignment.CenterVertically,
-			horizontalArrangement = Arrangement.Start,
-			modifier = Modifier
-				.fillMaxWidth()
-		
-		) {
-			Text(
-				text = pattern.timePattern.name,
-				style = MaterialTheme.typography.headlineSmall,
-				textAlign = TextAlign.Start,
-			)
-			IconButton(onClick = { deletePattern(pattern.timePattern.patternId) }) {
+		Row(modifier = Modifier.wrapContentWidth()) {
+			IconButton(onClick = deletePattern) {
 				Icon(Icons.Default.Delete, stringResource(R.string.delete_pattern))
 			}
-			IconButton(onClick = { editPattern(pattern.timePattern.patternId) }) {
+			IconButton(onClick = editPattern) {
 				Icon(Icons.Default.Edit, stringResource(R.string.edit_pattern))
 			}
-			IconButton(onClick = { setDefaultPattern(pattern.timePattern.patternId) }) {
+			IconButton(onClick = setDefaultPattern) {
 				Icon(Icons.Default.Check, stringResource(R.string.set_pattern_as_default))
 			}
 		}
-		PatternStrokes(
+		Text(
+			text = pattern.timePattern.name,
+			style = MaterialTheme.typography.headlineSmall,
+			textAlign = TextAlign.Start,
+		)
+		val clickableModifier = remember(isSelectingMode) {
+			if (isSelectingMode) Modifier.clickable { selectCustomPattern() } else Modifier
+		}
+		val isPatternSetAsDefault = remember(defaultPatternId, pattern.timePattern.patternId) {
+			defaultPatternId == pattern.timePattern.patternId
+		}
+		TimeStrokes(
+			modifier = clickableModifier,
 			strokes = pattern.strokes,
-			isPatternSetAsDefault = (pattern.timePattern.patternId == defaultPatternId)
+			isPatternSetAsDefault = isPatternSetAsDefault
 		)
 	}
 }
 
 @Composable
-private fun PatternStrokes(
+private fun TimeStrokes(
 	modifier: Modifier = Modifier,
 	strokes: List<PatternStrokeEntity>,
 	isPatternSetAsDefault: Boolean = false,
 ) {
 	val borderModifier = if (isPatternSetAsDefault) {
-		Modifier.border(BorderStroke(5.dp, Color.Red))
+		Modifier.border(BorderStroke(2.dp, Color.Red))
 	} else {
 		Modifier
 	}
 	Box(
 		modifier = modifier
 			.then(borderModifier)
-			.padding(16.dp)
+			.padding(4.dp)
 	) {
 		Column {
 			strokes.forEach { stroke ->
-				Row {
-					Text(text = (stroke.index + 1).toString())
-					Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.list_item_padding)))
-					Text(
-						text = fromLocalTime(stroke.startTime) + " - " + fromLocalTime(stroke.endTime),
-					)
+				key(stroke) {
+					Row {
+						Text(text = (stroke.index + 1).toString())
+						Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.list_item_padding)))
+						Text(
+							text = fromLocalTime(stroke.startTime) + " - " + fromLocalTime(stroke.endTime),
+						)
+					}
 				}
 			}
 		}
@@ -225,6 +271,8 @@ private fun PatternStrokes(
 private fun PatternsContentPreview() {
 	Surface {
 		PatternsContent(
+			modifier = Modifier,
+			isSelectingMode = false,
 			loading = false,
 			patterns = listOf(
 				TimePatternWithStrokes(
@@ -311,8 +359,7 @@ private fun PatternsContentPreview() {
 			defaultPatternId = 5,
 			editPattern = {},
 			deletePattern = {},
-			setDefaultPattern = {},
-			modifier = Modifier
-		)
+			{}
+		) {}
 	}
 }

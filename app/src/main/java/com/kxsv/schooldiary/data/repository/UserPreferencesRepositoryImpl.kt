@@ -19,6 +19,12 @@ class UserPreferencesRepositoryImpl @Inject constructor(
 		}
 	}
 	
+	override fun observeLessonDuration(): Flow<Long> {
+		return dataStore.data.map {
+			it.defaultLessonDuration
+		}
+	}
+	
 	override fun observePatternId(): Flow<Long> {
 		return dataStore.data.map {
 			it.defaultPatternId
@@ -56,6 +62,16 @@ class UserPreferencesRepositoryImpl @Inject constructor(
 	override suspend fun setTargetMark(targetMark: Double) {
 		dataStore.updateData {
 			it.copy(defaultTargetMark = targetMark)
+		}
+	}
+	
+	override suspend fun getLessonDuration(): Long {
+		return dataStore.data.first().defaultLessonDuration
+	}
+	
+	override suspend fun setLessonDuration(lessonDuration: Long) {
+		dataStore.updateData {
+			it.copy(defaultLessonDuration = lessonDuration)
 		}
 	}
 	

@@ -3,7 +3,7 @@ package com.kxsv.schooldiary.ui.main.navigation.nav_actions
 import com.kxsv.schooldiary.ui.screens.destinations.AddEditLessonScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.DateRangeScheduleCopyScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.DayScheduleCopyScreenDestination
-import com.kxsv.schooldiary.ui.screens.destinations.PatternSelectionScreenDestination
+import com.kxsv.schooldiary.ui.screens.destinations.PatternsScreenDestination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
 
@@ -17,7 +17,7 @@ class DayScheduleScreenNavActions(
 	}
 	
 	fun onChangePattern() {
-		destinationsNavigator.navigate(PatternSelectionScreenDestination())
+		destinationsNavigator.navigate(PatternsScreenDestination(isSelectingMode = true))
 	}
 	
 	fun onCopyDaySchedule() {

@@ -66,10 +66,10 @@ import com.kxsv.schooldiary.ui.screens.destinations.EduPerformanceScreenDestinat
 import com.kxsv.schooldiary.ui.screens.destinations.GradesScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.TasksScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.TypedDestination
-import com.kxsv.schooldiary.ui.screens.patterns.add_edit_pattern.fromLocalTime
 import com.kxsv.schooldiary.ui.theme.AppTheme
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.util.Utils
+import com.kxsv.schooldiary.util.Utils.fromLocalTime
 import com.kxsv.schooldiary.util.Utils.getIndexByTime
 import com.kxsv.schooldiary.util.Utils.getNextLessonsAfterIndex
 import com.ramcosta.composedestinations.annotation.Destination

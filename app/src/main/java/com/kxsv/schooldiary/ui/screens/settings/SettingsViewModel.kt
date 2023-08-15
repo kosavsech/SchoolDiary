@@ -25,6 +25,7 @@ import javax.inject.Inject
 
 data class SettingsUiState(
 	val defaultTargetMark: Double? = null,
+	val defaultLessonDuration: Long? = null,
 	val suppressInitLogin: Boolean? = null,
 	val userMessage: Int? = null,
 	val userMessageArgs: Array<out Any>? = null,
@@ -33,6 +34,7 @@ data class SettingsUiState(
 
 private data class AsyncData(
 	val defaultTargetMark: Double? = null,
+	val defaultLessonDuration: Long? = null,
 	val suppressInitLogin: Boolean? = null,
 )
 
@@ -43,12 +45,17 @@ class SettingsViewModel @Inject constructor(
 ) : ViewModel() {
 	
 	private val _defaultTargetMark = userPreferencesRepository.observeTargetMark()
+	private val _defaultLessonDuration = userPreferencesRepository.observeLessonDuration()
 	private val _suppressInitLogin = userPreferencesRepository.observeInitLoginSuppression()
 	
 	private val _asyncData = combine(
-		_defaultTargetMark, _suppressInitLogin
-	) { targetMark, suppressLogin ->
-		AsyncData(defaultTargetMark = targetMark, suppressInitLogin = suppressLogin)
+		_defaultTargetMark, _suppressInitLogin, _defaultLessonDuration
+	) { targetMark, suppressLogin, defaultLessonDuration ->
+		AsyncData(
+			defaultTargetMark = targetMark,
+			defaultLessonDuration = defaultLessonDuration,
+			suppressInitLogin = suppressLogin
+		)
 	}
 		.map { handleAsyncData(it) }
 		.catch { emit(Async.Error(R.string.loading_settings_error)) }
@@ -56,6 +63,7 @@ class SettingsViewModel @Inject constructor(
 	
 	private fun handleAsyncData(asyncData: AsyncData): Async<AsyncData> {
 		if (asyncData.defaultTargetMark == null) return Async.Error(R.string.default_target_mark_not_found)
+		if (asyncData.defaultLessonDuration == null) return Async.Error(R.string.default_lesson_duration_not_found)
 		if (asyncData.suppressInitLogin == null) return Async.Error(R.string.login_suppression_not_found)
 		
 		return Async.Success(asyncData)
@@ -71,6 +79,7 @@ class SettingsViewModel @Inject constructor(
 			is Async.Success -> {
 				state.copy(
 					defaultTargetMark = asyncData.data.defaultTargetMark,
+					defaultLessonDuration = asyncData.data.defaultLessonDuration,
 					suppressInitLogin = asyncData.data.suppressInitLogin
 				)
 			}
@@ -79,6 +88,10 @@ class SettingsViewModel @Inject constructor(
 	
 	fun changeDefaultTargetMark(newTarget: Double) = viewModelScope.launch(ioDispatcher) {
 		userPreferencesRepository.setTargetMark(newTarget)
+	}
+	
+	fun changeDefaultLessonDuration(newDuration: Long) = viewModelScope.launch(ioDispatcher) {
+		userPreferencesRepository.setLessonDuration(newDuration)
 	}
 	
 	fun changeLoginSuppression(newValue: Boolean) = viewModelScope.launch(ioDispatcher) {
@@ -106,4 +119,5 @@ class SettingsViewModel @Inject constructor(
 	private fun setSnackbarArgs(vararg args: Any) {
 		_uiState.update { it.copy(userMessageArgs = args) }
 	}
+	
 }

@@ -16,7 +16,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -46,6 +45,7 @@ import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditPatternTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AddEditPatternScreenNavActions
 import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.ui.util.LoadingContent
+import com.kxsv.schooldiary.util.Utils.fromLocalTime
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.result.ResultBackNavigator
@@ -56,8 +56,6 @@ import com.vanpra.composematerialdialogs.input
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 import com.vanpra.composematerialdialogs.title
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 data class AddEditPatternScreenNavArgs(
 	val patternId: Long?,
@@ -134,11 +132,11 @@ fun AddEditPatternScreen(
 		val saveStroke = remember {
 			{ viewModel.saveStroke() }
 		}
-		val updateStartTime = remember<(LocalTime) -> Unit> {
-			{ viewModel.updateStartTime(it) }
+		val onStartTimeSet = remember<(LocalTime) -> Unit> {
+			{ viewModel.onStartTimeSet(it) }
 		}
-		val updateEndTime = remember<(LocalTime) -> Unit> {
-			{ viewModel.updateEndTime(it) }
+		val onEndTimeSet = remember<(LocalTime) -> Unit> {
+			{ viewModel.onEndTimeSet(it) }
 		}
 		AddEditStrokeDialog(
 			dialogState = addEditStrokeDialogState,
@@ -148,8 +146,8 @@ fun AddEditPatternScreen(
 			errorMessage = uiState.errorMessage,
 			strokeToUpdate = uiState.strokeToUpdate,
 			saveStroke = saveStroke,
-			updateStartTime = updateStartTime,
-			updateEndTime = updateEndTime,
+			onStartTimeSet = onStartTimeSet,
+			onEndTimeSet = onEndTimeSet,
 			changeIndex = changeIndex
 		)
 		
@@ -163,7 +161,6 @@ fun AddEditPatternScreen(
 	}
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddEditPatternContent(
 	modifier: Modifier = Modifier,
@@ -205,7 +202,7 @@ private fun AddEditPatternContent(
 				colors = textFieldColors
 			)
 			strokes.forEach { stroke ->
-				key(strokes) {
+				key(stroke) {
 					Row(
 						modifier = Modifier
 							.fillMaxWidth()
@@ -215,7 +212,7 @@ private fun AddEditPatternContent(
 					) {
 						Text(
 							text = fromLocalTime(stroke.startTime) + " - " + fromLocalTime(stroke.endTime),
-							style = MaterialTheme.typography.bodySmall
+							style = MaterialTheme.typography.bodyLarge
 						)
 						IconButton(onClick = { onStrokeDelete(stroke) }) {
 							Icon(
@@ -230,26 +227,21 @@ private fun AddEditPatternContent(
 	}
 }
 
-// LocalTime -> String
-fun fromLocalTime(localTime: LocalTime): String {
-	return localTime.format(DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH))
-}
-
 @Composable
 private fun AddEditStrokeDialog(
 	dialogState: MaterialDialogState,
-	startTimeDialogState: MaterialDialogState = rememberMaterialDialogState(false),
-	endTimeDialogState: MaterialDialogState = rememberMaterialDialogState(false),
 	startTime: LocalTime,
 	endTime: LocalTime,
 	index: Int,
 	errorMessage: Int?,
 	strokeToUpdate: PatternStrokeEntity?,
 	saveStroke: () -> Boolean,
-	updateStartTime: (LocalTime) -> Unit,
-	updateEndTime: (LocalTime) -> Unit,
+	onStartTimeSet: (LocalTime) -> Unit,
+	onEndTimeSet: (LocalTime) -> Unit,
 	changeIndex: (Int) -> Unit,
 ) {
+	val startTimeDialogState = rememberMaterialDialogState(false)
+	val endTimeDialogState = rememberMaterialDialogState(false)
 	MaterialDialog(
 		dialogState = dialogState,
 		onCloseRequest = { dialogState.hide() },
@@ -295,13 +287,10 @@ private fun AddEditStrokeDialog(
 			Row(
 				verticalAlignment = Alignment.CenterVertically
 			) {
-				Icon(
-					Icons.Default.Schedule,
-					""
-				)
+				Icon(Icons.Default.Schedule, "")
 				Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.horizontal_margin)))
 				Text(
-					text = fromLocalTime(startTime),
+					text = fromLocalTime(startTime) ?: stringResource(R.string.not_set),
 					style = MaterialTheme.typography.bodyLarge
 				)
 			}
@@ -316,7 +305,7 @@ private fun AddEditStrokeDialog(
 				)
 		) {
 			Text(
-				text = stringResource(id = R.string.start_time_label),
+				text = stringResource(id = R.string.end_time_label),
 				color = MaterialTheme.colorScheme.onSurface,
 				style = MaterialTheme.typography.bodyLarge,
 				modifier = Modifier.align(Alignment.Start)
@@ -324,13 +313,10 @@ private fun AddEditStrokeDialog(
 			Row(
 				verticalAlignment = Alignment.CenterVertically
 			) {
-				Icon(
-					Icons.Default.Schedule,
-					""
-				)
+				Icon(Icons.Default.Schedule, "")
 				Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.horizontal_margin)))
 				Text(
-					text = fromLocalTime(endTime),
+					text = fromLocalTime(endTime) ?: stringResource(id = R.string.not_set),
 					style = MaterialTheme.typography.bodyLarge
 				)
 			}
@@ -339,11 +325,10 @@ private fun AddEditStrokeDialog(
 		input(
 			label = "Index",
 			prefill = index.toString(),
-			placeholder = "1",
 			isTextValid = {
 				it.toIntOrNull() != null && (it.toInt() in 1..9)
 			},
-			errorMessage = "Follow the format.\nAlso ensure that index is at least 1 and is less than 10",
+			errorMessage = "Ensure that index is at least 1 and is less than 10",
 			onInput = { changeIndex(it.toInt()) },
 			waitForPositiveButton = true,
 		)
@@ -365,18 +350,20 @@ private fun AddEditStrokeDialog(
 			}
 		}
 	}
+	
 	TimePickerDialog(
 		dialogState = startTimeDialogState,
 		title = R.string.starttime_picker_hint,
 		initialTime = startTime,
-		onTimeChange = updateStartTime
+		onTimeChange = onStartTimeSet,
+		onClick = { endTimeDialogState.show() }
 	)
 	
 	TimePickerDialog(
 		dialogState = endTimeDialogState,
 		title = R.string.endtime_picker_hint,
 		initialTime = endTime,
-		onTimeChange = updateEndTime
+		onTimeChange = onEndTimeSet,
 	)
 }
 
@@ -386,6 +373,7 @@ private fun TimePickerDialog(
 	@StringRes title: Int,
 	initialTime: LocalTime,
 	onTimeChange: (LocalTime) -> Unit,
+	onClick: () -> Unit = {},
 	is24HourClock: Boolean = false, // TODO: add option in settings to configure
 ) {
 	MaterialDialog(
@@ -393,6 +381,7 @@ private fun TimePickerDialog(
 		buttons = {
 			positiveButton(
 				text = stringResource(R.string.btn_save),
+				onClick = onClick
 			)
 			negativeButton(
 				text = stringResource(R.string.btn_cancel),

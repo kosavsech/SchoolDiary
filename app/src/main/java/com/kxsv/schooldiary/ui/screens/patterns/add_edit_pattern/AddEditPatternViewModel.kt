@@ -7,6 +7,7 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternEntity
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import com.kxsv.schooldiary.data.repository.TimePatternRepository
+import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
@@ -30,7 +31,7 @@ data class AddEditPatternUiState(
 	val strokes: MutableList<PatternStrokeEntity> = mutableListOf(),
 	// TODO: configure this behaviour
 	val startTime: LocalTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES),
-	val endTime: LocalTime = startTime.plusMinutes(45),
+	val endTime: LocalTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES),
 	val index: Int = 1,
 	val isLoading: Boolean = false,
 	val errorMessage: Int? = null,
@@ -42,20 +43,32 @@ data class AddEditPatternUiState(
 class AddEditPatternViewModel @Inject constructor(
 	private val patternRepository: TimePatternRepository,
 	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
+	private val userPreferencesRepository: UserPreferencesRepository,
 	savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 	
 	private val navArgs: AddEditPatternScreenNavArgs = savedStateHandle.navArgs()
 	private val patternId = navArgs.patternId
 	
+	private var defaultLessonDuration: Long? = null
+	
 	private val _uiState = MutableStateFlow(AddEditPatternUiState())
 	val uiState: StateFlow<AddEditPatternUiState> = _uiState.asStateFlow()
 	
 	init {
 		if (patternId != null) loadPattern(patternId)
+		viewModelScope.launch(ioDispatcher) {
+			defaultLessonDuration = userPreferencesRepository.getLessonDuration()
+		}
 	}
 	
 	fun saveStroke(): Boolean {
+		val lessonDuration =
+			uiState.value.startTime.until(uiState.value.endTime, ChronoUnit.MINUTES)
+		if (lessonDuration > 60) {
+			_uiState.update { it.copy(errorMessage = R.string.too_long_lesson) }
+			return false
+		}
 		val stroke = if (uiState.value.strokeToUpdate != null) {
 			PatternStrokeEntity(
 				startTime = uiState.value.startTime,
@@ -138,7 +151,7 @@ class AddEditPatternViewModel @Inject constructor(
 		}
 	}
 	
-	fun updateEndTime(endTime: LocalTime) {
+	fun onEndTimeSet(endTime: LocalTime) {
 		_uiState.update {
 			it.copy(
 				endTime = endTime
@@ -146,10 +159,11 @@ class AddEditPatternViewModel @Inject constructor(
 		}
 	}
 	
-	fun updateStartTime(startTime: LocalTime) {
+	fun onStartTimeSet(startTime: LocalTime) {
 		_uiState.update {
 			it.copy(
-				startTime = startTime
+				startTime = startTime,
+				endTime = startTime.plusMinutes(defaultLessonDuration ?: 45L)
 			)
 		}
 	}
