@@ -43,13 +43,13 @@ object Utils {
 	 * @param time
 	 * @param pattern
 	 * @param classes
-	 * @return index of closest future lesson or first lesson without pattern stroke.
+	 * @return index of closest future lesson with timings or without. Or null if couldn't find one.
 	 */
 	fun getIndexOfClosestLessonToTime(
 		time: LocalTime,
 		pattern: List<PatternStrokeEntity>,
 		classes: Map<Int, SubjectEntity>,
-	): Int {
+	): Int? {
 		if (pattern.isEmpty()) throw IllegalStateException("Shouldn't be called with empty pattern or classes")
 		if (classes.isEmpty()) throw IllegalStateException("Shouldn't be called with empty pattern or classes")
 		
@@ -57,24 +57,24 @@ object Utils {
 		val result = if (time !in studyTimeRange && time.isBefore(studyTimeRange.start)) {
 			classes.minBy { it.key }.key
 		} else {
-			var currentLessonCandidate: Pair<Int?, Long> = Pair(null, 1440)
-			val candidates = mutableListOf<Int>()
+			var candidateWithTimings: Pair<Int?, Long> = Pair(null, 1440)
+			val candidatesWithoutTimings = mutableListOf<Int>()
 			classes.keys.forEach {
 				val currentStroke = pattern.getOrNull(it)
 				if (currentStroke == null) {
-					candidates.add(it)
+					candidatesWithoutTimings.add(it)
 					return@forEach
 				}
-				val lessonTimeRange = currentStroke.startTime..currentStroke.endTime
-				if (time !in lessonTimeRange && time.isBefore(lessonTimeRange.start)) {
-					val timeUntilLesson =
-						time.until(lessonTimeRange.start, ChronoUnit.MINUTES)
-					if (timeUntilLesson < currentLessonCandidate.second) {
-						currentLessonCandidate = Pair(it, timeUntilLesson)
+				val lessonTime = currentStroke.startTime..currentStroke.endTime
+				if (time !in lessonTime && time.isBefore(lessonTime.start)) {
+					
+					val timeUntilLesson = time.until(lessonTime.start, ChronoUnit.MINUTES)
+					if (timeUntilLesson < candidateWithTimings.second) {
+						candidateWithTimings = Pair(it, timeUntilLesson)
 					}
 				}
 			}
-			currentLessonCandidate.first ?: candidates.first()
+			candidateWithTimings.first ?: candidatesWithoutTimings.firstOrNull()
 		}
 		
 		return result

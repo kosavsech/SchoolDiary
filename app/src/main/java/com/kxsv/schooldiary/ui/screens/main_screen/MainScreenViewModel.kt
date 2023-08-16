@@ -46,7 +46,7 @@ data class MainUiState(
 )
 
 private const val TAG = "MainScreenViewModel"
-private const val UNIQUE_WORK_NAME = "MainScreenFetchSubjectSync"
+private const val UNIQUE_WORK_NAME = "MainScreenFetchSync"
 
 @HiltViewModel
 class MainScreenViewModel @Inject constructor(

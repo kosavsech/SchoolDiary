@@ -44,13 +44,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -266,7 +266,7 @@ private fun CurrentDay(
 		DayHeader(date = Utils.currentDate)
 		var currentTime by remember { mutableStateOf(LocalTime.now()) }
 		LaunchedEffect(currentTime) {
-			delay(5_000L)
+			delay(CURRENT_DAY_INFO_UPDATE_TIMING)
 			currentTime = LocalTime.now()
 		}
 		
@@ -278,14 +278,16 @@ private fun CurrentDay(
 			classes[currentLessonIndex]
 		}
 		if (currentLessonIndex != null && currentLesson != null) {
-			LessonInfo(
-				isDetailed = true,
-				label = R.string.right_now_label,
-				labelIcon = Icons.Outlined.CircleNotifications,
-				subjectEntity = currentLesson,
-				startTime = currentPattern.getOrNull(currentLessonIndex)?.startTime,
-				endTime = currentPattern.getOrNull(currentLessonIndex)?.endTime,
-			)
+			key(currentLesson, currentPattern) {
+				LessonInfo(
+					isDetailed = true,
+					label = R.string.right_now_label,
+					labelIcon = Icons.Outlined.CircleNotifications,
+					subjectEntity = currentLesson,
+					startTime = currentPattern.getOrNull(currentLessonIndex)?.startTime,
+					endTime = currentPattern.getOrNull(currentLessonIndex)?.endTime,
+				)
+			}
 		}
 		
 		val nextFourLessonsIndices = remember(currentTime, currentPattern, classes) {
@@ -324,20 +326,23 @@ private fun CurrentDay(
 				}
 			}
 		}
-		val emptyLessonsText = when {
-			currentPattern.isEmpty() -> stringResource(R.string.pattern_not_set)
-			
-			classes.isEmpty() -> stringResource(R.string.no_schedule_for_day)
-			
-			nextFourLessonsIndices.isNullOrEmpty() && currentLesson == null -> {
-				stringResource(R.string.study_day_passed)
+		val emptyLessonsTextRes =
+			remember(currentPattern, classes, nextFourLessonsIndices, currentLesson) {
+				when {
+					currentPattern.isEmpty() -> R.string.pattern_not_set
+					
+					classes.isEmpty() -> R.string.no_schedule_for_day
+					
+					nextFourLessonsIndices.isNullOrEmpty() && (currentLesson == null) -> {
+						R.string.study_day_passed
+					}
+					
+					else -> null
+				}
 			}
-			
-			else -> null
-		}
-		if (emptyLessonsText != null) {
+		if (emptyLessonsTextRes != null) {
 			Text(
-				text = emptyLessonsText,
+				text = stringResource(emptyLessonsTextRes),
 				style = MaterialTheme.typography.displayMedium
 			)
 		}
@@ -365,13 +370,15 @@ private fun ScheduleDay(
 	Column(
 		modifier = Modifier
 	) {
-		DayHeader(date = date)
+		key(date) { DayHeader(date = date) }
 		
-		TasksOverview(
-			tasks = tasks,
-			onTaskChecked = onTaskChecked,
-			onTaskClicked = onTaskClicked
-		)
+		key(tasks) {
+			TasksOverview(
+				tasks = tasks,
+				onTaskChecked = onTaskChecked,
+				onTaskClicked = onTaskClicked
+			)
+		}
 		
 		Divider()
 		
@@ -414,13 +421,22 @@ private fun TasksOverview(
 	onTaskClicked: (Long) -> Unit,
 ) {
 	Column(modifier = Modifier.fillMaxWidth()) {
-		if (tasks.isEmpty()) {
+		val noTasks = remember(tasks) { tasks.isEmpty() }
+		val pendingTasks = remember(tasks) { tasks.filterNot { it.taskEntity.isDone } }
+		val message = remember(noTasks, pendingTasks) {
+			if (noTasks) {
+				R.string.no_task_for_this_day
+			} else if (pendingTasks.isEmpty()) {
+				R.string.day_tasks_done
+			} else null
+		}
+		if (message != null) {
 			Text(
-				text = stringResource(R.string.no_task_for_this_day),
+				text = stringResource(message),
 				style = MaterialTheme.typography.displayMedium
 			)
 		}
-		tasks.forEachIndexed { index, taskEntity ->
+		pendingTasks.forEachIndexed { index, taskEntity ->
 			if (index >= 5) return@Column
 			key(index, taskEntity) {
 				TasksOverviewItem(
@@ -522,18 +538,19 @@ private fun DayHeader(
 		modifier = Modifier
 			.fillMaxWidth()
 			.wrapContentHeight()
-			.padding(
-				vertical = dimensionResource(R.dimen.vertical_margin)
-			),
+			.padding(vertical = dimensionResource(R.dimen.vertical_margin)),
 		verticalAlignment = Alignment.CenterVertically,
 		horizontalArrangement = Arrangement.SpaceBetween,
 	) {
-		val dayOfWeekText = when (date) {
-			Utils.currentDate -> stringResource(id = R.string.today_filter)
-			
-			Utils.currentDate.plusDays(1) -> stringResource(id = R.string.tomorrow_filter)
-			
-			else -> date.dayOfWeek.getDisplayName(TextStyle.FULL_STANDALONE, Locale.ENGLISH)
+		val context = LocalContext.current
+		val dayOfWeekText = remember(date) {
+			when (date) {
+				Utils.currentDate -> context.getString(R.string.today_filter)
+				
+				Utils.currentDate.plusDays(1) -> context.getString(R.string.tomorrow_filter)
+				
+				else -> date.dayOfWeek.getDisplayName(TextStyle.FULL_STANDALONE, Locale.ENGLISH)
+			}
 		}
 		Text(
 			text = dayOfWeekText,
@@ -555,14 +572,9 @@ private fun LessonDetailed(
 	endTime: LocalTime?,
 ) {
 	var currentTime by remember { mutableStateOf(LocalTime.now()) }
-	var delay by remember { mutableIntStateOf(5) }
+	var delay by remember { mutableStateOf(LessonDetailedUpdateTiming.LONG) }
 	LaunchedEffect(currentTime) {
-		when (delay) {
-			3 -> delay(15_000L)
-			2 -> delay(5_000L)
-			1 -> delay(700L)
-			else -> delay(15_000L)
-		}
+		delay(delay.timing)
 		currentTime = LocalTime.now()
 	}
 	Column(
@@ -626,19 +638,19 @@ private fun LessonDetailed(
 					val milliSeconds = currentTime.until(target, ChronoUnit.MILLIS) % 1000
 					
 					return@remember if (hours < 0 || minutes < 0 || seconds < 0 || milliSeconds < 0) {
-						delay = 3
+						delay = LessonDetailedUpdateTiming.LONG
 						"Finished"
 					} else if (hours < 1 && minutes < 1) {
-						delay = 1
+						delay = LessonDetailedUpdateTiming.VERY_SHORT
 						"$seconds.$milliSeconds S"
 					} else if (hours < 1 && minutes < 5) {
-						delay = 2
+						delay = LessonDetailedUpdateTiming.SHORT
 						"$minutes m $seconds s"
 					} else if (hours < 1) {
-						delay = 3
+						delay = LessonDetailedUpdateTiming.DEFAULT
 						"${minutes + 1} m"
 					} else {
-						delay = 5
+						delay = LessonDetailedUpdateTiming.VERY_LONG
 						"$hours h ${minutes + 1} m"
 					}
 					

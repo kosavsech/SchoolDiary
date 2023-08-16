@@ -59,13 +59,6 @@ object NonDismissibleDialog : DestinationStyle.Dialog {
 	)
 }
 
-object DismissibleDialog : DestinationStyle.Dialog {
-	override val properties = DialogProperties(
-		dismissOnClickOutside = true,
-		dismissOnBackPress = true,
-	)
-}
-
 private const val TAG = "LoginDialog"
 
 @LoginNavGraph
@@ -89,7 +82,10 @@ fun LoginDialog(
 		{ viewModel.onLoginClick() }
 	}
 	val onLoggedIn = remember {
-		{ navigator.onLoggedIn() }
+		{
+			viewModel.onLoggedIn()
+			navigator.onLoggedIn()
+		}
 	}
 	LaunchedEffect(uiState.loggedIn) {
 		if (uiState.loggedIn) onLoggedIn()

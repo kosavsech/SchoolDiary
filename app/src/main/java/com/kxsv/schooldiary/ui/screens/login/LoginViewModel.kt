@@ -3,7 +3,18 @@ package com.kxsv.schooldiary.ui.screens.login
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
+import androidx.work.WorkManager
 import com.kxsv.schooldiary.R
+import com.kxsv.schooldiary.app.sync.initializers.SyncConstraints
+import com.kxsv.schooldiary.app.sync.workers.DelegatingWorker
+import com.kxsv.schooldiary.app.sync.workers.GradeSyncWorker
+import com.kxsv.schooldiary.app.sync.workers.ScheduleSyncWorker
+import com.kxsv.schooldiary.app.sync.workers.SubjectsSyncWorker
+import com.kxsv.schooldiary.app.sync.workers.TaskSyncWorker
+import com.kxsv.schooldiary.app.sync.workers.delegatedData
 import com.kxsv.schooldiary.data.remote.WebService
 import com.kxsv.schooldiary.data.remote.util.NetworkError
 import com.kxsv.schooldiary.data.remote.util.NetworkException
@@ -20,6 +31,7 @@ import java.io.IOException
 import javax.inject.Inject
 
 private const val TAG = "LoginViewModel"
+private const val UNIQUE_WORK_NAME = "OnLoggedInFetchSync"
 
 data class LoginUiState(
 	val eduLogin: String = "",
@@ -32,6 +44,7 @@ data class LoginUiState(
 @HiltViewModel
 class LoginViewModel @Inject constructor(
 	private val webService: WebService,
+	private val workManager: WorkManager,
 	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
@@ -92,5 +105,46 @@ class LoginViewModel @Inject constructor(
 				Log.e(TAG, "onLoginClick: exception", e)
 			}
 		}
+	}
+	
+	fun onLoggedIn() {
+		val subjectsSyncRequest =
+			OneTimeWorkRequestBuilder<DelegatingWorker>()
+				.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+				.setConstraints(SyncConstraints)
+				.setInputData(SubjectsSyncWorker::class.delegatedData())
+				.build()
+		
+		val scheduleSyncRequest =
+			OneTimeWorkRequestBuilder<DelegatingWorker>()
+				.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+				.setConstraints(SyncConstraints)
+				.setInputData(ScheduleSyncWorker::class.delegatedData())
+				.build()
+		
+		
+		val tasksSyncRequest =
+			OneTimeWorkRequestBuilder<DelegatingWorker>()
+				.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+				.setConstraints(SyncConstraints)
+				.setInputData(TaskSyncWorker::class.delegatedData())
+				.build()
+		
+		val gradesSyncRequest =
+			OneTimeWorkRequestBuilder<DelegatingWorker>()
+				.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+				.setConstraints(SyncConstraints)
+				.setInputData(GradeSyncWorker::class.delegatedData())
+				.build()
+		
+		val continuation = workManager
+			.beginUniqueWork(
+				UNIQUE_WORK_NAME,
+				ExistingWorkPolicy.KEEP,
+				subjectsSyncRequest
+			)
+			.then(listOf(scheduleSyncRequest, tasksSyncRequest, gradesSyncRequest))
+		
+		continuation.enqueue()
 	}
 }

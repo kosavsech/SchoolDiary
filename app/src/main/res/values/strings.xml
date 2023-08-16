@@ -193,4 +193,5 @@
     <string name="no_schedule_for_day">You have no lessons</string>
     <string name="study_day_passed">School time is over</string>
     <string name="pattern_not_set">Time pattern not set</string>
+    <string name="day_tasks_done">You\'ve done all tasks</string>
 </resources>
