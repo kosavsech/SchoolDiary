@@ -16,46 +16,98 @@ import kotlin.math.ceil
 import kotlin.math.floor
 
 private const val TAG = "Utils"
+
 const val ROUND_RULE = 0.6
+const val MINUTES_PER_HOUR = 60
+const val SECONDS_PER_MINUTE = 60
+const val SECONDS_PER_HOUR = SECONDS_PER_MINUTE * MINUTES_PER_HOUR
 
 object Utils {
 	val currentDate: LocalDate = LocalDate.of(2023, 5, 15)
 	
-	fun List<PatternStrokeEntity>.getIndexByTime(currentTime: LocalTime): Int? {
-		val result = this.firstOrNull {
-			currentTime.isAfter(it.startTime) && currentTime.isBefore(it.endTime)
+	fun List<PatternStrokeEntity>.getCurrentLessonIndexByTime(currentTime: LocalTime): Int? {
+		if (this.isEmpty()) return null
+		val studyTimeRange = this.first().startTime..this.last().endTime
+		
+		if (currentTime !in studyTimeRange) return null
+		this.forEach { timing ->
+			val lessonTimeRange = timing.startTime..timing.endTime
+			if (currentTime in lessonTimeRange) return timing.index
 		}
-		return result?.index
-	}
-	
-	fun List<PatternStrokeEntity>.getIndexOfClosestLessonToTime(currentTime: LocalTime): Int? {
-		val result = this.firstOrNull {
-			currentTime.isBefore(it.startTime)
-		}
-		return result?.index
+		return null
 	}
 	
 	/**
-	 * Gets next [n] lessons after [index]
+	 * Get index of closest lesson to time.
+	 *
+	 * @param time
+	 * @param pattern
+	 * @param classes
+	 * @return index of closest future lesson or first lesson without pattern stroke.
+	 */
+	fun getIndexOfClosestLessonToTime(
+		time: LocalTime,
+		pattern: List<PatternStrokeEntity>,
+		classes: Map<Int, SubjectEntity>,
+	): Int {
+		if (pattern.isEmpty()) throw IllegalStateException("Shouldn't be called with empty pattern or classes")
+		if (classes.isEmpty()) throw IllegalStateException("Shouldn't be called with empty pattern or classes")
+		
+		val studyTimeRange = pattern.first().startTime..pattern.last().endTime
+		val result = if (time !in studyTimeRange && time.isBefore(studyTimeRange.start)) {
+			classes.minBy { it.key }.key
+		} else {
+			var currentLessonCandidate: Pair<Int?, Long> = Pair(null, 1440)
+			val candidates = mutableListOf<Int>()
+			classes.keys.forEach {
+				val currentStroke = pattern.getOrNull(it)
+				if (currentStroke == null) {
+					candidates.add(it)
+					return@forEach
+				}
+				val lessonTimeRange = currentStroke.startTime..currentStroke.endTime
+				if (time !in lessonTimeRange && time.isBefore(lessonTimeRange.start)) {
+					val timeUntilLesson =
+						time.until(lessonTimeRange.start, ChronoUnit.MINUTES)
+					if (timeUntilLesson < currentLessonCandidate.second) {
+						currentLessonCandidate = Pair(it, timeUntilLesson)
+					}
+				}
+			}
+			currentLessonCandidate.first ?: candidates.first()
+		}
+		
+		return result
+	}
+	
+	/**
+	 * Gets next [n] lessons indices after [startIndex]
 	 *
 	 * @param n how much lessons to take
-	 * @param index after which index
+	 * @param startIndex starting index to search lessons
 	 * @return
 	 */
-	fun Map<Int, SubjectEntity>.getNextLessonsAfterIndex(n: Int, index: Int?): List<Int>? {
-		val subList = if (index != null) {
-			this.filter { it.key > index }.keys.toList()
-		} else {
-			this.keys.toList()
+	fun Map<Int, SubjectEntity>.getNextLessonsIndices(n: Int, startIndex: Int?): List<Int>? {
+		if (startIndex == null) {
+			Log.d(TAG, "getNextLessonsIndices: startIndex == null")
+			return null
 		}
-		if (subList.isEmpty()) return null
+		if (this.isEmpty()) return null
+		
+		Log.d(TAG, "getNextLessonsIndices: this: $this")
+		val indicesSublist = this.filter { it.key >= startIndex }.keys.toList()
+		Log.d(TAG, "getNextLessonsIndices: indicesSublist: $indicesSublist")
+		if (indicesSublist.isEmpty()) {
+			Log.d(TAG, "getNextLessonsIndices: indicesSublist.isEmpty()")
+			return null
+		}
 		
 		val result = mutableListOf<Int>()
-		subList.forEach {
-			if (result.size == n) return@forEach
+		indicesSublist.forEach {
+			if (result.size == n) return result
 			result.add(it)
 		}
-		
+		Log.d(TAG, "getNextLessonsIndices() returned: $result")
 		return result
 	}
 	
@@ -76,6 +128,14 @@ object Utils {
 	
 	fun Double.roundTo(n: Int): Double {
 		return String.format("%.${n}f", this, Locale.ENGLISH).toDouble()
+	}
+	
+	fun Float.stringRoundTo(n: Int): String {
+		return String.format("%.${n}f", this, Locale.ENGLISH)
+	}
+	
+	fun Float.roundTo(n: Int): Float {
+		return String.format("%.${n}f", this, Locale.ENGLISH).toFloat()
 	}
 	
 	fun roundWithRule(x: Double): Double {

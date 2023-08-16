@@ -94,7 +94,7 @@ class MainScreenViewModel @Inject constructor(
 				tasks = tasks[itemDate] ?: emptyList(),
 				classes = classes[itemDate]?.associate {
 					Pair(it.lesson.index, it.subject)
-				} ?: emptyMap(),
+				}?.toSortedMap() ?: emptyMap(),
 				pattern = patterns[itemDate] ?: defaultPattern
 				?: strokeRepository.getStrokesByPatternId(userPreferencesRepository.getPatternId())
 			)

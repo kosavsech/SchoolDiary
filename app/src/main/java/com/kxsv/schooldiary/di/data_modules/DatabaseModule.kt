@@ -1,6 +1,7 @@
 package com.kxsv.schooldiary.di.data_modules
 
 import android.content.Context
+import androidx.datastore.core.DataStore
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
@@ -18,6 +19,7 @@ import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternEntity
 import com.kxsv.schooldiary.data.local.features.time_pattern.TimePatternWithStrokes
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeDao
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
+import com.kxsv.schooldiary.data.local.user_preferences.UserPreferences
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.ApplicationScope
 import com.kxsv.schooldiary.di.util.Dispatcher
@@ -45,6 +47,7 @@ object DatabaseModule {
 		@Dispatcher(AppDispatchers.IO) ioDispatcher: CoroutineDispatcher,
 		patternDaoProvider: Provider<TimePatternDao>,
 		strokeDaoProvider: Provider<PatternStrokeDao>,
+		dataStore: Provider<DataStore<UserPreferences>>,
 	): AppDatabase {
 		return Room.databaseBuilder(
 			context.applicationContext,
@@ -56,7 +59,8 @@ object DatabaseModule {
 					applicationScope = applicationScope,
 					ioDispatcher = ioDispatcher,
 					patternDaoProvider = patternDaoProvider,
-					strokeDaoProvider = strokeDaoProvider
+					strokeDaoProvider = strokeDaoProvider,
+					dataStore = dataStore
 				)
 			)
 			.fallbackToDestructiveMigration()
@@ -69,6 +73,7 @@ object DatabaseModule {
 		@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 		private val patternDaoProvider: Provider<TimePatternDao>,
 		private val strokeDaoProvider: Provider<PatternStrokeDao>,
+		private val dataStore: Provider<DataStore<UserPreferences>>,
 	) : RoomDatabase.Callback() {
 		override fun onCreate(db: SupportSQLiteDatabase) {
 			super.onCreate(db)
@@ -200,10 +205,13 @@ object DatabaseModule {
 					)
 				),
 			)
-			timePatternEntities.forEach {
-				val masterId = patternDaoProvider.get().upsert(it.timePattern)
+			timePatternEntities.forEach { patternWithStrokes ->
+				val masterId = patternDaoProvider.get().upsert(patternWithStrokes.timePattern)
+				if (patternWithStrokes.timePattern.name == "Default") {
+					dataStore.get().updateData { it.copy(defaultPatternId = masterId) }
+				}
 				strokeDaoProvider.get().upsertAll(
-					it.strokes.map { strokes ->
+					patternWithStrokes.strokes.map { strokes ->
 						strokes.copy(patternMasterId = masterId)
 					}
 				)

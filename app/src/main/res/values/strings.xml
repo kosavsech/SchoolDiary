@@ -190,4 +190,7 @@
     <string name="default_lesson_duration">Default lesson duration</string>
     <string name="not_set">Not set</string>
     <string name="too_long_lesson">Lesson duration cannot be longer than hour</string>
+    <string name="no_schedule_for_day">You have no lessons</string>
+    <string name="study_day_passed">School time is over</string>
+    <string name="pattern_not_set">Time pattern not set</string>
 </resources>

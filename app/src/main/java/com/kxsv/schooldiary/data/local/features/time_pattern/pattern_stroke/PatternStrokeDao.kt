@@ -24,7 +24,7 @@ interface PatternStrokeDao {
 				"JOIN $TIME_PATTERN_TABLE_NAME ON $PATTERN_STROKE_TABLE_NAME.patternMasterId = $TIME_PATTERN_TABLE_NAME.patternId " +
 				"JOIN $STUDY_DAY_TABLE_NAME ON $PATTERN_STROKE_TABLE_NAME.patternMasterId = $STUDY_DAY_TABLE_NAME.appliedPatternId " +
 				"WHERE $STUDY_DAY_TABLE_NAME.date >= :startRange AND $STUDY_DAY_TABLE_NAME.date <= :endRange " +
-				"ORDER BY $STUDY_DAY_TABLE_NAME.date ASC"
+				"ORDER BY $PATTERN_STROKE_TABLE_NAME.`index` ASC"
 	)
 	fun observeAllForDateRange(
 		startRange: LocalDate,

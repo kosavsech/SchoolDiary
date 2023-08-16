@@ -163,7 +163,7 @@ class ScheduleViewModel @Inject constructor(
 		)
 		_uiState.update {
 			it.copy(
-				classDetailed = null, classes = newClasses
+				classDetailed = null, classes = newClasses.toSortedMap()
 			)
 		}
 		try {
@@ -536,7 +536,7 @@ class ScheduleViewModel @Inject constructor(
 						.toLessonsWithSubjectIndexed(subjectRepository, studyDayRepository)
 				}
 			}
-			_uiState.update { it.copy(classes = classes) }
+			_uiState.update { it.copy(classes = classes.toSortedMap()) }
 		} catch (e: NetworkException) {
 			Log.e(TAG, "initializeNetworkScheduleOnDate: exception on login", e)
 		} catch (e: IOException) {
@@ -619,7 +619,7 @@ class ScheduleViewModel @Inject constructor(
 					lessonRepository.upsertAll(lessons)
 				}
 				if (isFetched) {
-					_uiState.update { it.copy(classes = classes) }
+					_uiState.update { it.copy(classes = classes.toSortedMap()) }
 				} else {
 				
 				}
@@ -704,7 +704,7 @@ class ScheduleViewModel @Inject constructor(
 					val mappedClasses = mutableMapOf<Int, LessonWithSubject>()
 					dayWithClasses.classes.forEach { mappedClasses[it.lesson.index] = it }
 					_uiState.update {
-						it.copy(classes = mappedClasses, isLoading = false)
+						it.copy(classes = mappedClasses.toSortedMap(), isLoading = false)
 					}
 				} else {
 					Log.i(TAG, "retrieveSchedule: loaded studyDay. But searching for lesson in Net")
@@ -757,7 +757,7 @@ class ScheduleViewModel @Inject constructor(
 					}
 					it.copy(
 						studyDay = dayWithClasses.studyDay,
-						classes = mappedClasses,
+						classes = mappedClasses.toSortedMap(),
 						isLoading = false
 					)
 				}
