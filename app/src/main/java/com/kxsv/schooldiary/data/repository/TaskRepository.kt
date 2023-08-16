@@ -1,7 +1,6 @@
 package com.kxsv.schooldiary.data.repository
 
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
-import com.kxsv.schooldiary.data.local.features.task.TaskAndUniqueIdWithSubject
 import com.kxsv.schooldiary.data.local.features.task.TaskEntity
 import com.kxsv.schooldiary.data.local.features.task.TaskWithSubject
 import com.kxsv.schooldiary.data.remote.dtos.TaskDto
@@ -20,9 +19,9 @@ interface TaskRepository {
 		endRange: LocalDate,
 	): Flow<List<TaskWithSubject>>
 	
-	fun observeTask(taskId: Long): Flow<TaskEntity>
+	fun observeTask(taskId: String): Flow<TaskEntity>
 	
-	fun observeTaskWithSubject(taskId: Long): Flow<TaskWithSubject>
+	fun observeTaskWithSubject(taskId: String): Flow<TaskWithSubject>
 	
 	suspend fun getTasks(): List<TaskEntity>
 	
@@ -30,25 +29,25 @@ interface TaskRepository {
 	 * @throws NetworkException.NotLoggedInException
 	 * @return List of new tasks, which were not cached before
 	 */
-	suspend fun fetchSoonTasks(): List<TaskAndUniqueIdWithSubject>
+	suspend fun fetchSoonTasks(): List<TaskWithSubject>
 	
 	suspend fun fetchTaskVariantsForSubjectByDate(
 		date: LocalDate,
 		subject: SubjectEntity,
 	): List<TaskDto>
 	
-	suspend fun getById(taskId: Long): TaskEntity?
+	suspend fun getById(taskId: String): TaskEntity?
 	
 	suspend fun getByDateAndSubject(date: LocalDate, subjectId: String): List<TaskEntity>
 	
-	suspend fun getTaskWithSubject(taskId: Long): TaskWithSubject?
+	suspend fun getTaskWithSubject(taskId: String): TaskWithSubject?
 	
-	suspend fun createTask(task: TaskEntity): Long
+	suspend fun createTask(task: TaskEntity, fetchedLessonIndex: Int?): String
 	
 	suspend fun updateTask(task: TaskEntity)
 	
 	suspend fun deleteAllTasks()
 	
-	suspend fun deleteTask(taskId: Long)
+	suspend fun deleteTask(taskId: String)
 	
 }

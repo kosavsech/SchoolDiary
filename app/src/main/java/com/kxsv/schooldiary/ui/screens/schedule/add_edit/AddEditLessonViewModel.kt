@@ -170,9 +170,7 @@ class AddEditLessonViewModel @Inject constructor(
 				),
 				date = uiState.value.classDate!!
 			)
-			_uiState.update {
-				it.copy(isClassSaved = true)
-			}
+			_uiState.update { it.copy(isClassSaved = true) }
 		}
 	}
 	

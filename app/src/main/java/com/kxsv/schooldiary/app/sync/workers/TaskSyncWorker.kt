@@ -16,7 +16,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkerParameters
 import com.kxsv.schooldiary.app.sync.initializers.SyncConstraints
 import com.kxsv.schooldiary.app.sync.initializers.syncForegroundInfo
-import com.kxsv.schooldiary.data.local.features.task.TaskAndUniqueIdWithSubject
+import com.kxsv.schooldiary.data.local.features.task.TaskWithSubject
 import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.repository.TaskRepository
 import com.kxsv.schooldiary.di.util.NotificationsConstants
@@ -71,12 +71,12 @@ class TaskSyncWorker @AssistedInject constructor(
 					.checkSelfPermission(appContext, Manifest.permission.POST_NOTIFICATIONS) ==
 				PackageManager.PERMISSION_GRANTED
 			) {
-				Log.d(TAG, "DEBUG newTaskEntities: $newTaskEntities")
 				if (newTaskEntities.isNotEmpty()) {
+					Log.d(TAG, "DEBUG newTaskEntities: $newTaskEntities")
 					notificationManager.notify(3, createSummaryNotification())
 					newTaskEntities.forEach {
 						notificationManager.notify(
-							it.uniqueId, 4, createNotification(it)
+							it.taskEntity.taskId, 4, createNotification(it)
 						)
 					}
 				}
@@ -124,13 +124,17 @@ class TaskSyncWorker @AssistedInject constructor(
 		return taskSummaryNotificationBuilder.build()
 	}
 	
-	private fun createNotification(taskWithSubject: TaskAndUniqueIdWithSubject): Notification {
+	private fun createNotification(taskWithSubject: TaskWithSubject): Notification {
 		createNotificationChannel()
-		val title = taskWithSubject.taskEntity.title
-		val text = title/*.take(27) + if (title.length > 27) "..." else ""*/ +
-				" Due date: " + taskWithSubject.taskEntity.dueDate.format(DateTimeFormatter.ISO_LOCAL_DATE)
-		return taskNotificationBuilder.setContentText(text)
-			.setContentTitle(taskWithSubject.subject.getName()).build()
+		val subjectName = taskWithSubject.subject.getName()
+		val title = subjectName.take(10) + if (subjectName.length > 10) "... " else " " +
+				taskWithSubject.taskEntity.dueDate.format(DateTimeFormatter.ISO_LOCAL_DATE)
+		val text = taskWithSubject.taskEntity.title
+		
+		return taskNotificationBuilder
+			.setContentTitle(title)
+			.setContentText(text)
+			.build()
 	}
 	
 	private fun createNotificationChannel() {

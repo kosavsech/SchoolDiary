@@ -1,22 +1,20 @@
 package com.kxsv.schooldiary.data.repository
 
-import android.util.Log
 import com.kxsv.schooldiary.data.local.features.lesson.LessonDao
 import com.kxsv.schooldiary.data.local.features.study_day.StudyDayDao
 import com.kxsv.schooldiary.data.local.features.subject.SubjectDao
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
-import com.kxsv.schooldiary.data.local.features.task.TaskAndUniqueIdWithSubject
 import com.kxsv.schooldiary.data.local.features.task.TaskDao
 import com.kxsv.schooldiary.data.local.features.task.TaskEntity
 import com.kxsv.schooldiary.data.local.features.task.TaskWithSubject
 import com.kxsv.schooldiary.data.mapper.toSubjectEntitiesIndexed
-import com.kxsv.schooldiary.data.mapper.toTaskEntities
-import com.kxsv.schooldiary.data.mapper.toTasksAndUniqueIdWithSubject
+import com.kxsv.schooldiary.data.mapper.toTasksWithSubject
 import com.kxsv.schooldiary.data.remote.WebService
 import com.kxsv.schooldiary.data.remote.dtos.TaskDto
 import com.kxsv.schooldiary.data.remote.parsers.LessonParser
 import com.kxsv.schooldiary.data.remote.parsers.TaskParser
 import com.kxsv.schooldiary.data.remote.util.NetworkException
+import com.kxsv.schooldiary.data.util.DataIdGenUtils.generateTaskId
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.ApplicationScope
 import com.kxsv.schooldiary.di.util.Dispatcher
@@ -63,11 +61,11 @@ class TaskRepositoryImpl @Inject constructor(
 		return taskDataSource.observeAllWithSubjectForDateRange(startRange, endRange)
 	}
 	
-	override fun observeTask(taskId: Long): Flow<TaskEntity> {
+	override fun observeTask(taskId: String): Flow<TaskEntity> {
 		return taskDataSource.observeById(taskId)
 	}
 	
-	override fun observeTaskWithSubject(taskId: Long): Flow<TaskWithSubject> {
+	override fun observeTaskWithSubject(taskId: String): Flow<TaskWithSubject> {
 		return taskDataSource.observeByIdWithSubject(taskId)
 	}
 	
@@ -80,12 +78,12 @@ class TaskRepositoryImpl @Inject constructor(
 	 * @throws TimeoutCancellationException
 	 * @return List of new tasks, which were not cached before
 	 */
-	override suspend fun fetchSoonTasks(): List<TaskAndUniqueIdWithSubject> {
+	override suspend fun fetchSoonTasks(): List<TaskWithSubject> {
 		return withContext(ioDispatcher) {
 			withTimeout(15000L) {
+				val result: MutableList<TaskWithSubject> = mutableListOf()
 				val startRange = Utils.currentDate
 				val endRange = startRange.plusDays(7)
-				val result: MutableList<TaskAndUniqueIdWithSubject> = mutableListOf()
 				
 				(startRange..endRange).toList().forEach { date ->
 					if (date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
@@ -100,25 +98,25 @@ class TaskRepositoryImpl @Inject constructor(
 		}
 	}
 	
-	private suspend fun fetchTasksOnDate(date: LocalDate): MutableList<TaskAndUniqueIdWithSubject> {
+	private suspend fun fetchTasksOnDate(date: LocalDate): MutableList<TaskWithSubject> {
 		return withContext(ioDispatcher) {
-			val dateNewTasks: MutableList<TaskAndUniqueIdWithSubject> = mutableListOf()
-			val dayWithClasses = async { lessonDataSource.getAllWithSubjectByDate(date) }
+			val dateNewTasks: MutableList<TaskWithSubject> = mutableListOf()
+			val localSchedule = async { lessonDataSource.getAllWithSubjectByDate(date) }
 			val dayInfo = async { webService.getDayInfo(date) }
 			
-			val classes = if (dayWithClasses.await().isEmpty()) {
+			val subjectsIndexed = if (localSchedule.await().isNotEmpty()) {
+				val localClassesMapped = mutableMapOf<Int, SubjectEntity>()
+				localSchedule.await().forEach {
+					localClassesMapped[it.lesson.index] = it.subject
+				}
+				localClassesMapped
+			} else {
 				LessonParser()
 					.parse(dayInfo = dayInfo.await(), localDate = date)
 					.toSubjectEntitiesIndexed(subjectDataSource, studyDayDataSource)
-			} else {
-				val newMap = mutableMapOf<Int, SubjectEntity>()
-				dayWithClasses.await().forEach {
-					newMap[it.lesson.index] = it.subject
-				}
-				newMap
 			}
 			
-			classes.forEach { subjectIndexed ->
+			subjectsIndexed.forEach { subjectIndexed ->
 				dateNewTasks.addAll(
 					fetchTasksForSubject(
 						subjectIndexed = subjectIndexed,
@@ -131,93 +129,44 @@ class TaskRepositoryImpl @Inject constructor(
 		}
 	}
 	
+	/**
+	 * Fetches tasks for subject and caches them
+	 *
+	 * @param subjectIndexed
+	 * @param dayInfo
+	 * @param date
+	 * @return list of new tasks
+	 */
 	private suspend fun fetchTasksForSubject(
 		subjectIndexed: Map.Entry<Int, SubjectEntity>,
 		dayInfo: Elements,
 		date: LocalDate,
-	): List<TaskAndUniqueIdWithSubject> = withContext(ioDispatcher) {
-		val lessonNewTasks: MutableList<TaskAndUniqueIdWithSubject> = mutableListOf()
-		val netTaskVariants = TaskParser().parse(
-			dayInfo = dayInfo,
-			date = date,
-			subject = subjectIndexed.value,
-		)
-		if (netTaskVariants.isNotEmpty()) {
-			Log.d(
-				TAG, "fetchSoonTasks: taskVariant found on date($date) for:\n" +
-						"subject(${subjectIndexed.value.getName()}," +
-						" id = ${subjectIndexed.value.subjectId})\n" +
-						"taskVariant(size = ${netTaskVariants.size}): ${netTaskVariants[0]}" +
-						(if (netTaskVariants.size > 1) netTaskVariants[1] else "") +
-						(if (netTaskVariants.size > 2) "..." else "")
-			)
-			
-			val localTasks = getByDateAndSubject(date, subjectIndexed.value.subjectId)
-			if (localTasks.isNotEmpty()) {
-				Log.d(
-					TAG,
-					"fetchSoonTasks: local tasks found on date($date) for:\n" +
-							"subject(${subjectIndexed.value.getName()}," +
-							" id = ${subjectIndexed.value.subjectId})\n" +
-							"localTasks(size = ${localTasks.size}): ${localTasks[0]}" +
-							(if (localTasks.size > 1) localTasks[1] else "") +
-							(if (localTasks.size > 2) "..." else "")
-				)
-				var deletedCounter = 0
-				localTasks.forEach { taskEntity ->
-					if (taskEntity.isFetched) {
-						deleteTask(taskEntity.taskId)
-						deletedCounter++
-					}
-				}
-				Log.d(
-					TAG, "fetchSoonTasks: local tasks old fetched deleted" +
-							"(count = $deletedCounter) on date($date) for:\n" +
-							"subject(${subjectIndexed.value.getName()}," +
-							" id = ${subjectIndexed.value.subjectId})\n"
-				)
-				if (deletedCounter == netTaskVariants.size) {
-					taskDataSource.upsertAll(netTaskVariants.toTaskEntities())
-					Log.d(
-						TAG,
-						"fetchSoonTasks: deleted enough fetched tasks, so " +
-								"adding\n" +
-								"taskVariant(size = ${netTaskVariants.size}): ${netTaskVariants[0]}" +
-								(if (netTaskVariants.size > 1) netTaskVariants[1] else "") +
-								(if (netTaskVariants.size > 2) "..." else "") + "\n" +
-								"subject(${subjectIndexed.value.getName()}, " +
-								"id = ${subjectIndexed.value.subjectId})\n"
-					)
-				} else {
-					Log.d(
-						TAG,
-						"fetchSoonTasks: didn't delete enough fetched tasks, so " +
-								"NOT adding\n" +
-								"taskVariant(size = ${netTaskVariants.size}): ${netTaskVariants[0]}" +
-								(if (netTaskVariants.size > 1) netTaskVariants[1] else "") +
-								(if (netTaskVariants.size > 2) "..." else "") + "\n" +
-								"subject(${subjectIndexed.value.getName()}, " +
-								"id = ${subjectIndexed.value.subjectId})\n"
-					)
-				}
-			} else {
-				lessonNewTasks.addAll(netTaskVariants.toTasksAndUniqueIdWithSubject())
-				taskDataSource.upsertAll(netTaskVariants.toTaskEntities())
-				Log.d(
-					TAG,
-					"fetchSoonTasks($date, ${subjectIndexed.value.getName()}):" +
-							" localTasks.isEmpty so just saving\n $netTaskVariants"
-				)
-			}
-		} else {
-			Log.d(
-				TAG,
-				"fetchSoonTasks: netTaskVariant not found on date($date) for:\n" +
-						"subject(${subjectIndexed.value.getName()}," +
-						" id = ${subjectIndexed.value.subjectId})"
-			)
+	): List<TaskWithSubject> = withContext(ioDispatcher) {
+		val netTaskVariants = TaskParser()
+			.parse(dayInfo = dayInfo, date = date, subject = subjectIndexed.value)
+		
+		if (netTaskVariants.isEmpty()) return@withContext emptyList<TaskWithSubject>()
+		
+		val localTasks = getByDateAndSubject(date, subjectIndexed.value.subjectId)
+		val fetchedTasksWithSubjects = netTaskVariants.toTasksWithSubject()
+		
+		if (localTasks.isEmpty()) {
+			taskDataSource.upsertAll(fetchedTasksWithSubjects.map { it.taskEntity })
+			return@withContext fetchedTasksWithSubjects
 		}
-		return@withContext lessonNewTasks
+		
+		val newTasksForSubject = mutableListOf<TaskWithSubject>()
+		val localTasksAssociated = localTasks.associateBy { it.taskId }
+		
+		fetchedTasksWithSubjects.forEach {
+			val isFetchedPreviously = localTasksAssociated.containsKey(it.taskEntity.taskId)
+			
+			if (!isFetchedPreviously) {
+				newTasksForSubject.add(it)
+				taskDataSource.upsert(it.taskEntity)
+			}
+		}
+		return@withContext newTasksForSubject
 	}
 	
 	/**
@@ -235,7 +184,7 @@ class TaskRepositoryImpl @Inject constructor(
 		)
 	}
 	
-	override suspend fun getById(taskId: Long): TaskEntity? {
+	override suspend fun getById(taskId: String): TaskEntity? {
 		return taskDataSource.getById(taskId)
 	}
 	
@@ -243,12 +192,29 @@ class TaskRepositoryImpl @Inject constructor(
 		return taskDataSource.getByDateAndSubject(date = date, subjectId = subjectId)
 	}
 	
-	override suspend fun getTaskWithSubject(taskId: Long): TaskWithSubject? {
+	override suspend fun getTaskWithSubject(taskId: String): TaskWithSubject? {
 		return taskDataSource.getByIdWithSubject(taskId)
 	}
 	
-	override suspend fun createTask(task: TaskEntity): Long {
-		return taskDataSource.upsert(task)
+	override suspend fun createTask(task: TaskEntity, fetchedLessonIndex: Int?): String {
+		if (task.subjectMasterId == null) throw RuntimeException("Shouldn't be called with null subjectMasterId")
+		val localTasks = taskDataSource
+			.getByDateAndSubject(task.dueDate, task.subjectMasterId)
+			.filter { !it.isFetched }
+		
+		val lessonIndex = fetchedLessonIndex
+			?: if (localTasks.isEmpty()) { // first local(user entered title by hand) task on this day
+				100
+			} else {
+				localTasks.maxOf { it.taskId.split("_")[0].toInt() } + 1
+			}
+		val taskId = generateTaskId(
+			dueDate = task.dueDate,
+			subjectId = task.subjectMasterId,
+			lessonIndex = lessonIndex,
+		)
+		taskDataSource.insert(task.copy(taskId = taskId))
+		return taskId
 	}
 	
 	override suspend fun updateTask(task: TaskEntity) {
@@ -259,7 +225,7 @@ class TaskRepositoryImpl @Inject constructor(
 		taskDataSource.deleteAll()
 	}
 	
-	override suspend fun deleteTask(taskId: Long) {
+	override suspend fun deleteTask(taskId: String) {
 		taskDataSource.deleteById(taskId)
 	}
 	

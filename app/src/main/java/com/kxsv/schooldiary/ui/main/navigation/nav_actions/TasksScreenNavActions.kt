@@ -9,11 +9,11 @@ class TasksScreenNavActions(
 ) : NavActions {
 	fun onAddTask() {
 		destinationsNavigator.navigate(
-			AddEditTaskScreenDestination(taskId = null)
+			AddEditTaskScreenDestination(taskId = null, isEditingFetchedTask = false)
 		)
 	}
 	
-	fun onTaskClick(taskId: Long) {
+	fun onTaskClick(taskId: String) {
 		destinationsNavigator.navigate(
 			TaskDetailScreenDestination(taskId = taskId)
 		)

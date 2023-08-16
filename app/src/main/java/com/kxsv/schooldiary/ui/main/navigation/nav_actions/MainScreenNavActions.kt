@@ -14,7 +14,7 @@ class MainScreenNavActions(
 		destinationsNavigator.navigate(route)
 	}
 	
-	fun onTaskClicked(taskId: Long) {
+	fun onTaskClicked(taskId: String) {
 		destinationsNavigator.navigate(TaskDetailScreenDestination(taskId = taskId))
 	}
 	

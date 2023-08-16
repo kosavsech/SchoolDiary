@@ -168,7 +168,7 @@ class MainScreenViewModel @Inject constructor(
 		_uiState.update { it.copy(userMessage = message) }
 	}
 	
-	fun completeTask(id: Long, isDone: Boolean) = viewModelScope.launch(ioDispatcher) {
+	fun completeTask(id: String, isDone: Boolean) = viewModelScope.launch(ioDispatcher) {
 		val taskToUpdate = taskRepository.getById(id)?.copy(isDone = isDone)
 			?: return@launch showSnackbarMessage(R.string.task_not_found)
 		taskRepository.updateTask(taskToUpdate)

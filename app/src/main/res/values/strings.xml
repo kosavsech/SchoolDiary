@@ -194,4 +194,7 @@
     <string name="study_day_passed">School time is over</string>
     <string name="pattern_not_set">Time pattern not set</string>
     <string name="day_tasks_done">You\'ve done all tasks</string>
+    <string name="cannot_be_edited_for_fetched_task">Cannot be edited for fetched task</string>
+    <string name="net_task_variants_not_found">Not found task variants in Net</string>
+    <string name="task_duplicate">Such task already exists. Try changing some fields</string>
 </resources>

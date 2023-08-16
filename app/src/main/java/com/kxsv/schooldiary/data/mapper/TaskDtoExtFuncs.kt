@@ -1,9 +1,9 @@
 package com.kxsv.schooldiary.data.mapper
 
-import com.kxsv.schooldiary.data.local.features.task.TaskAndUniqueIdWithSubject
 import com.kxsv.schooldiary.data.local.features.task.TaskEntity
+import com.kxsv.schooldiary.data.local.features.task.TaskWithSubject
 import com.kxsv.schooldiary.data.remote.dtos.TaskDto
-import com.kxsv.schooldiary.data.util.DataIdGenUtils.generateUniqueTaskId
+import com.kxsv.schooldiary.data.util.DataIdGenUtils.generateTaskId
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -15,14 +15,15 @@ fun TaskDto.toTaskEntity(): TaskEntity {
 			LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
 		}",
 		subjectMasterId = subject.subjectId,
-		isFetched = true
+		isFetched = true,
+		taskId = generateTaskId(dueDate, subject.subjectId, lessonIndex)
 	)
 }
 
 fun List<TaskDto>.toTaskEntities() = map { it.toTaskEntity() }
 
-fun TaskDto.toTaskAndUniqueIdWithSubject(): TaskAndUniqueIdWithSubject {
-	return TaskAndUniqueIdWithSubject(
+fun TaskDto.toTaskWithSubject(): TaskWithSubject {
+	return TaskWithSubject(
 		TaskEntity(
 			title = title,
 			dueDate = dueDate,
@@ -30,13 +31,13 @@ fun TaskDto.toTaskAndUniqueIdWithSubject(): TaskAndUniqueIdWithSubject {
 				LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
 			}",
 			subjectMasterId = subject.subjectId,
-			isFetched = true
+			isFetched = true,
+			taskId = generateTaskId(dueDate, subject.subjectId, lessonIndex)
 		),
 		subject = subject,
-		uniqueId = generateUniqueTaskId()
 	)
 }
 
 
-fun List<TaskDto>.toTasksAndUniqueIdWithSubject() = map { it.toTaskAndUniqueIdWithSubject() }
+fun List<TaskDto>.toTasksWithSubject() = map { it.toTaskWithSubject() }
 

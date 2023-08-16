@@ -42,7 +42,7 @@ import com.ramcosta.composedestinations.result.ResultBackNavigator
 import java.time.format.DateTimeFormatter
 
 data class TaskDetailScreenNavArgs(
-	val taskId: Long,
+	val taskId: String,
 )
 
 @Destination(
@@ -70,7 +70,12 @@ fun TaskDetailScreen(
 					viewModel.deleteTask()
 					navigator.backWithResult(DELETE_RESULT_OK)
 				},
-				onEdit = { navigator.onEditTask(viewModel.taskId) }
+				onEdit = {
+					navigator.onEditTask(
+						taskId = viewModel.taskId,
+						isEditingFetchedTask = uiState.taskWithSubject?.taskEntity?.isFetched == true
+					)
+				}
 			)
 		},
 		floatingActionButton = {

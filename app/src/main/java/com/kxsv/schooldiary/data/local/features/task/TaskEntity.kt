@@ -27,6 +27,6 @@ data class TaskEntity(
 	val subjectMasterId: String?,
 	val isDone: Boolean = false,
 	val isFetched: Boolean = false,
-	@PrimaryKey(autoGenerate = true)
-	val taskId: Long = 0,
+	@PrimaryKey
+	val taskId: String = "",
 )

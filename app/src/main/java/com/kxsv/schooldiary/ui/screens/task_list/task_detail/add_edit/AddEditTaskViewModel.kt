@@ -1,5 +1,6 @@
 package com.kxsv.schooldiary.ui.screens.task_list.task_detail.add_edit
 
+import android.database.sqlite.SQLiteConstraintException
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -13,8 +14,6 @@ import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.data.repository.TaskRepository
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.Dispatcher
-import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
-import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.ui.util.Async
 import com.kxsv.schooldiary.ui.util.WhileUiSubscribed
@@ -41,8 +40,14 @@ data class AddEditTaskUiState(
 	val description: String = "",
 	val subject: SubjectEntity? = null,
 	val dueDate: LocalDate = Utils.currentDate.plusDays(1),
+	
 	val availableSubjects: List<SubjectEntity> = emptyList(),
 	val fetchedVariants: List<TaskDto>? = null,
+	
+	val selectedFetchedVariantIndex: Int? = null,
+	val isFetched: Boolean = false,
+	
+	val isTaskSaved: Boolean = false,
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
 )
@@ -56,7 +61,8 @@ class AddEditTaskViewModel @Inject constructor(
 ) : ViewModel() {
 	
 	private val navArgs: AddEditTaskScreenNavArgs = savedStateHandle.navArgs()
-	val taskId: Long? = navArgs.taskId
+	val taskId: String? = navArgs.taskId
+	val isEditingFetchedTask: Boolean = navArgs.isEditingFetchedTask
 	
 	private val _subjectsAsync = subjectRepository.observeAll()
 		.map { Async.Success(it) }
@@ -93,6 +99,7 @@ class AddEditTaskViewModel @Inject constructor(
 							description = taskWithSubject.taskEntity.description,
 							dueDate = taskWithSubject.taskEntity.dueDate,
 							subject = taskWithSubject.subject,
+							isFetched = taskWithSubject.taskEntity.isFetched,
 							isLoading = false
 						)
 					}
@@ -109,45 +116,61 @@ class AddEditTaskViewModel @Inject constructor(
 	}
 	
 	
-	fun saveTask(): Int? {
+	fun saveTask() {
 		if (uiState.value.title.isEmpty() || uiState.value.subject == null) {
-			_uiState.update { it.copy(userMessage = R.string.fill_required_fields_message) }
-			return null
+			_uiState.update {
+				it.copy(userMessage = R.string.fill_required_fields_message)
+			}
 		}
-		
 		
 		return if (taskId == null) {
 			createNewTask()
-			ADD_RESULT_OK
 		} else {
 			updateTask()
-			EDIT_RESULT_OK
 		}
 	}
 	
-	private fun createNewTask() = viewModelScope.launch(ioDispatcher) {
-		taskRepository.createTask(
-			task = TaskEntity(
-				title = uiState.value.title,
-				description = uiState.value.description,
-				dueDate = uiState.value.dueDate,
-				subjectMasterId = uiState.value.subject!!.subjectId,
-				isFetched = false,
-			)
-		)
+	private fun createNewTask() {
+		val subjectMasterId = uiState.value.subject?.subjectId
+			?: throw RuntimeException("updateTask() was called but subjectMasterId is null.")
+		
+		viewModelScope.launch(ioDispatcher) {
+			try {
+				taskRepository.createTask(
+					task = TaskEntity(
+						title = uiState.value.title,
+						description = uiState.value.description,
+						dueDate = uiState.value.dueDate,
+						subjectMasterId = subjectMasterId,
+						isFetched = uiState.value.isFetched,
+					),
+					fetchedLessonIndex = uiState.value.selectedFetchedVariantIndex
+				)
+				_uiState.update { it.copy(isTaskSaved = true) }
+			} catch (e: SQLiteConstraintException) {
+				_uiState.update { it.copy(userMessage = R.string.task_duplicate) }
+			}
+		}
 	}
 	
-	private fun updateTask() = viewModelScope.launch(ioDispatcher) {
-		taskRepository.updateTask(
-			task = TaskEntity(
-				title = uiState.value.title,
-				description = uiState.value.description,
-				dueDate = uiState.value.dueDate,
-				subjectMasterId = uiState.value.subject!!.subjectId,
-				isFetched = false,
-				taskId = taskId!!
+	private fun updateTask() {
+		if (taskId == null) throw RuntimeException("updateTask() was called but Task is new.")
+		val subjectMasterId = uiState.value.subject?.subjectId
+			?: throw RuntimeException("updateTask() was called but subjectMasterId is null.")
+		
+		viewModelScope.launch(ioDispatcher) {
+			taskRepository.updateTask(
+				task = TaskEntity(
+					title = uiState.value.title,
+					description = uiState.value.description,
+					dueDate = uiState.value.dueDate,
+					subjectMasterId = subjectMasterId,
+					isFetched = uiState.value.isFetched,
+					taskId = taskId
+				)
 			)
-		)
+			_uiState.update { it.copy(isTaskSaved = true) }
+		}
 	}
 	
 	fun snackbarMessageShown() {
@@ -156,24 +179,54 @@ class AddEditTaskViewModel @Inject constructor(
 		}
 	}
 	
-	fun changeDate(newDueDate: LocalDate) {
-		_uiState.update { it.copy(dueDate = newDueDate) }
+	fun onFetchedTaskImmutableFieldEdit() {
+		_uiState.update { it.copy(userMessage = R.string.cannot_be_edited_for_fetched_task) }
+	}
+	
+	fun pickFetchedVariant(pickedVariant: TaskDto) {
+		_uiState.update {
+			it.copy(
+				title = pickedVariant.title,
+				selectedFetchedVariantIndex = pickedVariant.lessonIndex,
+				isFetched = true
+			)
+		}
+	}
+	
+	fun onFetchedVariantChosen() {
+		_uiState.update { it.copy(fetchedVariants = null) }
+	}
+	
+	private fun clearIsFetchedTag() {
+		_uiState.update { it.copy(selectedFetchedVariantIndex = null, isFetched = false) }
 	}
 	
 	fun changeTitle(newTitle: String) {
-		_uiState.update { it.copy(title = newTitle) }
+		if (uiState.value.title != newTitle.trim()) {
+			clearIsFetchedTag()
+			_uiState.update { it.copy(title = newTitle.trim()) }
+		}
 	}
 	
 	fun changeDescription(newDescription: String) {
-		_uiState.update { it.copy(description = newDescription) }
+		if (uiState.value.description != newDescription.trim()) {
+			clearIsFetchedTag()
+			_uiState.update { it.copy(description = newDescription.trim()) }
+		}
+	}
+	
+	fun changeDate(newDueDate: LocalDate) {
+		if (uiState.value.dueDate != newDueDate) {
+			clearIsFetchedTag()
+			_uiState.update { it.copy(dueDate = newDueDate) }
+		}
 	}
 	
 	fun changeSubject(newSubject: SubjectEntity) {
-		_uiState.update { it.copy(subject = newSubject) }
-	}
-	
-	fun onFetchedTitleChoose() {
-		_uiState.update { it.copy(fetchedVariants = null) }
+		if (uiState.value.subject != newSubject) {
+			clearIsFetchedTag()
+			_uiState.update { it.copy(subject = newSubject) }
+		}
 	}
 	
 	/**
@@ -202,11 +255,10 @@ class AddEditTaskViewModel @Inject constructor(
 			} else {
 				_uiState.update {
 					it.copy(
-						userMessage = R.string.task_not_found
+						userMessage = R.string.net_task_variants_not_found
 					)
 				}
 			}
 		}
 	}
-	
 }

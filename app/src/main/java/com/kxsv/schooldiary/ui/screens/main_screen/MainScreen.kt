@@ -122,12 +122,12 @@ fun MainScreen(
 		val onScheduleShowMore = remember {
 			{ navigator.onScheduleShowMore() }
 		}
-		val onTaskChecked = remember<(Long, Boolean) -> Unit> {
+		val onTaskChecked = remember<(String, Boolean) -> Unit> {
 			{ id, isDone ->
 				viewModel.completeTask(id = id, isDone = isDone)
 			}
 		}
-		val onTaskClicked = remember<(Long) -> Unit> {
+		val onTaskClicked = remember<(String) -> Unit> {
 			{ navigator.onTaskClicked(taskId = it) }
 		}
 		val onTasksShowMore = remember<(LocalDate) -> Unit> {
@@ -164,8 +164,8 @@ private fun MainScreenContent(
 	itemList: List<MainScreenItem>,
 	onRefresh: () -> Unit,
 	onScheduleShowMore: () -> Unit,
-	onTaskClicked: (Long) -> Unit,
-	onTaskChecked: (Long, Boolean) -> Unit,
+	onTaskClicked: (String) -> Unit,
+	onTaskChecked: (String, Boolean) -> Unit,
 	onTasksShowMore: (LocalDate) -> Unit,
 	onNavigate: (String) -> Unit,
 ) {
@@ -363,8 +363,8 @@ private fun ScheduleDay(
 	classes: Map<Int, SubjectEntity>,
 	tasks: List<TaskWithSubject>,
 	currentPattern: List<PatternStrokeEntity>,
-	onTaskChecked: (Long, Boolean) -> Unit,
-	onTaskClicked: (Long) -> Unit,
+	onTaskChecked: (String, Boolean) -> Unit,
+	onTaskClicked: (String) -> Unit,
 	onTasksShowMore: () -> Unit,
 ) {
 	Column(
@@ -417,8 +417,8 @@ private fun ScheduleDay(
 @Composable
 private fun TasksOverview(
 	tasks: List<TaskWithSubject>,
-	onTaskChecked: (Long, Boolean) -> Unit,
-	onTaskClicked: (Long) -> Unit,
+	onTaskChecked: (String, Boolean) -> Unit,
+	onTaskClicked: (String) -> Unit,
 ) {
 	Column(modifier = Modifier.fillMaxWidth()) {
 		val noTasks = remember(tasks) { tasks.isEmpty() }
@@ -454,8 +454,8 @@ private fun TasksOverview(
 private fun TasksOverviewItem(
 	index: Int,
 	taskEntity: TaskWithSubject,
-	onTaskChecked: (Long, Boolean) -> Unit,
-	onTaskClicked: (Long) -> Unit,
+	onTaskChecked: (String, Boolean) -> Unit,
+	onTaskClicked: (String) -> Unit,
 ) {
 	Row(
 		modifier = Modifier
@@ -476,11 +476,7 @@ private fun TasksOverviewItem(
 			)
 			Spacer(modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.list_item_padding)))
 			Column {
-				val textDecoration = if (isChecked) {
-					TextDecoration.LineThrough
-				} else {
-					null
-				}
+				val textDecoration = if (isChecked) TextDecoration.LineThrough else null
 				Text(
 					text = taskEntity.taskEntity.title,
 					style = MaterialTheme.typography.titleMedium,

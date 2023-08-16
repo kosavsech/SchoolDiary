@@ -90,6 +90,9 @@ fun TasksScreen(
 		modifier = Modifier.fillMaxSize(),
 	) { paddingValues ->
 		
+		val onTaskClick = remember<(String) -> Unit> {
+			{ taskId -> navigator.onTaskClick(taskId) }
+		}
 		val onRefresh = remember<() -> Unit> {
 			{ viewModel.refresh() }
 		}
@@ -97,7 +100,7 @@ fun TasksScreen(
 			modifier = Modifier.padding(paddingValues),
 			isLoading = uiState.isLoading,
 			tasksGroups = uiState.tasks,
-			onTaskClick = { taskId -> navigator.onTaskClick(taskId) },
+			onTaskClick = onTaskClick,
 			onRefresh = onRefresh
 		)
 		
@@ -117,7 +120,7 @@ private fun TasksContent(
 	modifier: Modifier,
 	isLoading: Boolean,
 	tasksGroups: Map<LocalDate, List<TaskWithSubject>>,
-	onTaskClick: (Long) -> Unit,
+	onTaskClick: (String) -> Unit,
 	onRefresh: () -> Unit,
 ) {
 	LoadingContent(
@@ -190,7 +193,7 @@ private fun TasksContent(
 @Composable
 private fun TaskItem(
 	taskWithSubject: TaskWithSubject,
-	onTaskClick: (Long) -> Unit,
+	onTaskClick: (String) -> Unit,
 ) {
 	Column(
 		modifier = Modifier

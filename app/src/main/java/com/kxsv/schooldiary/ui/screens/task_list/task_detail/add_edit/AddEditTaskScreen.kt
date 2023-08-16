@@ -29,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -44,6 +45,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditTaskTopAppBar
+import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AddEditTaskScreenNavActions
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.ramcosta.composedestinations.annotation.Destination
@@ -60,7 +63,8 @@ import java.time.format.DateTimeFormatter
 private const val TAG = "AddEditTaskScreen"
 
 data class AddEditTaskScreenNavArgs(
-	val taskId: Long?,
+	val taskId: String?,
+	val isEditingFetchedTask: Boolean,
 )
 
 @Destination(
@@ -74,25 +78,38 @@ fun AddEditTaskScreen(
 	snackbarHostState: SnackbarHostState,
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
-	val navigator = AddEditTaskScreenNavActions(destinationsNavigator = destinationsNavigator)
+	val navigator = AddEditTaskScreenNavActions(
+		destinationsNavigator = destinationsNavigator,
+		resultNavigator = resultNavigator
+	)
 	
+	LaunchedEffect(uiState.isTaskSaved) {
+		if (uiState.isTaskSaved) {
+			navigator.backWithResult(
+				if (viewModel.taskId == null) ADD_RESULT_OK else EDIT_RESULT_OK
+			)
+		}
+	}
+	val onBack = remember {
+		{ navigator.popBackStack() }
+	}
+	val fetchNet = remember {
+		{ viewModel.fetchNet() }
+	}
 	Scaffold(
 		modifier = Modifier.fillMaxSize(),
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		topBar = {
 			AddEditTaskTopAppBar(
-				onBack = { navigator.popBackStack() },
-				fetchNet = { viewModel.fetchNet() },
+				onBack = onBack,
+				fetchNet = fetchNet,
 				fetchEnabled = (uiState.subject != null)
 			)
 		},
 		floatingActionButton = {
 			Row {
 				FloatingActionButton(
-					onClick = {
-						val result = viewModel.saveTask()
-						if (result != null) resultNavigator.navigateBack(result)
-					}
+					onClick = { viewModel.saveTask() }
 				) {
 					Icon(Icons.Filled.Done, stringResource(R.string.save_task))
 				}
@@ -100,28 +117,46 @@ fun AddEditTaskScreen(
 		}
 	) { paddingValues ->
 		
+		val onImmutableFieldEdit = remember {
+			{ viewModel.onFetchedTaskImmutableFieldEdit() }
+		}
+		val changeTitle = remember<(String) -> Unit> {
+			{ newTitle -> viewModel.changeTitle(newTitle) }
+		}
+		val changeDescription = remember<(String) -> Unit> {
+			{ newDescription -> viewModel.changeDescription(newDescription) }
+		}
+		val changeDate = remember<(LocalDate) -> Unit> {
+			{ newDate -> viewModel.changeDate(newDate) }
+		}
+		val changeSubject = remember<(SubjectEntity) -> Unit> {
+			{ newSubject -> viewModel.changeSubject(newSubject) }
+		}
 		AddEditSubjectContent(
+			modifier = Modifier.padding(paddingValues),
 			isLoading = uiState.isLoading,
+			isEditingFetchedTask = viewModel.isEditingFetchedTask,
 			name = uiState.title,
 			description = uiState.description,
 			dueDate = uiState.dueDate,
 			subject = uiState.subject,
 			availableSubjects = uiState.availableSubjects,
-			changeTitle = { newTitle -> viewModel.changeTitle(newTitle) },
-			changeDescription = { newDescription -> viewModel.changeDescription(newDescription) },
-			changeDate = { newDate -> viewModel.changeDate(newDate) },
-			changeSubject = { newSubject -> viewModel.changeSubject(newSubject) },
-			modifier = Modifier.padding(paddingValues)
+			onImmutableFieldEdit = onImmutableFieldEdit,
+			changeTitle = changeTitle,
+			changeDescription = changeDescription,
+			changeDate = changeDate,
+			changeSubject = changeSubject
 		)
 		
 		val taskVariantsListDialogState = rememberMaterialDialogState(false)
 		
 		LaunchedEffect(uiState.fetchedVariants) {
 			if (uiState.fetchedVariants != null) {
-				// todo add ability to configure task fetching override behavior
+				// todo add ability to configure task fetching 1 variant override behavior
+				//  do override or show dialog to consider picking
 				if (uiState.fetchedVariants.size == 1) {
-					viewModel.changeTitle(uiState.fetchedVariants.first().title)
-					viewModel.onFetchedTitleChoose()
+					viewModel.pickFetchedVariant(uiState.fetchedVariants.first())
+					viewModel.onFetchedVariantChosen()
 				} else {
 					taskVariantsListDialogState.show()
 				}
@@ -132,7 +167,7 @@ fun AddEditTaskScreen(
 			buttons = {
 				negativeButton(
 					res = R.string.btn_cancel,
-					onClick = { viewModel.onFetchedTitleChoose() })
+					onClick = { viewModel.onFetchedVariantChosen() })
 			}
 		) {
 			title(res = R.string.pick_task_title_hint)
@@ -141,8 +176,8 @@ fun AddEditTaskScreen(
 					"Lesson #${taskDto.lessonIndex + 1}\n ${taskDto.title}"
 				}
 			) { index, _ ->
-				viewModel.changeTitle(uiState.fetchedVariants[index].title)
-				viewModel.onFetchedTitleChoose()
+				viewModel.pickFetchedVariant(uiState.fetchedVariants[index])
+				viewModel.onFetchedVariantChosen()
 			}
 			
 		}
@@ -158,23 +193,23 @@ fun AddEditTaskScreen(
 
 @Composable
 private fun AddEditSubjectContent(
+	modifier: Modifier = Modifier,
 	isLoading: Boolean,
+	isEditingFetchedTask: Boolean,
 	name: String,
 	description: String,
 	dueDate: LocalDate,
 	subject: SubjectEntity?,
 	availableSubjects: List<SubjectEntity>,
+	onImmutableFieldEdit: () -> Unit,
 	changeTitle: (String) -> Unit,
 	changeDescription: (String) -> Unit,
 	changeDate: (LocalDate) -> Unit,
 	changeSubject: (SubjectEntity) -> Unit,
-	modifier: Modifier = Modifier,
 ) {
 	LoadingContent(
 		loading = isLoading,
 		empty = false,
-		emptyContent = { },
-		onRefresh = { }
 	) {
 		Column(
 			modifier
@@ -183,7 +218,6 @@ private fun AddEditSubjectContent(
 					horizontal = dimensionResource(id = R.dimen.horizontal_margin),
 					vertical = dimensionResource(id = R.dimen.vertical_margin)
 				)
-				.clickable { }
 		) {
 			val textFieldColors = OutlinedTextFieldDefaults.colors(
 				unfocusedBorderColor = Color.Transparent,
@@ -231,7 +265,11 @@ private fun AddEditSubjectContent(
 			Row(modifier = Modifier
 				.fillMaxWidth()
 				.clickable {
-					subjectDialog.show()
+					if (!isEditingFetchedTask) {
+						subjectDialog.show()
+					} else {
+						onImmutableFieldEdit()
+					}
 				}
 				.padding(vertical = dimensionResource(id = R.dimen.vertical_margin))
 			) {
@@ -253,11 +291,14 @@ private fun AddEditSubjectContent(
 					.fillMaxWidth()
 					.align(CenterHorizontally)
 			)
-			
 			Row(modifier = Modifier
 				.fillMaxWidth()
 				.clickable {
-					dateDialog.show()
+					if (!isEditingFetchedTask) {
+						dateDialog.show()
+					} else {
+						onImmutableFieldEdit()
+					}
 				}
 				.padding(vertical = dimensionResource(id = R.dimen.vertical_margin))
 			

@@ -5,5 +5,7 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 interface NavActions {
 	val destinationsNavigator: DestinationsNavigator
 	
-	fun popBackStack() = destinationsNavigator.popBackStack()
+	fun popBackStack() {
+		destinationsNavigator.popBackStack()
+	}
 }

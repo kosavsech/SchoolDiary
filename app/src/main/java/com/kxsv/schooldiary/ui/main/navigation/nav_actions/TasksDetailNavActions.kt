@@ -8,10 +8,11 @@ class TasksDetailNavActions(
 	override val destinationsNavigator: DestinationsNavigator,
 	private val resultBackNavigator: ResultBackNavigator<Int>,
 ) : NavActions {
-	fun onEditTask(taskId: Long) {
+	fun onEditTask(taskId: String, isEditingFetchedTask: Boolean) {
 		destinationsNavigator.navigate(
 			AddEditTaskScreenDestination(
-				taskId = taskId
+				taskId = taskId,
+				isEditingFetchedTask = isEditingFetchedTask
 			)
 		)
 	}

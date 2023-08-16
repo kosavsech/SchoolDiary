@@ -2,7 +2,6 @@ package com.kxsv.schooldiary.data.util
 
 import com.kxsv.schooldiary.data.remote.dtos.DayGradeDto
 import com.kxsv.schooldiary.data.remote.dtos.EduPerformanceDto
-import com.kxsv.schooldiary.data.remote.dtos.TaskDto
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -28,13 +27,14 @@ object DataIdGenUtils {
 		return generateGradeId(date, index, lessonIndex)
 	}
 	
-	fun TaskDto.generateUniqueTaskId(): String {
-		val dateStamp: String =
-			dueDate.atStartOfDay(zoneForIdGen).toEpochSecond().toString()
-		val subjectId: String = subject.subjectId
-		val lessonIndex: String = lessonIndex.toString()
+	fun generateTaskId(
+		dueDate: LocalDate,
+		subjectId: String,
+		lessonIndex: Int,
+	): String {
+		val dueDateStamp = dueDate.atStartOfDay(zoneForIdGen).toEpochSecond()
 		
-		return (dateStamp + "_" + subjectId + "_" + lessonIndex)
+		return ("${lessonIndex}_${subjectId}_${dueDateStamp}")
 	}
 	
 	fun EduPerformanceDto.generateEduPerformanceId(): String {
