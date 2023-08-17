@@ -25,8 +25,10 @@ import javax.inject.Inject
 
 data class SettingsUiState(
 	val defaultTargetMark: Double? = null,
+	val defaultRoundRule: Double? = null,
 	val defaultLessonDuration: Long? = null,
 	val suppressInitLogin: Boolean? = null,
+	
 	val userMessage: Int? = null,
 	val userMessageArgs: Array<out Any>? = null,
 	val isLoading: Boolean = false,
@@ -34,6 +36,7 @@ data class SettingsUiState(
 
 private data class AsyncData(
 	val defaultTargetMark: Double? = null,
+	val defaultRoundRule: Double? = null,
 	val defaultLessonDuration: Long? = null,
 	val suppressInitLogin: Boolean? = null,
 )
@@ -45,16 +48,21 @@ class SettingsViewModel @Inject constructor(
 ) : ViewModel() {
 	
 	private val _defaultTargetMark = userPreferencesRepository.observeTargetMark()
+	private val _defaultRoundRule = userPreferencesRepository.observeRoundRule()
 	private val _defaultLessonDuration = userPreferencesRepository.observeLessonDuration()
 	private val _suppressInitLogin = userPreferencesRepository.observeInitLoginSuppression()
 	
 	private val _asyncData = combine(
-		_defaultTargetMark, _suppressInitLogin, _defaultLessonDuration
-	) { targetMark, suppressLogin, defaultLessonDuration ->
+		flow = _defaultTargetMark,
+		flow2 = _suppressInitLogin,
+		flow3 = _defaultLessonDuration,
+		flow4 = _defaultRoundRule
+	) { targetMark, suppressLogin, defaultLessonDuration, roundRule ->
 		AsyncData(
 			defaultTargetMark = targetMark,
+			defaultRoundRule = roundRule,
 			defaultLessonDuration = defaultLessonDuration,
-			suppressInitLogin = suppressLogin
+			suppressInitLogin = suppressLogin,
 		)
 	}
 		.map { handleAsyncData(it) }
@@ -63,6 +71,7 @@ class SettingsViewModel @Inject constructor(
 	
 	private fun handleAsyncData(asyncData: AsyncData): Async<AsyncData> {
 		if (asyncData.defaultTargetMark == null) return Async.Error(R.string.default_target_mark_not_found)
+		if (asyncData.defaultRoundRule == null) return Async.Error(R.string.default_round_rule_not_found)
 		if (asyncData.defaultLessonDuration == null) return Async.Error(R.string.default_lesson_duration_not_found)
 		if (asyncData.suppressInitLogin == null) return Async.Error(R.string.login_suppression_not_found)
 		
@@ -79,6 +88,7 @@ class SettingsViewModel @Inject constructor(
 			is Async.Success -> {
 				state.copy(
 					defaultTargetMark = asyncData.data.defaultTargetMark,
+					defaultRoundRule = asyncData.data.defaultRoundRule,
 					defaultLessonDuration = asyncData.data.defaultLessonDuration,
 					suppressInitLogin = asyncData.data.suppressInitLogin
 				)
@@ -88,6 +98,10 @@ class SettingsViewModel @Inject constructor(
 	
 	fun changeDefaultTargetMark(newTarget: Double) = viewModelScope.launch(ioDispatcher) {
 		userPreferencesRepository.setTargetMark(newTarget)
+	}
+	
+	fun changeDefaultRoundRule(newRule: Double) = viewModelScope.launch(ioDispatcher) {
+		userPreferencesRepository.setRoundRule(newRule)
 	}
 	
 	fun changeDefaultLessonDuration(newDuration: Long) = viewModelScope.launch(ioDispatcher) {

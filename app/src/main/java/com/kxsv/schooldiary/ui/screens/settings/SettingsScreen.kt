@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.MaterialTheme
@@ -24,16 +26,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableDoubleStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -45,12 +49,14 @@ import com.kxsv.schooldiary.ui.screens.settings.utils.SettingsItemType
 import com.kxsv.schooldiary.ui.screens.settings.utils.SettingsScreenItem
 import com.kxsv.schooldiary.ui.theme.AppTheme
 import com.kxsv.schooldiary.ui.util.LoadingContent
+import com.kxsv.schooldiary.util.Utils.roundTo
 import com.kxsv.schooldiary.util.Utils.stringRoundTo
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.MaterialDialogState
 import com.vanpra.composematerialdialogs.input
+import com.vanpra.composematerialdialogs.message
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 import com.vanpra.composematerialdialogs.title
 import kotlinx.coroutines.CoroutineScope
@@ -76,7 +82,11 @@ fun SettingsScreen(
 		val uiState = viewModel.uiState.collectAsState().value
 		val targetMarkDialogState = rememberMaterialDialogState(false)
 		val lessonDurationDialogState = rememberMaterialDialogState(false)
+		val roundRuleDialogState = rememberMaterialDialogState(false)
 		
+		val changeDefaultRoundRule = remember<(Double) -> Unit> {
+			{ viewModel.changeDefaultRoundRule(it) }
+		}
 		val changeDefaultTargetMark = remember<(Double) -> Unit> {
 			{ viewModel.changeDefaultTargetMark(it) }
 		}
@@ -90,15 +100,20 @@ fun SettingsScreen(
 			modifier = Modifier.padding(paddingValues),
 			loading = uiState.isLoading,
 			targetMarkDialogState = targetMarkDialogState,
+			roundRuleDialogState = roundRuleDialogState,
 			lessonDurationDialogState = lessonDurationDialogState,
 			defaultTargetMark = uiState.defaultTargetMark,
+			defaultRoundRule = uiState.defaultRoundRule,
 			defaultLessonDuration = uiState.defaultLessonDuration,
 			loginSuppression = uiState.suppressInitLogin,
-			onDefaultTargetMarkChange = changeDefaultTargetMark,
-			onDefaultLessonDurationChange = changeDefaultLessonDuration,
 			onLoginSuppressionChange = changeLoginSuppression
 		)
 		
+		RoundRuleDialog(
+			roundRuleDialogState = roundRuleDialogState,
+			defaultRoundRule = uiState.defaultRoundRule,
+			onInputSave = changeDefaultRoundRule,
+		)
 		TargetMarkDialog(
 			targetMarkDialogState = targetMarkDialogState,
 			defaultTargetMark = uiState.defaultTargetMark,
@@ -118,6 +133,7 @@ fun LessonDurationDialog(
 	defaultLessonDuration: Long?,
 	onInputSave: (Long) -> Unit,
 ) {
+	val focusManager = LocalFocusManager.current
 	MaterialDialog(
 		dialogState = lessonDurationDialogState,
 		buttons = {
@@ -134,6 +150,16 @@ fun LessonDurationDialog(
 			},
 			errorMessage = "Ensure that duration is at least 20 and not more than 60",
 			onInput = { onInputSave(it.toLong()) },
+			keyboardOptions = KeyboardOptions(
+				imeAction = ImeAction.Done,
+				autoCorrect = false,
+				capitalization = KeyboardCapitalization.None,
+				keyboardType = KeyboardType.NumberPassword
+			),
+			keyboardActions = KeyboardActions(
+				onDone = { focusManager.clearFocus() }
+			),
+			focusOnShow = true,
 			waitForPositiveButton = true
 		)
 	}
@@ -145,6 +171,7 @@ private fun TargetMarkDialog(
 	defaultTargetMark: Double?,
 	onInputSave: (Double) -> Unit,
 ) {
+	val focusManager = LocalFocusManager.current
 	MaterialDialog(
 		dialogState = targetMarkDialogState,
 		buttons = {
@@ -162,7 +189,57 @@ private fun TargetMarkDialog(
 				it.toDoubleOrNull() != null && (it.toDouble() > 2.00 && it.toDouble() < 5.00)
 			},
 			errorMessage = "Follow the format.\nAlso ensure that target is more than 2 and is less than 5",
-			onInput = { onInputSave(it.toDouble()) },
+			onInput = { onInputSave(it.toDouble().roundTo(2)) },
+			keyboardOptions = KeyboardOptions(
+				imeAction = ImeAction.Done,
+				autoCorrect = false,
+				capitalization = KeyboardCapitalization.None,
+				keyboardType = KeyboardType.Decimal
+			),
+			keyboardActions = KeyboardActions(
+				onDone = { focusManager.clearFocus() }
+			),
+			focusOnShow = true,
+			waitForPositiveButton = true
+		)
+	}
+}
+
+@Composable
+private fun RoundRuleDialog(
+	roundRuleDialogState: MaterialDialogState,
+	defaultRoundRule: Double?,
+	onInputSave: (Double) -> Unit,
+) {
+	val focusManager = LocalFocusManager.current
+	MaterialDialog(
+		dialogState = roundRuleDialogState,
+		buttons = {
+			positiveButton(res = R.string.btn_save)
+			negativeButton(res = R.string.btn_cancel)
+		},
+	) {
+		val isTextValid = remember<(String) -> Boolean> {
+			{ it.toDoubleOrNull() != null && (it.toDouble() > 0.44 && it.toDouble() < 1.00) }
+		}
+		title(res = R.string.enter_default_round_rule_dialog_title)
+		message(res = R.string.default_round_rule_description)
+		input(
+			label = "Round rule",
+			prefill = defaultRoundRule?.stringRoundTo(2) ?: stringResource(id = R.string.not_found),
+			isTextValid = { isTextValid(it) },
+			errorMessage = "Ensure that round rule is correct",
+			onInput = { onInputSave(it.toDouble().roundTo(2)) },
+			keyboardOptions = KeyboardOptions(
+				imeAction = ImeAction.Done,
+				autoCorrect = false,
+				capitalization = KeyboardCapitalization.None,
+				keyboardType = KeyboardType.Decimal
+			),
+			keyboardActions = KeyboardActions(
+				onDone = { focusManager.clearFocus() }
+			),
+			focusOnShow = true,
 			waitForPositiveButton = true
 		)
 	}
@@ -173,12 +250,12 @@ private fun SettingsContent(
 	modifier: Modifier,
 	loading: Boolean,
 	targetMarkDialogState: MaterialDialogState,
+	roundRuleDialogState: MaterialDialogState,
 	lessonDurationDialogState: MaterialDialogState,
 	defaultTargetMark: Double?,
+	defaultRoundRule: Double?,
 	defaultLessonDuration: Long?,
 	loginSuppression: Boolean?,
-	onDefaultTargetMarkChange: (Double) -> Unit,
-	onDefaultLessonDurationChange: (Long) -> Unit,
 	onLoginSuppressionChange: (Boolean) -> Unit,
 ) {
 	val settingItems = listOf(
@@ -190,13 +267,19 @@ private fun SettingsContent(
 		SettingsScreenItem(
 			label = R.string.default_target_mark,
 			type = SettingsItemType.Input(currentValue = defaultTargetMark?.toString()),
-			onValueChange = { onDefaultTargetMarkChange(it as Double) },
+			onValueChange = {},
 			onClick = { targetMarkDialogState.show() },
+		),
+		SettingsScreenItem(
+			label = R.string.default_round_rule,
+			type = SettingsItemType.Input(currentValue = defaultRoundRule?.toString()),
+			onValueChange = {},
+			onClick = { roundRuleDialogState.show() },
 		),
 		SettingsScreenItem(
 			label = R.string.default_lesson_duration,
 			type = SettingsItemType.Input(currentValue = defaultLessonDuration?.toString()),
-			onValueChange = { onDefaultLessonDurationChange(it as Long) },
+			onValueChange = {},
 			onClick = { lessonDurationDialogState.show() },
 		),
 	)
@@ -298,8 +381,6 @@ private fun SettingsContent(
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun SettingsContentPreview() {
-	var defaultLessonDuration by remember { mutableLongStateOf(45L) }
-	var defaultTargetMark by remember { mutableDoubleStateOf(4.6) }
 	var loginSuppression by remember { mutableStateOf(false) }
 	AppTheme(darkTheme = true) {
 		Surface {
@@ -307,12 +388,12 @@ fun SettingsContentPreview() {
 				modifier = Modifier,
 				loading = false,
 				targetMarkDialogState = rememberMaterialDialogState(false),
+				roundRuleDialogState = rememberMaterialDialogState(false),
 				lessonDurationDialogState = rememberMaterialDialogState(false),
-				defaultTargetMark = defaultTargetMark,
-				defaultLessonDuration = defaultLessonDuration,
+				defaultTargetMark = 4.6,
+				defaultRoundRule = 0.6,
+				defaultLessonDuration = 45L,
 				loginSuppression = loginSuppression,
-				onDefaultTargetMarkChange = { defaultTargetMark = it },
-				onDefaultLessonDurationChange = { defaultLessonDuration = it }
 			) { loginSuppression = it }
 		}
 	}

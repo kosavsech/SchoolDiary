@@ -19,6 +19,12 @@ class UserPreferencesRepositoryImpl @Inject constructor(
 		}
 	}
 	
+	override fun observeRoundRule(): Flow<Double> {
+		return dataStore.data.map {
+			it.defaultRoundRule
+		}
+	}
+	
 	override fun observeLessonDuration(): Flow<Long> {
 		return dataStore.data.map {
 			it.defaultLessonDuration
@@ -62,6 +68,16 @@ class UserPreferencesRepositoryImpl @Inject constructor(
 	override suspend fun setTargetMark(targetMark: Double) {
 		dataStore.updateData {
 			it.copy(defaultTargetMark = targetMark)
+		}
+	}
+	
+	override suspend fun getRoundRule(): Double {
+		return dataStore.data.first().defaultRoundRule
+	}
+	
+	override suspend fun setRoundRule(roundRule: Double) {
+		dataStore.updateData {
+			it.copy(defaultRoundRule = roundRule)
 		}
 	}
 	

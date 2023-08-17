@@ -17,7 +17,6 @@ import kotlin.math.floor
 
 private const val TAG = "Utils"
 
-const val ROUND_RULE = 0.6
 const val MINUTES_PER_HOUR = 60
 const val SECONDS_PER_MINUTE = 60
 const val SECONDS_PER_HOUR = SECONDS_PER_MINUTE * MINUTES_PER_HOUR
@@ -138,9 +137,9 @@ object Utils {
 		return String.format("%.${n}f", this, Locale.ENGLISH).toFloat()
 	}
 	
-	fun roundWithRule(x: Double): Double {
+	fun roundWithRule(x: Double, roundRule: Double): Double {
 		val floored = floor(x)
-		return if (x >= (floored + ROUND_RULE)) {
+		return if (x >= (floored + roundRule)) {
 			ceil(x)
 		} else {
 			floored
@@ -151,18 +150,18 @@ object Utils {
 	 * @param x which is [grade][Mark.value]
 	 * @throws IllegalArgumentException if param [x] > [5][Mark.FIVE] or [x] < [2][Mark.TWO]
 	 */
-	fun getLowerBoundOfGrade(x: Int): Double {
+	fun getLowerBoundOfGrade(x: Int, roundRule: Double): Double {
 		if (x > Mark.FIVE.value!! || x < Mark.TWO.value!!) throw IllegalArgumentException("Non-existent grade")
-		return x - 1 + ROUND_RULE
+		return x - 1 + roundRule
 	}
 	
 	/**
 	 * @param x is mark with type [Double] so could consume any number of marks.
 	 * @throws IllegalArgumentException if param [x] > [5][Mark.FIVE] or [x] < [2][Mark.TWO]
 	 */
-	fun getLowerBoundForMark(x: Double): Double {
+	fun getLowerBoundForMark(x: Double, roundRule: Double): Double {
 		if (x > Mark.FIVE.value!! || x < Mark.TWO.value!!) throw IllegalArgumentException("Non-existent mark")
-		return roundWithRule(x) - 1 + ROUND_RULE
+		return roundWithRule(x, roundRule) - 1 + roundRule
 	}
 	
 	/**
@@ -204,6 +203,7 @@ object Utils {
 	}
 	
 	fun calculateRealizableBadMarks(
+		roundRule: Double,
 		lowerBound: Double,
 		avgMark: Double,
 		sum: Int,
@@ -214,7 +214,7 @@ object Utils {
 			when (grade.size) {
 				1 -> {
 					var gradeCount: Int =
-						if (grade.first() >= roundWithRule(processAvg)) {
+						if (grade.first() >= roundWithRule(processAvg, roundRule)) {
 							Log.w(TAG, "calculateGrades: auto-skip of ${grade[0]}")
 							return null
 						} else {
@@ -247,7 +247,7 @@ object Utils {
 				
 				2 -> {
 					val maxGrade = maxOf(grade[0], grade[1])
-					if (maxGrade >= roundWithRule(processAvg)) {
+					if (maxGrade >= roundWithRule(processAvg, roundRule)) {
 						Log.w(TAG, "calculateGrades: auto-skip of ${grade[0]} and ${grade[1]}")
 						return null
 					}

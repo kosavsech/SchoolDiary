@@ -6,6 +6,8 @@ interface UserPreferencesRepository {
 	
 	fun observeTargetMark(): Flow<Double>
 	
+	fun observeRoundRule(): Flow<Double>
+	
 	fun observeLessonDuration(): Flow<Long>
 	
 	fun observePatternId(): Flow<Long>
@@ -21,6 +23,10 @@ interface UserPreferencesRepository {
 	suspend fun getTargetMark(): Double
 	
 	suspend fun setTargetMark(targetMark: Double)
+	
+	suspend fun getRoundRule(): Double
+	
+	suspend fun setRoundRule(roundRule: Double)
 	
 	suspend fun getLessonDuration(): Long
 	

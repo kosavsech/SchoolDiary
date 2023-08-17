@@ -197,4 +197,8 @@
     <string name="cannot_be_edited_for_fetched_task">Cannot be edited for fetched task</string>
     <string name="net_task_variants_not_found">Not found task variants in Net</string>
     <string name="task_duplicate">Such task already exists. Try changing some fields</string>
+    <string name="default_round_rule_not_found">Default round rule not found</string>
+    <string name="enter_default_round_rule_dialog_title">Enter default round rule:</string>
+    <string name="default_round_rule">Default grade round rule</string>
+    <string name="default_round_rule_description">This value will be used in realizable bad marks and marks until target mark calculation.</string>
 </resources>

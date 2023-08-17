@@ -126,6 +126,7 @@ fun SubjectDetailScreen(
 			currentPeriod = uiState.period,
 			subjectWithTeachers = uiState.subjectWithTeachers,
 			targetMark = uiState.targetMark,
+			roundRule = uiState.roundRule,
 			eduPerformance = uiState.eduPerformance,
 			grades = uiState.grades,
 			onPeriodChange = changePeriod,
@@ -165,6 +166,7 @@ private fun SubjectContent(
 	currentPeriod: EduPerformancePeriod,
 	subjectWithTeachers: SubjectWithTeachers?,
 	targetMark: Double,
+	roundRule: Double,
 	eduPerformance: EduPerformanceEntity?,
 	grades: List<GradeEntity>,
 	onPeriodChange: (EduPerformancePeriod) -> Unit,
@@ -217,7 +219,8 @@ private fun SubjectContent(
 				TargetGradeProgress(
 					targetMarkDialogState = targetMarkDialogState,
 					performanceEntity = eduPerformance,
-					targetMark = targetMark
+					targetMark = targetMark,
+					roundRule = roundRule
 				)
 				Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.vertical_margin)))
 				
@@ -277,6 +280,7 @@ private fun TargetGradeProgress(
 	targetMarkDialogState: MaterialDialogState,
 	performanceEntity: EduPerformanceEntity,
 	targetMark: Double,
+	roundRule: Double,
 ) {
 	ElevatedCard(
 		modifier = Modifier
@@ -335,12 +339,13 @@ private fun TargetGradeProgress(
 					valueSum = valueSum
 				)
 			}
-		val lowerBound = remember(avgMark) {
-			getLowerBoundForMark(avgMark)
+		val lowerBound = remember(avgMark, roundRule) {
+			getLowerBoundForMark(avgMark, roundRule)
 		}
 		val realizableBadMarks =
-			remember(lowerBound, avgMark, performanceEntity.marks.size, valueSum) {
+			remember(lowerBound, avgMark, performanceEntity.marks.size, valueSum, roundRule) {
 				calculateRealizableBadMarks(
+					roundRule = roundRule,
 					lowerBound = lowerBound,
 					avgMark = avgMark,
 					sum = performanceEntity.marks.size,

@@ -41,6 +41,7 @@ data class SubjectDetailUiState(
 	val eduPerformance: EduPerformanceEntity? = null,
 	val period: EduPerformancePeriod = EduPerformancePeriod.FOURTH,
 	val targetMark: Double = 0.0,
+	val roundRule: Double = 0.6,
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
 )
@@ -111,9 +112,18 @@ class SubjectDetailViewModel @Inject constructor(
 				period = period,
 				targetMark = targetMark
 			)
+			
 		}
 		
 	}.stateIn(viewModelScope, WhileUiSubscribed, SubjectDetailUiState(isLoading = true))
+	
+	init {
+		viewModelScope.launch(ioDispatcher) {
+			_uiState.update {
+				it.copy(roundRule = userPreferencesRepository.getRoundRule())
+			}
+		}
+	}
 	
 	fun deleteSubject() = viewModelScope.launch(ioDispatcher) {
 		subjectRepository.deleteSubject(subjectId)
