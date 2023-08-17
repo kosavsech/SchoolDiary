@@ -22,7 +22,7 @@ import java.time.LocalDate
 )
 data class TaskEntity(
 	val title: String,
-	val description: String,
+	val description: String = "",
 	val dueDate: LocalDate,
 	val subjectMasterId: String?,
 	val isDone: Boolean = false,

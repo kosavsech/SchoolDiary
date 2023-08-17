@@ -165,9 +165,9 @@ class TasksViewModel @Inject constructor(
 	
 	fun showEditResultMessage(result: Int) {
 		when (result) {
-			EDIT_RESULT_OK -> showSnackbarMessage(R.string.successfully_saved_subject_message)
-			ADD_RESULT_OK -> showSnackbarMessage(R.string.successfully_added_subject_message)
-			DELETE_RESULT_OK -> showSnackbarMessage(R.string.successfully_deleted_subject_message)
+			EDIT_RESULT_OK -> showSnackbarMessage(R.string.successfully_saved_task_message)
+			ADD_RESULT_OK -> showSnackbarMessage(R.string.successfully_added_task_message)
+			DELETE_RESULT_OK -> showSnackbarMessage(R.string.successfully_deleted_task_message)
 		}
 	}
 	

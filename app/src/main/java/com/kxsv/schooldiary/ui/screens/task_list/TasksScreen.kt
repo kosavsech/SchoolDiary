@@ -3,6 +3,7 @@ package com.kxsv.schooldiary.ui.screens.task_list
 
 import android.content.Intent
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.Icon
@@ -22,32 +24,40 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.Bottom
+import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
+import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
+import com.kxsv.schooldiary.data.local.features.task.TaskEntity
 import com.kxsv.schooldiary.data.local.features.task.TaskWithSubject
 import com.kxsv.schooldiary.ui.main.app_bars.bottombar.TasksBottomAppBar
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.TasksTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.TasksScreenNavActions
+import com.kxsv.schooldiary.ui.screens.destinations.TaskDetailScreenDestination
 import com.kxsv.schooldiary.ui.screens.grade_list.MY_URI
+import com.kxsv.schooldiary.ui.theme.AppTheme
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.util.Utils
 import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.FULL_ROUTE_PLACEHOLDER
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.ramcosta.composedestinations.result.NavResult
+import com.ramcosta.composedestinations.result.ResultRecipient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -65,6 +75,7 @@ import java.time.temporal.ChronoUnit
 @Composable
 fun TasksScreen(
 	destinationsNavigator: DestinationsNavigator,
+	taskDeleteResult: ResultRecipient<TaskDetailScreenDestination, Int>,
 	drawerState: DrawerState,
 	coroutineScope: CoroutineScope,
 	viewModel: TasksViewModel = hiltViewModel(),
@@ -72,6 +83,14 @@ fun TasksScreen(
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
 	val navigator = TasksScreenNavActions(destinationsNavigator = destinationsNavigator)
+	taskDeleteResult.onNavResult { result ->
+		when (result) {
+			is NavResult.Canceled -> {}
+			is NavResult.Value -> {
+				viewModel.showEditResultMessage(result.value)
+			}
+		}
+	}
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		topBar = {
@@ -132,46 +151,46 @@ private fun TasksContent(
 		onRefresh = onRefresh
 	) {
 		LazyColumn(
-			contentPadding = PaddingValues(
-				vertical = dimensionResource(R.dimen.list_item_padding),
-			),
+			contentPadding = PaddingValues(vertical = dimensionResource(R.dimen.list_item_padding)),
 		) {
-			tasksGroups.keys.toList().forEach { key ->
+			tasksGroups.keys.toList().forEach { dateKey ->
 				item {
 					Row(
 						modifier = Modifier.padding(
 							vertical = dimensionResource(R.dimen.list_item_padding),
 							horizontal = dimensionResource(R.dimen.horizontal_margin),
 						),
-						verticalAlignment = Bottom
+						verticalAlignment = CenterVertically,
+						horizontalArrangement = Arrangement.Start
 					) {
 						val titleText =
-							if (key == Utils.currentDate) {
+							if (dateKey == Utils.currentDate) {
 								"Today"
-							} else if (ChronoUnit.DAYS.between(Utils.currentDate, key) == 1L) {
+							} else if (ChronoUnit.DAYS.between(Utils.currentDate, dateKey) == 1L) {
 								"Tomorrow"
-							} else if (ChronoUnit.DAYS.between(Utils.currentDate, key) == -1L) {
+							} else if (ChronoUnit.DAYS.between(Utils.currentDate, dateKey) == -1L) {
 								"Yesterday"
-							} else if (key.isAfter(Utils.currentDate)) {
-								ChronoUnit.DAYS.between(Utils.currentDate, key)
+							} else if (dateKey.isAfter(Utils.currentDate)) {
+								ChronoUnit.DAYS.between(Utils.currentDate, dateKey)
 									.toString() + " days"
 							} else {
-								ChronoUnit.DAYS.between(key, Utils.currentDate)
+								ChronoUnit.DAYS.between(dateKey, Utils.currentDate)
 									.toString() + " days ago"
 							}
 						Text(
 							text = titleText,
-							style = MaterialTheme.typography.titleSmall,
-							color = Color.Blue
+							style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+							color = MaterialTheme.colorScheme.primary
 						)
 						Spacer(modifier = Modifier.padding(horizontal = 8.dp))
 						Text(
-							text = key.format(DateTimeFormatter.ofPattern("dd MMM yyyy")),
-							style = MaterialTheme.typography.labelSmall,
+							text = dateKey.format(DateTimeFormatter.ofPattern("dd MMM yyyy")),
+							style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+							color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f)
 						)
 					}
 				}
-				items(tasksGroups[key]!!) { taskWithSubject ->
+				items(tasksGroups.getOrDefault(dateKey, emptyList())) { taskWithSubject ->
 					Column {
 						TaskItem(
 							taskWithSubject = taskWithSubject,
@@ -179,7 +198,7 @@ private fun TasksContent(
 						)
 						
 						Divider(
-							Modifier
+							modifier = Modifier
 								.fillMaxWidth()
 								.align(Alignment.CenterHorizontally)
 						)
@@ -226,15 +245,108 @@ private fun TaskItem(
 			Text(
 				text = taskWithSubject.taskEntity.dueDate.format(DateTimeFormatter.ofPattern("d MMM yyyy")),
 				style = MaterialTheme.typography.bodySmall,
+				color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f)
 			)
 		}
 		Spacer(modifier = Modifier.padding(vertical = 4.dp))
 		Row(
 			verticalAlignment = Alignment.CenterVertically,
 		) {
+			Icon(
+				imageVector = Icons.Outlined.Circle,
+				contentDescription = "Subject",
+				modifier = Modifier.size(14.dp)
+			)
+			Spacer(modifier = Modifier.padding(horizontal = 4.dp))
 			Text(
 				text = taskWithSubject.subject.getName(),
 				style = MaterialTheme.typography.bodySmall,
+				color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f)
+			)
+		}
+	}
+}
+
+
+val previewTasks = listOf(
+	TaskWithSubject(
+		subject = SubjectEntity(fullName = "Физическая культура"),
+		taskEntity = TaskEntity(
+			title = "Tomorrow",
+			dueDate = Utils.currentDate.plusDays(1),
+			subjectMasterId = ""
+		)
+	),
+	TaskWithSubject(
+		subject = SubjectEntity(fullName = "Алгебра"),
+		taskEntity = TaskEntity(
+			title = "задания №20",
+			dueDate = Utils.currentDate.plusDays(1),
+			subjectMasterId = ""
+		)
+	),
+	TaskWithSubject(
+		subject = SubjectEntity(fullName = "Русский язык"),
+		taskEntity = TaskEntity(
+			title = "Параграф 36, вар.18",
+			dueDate = Utils.currentDate.plusDays(1),
+			subjectMasterId = ""
+		)
+	),
+	TaskWithSubject(
+		subject = SubjectEntity(fullName = "Обществознание"),
+		taskEntity = TaskEntity(
+			title = "п. 25 читать пересказывать",
+			dueDate = Utils.currentDate.plusDays(1),
+			subjectMasterId = ""
+		)
+	),
+	TaskWithSubject(
+		subject = SubjectEntity(fullName = "Русский язык"),
+		taskEntity = TaskEntity(
+			title = "Параграф 36, вар.19",
+			dueDate = Utils.currentDate.plusDays(2),
+			subjectMasterId = ""
+		)
+	),
+	TaskWithSubject(
+		subject = SubjectEntity(fullName = "Физика"),
+		taskEntity = TaskEntity(
+			title = "стр 52-53 выучить, записи в тетради-подготовка к СР по астрономии, параграф 30+ конспекты тренировочных заданий уроков 46,47,49,50 на РЭШ",
+			dueDate = Utils.currentDate.plusDays(2),
+			subjectMasterId = ""
+		)
+	),
+	TaskWithSubject(
+		subject = SubjectEntity(fullName = "Литература"),
+		taskEntity = TaskEntity(
+			title = "Подготовить анализ пьесы.",
+			dueDate = Utils.currentDate.plusDays(2),
+			subjectMasterId = ""
+		)
+	),
+	TaskWithSubject(
+		subject = SubjectEntity(fullName = "Химия"),
+		taskEntity = TaskEntity(
+			title = "лекция в тетради",
+			dueDate = Utils.currentDate.plusDays(2),
+			subjectMasterId = ""
+		)
+	),
+)
+val previewTaskGroups = previewTasks.groupBy { it.taskEntity.dueDate }.toSortedMap()
+
+@Preview
+@Composable
+fun TasksScreenContentPreview() {
+	AppTheme(darkTheme = true) {
+		Surface {
+			TasksContent(
+				modifier = Modifier,
+				isLoading = false,
+				tasksGroups = previewTaskGroups,
+				onTaskClick = {},
+				onRefresh = {}
 			)
 		}
 	}

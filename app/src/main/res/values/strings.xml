@@ -201,4 +201,7 @@
     <string name="enter_default_round_rule_dialog_title">Enter default round rule:</string>
     <string name="default_round_rule">Default grade round rule</string>
     <string name="default_round_rule_description">This value will be used in realizable bad marks and marks until target mark calculation.</string>
+    <string name="successfully_deleted_task_message">Task deleted</string>
+    <string name="successfully_saved_task_message">Task saved</string>
+    <string name="successfully_added_task_message">Task added</string>
 </resources>

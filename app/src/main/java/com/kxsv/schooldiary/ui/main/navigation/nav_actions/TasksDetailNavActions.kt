@@ -18,6 +18,6 @@ class TasksDetailNavActions(
 	}
 	
 	fun backWithResult(result: Int) {
-	
+		resultBackNavigator.navigateBack(result)
 	}
 }
