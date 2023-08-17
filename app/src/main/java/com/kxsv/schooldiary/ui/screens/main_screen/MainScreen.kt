@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,15 +21,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowRightAlt
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.ViewDay
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material.icons.outlined.CircleNotifications
 import androidx.compose.material.icons.outlined.Place
-import androidx.compose.material3.Button
+import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerState
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalContentColor
@@ -46,9 +51,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
@@ -57,15 +64,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
+import com.kxsv.schooldiary.data.local.features.lesson.LessonEntity
+import com.kxsv.schooldiary.data.local.features.lesson.LessonWithSubject
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.task.TaskEntity
 import com.kxsv.schooldiary.data.local.features.task.TaskWithSubject
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.MainTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.MainScreenNavActions
+import com.kxsv.schooldiary.ui.screens.destinations.AddEditLessonScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.DayScheduleScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.EduPerformanceScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.GradesScreenDestination
@@ -83,6 +94,11 @@ import com.kxsv.schooldiary.util.Utils.getNextLessonsIndices
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootNavGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.ramcosta.composedestinations.result.NavResult
+import com.ramcosta.composedestinations.result.ResultRecipient
+import com.vanpra.composematerialdialogs.MaterialDialog
+import com.vanpra.composematerialdialogs.MaterialDialogState
+import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -90,6 +106,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.time.format.TextStyle
 import java.time.temporal.ChronoUnit
 import java.util.Locale
@@ -101,12 +118,21 @@ private const val TAG = "MainScreen"
 @Composable
 fun MainScreen(
 	destinationsNavigator: DestinationsNavigator,
+	lessonAddEditResult: ResultRecipient<AddEditLessonScreenDestination, Int>,
 	drawerState: DrawerState,
 	coroutineScope: CoroutineScope,
 	viewModel: MainScreenViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState,
 ) {
 	val navigator = MainScreenNavActions(destinationsNavigator = destinationsNavigator)
+	lessonAddEditResult.onNavResult { result ->
+		when (result) {
+			is NavResult.Canceled -> {}
+			is NavResult.Value -> {
+				viewModel.showEditResultMessage(result.value)
+			}
+		}
+	}
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		topBar = {
@@ -115,6 +141,7 @@ fun MainScreen(
 		modifier = Modifier.fillMaxSize(),
 	) { paddingValues ->
 		val uiState = viewModel.uiState.collectAsState().value
+		val classDialogState = rememberMaterialDialogState(false)
 		
 		val onRefresh = remember {
 			{ viewModel.refresh() }
@@ -130,6 +157,38 @@ fun MainScreen(
 		val onTaskClicked = remember<(String) -> Unit> {
 			{ navigator.onTaskClicked(taskId = it) }
 		}
+		val onClassClick = remember<(
+			LessonWithSubject?,
+			LocalDate?,
+			ClosedRange<LocalTime>?,
+		) -> Unit> {
+			{ lessonWithSubject, date, timings ->
+				if (lessonWithSubject != null && date != null) {
+					viewModel.selectClass(lessonWithSubject, date, timings)
+					classDialogState.show()
+				} else {
+					viewModel.clickedCorruptedClass()
+				}
+			}
+		}
+		val onDeleteClass = remember<(Long?) -> Unit> {
+			{
+				if (it != null) {
+					viewModel.deleteClass(it)
+				} else {
+					viewModel.clickedCorruptedClass()
+				}
+			}
+		}
+		val onEditClass = remember<(Long?) -> Unit> {
+			{ lessonId ->
+				if (lessonId != null) {
+					navigator.onAddEditClass(lessonId)
+				} else {
+					viewModel.clickedCorruptedClass()
+				}
+			}
+		}
 		val onTasksShowMore = remember<(LocalDate) -> Unit> {
 			{ navigator.onTasksShowMore(date = it) }
 		}
@@ -142,20 +201,121 @@ fun MainScreen(
 			itemList = uiState.itemList,
 			onRefresh = onRefresh,
 			onScheduleShowMore = onScheduleShowMore,
+			onLessonClick = onClassClick,
+			onEditClass = onEditClass,
+			onDeleteClick = onDeleteClass,
 			onTaskChecked = onTaskChecked,
 			onTaskClicked = onTaskClicked,
 			onTasksShowMore = onTasksShowMore,
 			onNavigate = onNavigate
 		)
+		
+		val unselectClass = remember {
+			{ viewModel.unselectClass() }
+		}
+		LessonDialog(
+			dialogState = classDialogState,
+			classDetailed = uiState.classDetailed,
+			selectedDate = uiState.classDetailedDate,
+			classTimings = uiState.classDetailedTimings,
+			onDeleteClass = onDeleteClass,
+			onEditClass = onEditClass,
+			unselectClass = unselectClass,
+		)
 	}
 }
 
-data class MainScreenItem(
-	val date: LocalDate,
-	val classes: Map<Int, SubjectEntity> = emptyMap(),
-	val tasks: List<TaskWithSubject> = emptyList(),
-	val pattern: List<PatternStrokeEntity> = emptyList(),
-)
+@Composable
+private fun LessonDialog(
+	dialogState: MaterialDialogState,
+	classDetailed: LessonWithSubject?,
+	selectedDate: LocalDate?,
+	classTimings: ClosedRange<LocalTime>?,
+	onDeleteClass: (Long) -> Unit,
+	onEditClass: (Long) -> Unit,
+	unselectClass: () -> Unit,
+) {
+	if (classDetailed != null && selectedDate != null) {
+		MaterialDialog(
+			dialogState = dialogState,
+			onCloseRequest = { unselectClass(); it.hide() },
+		) {
+			Column(Modifier.padding(dimensionResource(R.dimen.horizontal_margin))) {
+				Text(
+					classDetailed.subject.getName(),
+					style = MaterialTheme.typography.titleMedium
+				)
+				Spacer(modifier = Modifier.padding(vertical = 4.dp))
+				Text(
+					selectedDate.dayOfWeek.name,
+					style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Normal)
+				)
+				Spacer(modifier = Modifier.padding(vertical = 2.dp))
+				
+				val text: String =
+					if (classTimings != null) {
+						classTimings.start.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)) +
+								" - " +
+								classTimings.endInclusive.format(
+									DateTimeFormatter.ofLocalizedTime(
+										FormatStyle.SHORT
+									)
+								)
+					} else stringResource(
+						R.string.class_out_of_strokes_bounds_message,
+						classDetailed.lesson.index + 1
+					)
+				Text(
+					text,
+					style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Normal)
+				)
+				Spacer(modifier = Modifier.padding(vertical = 4.dp))
+				Row(
+					modifier = Modifier.fillMaxWidth(),
+					horizontalArrangement = Arrangement.Center
+				) {
+					val coroutineScope = rememberCoroutineScope()
+					FilledTonalButton(
+						onClick = {
+							coroutineScope.launch {
+								onEditClass(classDetailed.lesson.lessonId)
+								dialogState.hide()
+							}
+						},
+						modifier = Modifier.weight(0.45f)
+					) {
+						Text(text = stringResource(R.string.btn_edit))
+					}
+					Spacer(modifier = Modifier.weight(0.1f))
+					FilledTonalButton(
+						onClick = { onDeleteClass(classDetailed.lesson.lessonId) },
+						modifier = Modifier.weight(0.45f)
+					) {
+						Text(text = stringResource(R.string.btn_delete))
+					}
+				}
+				Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding)))
+				if (classDetailed.subject.cabinet != null) {
+					Row(verticalAlignment = Alignment.CenterVertically) {
+						Icon(Icons.Default.LocationOn, stringResource(R.string.lesson_room))
+						Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.list_item_padding)))
+						Column {
+							Text(
+								classDetailed.subject.getCabinetString(),
+								style = MaterialTheme.typography.labelLarge
+							)
+							Text(
+								stringResource(R.string.cabinet_hint),
+								style = MaterialTheme.typography.labelMedium
+							)
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 
 @Composable
 private fun MainScreenContent(
@@ -164,6 +324,9 @@ private fun MainScreenContent(
 	itemList: List<MainScreenItem>,
 	onRefresh: () -> Unit,
 	onScheduleShowMore: () -> Unit,
+	onLessonClick: (LessonWithSubject?, LocalDate?, ClosedRange<LocalTime>?) -> Unit,
+	onEditClass: (Long?) -> Unit,
+	onDeleteClick: (Long?) -> Unit,
 	onTaskClicked: (String) -> Unit,
 	onTaskChecked: (String, Boolean) -> Unit,
 	onTasksShowMore: (LocalDate) -> Unit,
@@ -191,6 +354,9 @@ private fun MainScreenContent(
 								classes = it.classes,
 								currentPattern = it.pattern,
 								onScheduleShowMore = onScheduleShowMore,
+								onLessonClick = onLessonClick,
+								onEditClass = onEditClass,
+								onDeleteClick = onDeleteClick
 							)
 						}
 					} else {
@@ -258,101 +424,129 @@ private fun ChipSection(
 
 @Composable
 private fun CurrentDay(
-	classes: Map<Int, SubjectEntity>,
+	classes: Map<Int, LessonWithSubject>,
 	currentPattern: List<PatternStrokeEntity>,
 	onScheduleShowMore: () -> Unit,
+	onLessonClick: (LessonWithSubject?, LocalDate?, ClosedRange<LocalTime>?) -> Unit,
+	onEditClass: (Long?) -> Unit,
+	onDeleteClick: (Long?) -> Unit,
 ) {
 	Column {
 		DayHeader(date = Utils.currentDate)
-		var currentTime by remember { mutableStateOf(LocalTime.now()) }
-		LaunchedEffect(currentTime) {
-			delay(CURRENT_DAY_INFO_UPDATE_TIMING)
-			currentTime = LocalTime.now()
-		}
-		
-		val currentLessonIndex = remember(currentPattern, currentTime) {
-			currentPattern.getCurrentLessonIndexByTime(currentTime)
-		}
-		val currentLesson = remember(currentLessonIndex, classes) {
-			if (currentLessonIndex == null) return@remember null
-			classes[currentLessonIndex]
-		}
-		if (currentLessonIndex != null && currentLesson != null) {
-			key(currentLesson, currentPattern) {
-				LessonInfo(
-					isDetailed = true,
-					label = R.string.right_now_label,
-					labelIcon = Icons.Outlined.CircleNotifications,
-					subjectEntity = currentLesson,
-					startTime = currentPattern.getOrNull(currentLessonIndex)?.startTime,
-					endTime = currentPattern.getOrNull(currentLessonIndex)?.endTime,
-				)
-			}
-		}
-		
-		val nextFourLessonsIndices = remember(currentTime, currentPattern, classes) {
-			if (currentPattern.isNotEmpty() && classes.isNotEmpty()) {
-				classes.getNextLessonsIndices(
-					n = 4,
-					startIndex = getIndexOfClosestLessonToTime(currentTime, currentPattern, classes)
-				)
-			} else null
-		}
-		
-		nextFourLessonsIndices?.forEach { lessonIndex ->
-			key(lessonIndex, currentLesson, classes, currentPattern) {
-				val isDetailed = (lessonIndex == nextFourLessonsIndices.first())
-				if (isDetailed && currentLesson != null) {
-					Divider(
-						modifier = Modifier.padding(
-							vertical = dimensionResource(id = R.dimen.vertical_margin)
-						)
-					)
+		ElevatedCard(
+			elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.0.dp)
+		) {
+			Column(modifier = Modifier.padding(dimensionResource(R.dimen.list_item_padding))) {
+				var currentTime by remember { mutableStateOf(LocalTime.now()) }
+				LaunchedEffect(currentTime) {
+					delay(CURRENT_DAY_INFO_UPDATE_TIMING)
+					currentTime = LocalTime.now()
 				}
-				LessonInfo(
-					isDetailed = isDetailed,
-					label = R.string.next_lessons_label,
-					labelIcon = Icons.Default.ViewDay,
-					subjectEntity = classes[lessonIndex] ?: SubjectEntity("Something went wrong"),
-					startTime = currentPattern.getOrNull(lessonIndex)?.startTime,
-					endTime = currentPattern.getOrNull(lessonIndex)?.endTime,
-				)
-				if (isDetailed && nextFourLessonsIndices.size > 1) {
-					Divider(
-						modifier = Modifier.padding(
-							vertical = dimensionResource(id = R.dimen.vertical_margin)
-						)
-					)
+				
+				val currentLessonIndex = remember(currentPattern, currentTime) {
+					currentPattern.getCurrentLessonIndexByTime(currentTime)
 				}
-			}
-		}
-		val emptyLessonsTextRes =
-			remember(currentPattern, classes, nextFourLessonsIndices, currentLesson) {
-				when {
-					currentPattern.isEmpty() -> R.string.pattern_not_set
-					
-					classes.isEmpty() -> R.string.no_schedule_for_day
-					
-					nextFourLessonsIndices.isNullOrEmpty() && (currentLesson == null) -> {
-						R.string.study_day_passed
+				val currentLesson = remember(currentLessonIndex, classes) {
+					if (currentLessonIndex == null) return@remember null
+					classes[currentLessonIndex]
+				}
+				if (currentLessonIndex != null && currentLesson != null) {
+					key(currentLesson, currentPattern) {
+						val startTime = currentPattern.getOrNull(currentLessonIndex)?.startTime
+						val endTime = currentPattern.getOrNull(currentLessonIndex)?.endTime
+						val timings =
+							if (startTime != null && endTime != null) (startTime..endTime) else null
+						LessonInfo(
+							isDetailed = true,
+							label = R.string.right_now_label,
+							labelIcon = Icons.Outlined.CircleNotifications,
+							subjectEntity = currentLesson.subject,
+							startTime = startTime,
+							endTime = endTime,
+							onLessonClick = {
+								onLessonClick(
+									currentLesson,
+									Utils.currentDate,
+									timings
+								)
+							},
+							onEditClass = { onEditClass(currentLesson.lesson.lessonId) },
+							onDeleteClick = { onDeleteClick(currentLesson.lesson.lessonId) },
+						)
 					}
-					
-					else -> null
+				}
+				
+				val nextFourLessonsIndices = remember(currentTime, currentPattern, classes) {
+					if (currentPattern.isNotEmpty() && classes.isNotEmpty()) {
+						classes.keys.getNextLessonsIndices(
+							n = 4,
+							startIndex = classes.keys
+								.getIndexOfClosestLessonToTime(
+									time = currentTime,
+									pattern = currentPattern
+								)
+						)
+					} else null
+				}
+				
+				
+				nextFourLessonsIndices?.forEach { lessonIndex ->
+					key(lessonIndex, currentLesson, classes, currentPattern) {
+						val isDetailed = (lessonIndex == nextFourLessonsIndices.first())
+						if (isDetailed && currentLesson != null) {
+							Divider()
+						}
+						val startTime = currentPattern.getOrNull(lessonIndex)?.startTime
+						val endTime = currentPattern.getOrNull(lessonIndex)?.endTime
+						val timings =
+							if (startTime != null && endTime != null) (startTime..endTime) else null
+						LessonInfo(
+							isDetailed = isDetailed,
+							label = R.string.next_lessons_label,
+							labelIcon = Icons.Default.ViewDay,
+							subjectEntity = classes[lessonIndex]?.subject
+								?: SubjectEntity("Something went wrong"),
+							startTime = startTime,
+							endTime = endTime,
+							onLessonClick = {
+								onLessonClick(
+									classes[lessonIndex],
+									Utils.currentDate,
+									timings
+								)
+							},
+							onDeleteClick = { onDeleteClick(0) },
+							onEditClass = { onEditClass(0) }
+						)
+						if (isDetailed && nextFourLessonsIndices.size > 1) {
+							Divider()
+						}
+					}
+				}
+				
+				val emptyLessonsTextRes =
+					remember(currentPattern, classes, nextFourLessonsIndices, currentLesson) {
+						when {
+							currentPattern.isEmpty() -> R.string.pattern_not_set
+							
+							classes.isEmpty() -> R.string.no_schedule_for_day
+							
+							nextFourLessonsIndices.isNullOrEmpty() && (currentLesson == null) -> {
+								R.string.study_day_passed
+							}
+							
+							else -> null
+						}
+					}
+				if (emptyLessonsTextRes != null) {
+					Text(
+						text = stringResource(emptyLessonsTextRes),
+						style = MaterialTheme.typography.displayMedium
+					)
 				}
 			}
-		if (emptyLessonsTextRes != null) {
-			Text(
-				text = stringResource(emptyLessonsTextRes),
-				style = MaterialTheme.typography.displayMedium
-			)
+			ShowMore(onScheduleShowMore)
 		}
-	}
-	Divider(modifier = Modifier.padding(vertical = dimensionResource(id = R.dimen.vertical_margin)))
-	Button(onClick = onScheduleShowMore) {
-		Text(
-			text = stringResource(id = R.string.btn_show_more),
-			style = MaterialTheme.typography.labelMedium
-		)
 	}
 }
 
@@ -360,58 +554,78 @@ private fun CurrentDay(
 @Composable
 private fun ScheduleDay(
 	date: LocalDate,
-	classes: Map<Int, SubjectEntity>,
+	classes: Map<Int, LessonWithSubject>,
 	tasks: List<TaskWithSubject>,
 	currentPattern: List<PatternStrokeEntity>,
 	onTaskChecked: (String, Boolean) -> Unit,
 	onTaskClicked: (String) -> Unit,
 	onTasksShowMore: () -> Unit,
 ) {
-	Column(
-		modifier = Modifier
-	) {
+	Column() {
 		key(date) { DayHeader(date = date) }
-		
-		key(tasks) {
-			TasksOverview(
-				tasks = tasks,
-				onTaskChecked = onTaskChecked,
-				onTaskClicked = onTaskClicked
-			)
-		}
-		
-		Divider()
-		
-		Row(
-			modifier = Modifier
-				.fillMaxWidth()
-				.clickable { onTasksShowMore() }
-				.padding(vertical = dimensionResource(id = R.dimen.vertical_margin)),
-			horizontalArrangement = Arrangement.Start,
-			verticalAlignment = Alignment.CenterVertically
+		ElevatedCard(
+			elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.0.dp)
 		) {
-			Text(
-				text = stringResource(id = R.string.btn_show_more),
-				style = MaterialTheme.typography.bodyMedium
-			)
-			Spacer(modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.list_item_padding)))
-			Icon(
-				imageVector = Icons.Default.ArrowRightAlt,
-				contentDescription = stringResource(id = R.string.btn_show_more),
-				tint = LocalContentColor.current
-			)
+			Column(modifier = Modifier.padding(dimensionResource(R.dimen.list_item_padding))) {
+				key(tasks) {
+					TasksOverview(
+						tasks = tasks,
+						onTaskChecked = onTaskChecked,
+						onTaskClicked = onTaskClicked
+					)
+				}
+			}
+			ShowMore(onTasksShowMore)
 		}
-		
 		classes.forEach {
 			key(it.value, it.key) {
 				LessonShort(
-					subjectEntity = it.value,
+					subjectEntity = it.value.subject,
 					startTime = currentPattern.getOrNull(it.key)?.startTime,
 					endTime = currentPattern.getOrNull(it.key)?.endTime,
 				)
 			}
 		}
 	}
+}
+
+@Composable
+fun ShowMore(
+	onClick: () -> Unit,
+) {
+	Divider()
+	
+	Row(
+		modifier = Modifier
+			.fillMaxWidth()
+			.clickable(
+				interactionSource = remember { MutableInteractionSource() },
+				indication = rememberRipple(
+					bounded = true,
+					radius = Dp.Unspecified,
+					color = MaterialTheme.colorScheme.onSurfaceVariant
+				),
+				onClick = onClick
+			)
+			.padding(
+				vertical = dimensionResource(id = R.dimen.vertical_margin),
+				horizontal = dimensionResource(id = R.dimen.list_item_padding)
+			),
+		horizontalArrangement = Arrangement.Start,
+		verticalAlignment = Alignment.CenterVertically
+	) {
+		Text(
+			text = stringResource(id = R.string.btn_show_more),
+			style = MaterialTheme.typography.bodyMedium
+		)
+		Spacer(modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.list_item_padding)))
+		Icon(
+			imageVector = Icons.Default.ArrowRightAlt,
+			contentDescription = stringResource(id = R.string.btn_show_more),
+			tint = LocalContentColor.current
+		)
+	}
+	
 }
 
 @Composable
@@ -507,6 +721,9 @@ private fun LessonInfo(
 	subjectEntity: SubjectEntity,
 	startTime: LocalTime?,
 	endTime: LocalTime?,
+	onLessonClick: () -> Unit,
+	onEditClass: () -> Unit,
+	onDeleteClick: () -> Unit,
 ) {
 	if (isDetailed) {
 		LessonDetailed(
@@ -515,14 +732,19 @@ private fun LessonInfo(
 			subjectEntity = subjectEntity,
 			startTime = startTime,
 			endTime = endTime,
+			onLessonClick = onLessonClick,
+			onEditClass = onEditClass,
+			onDeleteClick = onDeleteClick
 		)
 	} else {
 		LessonBrief(
 			subjectEntity = subjectEntity,
 			startTime = startTime,
 			endTime = endTime,
+			onLessonClick = onLessonClick,
+			onEditClass = onEditClass,
+			onDeleteClick = onDeleteClick
 		)
-		Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding) / 2))
 	}
 }
 
@@ -566,6 +788,9 @@ private fun LessonDetailed(
 	subjectEntity: SubjectEntity,
 	startTime: LocalTime?,
 	endTime: LocalTime?,
+	onLessonClick: () -> Unit,
+	onEditClass: () -> Unit,
+	onDeleteClick: () -> Unit,
 ) {
 	var currentTime by remember { mutableStateOf(LocalTime.now()) }
 	var delay by remember { mutableStateOf(LessonDetailedUpdateTiming.LONG) }
@@ -574,7 +799,11 @@ private fun LessonDetailed(
 		currentTime = LocalTime.now()
 	}
 	Column(
-		modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.horizontal_margin)),
+		modifier = Modifier
+			.fillMaxWidth()
+			.clip(MaterialTheme.shapes.medium)
+			.clickable { onLessonClick() }
+			.padding(dimensionResource(R.dimen.horizontal_margin)),
 	) {
 		Row(
 			verticalAlignment = Alignment.CenterVertically
@@ -728,11 +957,19 @@ private fun LessonBrief(
 	subjectEntity: SubjectEntity,
 	startTime: LocalTime?,
 	endTime: LocalTime?,
+	onLessonClick: () -> Unit,
+	onEditClass: () -> Unit,
+	onDeleteClick: () -> Unit,
 ) {
 	Column(
-		modifier = Modifier.padding(
-			horizontal = dimensionResource(R.dimen.horizontal_margin),
-		),
+		modifier = Modifier
+			.fillMaxWidth()
+			.clip(MaterialTheme.shapes.medium)
+			.clickable { onLessonClick() }
+			.padding(
+				horizontal = dimensionResource(R.dimen.horizontal_margin),
+				vertical = dimensionResource(id = R.dimen.list_item_padding) / 2
+			),
 	) {
 		Row(
 			modifier = Modifier.fillMaxWidth(),
@@ -850,19 +1087,31 @@ private val previewCurrentPattern = listOf(
 	),
 )
 private val previewClasses1 = mapOf(
-	Pair(0, SubjectEntity("Татарский язык", "210")),
-	Pair(1, SubjectEntity("Русский язык", "210")),
-	Pair(2, SubjectEntity("Иностранный язык (Английский)", "316")),
-	Pair(3, SubjectEntity("Основы безопасности жизнедеятельности", "316")),
-	Pair(4, SubjectEntity("Алгебра", "310")),
-	Pair(5, SubjectEntity("Литература", "210")),
+	Pair(0, LessonWithSubject(LessonEntity(0), SubjectEntity("Татарский язык", "210"))),
+	Pair(1, LessonWithSubject(LessonEntity(0), SubjectEntity("Русский язык", "210"))),
+	Pair(
+		2,
+		LessonWithSubject(LessonEntity(0), SubjectEntity("Иностранный язык (Английский)", "316"))
+	),
+	Pair(
+		3,
+		LessonWithSubject(
+			LessonEntity(0),
+			SubjectEntity("Основы безопасности жизнедеятельности", "316")
+		)
+	),
+	Pair(4, LessonWithSubject(LessonEntity(0), SubjectEntity("Алгебра", "310"))),
+	Pair(5, LessonWithSubject(LessonEntity(0), SubjectEntity("Литература", "210"))),
 )
 private val previewClasses2 = mapOf(
-	Pair(1, SubjectEntity("Иностранный язык(немецкий)", "210")),
-	Pair(2, SubjectEntity("Обществознание", "310")),
-	Pair(3, SubjectEntity("Иностранный язык (Английский)", "316")),
-	Pair(4, SubjectEntity("История", "316")),
-	Pair(5, SubjectEntity("Геометрия", "210")),
+	Pair(1, LessonWithSubject(LessonEntity(0), SubjectEntity("Иностранный язык(немецкий)", "210"))),
+	Pair(2, LessonWithSubject(LessonEntity(0), SubjectEntity("Обществознание", "310"))),
+	Pair(
+		3,
+		LessonWithSubject(LessonEntity(0), SubjectEntity("Иностранный язык (Английский)", "316"))
+	),
+	Pair(4, LessonWithSubject(LessonEntity(0), SubjectEntity("История", "316"))),
+	Pair(5, LessonWithSubject(LessonEntity(0), SubjectEntity("Геометрия", "210"))),
 )
 private val previewTasks1 = listOf(
 	TaskWithSubject(
@@ -906,6 +1155,9 @@ private fun MainScreenContentPreview() {
 				itemList = previewItems,
 				onRefresh = {},
 				onScheduleShowMore = {},
+				onLessonClick = { _, _, _ -> },
+				onEditClass = {},
+				onDeleteClick = {},
 				onTaskClicked = {},
 				onTaskChecked = { _, _ -> },
 				onTasksShowMore = {},

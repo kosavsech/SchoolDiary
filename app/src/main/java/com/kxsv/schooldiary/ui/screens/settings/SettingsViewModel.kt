@@ -120,9 +120,9 @@ class SettingsViewModel @Inject constructor(
 	
 	fun showEditResultMessage(result: Int) {
 		when (result) {
-			EDIT_RESULT_OK -> showSnackbarMessage(R.string.successfully_saved_schedule_message)
-			ADD_RESULT_OK -> showSnackbarMessage(R.string.successfully_added_schedule_message)
-			DELETE_RESULT_OK -> showSnackbarMessage(R.string.successfully_deleted_schedule_message)
+			EDIT_RESULT_OK -> showSnackbarMessage(R.string.successfully_saved_class_message)
+			ADD_RESULT_OK -> showSnackbarMessage(R.string.successfully_added_class_message)
+			DELETE_RESULT_OK -> showSnackbarMessage(R.string.successfully_deleted_class_message)
 		}
 	}
 	

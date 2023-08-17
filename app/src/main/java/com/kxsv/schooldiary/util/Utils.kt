@@ -1,7 +1,6 @@
 package com.kxsv.schooldiary.util
 
 import android.util.Log
-import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import com.kxsv.schooldiary.data.util.Mark
@@ -27,8 +26,8 @@ object Utils {
 	fun List<PatternStrokeEntity>.getCurrentLessonIndexByTime(currentTime: LocalTime): Int? {
 		if (this.isEmpty()) return null
 		val studyTimeRange = this.first().startTime..this.last().endTime
-		
 		if (currentTime !in studyTimeRange) return null
+		
 		this.forEach { timing ->
 			val lessonTimeRange = timing.startTime..timing.endTime
 			if (currentTime in lessonTimeRange) return timing.index
@@ -37,28 +36,26 @@ object Utils {
 	}
 	
 	/**
-	 * Get index of closest lesson to time.
+	 * Get index of closest next lesson to time.
 	 *
 	 * @param time
 	 * @param pattern
-	 * @param classes
-	 * @return index of closest future lesson with timings or without. Or null if couldn't find one.
+	 * @return index of closest future lesson. Or null if couldn't find one.
 	 */
-	fun getIndexOfClosestLessonToTime(
+	fun Collection<Int>.getIndexOfClosestLessonToTime(
 		time: LocalTime,
 		pattern: List<PatternStrokeEntity>,
-		classes: Map<Int, SubjectEntity>,
 	): Int? {
-		if (pattern.isEmpty()) throw IllegalStateException("Shouldn't be called with empty pattern or classes")
-		if (classes.isEmpty()) throw IllegalStateException("Shouldn't be called with empty pattern or classes")
+		if (pattern.isEmpty()) throw IllegalStateException("Shouldn't be called with empty pattern")
+		if (this.isEmpty()) throw IllegalStateException("Shouldn't be called with empty classes indices")
 		
 		val studyTimeRange = pattern.first().startTime..pattern.last().endTime
 		val result = if (time !in studyTimeRange && time.isBefore(studyTimeRange.start)) {
-			classes.minBy { it.key }.key
+			this.min()
 		} else {
 			var candidateWithTimings: Pair<Int?, Long> = Pair(null, 1440)
 			val candidatesWithoutTimings = mutableListOf<Int>()
-			classes.keys.forEach {
+			this.forEach {
 				val currentStroke = pattern.getOrNull(it)
 				if (currentStroke == null) {
 					candidatesWithoutTimings.add(it)
@@ -86,7 +83,7 @@ object Utils {
 	 * @param startIndex starting index to search lessons
 	 * @return
 	 */
-	fun Map<Int, SubjectEntity>.getNextLessonsIndices(n: Int, startIndex: Int?): List<Int>? {
+	fun Collection<Int>.getNextLessonsIndices(n: Int, startIndex: Int?): List<Int>? {
 		if (startIndex == null) {
 			Log.d(TAG, "getNextLessonsIndices: startIndex == null")
 			return null
@@ -94,7 +91,7 @@ object Utils {
 		if (this.isEmpty()) return null
 		
 		Log.d(TAG, "getNextLessonsIndices: this: $this")
-		val indicesSublist = this.filter { it.key >= startIndex }.keys.toList()
+		val indicesSublist = this.filter { it >= startIndex }.toList()
 		Log.d(TAG, "getNextLessonsIndices: indicesSublist: $indicesSublist")
 		if (indicesSublist.isEmpty()) {
 			Log.d(TAG, "getNextLessonsIndices: indicesSublist.isEmpty()")

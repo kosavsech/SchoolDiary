@@ -294,13 +294,14 @@ private fun SettingsContent(
 					is SettingsItemType.Input -> {
 						val clickableModifier = if (settingItem.onClick != null) {
 							Modifier.clickable(
-								interactionSource = MutableInteractionSource(),
+								interactionSource = remember { MutableInteractionSource() },
 								indication = rememberRipple(
 									bounded = false,
 									radius = Dp.Unspecified,
 									color = MaterialTheme.colorScheme.onSurfaceVariant
-								)
-							) { settingItem.onClick.invoke() }
+								),
+								onClick = { settingItem.onClick.invoke() }
+							)
 						} else Modifier
 						Row(
 							modifier = Modifier

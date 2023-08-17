@@ -65,9 +65,9 @@
     <string name="picked_date">Picked date</string>
     <string name="picked_subject">Picked subject</string>
     <string name="successfully_deleted_stroke">Stroke deleted</string>
-    <string name="successfully_deleted_schedule_message">Class deleted</string>
-    <string name="successfully_saved_schedule_message">Class saved</string>
-    <string name="successfully_added_schedule_message">Class added</string>
+    <string name="successfully_deleted_class_message">Class deleted</string>
+    <string name="successfully_saved_class_message">Class saved</string>
+    <string name="successfully_added_class_message">Class added</string>
     <string name="pick_index_hint">Choose class number</string>
     <string name="picked_class_number">Picked class number</string>
     <string name="set_pattern_as_default">Set pattern as default</string>
@@ -206,4 +206,5 @@
     <string name="default_lesson_duration_description">This value will be used to suggest pattern stroke end time</string>
     <string name="too_early_time_for_such_index">The time is too early for such an index</string>
     <string name="too_late_time_for_such_index">The time is too late for such an index</string>
+    <string name="corrupted_class">This class is corrupted</string>
 </resources>

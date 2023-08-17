@@ -1,5 +1,6 @@
 package com.kxsv.schooldiary.ui.main.navigation.nav_actions
 
+import com.kxsv.schooldiary.ui.screens.destinations.AddEditLessonScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.DayScheduleScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.TaskDetailScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.TasksScreenDestination
@@ -20,6 +21,12 @@ class MainScreenNavActions(
 	
 	fun onTasksShowMore(date: LocalDate) {
 		destinationsNavigator.navigate(TasksScreenDestination())
+	}
+	
+	fun onAddEditClass(lessonId: Long?) {
+		destinationsNavigator.navigate(
+			AddEditLessonScreenDestination(datestamp = 0, lessonId = lessonId)
+		)
 	}
 	
 	fun onScheduleShowMore() {

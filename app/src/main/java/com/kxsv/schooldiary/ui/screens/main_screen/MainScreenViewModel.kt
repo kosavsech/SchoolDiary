@@ -13,6 +13,7 @@ import com.kxsv.schooldiary.app.sync.workers.ScheduleSyncWorker
 import com.kxsv.schooldiary.app.sync.workers.SubjectsSyncWorker
 import com.kxsv.schooldiary.app.sync.workers.TaskSyncWorker
 import com.kxsv.schooldiary.app.sync.workers.delegatedData
+import com.kxsv.schooldiary.data.local.features.lesson.LessonWithSubject
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import com.kxsv.schooldiary.data.repository.LessonRepository
 import com.kxsv.schooldiary.data.repository.PatternStrokeRepository
@@ -20,6 +21,9 @@ import com.kxsv.schooldiary.data.repository.TaskRepository
 import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.Dispatcher
+import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.util.WhileUiSubscribed
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.toList
@@ -36,11 +40,16 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.LocalTime
 import javax.inject.Inject
 
 
 data class MainUiState(
 	val itemList: List<MainScreenItem> = emptyList(),
+	val classDetailed: LessonWithSubject? = null,
+	val classDetailedDate: LocalDate? = null,
+	val classDetailedTimings: ClosedRange<LocalTime>? = null,
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
 )
@@ -50,11 +59,11 @@ private const val UNIQUE_WORK_NAME = "MainScreenFetchSync"
 
 @HiltViewModel
 class MainScreenViewModel @Inject constructor(
-	lessonRepository: LessonRepository,
 	private val taskRepository: TaskRepository,
 	private val strokeRepository: PatternStrokeRepository,
 	private val userPreferencesRepository: UserPreferencesRepository,
 	private val workManager: WorkManager,
+	private val lessonRepository: LessonRepository,
 	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
@@ -92,9 +101,9 @@ class MainScreenViewModel @Inject constructor(
 			val item = MainScreenItem(
 				date = itemDate,
 				tasks = tasks[itemDate] ?: emptyList(),
-				classes = classes[itemDate]?.associate {
-					Pair(it.lesson.index, it.subject)
-				}?.toSortedMap() ?: emptyMap(),
+				classes = classes[itemDate]
+					?.associateBy { it.lesson.index }?.toSortedMap()
+					?: emptyMap(),
 				pattern = patterns[itemDate] ?: defaultPattern
 				?: strokeRepository.getStrokesByPatternId(userPreferencesRepository.getPatternId())
 			)
@@ -160,6 +169,14 @@ class MainScreenViewModel @Inject constructor(
 		}
 	}
 	
+	fun showEditResultMessage(result: Int) {
+		when (result) {
+			EDIT_RESULT_OK -> showSnackbarMessage(R.string.successfully_added_class_message)
+			ADD_RESULT_OK -> showSnackbarMessage(R.string.successfully_added_grade_message)
+			DELETE_RESULT_OK -> showSnackbarMessage(R.string.successfully_deleted_grade_message)
+		}
+	}
+	
 	fun snackbarMessageShown() {
 		_uiState.update { it.copy(userMessage = null) }
 	}
@@ -172,5 +189,35 @@ class MainScreenViewModel @Inject constructor(
 		val taskToUpdate = taskRepository.getById(id)?.copy(isDone = isDone)
 			?: return@launch showSnackbarMessage(R.string.task_not_found)
 		taskRepository.updateTask(taskToUpdate)
+	}
+	
+	fun clickedCorruptedClass() {
+		showSnackbarMessage(R.string.corrupted_class)
+	}
+	
+	fun selectClass(
+		lessonWithSubject: LessonWithSubject,
+		date: LocalDate,
+		timings: ClosedRange<LocalTime>?,
+	) {
+		_uiState.update {
+			it.copy(
+				classDetailed = lessonWithSubject,
+				classDetailedDate = date,
+				classDetailedTimings = timings
+			)
+		}
+	}
+	
+	fun unselectClass() {
+		_uiState.update { it.copy(classDetailed = null) }
+	}
+	
+	fun deleteClass(lessonId: Long) {
+		_uiState.update { it.copy(classDetailed = null) }
+		viewModelScope.launch(ioDispatcher) {
+			lessonRepository.deleteLesson(lessonId)
+		}
+		showEditResultMessage(DELETE_RESULT_OK)
 	}
 }
