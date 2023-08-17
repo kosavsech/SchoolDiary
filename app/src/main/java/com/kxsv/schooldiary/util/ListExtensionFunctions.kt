@@ -1,7 +1,14 @@
 package com.kxsv.schooldiary.util
 
 object ListExtensionFunctions {
-	fun <T> copyExclusively(targetItem: T, elements: Collection<T>): MutableList<T> {
+	
+	fun <E> Collection<E>.copyExclusively(targetItem: E?): MutableList<E> {
+		val newList = copyRefresh(this)
+		newList.remove(targetItem)
+		return newList
+	}
+	
+	fun <T> copyExclusively(targetItem: T?, elements: Collection<T>): MutableList<T> {
 		val newList = copyRefresh(elements)
 		newList.remove(targetItem)
 		return newList
@@ -13,7 +20,7 @@ object ListExtensionFunctions {
 		return newList
 	}
 	
-	fun <T> copyRefresh(elements: Collection<T>): MutableList<T> {
+	private fun <T> copyRefresh(elements: Collection<T>): MutableList<T> {
 		val newList: MutableList<T> = mutableListOf()
 		newList.addAll(elements)
 		return newList

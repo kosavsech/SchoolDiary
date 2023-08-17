@@ -14,7 +14,6 @@ import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.util.ListExtensionFunctions.copyExclusively
-import com.kxsv.schooldiary.util.ListExtensionFunctions.copyRefresh
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,15 +27,17 @@ import javax.inject.Inject
 
 data class AddEditPatternUiState(
 	val name: String = "",
-	val strokes: MutableList<PatternStrokeEntity> = mutableListOf(),
-	// TODO: configure this behaviour
+	val strokes: List<PatternStrokeEntity> = mutableListOf(),
+	
 	val startTime: LocalTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES),
 	val endTime: LocalTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES),
 	val index: Int = 1,
+	
+	val strokeToUpdate: PatternStrokeEntity? = null,
+	
 	val isLoading: Boolean = false,
 	val errorMessage: Int? = null,
 	val userMessage: Int? = null,
-	val strokeToUpdate: PatternStrokeEntity? = null,
 )
 
 @HiltViewModel
@@ -62,6 +63,11 @@ class AddEditPatternViewModel @Inject constructor(
 		}
 	}
 	
+	/**
+	 * Tries to save currently edited stroke.
+	 *
+	 * @return true if stroke was successfully added to list, false if not
+	 */
 	fun saveStroke(): Boolean {
 		val lessonDuration =
 			uiState.value.startTime.until(uiState.value.endTime, ChronoUnit.MINUTES)
@@ -69,61 +75,57 @@ class AddEditPatternViewModel @Inject constructor(
 			_uiState.update { it.copy(errorMessage = R.string.too_long_lesson) }
 			return false
 		}
-		val stroke = if (uiState.value.strokeToUpdate != null) {
-			PatternStrokeEntity(
-				startTime = uiState.value.startTime,
-				endTime = uiState.value.endTime,
-				index = (uiState.value.index - 1),
-				strokeId = uiState.value.strokeToUpdate!!.strokeId
-			)
-		} else {
-			PatternStrokeEntity(
-				startTime = uiState.value.startTime,
-				endTime = uiState.value.endTime,
-				index = (uiState.value.index - 1)
-			)
-		}
-		val newStrokes = copyRefresh(uiState.value.strokes)
-		newStrokes.remove(uiState.value.strokeToUpdate)
 		
-		val isIndexDuplicate = newStrokes.firstOrNull { it.index == stroke.index }
-		if (isIndexDuplicate != null) {
+		val updatedStroke = PatternStrokeEntity(
+			startTime = uiState.value.startTime,
+			endTime = uiState.value.endTime,
+			index = (uiState.value.index - 1),
+			strokeId = uiState.value.strokeToUpdate?.strokeId ?: 0
+		)
+		
+		val newStrokes =
+			uiState.value.strokes.copyExclusively(targetItem = uiState.value.strokeToUpdate)
+		
+		val isIndexDuplicate = newStrokes.any { it.index == updatedStroke.index }
+		if (isIndexDuplicate) {
 			_uiState.update { it.copy(errorMessage = R.string.stroke_index_duplicate) }
 			return false
 		}
 		
-		val isStartTimeDuplicate =
-			newStrokes.firstOrNull { it.startTime == stroke.startTime } != null
+		val isStartTimeDuplicate = newStrokes.any { it.startTime == updatedStroke.startTime }
 		if (isStartTimeDuplicate) {
 			_uiState.update { it.copy(errorMessage = R.string.start_time_duplicate) }
 			return false
 		}
 		
-		val isEndTimeDuplicate = newStrokes.firstOrNull { it.endTime == stroke.endTime } != null
+		val isEndTimeDuplicate = newStrokes.any { it.endTime == updatedStroke.endTime }
 		if (isEndTimeDuplicate) {
 			_uiState.update { it.copy(errorMessage = R.string.end_time_duplicate) }
 			return false
 		}
 		
-		newStrokes.forEach { listStroke ->
-			if (stroke.startTime.isAfter(listStroke.startTime) && stroke.index < listStroke.index) {
-				_uiState.update { it.copy(errorMessage = R.string.too_low_index) }
-				return false
-			}
-			if (stroke.startTime.isBefore(listStroke.startTime) && stroke.index > listStroke.index) {
-				_uiState.update { it.copy(errorMessage = R.string.too_high_index) }
-				return false
+		val isTimingImproper = newStrokes.any { strokeFromList ->
+			val existentStrokeIsEarlier = strokeFromList.startTime.isBefore(updatedStroke.startTime)
+			val existentStrokeIsHigher = strokeFromList.index < updatedStroke.index
+			
+			return@any if (existentStrokeIsEarlier && !existentStrokeIsHigher) {
+				_uiState.update { it.copy(errorMessage = R.string.too_early_time_for_such_index) }
+				true
+			} else if (!existentStrokeIsEarlier && existentStrokeIsHigher) {
+				_uiState.update { it.copy(errorMessage = R.string.too_late_time_for_such_index) }
+				true
+			} else {
+				false
 			}
 		}
-		
-		newStrokes.add(stroke)
-		newStrokes.sortBy { it.index }
+		if (isTimingImproper) return false
+		newStrokes.add(updatedStroke)
 		
 		_uiState.update {
 			it.copy(
 				strokeToUpdate = null,
 				errorMessage = null,
-				strokes = newStrokes,
+				strokes = newStrokes.sortedBy { stroke -> stroke.index },
 				startTime = it.endTime.plusMinutes(15),
 				endTime = it.endTime.plusMinutes(60),
 				index = it.index + 1
@@ -133,9 +135,11 @@ class AddEditPatternViewModel @Inject constructor(
 	}
 	
 	fun deleteStroke(stroke: PatternStrokeEntity) {
-		val newStrokes = copyExclusively(stroke, uiState.value.strokes)
-		newStrokes.sortBy { it.index }
-		_uiState.update { it.copy(strokes = newStrokes) }
+		val newStrokes = uiState.value.strokes.copyExclusively(stroke)
+		
+		_uiState.update {
+			it.copy(strokes = newStrokes.sortedBy { stroke -> stroke.index })
+		}
 		showSnackbarMessage(R.string.successfully_deleted_stroke)
 	}
 	
@@ -151,12 +155,20 @@ class AddEditPatternViewModel @Inject constructor(
 		}
 	}
 	
-	fun onEndTimeSet(endTime: LocalTime) {
+	fun clearData() {
 		_uiState.update {
 			it.copy(
-				endTime = endTime
+				strokeToUpdate = null,
+				errorMessage = null,
+				startTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES),
+				endTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES),
+				index = 1
 			)
 		}
+	}
+	
+	fun onEndTimeSet(endTime: LocalTime) {
+		_uiState.update { it.copy(endTime = endTime) }
 	}
 	
 	fun onStartTimeSet(startTime: LocalTime) {
@@ -169,11 +181,7 @@ class AddEditPatternViewModel @Inject constructor(
 	}
 	
 	fun updateName(name: String) {
-		_uiState.update {
-			it.copy(
-				name = name
-			)
-		}
+		_uiState.update { it.copy(name = name) }
 	}
 	
 	fun updateIndex(newIndex: Int) {

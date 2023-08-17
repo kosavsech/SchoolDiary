@@ -132,6 +132,9 @@ fun AddEditPatternScreen(
 		val saveStroke = remember {
 			{ viewModel.saveStroke() }
 		}
+		val clearData = remember {
+			{ viewModel.clearData() }
+		}
 		val onStartTimeSet = remember<(LocalTime) -> Unit> {
 			{ viewModel.onStartTimeSet(it) }
 		}
@@ -146,6 +149,7 @@ fun AddEditPatternScreen(
 			errorMessage = uiState.errorMessage,
 			strokeToUpdate = uiState.strokeToUpdate,
 			saveStroke = saveStroke,
+			clearData = clearData,
 			onStartTimeSet = onStartTimeSet,
 			onEndTimeSet = onEndTimeSet,
 			changeIndex = changeIndex
@@ -236,6 +240,7 @@ private fun AddEditStrokeDialog(
 	errorMessage: Int?,
 	strokeToUpdate: PatternStrokeEntity?,
 	saveStroke: () -> Boolean,
+	clearData: () -> Unit,
 	onStartTimeSet: (LocalTime) -> Unit,
 	onEndTimeSet: (LocalTime) -> Unit,
 	changeIndex: (Int) -> Unit,
@@ -255,10 +260,13 @@ private fun AddEditStrokeDialog(
 			)
 			negativeButton(
 				text = stringResource(R.string.btn_cancel),
-				onClick = { dialogState.hide() })
+				onClick = {
+					dialogState.hide()
+					clearData()
+				}
+			)
 		},
 		autoDismiss = false,
-		backgroundColor = MaterialTheme.colorScheme.surface
 	) {
 		val res = if (strokeToUpdate == null) {
 			R.string.create_pattern_stroke

@@ -161,11 +161,9 @@
     <string name="main_menu_title">Main menu</string>
     <string name="right_now_label">Right now</string>
     <string name="next_lessons_label">Next lessons</string>
-    <string name="end_time_duplicate">End time equal to  is already present in this pattern</string>
-    <string name="stroke_index_duplicate">Index equal to  is already present in this pattern</string>
-    <string name="start_time_duplicate">Start time equal to  is already present in this pattern</string>
-    <string name="too_low_index">Too low index for such time</string>
-    <string name="too_high_index">Too high index for such time</string>
+    <string name="end_time_duplicate">There is already a stroke with such an end time</string>
+    <string name="stroke_index_duplicate">There is already a stroke with such an index</string>
+    <string name="start_time_duplicate">There is already a stroke with such an start time</string>
     <string name="create_pattern_stroke">Create stroke:</string>
     <string name="edit_pattern_stroke">Edit stroke:</string>
     <string name="btn_show_more">Show more</string>
@@ -204,4 +202,8 @@
     <string name="successfully_deleted_task_message">Task deleted</string>
     <string name="successfully_saved_task_message">Task saved</string>
     <string name="successfully_added_task_message">Task added</string>
+    <string name="default_target_mark_description">This value will be used in marks until target calculation as global default</string>
+    <string name="default_lesson_duration_description">This value will be used to suggest pattern stroke end time</string>
+    <string name="too_early_time_for_such_index">The time is too early for such an index</string>
+    <string name="too_late_time_for_such_index">The time is too late for such an index</string>
 </resources>

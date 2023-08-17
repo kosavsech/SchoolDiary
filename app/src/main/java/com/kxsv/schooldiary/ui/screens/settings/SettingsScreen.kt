@@ -142,6 +142,7 @@ fun LessonDurationDialog(
 		},
 	) {
 		title(res = R.string.enter_default_lesson_duration_dialog_title)
+		message(res = R.string.default_lesson_duration_description)
 		input(
 			label = "Default lesson duration",
 			prefill = defaultLessonDuration?.toString() ?: stringResource(id = R.string.not_found),
@@ -150,6 +151,7 @@ fun LessonDurationDialog(
 			},
 			errorMessage = "Ensure that duration is at least 20 and not more than 60",
 			onInput = { onInputSave(it.toLong()) },
+			waitForPositiveButton = true,
 			keyboardOptions = KeyboardOptions(
 				imeAction = ImeAction.Done,
 				autoCorrect = false,
@@ -158,9 +160,7 @@ fun LessonDurationDialog(
 			),
 			keyboardActions = KeyboardActions(
 				onDone = { focusManager.clearFocus() }
-			),
-			focusOnShow = true,
-			waitForPositiveButton = true
+			)
 		)
 	}
 }
@@ -180,6 +180,7 @@ private fun TargetMarkDialog(
 		},
 	) {
 		title(res = R.string.enter_default_target_mark_dialog_title)
+		message(res = R.string.default_target_mark_description)
 		input(
 			label = "Target mark",
 			prefill = defaultTargetMark?.stringRoundTo(2)
@@ -190,6 +191,7 @@ private fun TargetMarkDialog(
 			},
 			errorMessage = "Follow the format.\nAlso ensure that target is more than 2 and is less than 5",
 			onInput = { onInputSave(it.toDouble().roundTo(2)) },
+			waitForPositiveButton = true,
 			keyboardOptions = KeyboardOptions(
 				imeAction = ImeAction.Done,
 				autoCorrect = false,
@@ -198,9 +200,7 @@ private fun TargetMarkDialog(
 			),
 			keyboardActions = KeyboardActions(
 				onDone = { focusManager.clearFocus() }
-			),
-			focusOnShow = true,
-			waitForPositiveButton = true
+			)
 		)
 	}
 }
@@ -230,6 +230,7 @@ private fun RoundRuleDialog(
 			isTextValid = { isTextValid(it) },
 			errorMessage = "Ensure that round rule is correct",
 			onInput = { onInputSave(it.toDouble().roundTo(2)) },
+			waitForPositiveButton = true,
 			keyboardOptions = KeyboardOptions(
 				imeAction = ImeAction.Done,
 				autoCorrect = false,
@@ -238,9 +239,7 @@ private fun RoundRuleDialog(
 			),
 			keyboardActions = KeyboardActions(
 				onDone = { focusManager.clearFocus() }
-			),
-			focusOnShow = true,
-			waitForPositiveButton = true
+			)
 		)
 	}
 }
@@ -387,14 +386,15 @@ fun SettingsContentPreview() {
 			SettingsContent(
 				modifier = Modifier,
 				loading = false,
-				targetMarkDialogState = rememberMaterialDialogState(false),
+				targetMarkDialogState = rememberMaterialDialogState(true),
 				roundRuleDialogState = rememberMaterialDialogState(false),
 				lessonDurationDialogState = rememberMaterialDialogState(false),
 				defaultTargetMark = 4.6,
 				defaultRoundRule = 0.6,
 				defaultLessonDuration = 45L,
 				loginSuppression = loginSuppression,
-			) { loginSuppression = it }
+				onLoginSuppressionChange = { loginSuppression = it },
+			)
 		}
 	}
 }
