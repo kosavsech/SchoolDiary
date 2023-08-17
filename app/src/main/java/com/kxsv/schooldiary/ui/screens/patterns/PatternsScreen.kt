@@ -220,7 +220,13 @@ private fun PatternItem(
 			textAlign = TextAlign.Start,
 		)
 		val clickableModifier = remember(isSelectingMode) {
-			if (isSelectingMode) Modifier.clickable { selectCustomPattern() } else Modifier
+			Modifier.clickable {
+				if (isSelectingMode) {
+					selectCustomPattern()
+				} else {
+					editPattern()
+				}
+			}
 		}
 		val isPatternSetAsDefault = remember(defaultPatternId, pattern.timePattern.patternId) {
 			defaultPatternId == pattern.timePattern.patternId

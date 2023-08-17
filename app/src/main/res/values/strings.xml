@@ -75,7 +75,7 @@
     <string name="default_pattern_absent_message">Please, choose default time pattern first</string>
     <string name="successfully_set_default_pattern">Pattern was set as a default</string>
     <string name="change_pattern">Change time pattern</string>
-    <string name="successfully_set_custom_pattern">Pattern for this day is %1$s from now on</string>
+    <string name="successfully_set_custom_pattern">Pattern for this day is "%1$s" from now on</string>
     <string name="class_out_of_strokes_bounds_message">No time pattern stroke for %1$s class</string>
     <string name="pattern_selection_title">Select custom pattern</string>
     <string name="no_schedule_for_custom_pattern_message">Create lesson first</string>
