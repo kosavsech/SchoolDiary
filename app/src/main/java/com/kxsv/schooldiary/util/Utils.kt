@@ -4,6 +4,7 @@ import android.util.Log
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import com.kxsv.schooldiary.data.util.Mark
+import kotlinx.datetime.toJavaLocalTime
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -110,6 +111,9 @@ object Utils {
 	fun fromLocalTime(localTime: LocalTime?): String? =
 		localTime?.format(DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH))
 	
+	fun fromLocalTime(localTime: kotlinx.datetime.LocalTime?): String? {
+		return fromLocalTime(localTime?.toJavaLocalTime())
+	}
 	
 	fun timestampToLocalDate(value: Long?): LocalDate? = value?.let {
 		Instant.ofEpochSecond(it).atZone(ZoneId.of("Europe/Moscow")).toLocalDate()

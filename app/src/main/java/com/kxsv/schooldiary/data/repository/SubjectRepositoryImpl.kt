@@ -42,7 +42,7 @@ class SubjectRepositoryImpl @Inject constructor(
 		return SubjectParser().parse(termYearRows)
 	}
 	
-	override suspend fun getSubjects(): List<SubjectEntity> {
+	override suspend fun getAll(): List<SubjectEntity> {
 		return subjectDataSource.getAll()
 	}
 	
@@ -62,11 +62,11 @@ class SubjectRepositoryImpl @Inject constructor(
 		return subjectDataSource.getByIdWithTeachers(subjectId)
 	}
 	
-	override suspend fun createSubject(subject: SubjectEntity, teachersIds: Set<String>): String {
+	override suspend fun createSubject(subject: SubjectEntity, teachersIds: Set<String>?): String {
 		val subjectId = generateSubjectId(subject.fullName)
 		subjectDataSource.upsert(subject.copy(subjectId = subjectId))
 		
-		teachersIds.forEach { teacherId ->
+		teachersIds?.forEach { teacherId ->
 			subjectTeacherDataSource.upsert(
 				SubjectTeacher(subjectId = subjectId, teacherId = teacherId)
 			)
@@ -75,7 +75,7 @@ class SubjectRepositoryImpl @Inject constructor(
 	}
 	
 	override suspend fun updateSubject(subject: SubjectEntity, teachersIds: Set<String>?) {
-		subjectDataSource.upsert(subject)
+		subjectDataSource.update(subject)
 		
 		if (teachersIds != null) {
 			subjectTeacherDataSource.deleteBySubjectId(subject.subjectId)

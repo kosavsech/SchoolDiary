@@ -48,6 +48,8 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity.Companion.shortName
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditSubjectTopAppBar
+import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AddEditSubjectScreenNavActions
 import com.kxsv.schooldiary.ui.screens.teacher_list.AddEditTeacherDialog
 import com.kxsv.schooldiary.ui.util.LoadingContent
@@ -79,21 +81,24 @@ fun AddEditSubjectScreen(
 		destinationsNavigator = destinationsNavigator,
 		resultBackNavigator = resultBackNavigator
 	)
+	
+	LaunchedEffect(uiState.isSubjectSaved) {
+		if (uiState.isSubjectSaved) {
+			val result = if (viewModel.subjectId == null) ADD_RESULT_OK else EDIT_RESULT_OK
+			navigator.navigateBackWithResult(result)
+		}
+	}
+	
 	val teacherCreateDialog = rememberMaterialDialogState(false)
 	val teacherSelectDialog = rememberMaterialDialogState(false)
-	
+	val saveSubject = remember { { viewModel.saveSubject() } }
 	Scaffold(
 		modifier = Modifier.fillMaxSize(),
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		topBar = { AddEditSubjectTopAppBar { navigator.popBackStack() } },
 		floatingActionButton = {
 			Row {
-				FloatingActionButton(onClick = {
-					val result = viewModel.saveSubject()
-					if (uiState.isSubjectSaved && result != null) {
-						navigator.navigateBackWithResult(result)
-					}
-				}) {
+				FloatingActionButton(onClick = saveSubject) {
 					Icon(Icons.Default.Save, stringResource(R.string.save_subject))
 				}
 			}

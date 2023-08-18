@@ -340,18 +340,21 @@ private fun LessonDialog(
 						Text(text = stringResource(R.string.btn_delete))
 					}
 				}
-				Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding)))
-				if (classDetailed.subject.cabinet != null) {
+				val cabinetText = remember(classDetailed) {
+					classDetailed.lesson.cabinet ?: classDetailed.subject.cabinet
+				}
+				if (cabinetText != null) {
+					Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding)))
 					Row(verticalAlignment = Alignment.CenterVertically) {
 						Icon(Icons.Default.LocationOn, stringResource(R.string.lesson_room))
 						Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.list_item_padding)))
 						Column {
 							Text(
-								classDetailed.subject.getCabinetString(),
+								text = cabinetText,
 								style = MaterialTheme.typography.labelLarge
 							)
 							Text(
-								stringResource(R.string.cabinet_hint),
+								text = stringResource(R.string.cabinet_hint),
 								style = MaterialTheme.typography.labelMedium
 							)
 						}

@@ -8,10 +8,12 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.lesson.LessonEntity
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.repository.LessonRepository
+import com.kxsv.schooldiary.data.repository.StudyDayRepository
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.screens.navArgs
+import com.kxsv.schooldiary.util.Utils.nonEmptyTrim
 import com.kxsv.schooldiary.util.Utils.timestampToLocalDate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -24,28 +26,33 @@ import java.time.LocalDate
 import javax.inject.Inject
 
 data class AddEditScheduleUiState(
+	val pickedSubject: SubjectEntity? = null,
+	val date: LocalDate? = null,
+	val indexInPattern: String = "",
+	val cabinet: String = "",
+	
+	val isCabinetFromSubject: Boolean = false,
 	val availableSubjects: List<SubjectEntity> = emptyList(),
 	val initialSubjectSelection: Int? = null,
-	val pickedSubject: SubjectEntity? = null,
-	val classDate: LocalDate? = null,
-	val classIndex: String = "",
+	
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
-	val errorMessage: Int? = null,
+	val indexErrorMessage: Int? = null,
+	val cabinetErrorMessage: Int? = null,
 	val isClassSaved: Boolean = false,
 )
 
 @HiltViewModel
 class AddEditLessonViewModel @Inject constructor(
 	private val lessonRepository: LessonRepository,
+	private val studyDayRepository: StudyDayRepository,
 	private val subjectRepository: SubjectRepository,
 	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 	savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 	
-	private val addEditLessonScreenNavArgs: AddEditLessonDestinationNavArgs =
-		savedStateHandle.navArgs()
-	
+	private val addEditLessonScreenNavArgs =
+		savedStateHandle.navArgs<AddEditLessonDestinationNavArgs>()
 	private val datestamp = addEditLessonScreenNavArgs.datestamp
 	val lessonId = addEditLessonScreenNavArgs.lessonId
 	
@@ -54,33 +61,30 @@ class AddEditLessonViewModel @Inject constructor(
 	
 	init {
 		if (lessonId != null) {
-			loadClass(lessonId)
+			loadLesson(lessonId)
 		} else {
-			updateDate(timestampToLocalDate(datestamp)!!)
+			val preSetDate = timestampToLocalDate(datestamp)
+			updateDate(preSetDate ?: LocalDate.now())
 		}
-		
 	}
 	
 	fun saveLesson() {
-		if (uiState.value.pickedSubject == null
-			|| uiState.value.classDate == null
-			|| uiState.value.classIndex.isBlank()
-		) {
+		if (uiState.value.pickedSubject == null || uiState.value.date == null || uiState.value.indexInPattern.isBlank()) {
 			_uiState.update {
 				it.copy(userMessage = R.string.fill_required_fields_message)
 			}
 			return
 		}
-		if (uiState.value.classIndex.toIntOrNull() == null) {
+		if (uiState.value.indexInPattern.toIntOrNull() == null) {
 			_uiState.update {
-				it.copy(errorMessage = R.string.wrong_input_format_for_class_index)
+				it.copy(indexErrorMessage = R.string.wrong_input_format_for_class_index)
 			}
 			return
 		} else {
-			val classIndex = uiState.value.classIndex.toInt()
+			val classIndex = uiState.value.indexInPattern.toInt()
 			if (classIndex < 1 || classIndex > 9) {
 				_uiState.update {
-					it.copy(errorMessage = R.string.wrong_input_value_for_class_index)
+					it.copy(indexErrorMessage = R.string.wrong_input_value_for_class_index)
 				}
 				return
 			}
@@ -98,30 +102,39 @@ class AddEditLessonViewModel @Inject constructor(
 		}
 	}
 	
-	fun clearErrorMessage() {
+	fun clearIndexErrorMessage() {
 		_uiState.update {
-			it.copy(errorMessage = null)
+			it.copy(indexErrorMessage = null)
 		}
 	}
 	
 	fun updateDate(date: LocalDate) {
 		_uiState.update {
-			it.copy(classDate = date)
+			it.copy(date = date)
 		}
 	}
 	
 	fun updateIndex(index: String) {
 		_uiState.update {
-			it.copy(classIndex = index)
+			it.copy(indexInPattern = index)
+		}
+	}
+	
+	fun updateCabinet(cabinet: String) {
+		_uiState.update {
+			it.copy(
+				cabinet = cabinet,
+				isCabinetFromSubject = cabinet.isBlank()
+			)
 		}
 	}
 	
 	fun saveSelectedSubject(newIndex: Int) {
-		val newPickedSubject: SubjectEntity = uiState.value.availableSubjects[newIndex]
+		val newPickedSubject = uiState.value.availableSubjects[newIndex]
 		_uiState.update {
 			it.copy(
 				pickedSubject = newPickedSubject,
-				initialSubjectSelection = null
+				initialSubjectSelection = newIndex
 			)
 		}
 	}
@@ -132,14 +145,14 @@ class AddEditLessonViewModel @Inject constructor(
 		}
 		
 		viewModelScope.launch(ioDispatcher) {
-			subjectRepository.getSubjects().let { subjects ->
-				val updatedSelectedSubjectIndex: Int =
-					subjects.binarySearch(uiState.value.pickedSubject, compareBy { it?.subjectId })
+			subjectRepository.getAll().let { subjects ->
+				val updatedInitialSelectionIndex = subjects
+					.binarySearch(uiState.value.pickedSubject, compareBy { it?.displayName })
 				
 				_uiState.update {
 					it.copy(
 						availableSubjects = subjects,
-						initialSubjectSelection = updatedSelectedSubjectIndex,
+						initialSubjectSelection = updatedInitialSelectionIndex,
 						isLoading = false
 					)
 				}
@@ -147,61 +160,79 @@ class AddEditLessonViewModel @Inject constructor(
 		}
 	}
 	
-	private fun createNewClass() = viewModelScope.launch(ioDispatcher) {
-		lessonRepository.createLesson(
-			lesson = LessonEntity(
-				index = uiState.value.classIndex.toInt() - 1,
-				subjectAncestorId = uiState.value.pickedSubject!!.subjectId,
-			),
-			date = uiState.value.classDate!!
-		)
-		_uiState.update { it.copy(isClassSaved = true) }
-	}
-	
-	private fun updateClass() {
-		if (lessonId == null) throw RuntimeException("updateClass() was called but class is new.")
+	private fun createNewClass() {
+		val subjectAncestorId = uiState.value.pickedSubject?.subjectId
+			?: throw RuntimeException("updateClass() was called but subject is not set.")
+		val date = uiState.value.date
+			?: throw RuntimeException("updateClass() was called but date is not set.")
+		val cabinet = if (uiState.value.isCabinetFromSubject) {
+			null
+		} else {
+			uiState.value.cabinet.nonEmptyTrim()
+		}
 		
 		viewModelScope.launch(ioDispatcher) {
-			lessonRepository.updateLesson(
+			lessonRepository.createLesson(
 				lesson = LessonEntity(
-					index = uiState.value.classIndex.toInt() - 1,
-					subjectAncestorId = uiState.value.pickedSubject!!.subjectId,
-					lessonId = lessonId
+					index = uiState.value.indexInPattern.toInt() - 1,
+					subjectAncestorId = subjectAncestorId,
+					cabinet = cabinet
 				),
-				date = uiState.value.classDate!!
+				date = date
 			)
 			_uiState.update { it.copy(isClassSaved = true) }
 		}
 	}
 	
-	private fun loadClass(subjectId: Long) {
+	private fun updateClass() {
+		if (lessonId == null) throw RuntimeException("updateClass() was called but class is new.")
+		val subjectAncestorId = uiState.value.pickedSubject?.subjectId
+			?: throw RuntimeException("updateClass() was called but subject is not set.")
+		val date = uiState.value.date
+			?: throw RuntimeException("updateClass() was called but date is not set.")
+		val cabinet = if (uiState.value.isCabinetFromSubject) {
+			null
+		} else {
+			uiState.value.cabinet.nonEmptyTrim()
+		}
+		viewModelScope.launch(ioDispatcher) {
+			lessonRepository.updateLesson(
+				lesson = LessonEntity(
+					index = uiState.value.indexInPattern.toInt() - 1,
+					subjectAncestorId = subjectAncestorId,
+					cabinet = cabinet,
+					lessonId = lessonId
+				),
+				date = date
+			)
+			_uiState.update { it.copy(isClassSaved = true) }
+		}
+	}
+	
+	private fun loadLesson(lessonId: Long) {
 		_uiState.update {
 			it.copy(isLoading = true)
 		}
 		
 		viewModelScope.launch(ioDispatcher) {
-			lessonRepository.getLessonWithSubject(subjectId)?.let { scheduleWithSubject ->
+			lessonRepository.getLessonWithSubject(lessonId)?.let { lessonWithSubject ->
+				val isCabinetFromSubject =
+					(lessonWithSubject.lesson.cabinet == null) && (lessonWithSubject.subject.cabinet != null)
+				val cabinet =
+					(lessonWithSubject.lesson.cabinet ?: lessonWithSubject.subject.cabinet) ?: ""
+				val date = lessonWithSubject.lesson.studyDayMasterId?.let { studyDayMasterId ->
+					studyDayRepository.getById(studyDayMasterId)?.date
+				}
 				_uiState.update {
 					it.copy(
-						pickedSubject = scheduleWithSubject.subject,
-						classIndex = (scheduleWithSubject.lesson.index + 1).toString(),
+						pickedSubject = lessonWithSubject.subject,
+						indexInPattern = (lessonWithSubject.lesson.index + 1).toString(),
+						cabinet = cabinet,
+						isCabinetFromSubject = isCabinetFromSubject,
+						date = date
 					)
 				}
-			}
-			lessonRepository.getLessonWithStudyDay(subjectId).let { scheduleWithStudyDay ->
-				if (scheduleWithStudyDay != null) {
-					_uiState.update {
-						it.copy(
-							classDate = scheduleWithStudyDay.studyDay.date,
-							isLoading = false
-						)
-					}
-				} else {
-					_uiState.update {
-						it.copy(isLoading = false)
-					}
-				}
-			}
+			} ?: _uiState.update { it.copy(isLoading = false) }
 		}
 	}
 }

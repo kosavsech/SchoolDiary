@@ -88,6 +88,9 @@ interface LessonDao {
 	@Upsert
 	suspend fun upsert(lesson: LessonEntity)
 	
+	@Update
+	suspend fun update(lesson: LessonEntity)
+	
 	@Query("DELETE FROM $LESSON_TABLE_NAME")
 	suspend fun deleteAll()
 	

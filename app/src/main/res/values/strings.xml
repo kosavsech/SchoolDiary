@@ -207,4 +207,6 @@
     <string name="too_early_time_for_such_index">The time is too early for such an index</string>
     <string name="too_late_time_for_such_index">The time is too late for such an index</string>
     <string name="corrupted_class">This class is corrupted</string>
+    <string name="leading_icon_of_row">Leading icon of row</string>
+    <string name="override_lesson_cabinet">Override lesson cabinet</string>
 </resources>

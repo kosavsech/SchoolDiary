@@ -21,7 +21,7 @@ interface SubjectDao {
 	@Query("SELECT * FROM $SUBJECT_TABLE_NAME WHERE subjectId = :subjectId")
 	fun observeByIdWithGrades(subjectId: String): Flow<SubjectWithGrades>
 	
-	@Query("SELECT * FROM $SUBJECT_TABLE_NAME")
+	@Query("SELECT * FROM $SUBJECT_TABLE_NAME ORDER BY displayName")
 	suspend fun getAll(): List<SubjectEntity>
 	
 	@Query("SELECT * FROM $SUBJECT_TABLE_NAME WHERE subjectId = :subjectId")
@@ -39,6 +39,9 @@ interface SubjectDao {
 	
 	@Upsert
 	suspend fun upsert(subject: SubjectEntity): Long
+	
+	@Update
+	suspend fun update(subject: SubjectEntity)
 	
 	@Query("DELETE FROM $SUBJECT_TABLE_NAME")
 	suspend fun deleteAll()

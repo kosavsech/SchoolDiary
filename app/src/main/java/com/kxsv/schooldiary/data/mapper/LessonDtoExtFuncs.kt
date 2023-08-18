@@ -35,8 +35,8 @@ suspend fun LessonDto.toLessonEntity(
 		
 		return LessonEntity(
 			index = index,
-			subjectAncestorId = subject.subjectId,
-			studyDayMasterId = studyDayMasterId
+			studyDayMasterId = studyDayMasterId,
+			subjectAncestorId = subject.subjectId
 		)
 	} catch (e: NoSuchElementException) {
 		throw RuntimeException("Failed to convert class to local", e)
@@ -92,8 +92,8 @@ suspend fun LessonDto.toLessonWithSubject(
 		return LessonWithSubject(
 			lesson = LessonEntity(
 				index = index,
-				subjectAncestorId = subject.subjectId,
-				studyDayMasterId = studyDayMasterId
+				studyDayMasterId = studyDayMasterId,
+				subjectAncestorId = subject.subjectId
 			),
 			subject = subject,
 		)
@@ -123,8 +123,8 @@ suspend fun LessonDto.toLessonWithSubject(
 		return LessonWithSubject(
 			lesson = LessonEntity(
 				index = index,
-				subjectAncestorId = subject.subjectId,
-				studyDayMasterId = studyDayMasterId
+				studyDayMasterId = studyDayMasterId,
+				subjectAncestorId = subject.subjectId
 			),
 			subject = subject,
 		)
@@ -242,8 +242,8 @@ suspend fun LessonDto.saveAsLessonWithSubject(
 		val localizedClass = LessonWithSubject(
 			lesson = LessonEntity(
 				index = index,
-				subjectAncestorId = subject.subjectId,
-				studyDayMasterId = studyDayMasterId
+				studyDayMasterId = studyDayMasterId,
+				subjectAncestorId = subject.subjectId
 			),
 			subject = subject,
 		)

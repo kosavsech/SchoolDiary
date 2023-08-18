@@ -26,6 +26,7 @@ import androidx.compose.material.MaterialTheme.colors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.Divider
@@ -51,6 +52,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -108,45 +110,56 @@ fun AddEditLessonScreen(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		topBar = { AddEditScheduleTopAppBar { navigator.popBackStack() } },
 		floatingActionButton = {
-			FloatingActionButton(onClick = {
-				saveLesson()
-			}) {
-				Icon(Icons.Filled.Done, stringResource(R.string.save_schedule))
+			FloatingActionButton(onClick = saveLesson) {
+				Icon(
+					imageVector = Icons.Filled.Done,
+					contentDescription = stringResource(R.string.save_schedule)
+				)
 			}
 			
 		}
 	) { paddingValues ->
 		
-		val clearErrorMessage = remember {
-			{ viewModel.clearErrorMessage() }
+		val clearIndexErrorMessage = remember {
+			{ viewModel.clearIndexErrorMessage() }
 		}
 		val loadAvailableSubjects = remember {
 			{ viewModel.loadAvailableSubjects() }
 		}
+		val saveSelectedSubject = remember<(Int) -> Unit> {
+			{ viewModel.saveSelectedSubject(it) }
+		}
+		val updateDate = remember<(LocalDate) -> Unit> {
+			{ viewModel.updateDate(it) }
+		}
+		val updateIndex = remember<(String) -> Unit> {
+			{ viewModel.updateIndex(it) }
+		}
+		val updateCabinet = remember<(String) -> Unit> {
+			{ viewModel.updateCabinet(it) }
+		}
 		AddEditLessonContent(
 			modifier = Modifier.padding(paddingValues),
 			isLoading = uiState.isLoading,
-			errorMessage = uiState.errorMessage,
 			pickedSubject = uiState.pickedSubject,
-			classIndex = uiState.classIndex,
-			classDate = uiState.classDate,
+			indexInPattern = uiState.indexInPattern,
+			date = uiState.date,
+			cabinet = uiState.cabinet,
 			subjects = uiState.availableSubjects,
 			initialSubjectSelection = uiState.initialSubjectSelection,
-			clearErrorMessage = clearErrorMessage,
+			indexErrorMessage = uiState.indexErrorMessage,
+			clearIndexErrorMessage = clearIndexErrorMessage,
 			onSubjectDialogShown = loadAvailableSubjects,
-			onSubjectChanged = viewModel::saveSelectedSubject,
-			onDateChanged = viewModel::updateDate,
-			onIndexUpdate = viewModel::updateIndex
+			onSubjectChanged = saveSelectedSubject,
+			onDateChanged = updateDate,
+			onIndexUpdate = updateIndex,
+			onCabinetUpdate = updateCabinet
 		)
 		
 		LaunchedEffect(uiState.isClassSaved) {
 			if (uiState.isClassSaved) {
 				navigator.navigateBackWithResult(
-					if (viewModel.lessonId == null) {
-						ADD_RESULT_OK
-					} else {
-						EDIT_RESULT_OK
-					}
+					if (viewModel.lessonId == null) ADD_RESULT_OK else EDIT_RESULT_OK
 				)
 			}
 		}
@@ -165,17 +178,19 @@ fun AddEditLessonScreen(
 private fun AddEditLessonContent(
 	modifier: Modifier = Modifier,
 	isLoading: Boolean,
-	@StringRes errorMessage: Int?,
 	pickedSubject: SubjectEntity?,
-	classIndex: String,
-	classDate: LocalDate?,
+	indexInPattern: String,
+	date: LocalDate?,
+	cabinet: String,
 	subjects: List<SubjectEntity>,
 	initialSubjectSelection: Int?,
-	clearErrorMessage: () -> Unit,
+	@StringRes indexErrorMessage: Int?,
+	clearIndexErrorMessage: () -> Unit,
 	onSubjectDialogShown: () -> Unit,
 	onSubjectChanged: (Int) -> Unit,
 	onDateChanged: (LocalDate) -> Unit,
 	onIndexUpdate: (String) -> Unit,
+	onCabinetUpdate: (String) -> Unit,
 ) {
 	LoadingContent(
 		loading = isLoading,
@@ -200,7 +215,7 @@ private fun AddEditLessonContent(
 					.align(Alignment.CenterHorizontally)
 			)
 			DateRow(
-				date = classDate,
+				date = date,
 				onDateChanged = onDateChanged
 			)
 			Divider(
@@ -208,11 +223,47 @@ private fun AddEditLessonContent(
 					.fillMaxWidth()
 					.align(Alignment.CenterHorizontally)
 			)
-			ClassNumberRow(
-				index = classIndex,
-				onIndexUpdate = onIndexUpdate,
-				clearErrorMessage = clearErrorMessage,
-				errorMessage = errorMessage
+			val focusManager = LocalFocusManager.current
+			TextInputRow(
+				value = indexInPattern,
+				onValueChange = onIndexUpdate,
+				placeholder = R.string.pick_index_hint,
+				leadingIconImageVector = Icons.Default.Schedule,
+				keyboardOptions = KeyboardOptions(
+					imeAction = ImeAction.Done,
+					autoCorrect = false,
+					capitalization = KeyboardCapitalization.None,
+					keyboardType = KeyboardType.Decimal
+				),
+				keyboardActions = KeyboardActions(
+					onDone = {
+						focusManager.clearFocus()
+					}
+				),
+				clearErrorMessage = clearIndexErrorMessage,
+				errorMessage = indexErrorMessage
+			)
+			Divider(
+				Modifier
+					.fillMaxWidth()
+					.align(Alignment.CenterHorizontally)
+			)
+			TextInputRow(
+				value = cabinet,
+				onValueChange = onCabinetUpdate,
+				placeholder = R.string.override_lesson_cabinet,
+				leadingIconImageVector = Icons.Default.Place,
+				keyboardOptions = KeyboardOptions(
+					imeAction = ImeAction.Done,
+					autoCorrect = false,
+					capitalization = KeyboardCapitalization.None,
+					keyboardType = KeyboardType.Password
+				),
+				keyboardActions = KeyboardActions(
+					onDone = {
+						focusManager.clearFocus()
+					}
+				),
 			)
 		}
 	}
@@ -243,11 +294,15 @@ private fun animateBorderStrokeAsState(
 }
 
 @Composable
-private fun ClassNumberRow(
-	index: String,
-	onIndexUpdate: (String) -> Unit,
-	clearErrorMessage: () -> Unit,
-	@StringRes errorMessage: Int?,
+private fun TextInputRow(
+	value: String,
+	onValueChange: (String) -> Unit,
+	@StringRes placeholder: Int,
+	leadingIconImageVector: ImageVector,
+	keyboardOptions: KeyboardOptions,
+	keyboardActions: KeyboardActions,
+	clearErrorMessage: () -> Unit = {},
+	@StringRes errorMessage: Int? = null,
 ) {
 	val textFieldColors = OutlinedTextFieldDefaults.colors(
 		cursorColor = colors.secondary.copy(alpha = ContentAlpha.high),
@@ -256,12 +311,9 @@ private fun ClassNumberRow(
 		errorBorderColor = Color.Transparent,
 		errorContainerColor = Color.Transparent,
 	)
-	LaunchedEffect(key1 = index) {
-		if (errorMessage != null) {
-			clearErrorMessage()
-		}
+	LaunchedEffect(key1 = value) {
+		if (errorMessage != null) clearErrorMessage()
 	}
-	val focusManager = LocalFocusManager.current
 	val interactionSource = remember { MutableInteractionSource() }
 	val isValid by remember(errorMessage) { mutableStateOf(errorMessage == null) }
 	val borderStroke =
@@ -280,34 +332,25 @@ private fun ClassNumberRow(
 				verticalAlignment = Alignment.CenterVertically
 			) {
 				Icon(
-					imageVector = Icons.Default.Schedule,
-					contentDescription = stringResource(R.string.picked_class_number),
+					imageVector = leadingIconImageVector,
+					contentDescription = stringResource(R.string.leading_icon_of_row),
 					modifier = Modifier.size(18.dp)
 				)
 				OutlinedTextField(
-					value = index,
+					value = value,
 					modifier = Modifier.fillMaxWidth(),
-					onValueChange = onIndexUpdate,
+					onValueChange = onValueChange,
 					placeholder = {
 						Text(
-							text = stringResource(id = R.string.pick_index_hint),
+							text = stringResource(id = placeholder),
 							style = MaterialTheme.typography.titleMedium
 						)
 					},
 					textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
 					maxLines = 1,
 					colors = textFieldColors,
-					keyboardOptions = KeyboardOptions(
-						imeAction = ImeAction.Done,
-						autoCorrect = false,
-						capitalization = KeyboardCapitalization.None,
-						keyboardType = KeyboardType.Decimal
-					),
-					keyboardActions = KeyboardActions(
-						onDone = {
-							focusManager.clearFocus()
-						}
-					),
+					keyboardOptions = keyboardOptions,
+					keyboardActions = keyboardActions,
 					isError = !isValid,
 					interactionSource = interactionSource
 				)
@@ -458,14 +501,15 @@ private fun SubjectPickerDialog(
 private fun AddEditScheduleContentPreview() {
 	Surface {
 		AddEditLessonContent(
+			modifier = Modifier,
 			isLoading = false,
 //			date = null,
-			errorMessage = null,
 			pickedSubject = SubjectEntity("Русский язык", "210"),
+			indexInPattern = "",
 //			index = 0,
-			classIndex = "",
+			date = Utils.currentDate,
 //			lesson = null,
-			classDate = Utils.currentDate,
+			cabinet = "556",
 			subjects = listOf(
 				SubjectEntity("Русский язык", "210"),
 				SubjectEntity("Геометрия", "310"),
@@ -474,12 +518,13 @@ private fun AddEditScheduleContentPreview() {
 				SubjectEntity("Английский язык", "316"),
 			),
 			initialSubjectSelection = null,
-			clearErrorMessage = {},
+			indexErrorMessage = null,
+			clearIndexErrorMessage = {},
 			onSubjectDialogShown = {},
 			onSubjectChanged = {},
 			onDateChanged = {},
 			onIndexUpdate = {}
-		)
+		) {}
 	}
 }
 

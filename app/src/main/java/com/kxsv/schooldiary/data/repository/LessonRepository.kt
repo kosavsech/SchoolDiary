@@ -22,7 +22,7 @@ interface LessonRepository {
 	
 	suspend fun getAll(): List<LessonEntity>
 	
-	suspend fun getDayAndLessonsWithSubjectByDateRange(
+	suspend fun getDateAndLessonsWithSubjectByDateRange(
 		startRange: LocalDate,
 		endRange: LocalDate,
 	): Map<LocalDate, List<LessonWithSubject>>

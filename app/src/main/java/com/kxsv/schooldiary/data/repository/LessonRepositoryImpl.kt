@@ -60,7 +60,7 @@ class LessonRepositoryImpl @Inject constructor(
 		return lessonDataSource.getAll()
 	}
 	
-	override suspend fun getDayAndLessonsWithSubjectByDateRange(
+	override suspend fun getDateAndLessonsWithSubjectByDateRange(
 		startRange: LocalDate,
 		endRange: LocalDate,
 	): Map<LocalDate, List<LessonWithSubject>> {
@@ -209,13 +209,13 @@ class LessonRepositoryImpl @Inject constructor(
 	
 	override suspend fun updateLesson(lesson: LessonEntity, date: LocalDate) {
 		val studyDayMaster = studyDayDataSource.getByDate(date)
-		val updatedSchedule = if (studyDayMaster == null) {
+		val lessonWithMasterId = if (studyDayMaster == null) {
 			val studyDayId = studyDayDataSource.upsert(StudyDayEntity(date))
 			lesson.copy(studyDayMasterId = studyDayId)
 		} else {
 			lesson.copy(studyDayMasterId = studyDayMaster.studyDayId)
 		}
-		lessonDataSource.upsert(updatedSchedule)
+		lessonDataSource.upsert(lessonWithMasterId)
 	}
 	
 	override suspend fun deleteAllLessons() {

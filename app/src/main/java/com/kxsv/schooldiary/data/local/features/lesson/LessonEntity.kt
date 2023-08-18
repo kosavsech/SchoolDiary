@@ -34,6 +34,15 @@ data class LessonEntity(
 	val studyDayMasterId: Long? = null,
 	@ColumnInfo(index = true)
 	val subjectAncestorId: String? = null,
+	val cabinet: String? = null,
 	@PrimaryKey(autoGenerate = true)
 	val lessonId: Long = 0,
-)
+) {
+	fun getCabinetString(): String {
+		return if (!this.cabinet.isNullOrBlank()) {
+			this.cabinet
+		} else {
+			""
+		}
+	}
+}

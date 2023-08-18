@@ -13,7 +13,6 @@ import com.kxsv.schooldiary.data.repository.TeacherRepository
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
-import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.ui.util.Async
 import com.kxsv.schooldiary.ui.util.WhileUiSubscribed
@@ -103,12 +102,15 @@ class AddEditSubjectViewModel @Inject constructor(
 		}
 	}
 	
-	fun saveSubject(): Int? {
+	fun saveSubject() {
 		if (uiState.value.fullName.isEmpty()) {
 			_uiState.update {
-				it.copy(userMessage = R.string.empty_subject_message)
+				it.copy(
+					userMessage = R.string.empty_subject_message,
+					isSubjectSaved = false
+				)
 			}
-			return null
+			return
 		}
 		viewModelScope.launch(ioDispatcher) {
 			try {
@@ -126,11 +128,6 @@ class AddEditSubjectViewModel @Inject constructor(
 					)
 				}
 			}
-		}
-		return if (subjectId == null) {
-			ADD_RESULT_OK
-		} else {
-			EDIT_RESULT_OK
 		}
 	}
 	
@@ -238,6 +235,10 @@ class AddEditSubjectViewModel @Inject constructor(
 	
 	private suspend fun updateSubject() {
 		if (subjectId == null) throw RuntimeException("updateSubject() was called but subject is new.")
+		Log.d(
+			TAG,
+			"updateSubject: updating subject ${uiState.value.fullName.trim()} id = $subjectId"
+		)
 		subjectRepository.updateSubject(
 			subject = SubjectEntity(
 				fullName = uiState.value.fullName.trim(),

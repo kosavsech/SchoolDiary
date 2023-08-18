@@ -17,7 +17,7 @@ interface SubjectRepository {
 	
 	suspend fun fetchSubjectNames(): MutableList<String>
 	
-	suspend fun getSubjects(): List<SubjectEntity>
+	suspend fun getAll(): List<SubjectEntity>
 	
 	suspend fun getSubject(subjectId: String): SubjectEntity?
 	
@@ -27,7 +27,7 @@ interface SubjectRepository {
 	
 	suspend fun getSubjectWithTeachers(subjectId: String): SubjectWithTeachers?
 	
-	suspend fun createSubject(subject: SubjectEntity, teachersIds: Set<String>): String
+	suspend fun createSubject(subject: SubjectEntity, teachersIds: Set<String>?): String
 	
 	suspend fun updateSubject(subject: SubjectEntity, teachersIds: Set<String>?)
 	

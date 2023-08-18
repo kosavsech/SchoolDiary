@@ -109,7 +109,7 @@ class SubjectsSyncWorker @AssistedInject constructor(
 					val newSubject = subject.copy(subjectId = subjectId)
 					Log.i(TAG, "updateDatabase: FOUND NEW SUBJECT:\n${newSubject.fullName}")
 					newSubjectsFound.add(newSubject)
-					subjectRepository.updateSubject(newSubject, null)
+					subjectRepository.createSubject(newSubject, null)
 				}
 			}
 			newSubjectsFound
