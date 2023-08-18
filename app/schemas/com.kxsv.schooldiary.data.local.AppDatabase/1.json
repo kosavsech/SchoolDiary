@@ -1,0 +1,650 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "29af749ee444b8170e732c9610628ee1",
+    "entities": [
+      {
+        "tableName": "timePattern",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`name` TEXT NOT NULL, `patternId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "patternId",
+            "columnName": "patternId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "patternId"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "patternStroke",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`index` INTEGER NOT NULL, `patternMasterId` INTEGER, `startTime` INTEGER NOT NULL, `endTime` INTEGER NOT NULL, `strokeId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, FOREIGN KEY(`patternMasterId`) REFERENCES `timePattern`(`patternId`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "index",
+            "columnName": "index",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "patternMasterId",
+            "columnName": "patternMasterId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "startTime",
+            "columnName": "startTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endTime",
+            "columnName": "endTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "strokeId",
+            "columnName": "strokeId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "strokeId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_patternStroke_patternMasterId",
+            "unique": false,
+            "columnNames": [
+              "patternMasterId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_patternStroke_patternMasterId` ON `${TABLE_NAME}` (`patternMasterId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "timePattern",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "patternMasterId"
+            ],
+            "referencedColumns": [
+              "patternId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "subject",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`fullName` TEXT NOT NULL, `cabinet` TEXT, `displayName` TEXT, `targetMark` REAL, `subjectId` TEXT NOT NULL, PRIMARY KEY(`subjectId`))",
+        "fields": [
+          {
+            "fieldPath": "fullName",
+            "columnName": "fullName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cabinet",
+            "columnName": "cabinet",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "displayName",
+            "columnName": "displayName",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "targetMark",
+            "columnName": "targetMark",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "subjectId",
+            "columnName": "subjectId",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "subjectId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_subject_fullName",
+            "unique": true,
+            "columnNames": [
+              "fullName"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_subject_fullName` ON `${TABLE_NAME}` (`fullName`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "teacher",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`lastName` TEXT NOT NULL, `firstName` TEXT NOT NULL, `patronymic` TEXT NOT NULL, `phoneNumber` TEXT NOT NULL, `teacherId` TEXT NOT NULL, PRIMARY KEY(`teacherId`))",
+        "fields": [
+          {
+            "fieldPath": "lastName",
+            "columnName": "lastName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "firstName",
+            "columnName": "firstName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "patronymic",
+            "columnName": "patronymic",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "phoneNumber",
+            "columnName": "phoneNumber",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "teacherId",
+            "columnName": "teacherId",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "teacherId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_teacher_lastName_firstName_patronymic",
+            "unique": true,
+            "columnNames": [
+              "lastName",
+              "firstName",
+              "patronymic"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_teacher_lastName_firstName_patronymic` ON `${TABLE_NAME}` (`lastName`, `firstName`, `patronymic`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "SubjectTeacher",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`subjectId` TEXT NOT NULL, `teacherId` TEXT NOT NULL, PRIMARY KEY(`subjectId`, `teacherId`), FOREIGN KEY(`subjectId`) REFERENCES `subject`(`subjectId`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`teacherId`) REFERENCES `teacher`(`teacherId`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "subjectId",
+            "columnName": "subjectId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "teacherId",
+            "columnName": "teacherId",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "subjectId",
+            "teacherId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_SubjectTeacher_teacherId",
+            "unique": false,
+            "columnNames": [
+              "teacherId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_SubjectTeacher_teacherId` ON `${TABLE_NAME}` (`teacherId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "subject",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "subjectId"
+            ],
+            "referencedColumns": [
+              "subjectId"
+            ]
+          },
+          {
+            "table": "teacher",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "teacherId"
+            ],
+            "referencedColumns": [
+              "teacherId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "studyDay",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`date` INTEGER NOT NULL, `appliedPatternId` INTEGER, `studyDayId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, FOREIGN KEY(`appliedPatternId`) REFERENCES `timePattern`(`patternId`) ON UPDATE CASCADE ON DELETE SET DEFAULT )",
+        "fields": [
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appliedPatternId",
+            "columnName": "appliedPatternId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "studyDayId",
+            "columnName": "studyDayId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "studyDayId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_studyDay_appliedPatternId",
+            "unique": false,
+            "columnNames": [
+              "appliedPatternId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_studyDay_appliedPatternId` ON `${TABLE_NAME}` (`appliedPatternId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "timePattern",
+            "onDelete": "SET DEFAULT",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "appliedPatternId"
+            ],
+            "referencedColumns": [
+              "patternId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "lesson",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`index` INTEGER NOT NULL, `studyDayMasterId` INTEGER, `subjectAncestorId` TEXT, `cabinet` TEXT, `lessonId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, FOREIGN KEY(`subjectAncestorId`) REFERENCES `subject`(`subjectId`) ON UPDATE CASCADE ON DELETE SET DEFAULT , FOREIGN KEY(`studyDayMasterId`) REFERENCES `studyDay`(`studyDayId`) ON UPDATE CASCADE ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "index",
+            "columnName": "index",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "studyDayMasterId",
+            "columnName": "studyDayMasterId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "subjectAncestorId",
+            "columnName": "subjectAncestorId",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "cabinet",
+            "columnName": "cabinet",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "lessonId",
+            "columnName": "lessonId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "lessonId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_lesson_studyDayMasterId",
+            "unique": false,
+            "columnNames": [
+              "studyDayMasterId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_lesson_studyDayMasterId` ON `${TABLE_NAME}` (`studyDayMasterId`)"
+          },
+          {
+            "name": "index_lesson_subjectAncestorId",
+            "unique": false,
+            "columnNames": [
+              "subjectAncestorId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_lesson_subjectAncestorId` ON `${TABLE_NAME}` (`subjectAncestorId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "subject",
+            "onDelete": "SET DEFAULT",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "subjectAncestorId"
+            ],
+            "referencedColumns": [
+              "subjectId"
+            ]
+          },
+          {
+            "table": "studyDay",
+            "onDelete": "NO ACTION",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "studyDayMasterId"
+            ],
+            "referencedColumns": [
+              "studyDayId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "grade",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`mark` TEXT NOT NULL, `typeOfWork` TEXT NOT NULL, `date` INTEGER NOT NULL, `fetchDateTime` INTEGER NOT NULL, `subjectMasterId` TEXT NOT NULL, `lessonIndex` INTEGER NOT NULL, `index` INTEGER NOT NULL, `gradeId` TEXT NOT NULL, PRIMARY KEY(`gradeId`), FOREIGN KEY(`subjectMasterId`) REFERENCES `subject`(`subjectId`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "mark",
+            "columnName": "mark",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "typeOfWork",
+            "columnName": "typeOfWork",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fetchDateTime",
+            "columnName": "fetchDateTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "subjectMasterId",
+            "columnName": "subjectMasterId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lessonIndex",
+            "columnName": "lessonIndex",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "index",
+            "columnName": "index",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gradeId",
+            "columnName": "gradeId",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "gradeId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_grade_subjectMasterId",
+            "unique": false,
+            "columnNames": [
+              "subjectMasterId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_grade_subjectMasterId` ON `${TABLE_NAME}` (`subjectMasterId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "subject",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "subjectMasterId"
+            ],
+            "referencedColumns": [
+              "subjectId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "eduPerformance",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`subjectMasterId` TEXT, `marks` TEXT NOT NULL, `finalMark` TEXT, `examMark` TEXT, `period` TEXT NOT NULL, `eduPerformanceId` TEXT NOT NULL, PRIMARY KEY(`eduPerformanceId`), FOREIGN KEY(`subjectMasterId`) REFERENCES `subject`(`subjectId`) ON UPDATE NO ACTION ON DELETE SET DEFAULT )",
+        "fields": [
+          {
+            "fieldPath": "subjectMasterId",
+            "columnName": "subjectMasterId",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "marks",
+            "columnName": "marks",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "finalMark",
+            "columnName": "finalMark",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "examMark",
+            "columnName": "examMark",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "period",
+            "columnName": "period",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "eduPerformanceId",
+            "columnName": "eduPerformanceId",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "eduPerformanceId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_eduPerformance_subjectMasterId",
+            "unique": false,
+            "columnNames": [
+              "subjectMasterId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_eduPerformance_subjectMasterId` ON `${TABLE_NAME}` (`subjectMasterId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "subject",
+            "onDelete": "SET DEFAULT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "subjectMasterId"
+            ],
+            "referencedColumns": [
+              "subjectId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "task",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`title` TEXT NOT NULL, `description` TEXT NOT NULL, `dueDate` INTEGER NOT NULL, `subjectMasterId` TEXT, `isDone` INTEGER NOT NULL, `isFetched` INTEGER NOT NULL, `taskId` TEXT NOT NULL, PRIMARY KEY(`taskId`), FOREIGN KEY(`subjectMasterId`) REFERENCES `subject`(`subjectId`) ON UPDATE NO ACTION ON DELETE SET DEFAULT )",
+        "fields": [
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dueDate",
+            "columnName": "dueDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "subjectMasterId",
+            "columnName": "subjectMasterId",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "isDone",
+            "columnName": "isDone",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isFetched",
+            "columnName": "isFetched",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "taskId",
+            "columnName": "taskId",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "taskId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_task_subjectMasterId",
+            "unique": false,
+            "columnNames": [
+              "subjectMasterId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_task_subjectMasterId` ON `${TABLE_NAME}` (`subjectMasterId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "subject",
+            "onDelete": "SET DEFAULT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "subjectMasterId"
+            ],
+            "referencedColumns": [
+              "subjectId"
+            ]
+          }
+        ]
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '29af749ee444b8170e732c9610628ee1')"
+    ]
+  }
+}
