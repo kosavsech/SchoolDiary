@@ -99,6 +99,8 @@ fun TermsSettingsScreen(
 		modifier = Modifier.fillMaxSize(),
 	) { paddingValues ->
 		val dialogState = rememberMaterialDialogState(false)
+		val startDateDialogState = rememberMaterialDialogState(false)
+		val endDateDialogState = rememberMaterialDialogState(false)
 		
 		val changeEducationPeriodType = remember<(PeriodType) -> Unit> {
 			{ viewModel.changeEducationPeriodType(it) }
@@ -118,24 +120,61 @@ fun TermsSettingsScreen(
 		val savePeriod = remember {
 			{ viewModel.savePeriodsRanges() }
 		}
-		val updateEntry = remember<(PeriodWithRange) -> Unit> {
-			{ viewModel.updateEntry(it) }
-		}
 		val onCancel = remember {
 			{ viewModel.unselectEntry() }
 		}
+		val clearErrorMessage = remember {
+			{ viewModel.clearErrorMessage() }
+		}
+		LaunchedEffect(uiState.isPeriodSaved) {
+			if (uiState.isPeriodSaved) dialogState.hide()
+		}
 		PeriodRangeEntryDialog(
 			dialogState = dialogState,
+			startDateDialogState = startDateDialogState,
+			endDateDialogState = endDateDialogState,
 			titleRes = when (uiState.educationPeriodType) {
 				PeriodType.TERMS -> R.string.configure_term
 				PeriodType.SEMESTERS -> R.string.configure_semester
 				else -> R.string.corrupted_class
 			},
 			periodWithRangeEntry = uiState.periodWithRangeToUpdate,
-			updateEntry = updateEntry,
+			errorMessage = uiState.errorMessage,
+			clearErrorMessage = clearErrorMessage,
 			savePeriod = savePeriod,
 			onCancel = onCancel
 		)
+		
+		val updateEntry = remember<(PeriodWithRange) -> Unit> {
+			{ viewModel.updateEntry(it) }
+		}
+		if (uiState.periodWithRangeToUpdate != null) {
+			DatePickerDialog(
+				dialogState = startDateDialogState,
+				titleRes = R.string.choose_start_of_period_title,
+				onDateChanged = {
+					val updatedRange = uiState.periodWithRangeToUpdate.range.copy(
+						start = localDateToPeriodRangeEntry(it)
+					)
+					val updatedEntry = uiState.periodWithRangeToUpdate.copy(range = updatedRange)
+					updateEntry(updatedEntry)
+				},
+				initialDate = periodRangeEntryToLocalDate(uiState.periodWithRangeToUpdate.range.start)
+			)
+			DatePickerDialog(
+				dialogState = endDateDialogState,
+				titleRes = R.string.choose_end_of_period_title,
+				onDateChanged = {
+					val updatedRange =
+						uiState.periodWithRangeToUpdate.range.copy(
+							end = localDateToPeriodRangeEntry(it)
+						)
+					val updatedEntry = uiState.periodWithRangeToUpdate.copy(range = updatedRange)
+					updateEntry(updatedEntry)
+				},
+				initialDate = periodRangeEntryToLocalDate(uiState.periodWithRangeToUpdate.range.end)
+			)
+		}
 	}
 }
 
@@ -193,9 +232,9 @@ private fun PeriodTypeItem(
 		verticalAlignment = Alignment.CenterVertically
 	) {
 		Icon(
-			Icons.Default.EditCalendar,
-			"Period type",
-			Modifier.size(18.dp)
+			imageVector = Icons.Default.EditCalendar,
+			contentDescription = "Period type",
+			modifier = Modifier.size(18.dp)
 		)
 		Spacer(modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.horizontal_margin)))
 		Row(
@@ -240,8 +279,6 @@ private fun PeriodTypeItem(
 					colors = MenuDefaults.itemColors(
 						textColor = MaterialTheme.colorScheme.onSurface,
 						disabledTextColor = MaterialTheme.colorScheme.onSurface,
-						leadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-						disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
 					)
 				)
 			}
@@ -264,9 +301,9 @@ private fun PeriodItem(
 		verticalAlignment = Alignment.CenterVertically
 	) {
 		Icon(
-			Icons.Default.CalendarToday,
-			"Term",
-			Modifier.size(18.dp)
+			imageVector = Icons.Default.CalendarToday,
+			contentDescription = "Term",
+			modifier = Modifier.size(18.dp)
 		)
 		Spacer(modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.horizontal_margin)))
 		Column {
@@ -294,21 +331,28 @@ private fun PeriodItem(
 @Composable
 private fun PeriodRangeEntryDialog(
 	dialogState: MaterialDialogState,
+	startDateDialogState: MaterialDialogState,
+	endDateDialogState: MaterialDialogState,
 	@StringRes titleRes: Int,
 	periodWithRangeEntry: PeriodWithRange?,
-	updateEntry: (PeriodWithRange) -> Unit,
+	@StringRes errorMessage: Int?,
+	clearErrorMessage: () -> Unit,
 	savePeriod: () -> Unit,
 	onCancel: () -> Unit,
 ) {
-	val startDateDialogState = rememberMaterialDialogState(false)
-	val endDateDialogState = rememberMaterialDialogState(false)
+	if (periodWithRangeEntry != null) {
+		LaunchedEffect(periodWithRangeEntry.range) { clearErrorMessage() }
+	}
 	if (periodWithRangeEntry != null) {
 		MaterialDialog(
 			dialogState = dialogState,
 			buttons = {
 				positiveButton(res = R.string.btn_save, onClick = savePeriod)
-				negativeButton(res = R.string.btn_cancel, onClick = onCancel)
-			}
+				negativeButton(
+					res = R.string.btn_cancel,
+					onClick = { onCancel(); dialogState.hide() })
+			},
+			autoDismiss = false
 		) {
 			val ordinal =
 				stringArrayResource(R.array.ordinals)[periodWithRangeEntry.period.index] + " "
@@ -353,29 +397,16 @@ private fun PeriodRangeEntryDialog(
 					style = MaterialTheme.typography.bodyLarge
 				)
 			}
+			if (errorMessage != null) {
+				Text(
+					text = stringResource(errorMessage),
+					style = MaterialTheme.typography.labelMedium,
+					color = MaterialTheme.colorScheme.error,
+					modifier = Modifier
+						.padding(horizontal = dimensionResource(id = R.dimen.horizontal_margin))
+				)
+			}
 		}
-		DatePickerDialog(
-			dialogState = startDateDialogState,
-			titleRes = R.string.choose_start_of_period_title,
-			onDateChanged = {
-				val updatedRange =
-					periodWithRangeEntry.range.copy(start = localDateToPeriodRangeEntry(it))
-				val updatedEntry = periodWithRangeEntry.copy(range = updatedRange)
-				updateEntry(updatedEntry)
-			},
-			initialDate = periodRangeEntryToLocalDate(periodWithRangeEntry.range.start)
-		)
-		DatePickerDialog(
-			dialogState = endDateDialogState,
-			titleRes = R.string.choose_end_of_period_title,
-			onDateChanged = {
-				val updatedRange =
-					periodWithRangeEntry.range.copy(end = localDateToPeriodRangeEntry(it))
-				val updatedEntry = periodWithRangeEntry.copy(range = updatedRange)
-				updateEntry(updatedEntry)
-			},
-			initialDate = periodRangeEntryToLocalDate(periodWithRangeEntry.range.end)
-		)
 	}
 }
 

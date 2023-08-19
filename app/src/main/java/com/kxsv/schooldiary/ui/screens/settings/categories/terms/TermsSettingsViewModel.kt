@@ -2,11 +2,13 @@ package com.kxsv.schooldiary.ui.screens.settings.categories.terms
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
 import com.kxsv.schooldiary.data.util.user_preferences.PeriodType
 import com.kxsv.schooldiary.data.util.user_preferences.PeriodWithRange
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.Dispatcher
+import com.kxsv.schooldiary.util.Utils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList
@@ -27,8 +29,10 @@ data class TermsSettingsUiState(
 	val periodWithRangeToUpdate: PeriodWithRange? = null,
 	
 	val isSaved: Boolean = false,
+	val isPeriodSaved: Boolean = false,
 	
 	val userMessage: Int? = null,
+	val errorMessage: Int? = null,
 	val userMessageArgs: Array<out Any>? = null,
 	val isLoading: Boolean = false,
 )
@@ -63,7 +67,12 @@ class TermsSettingsViewModel @Inject constructor(
 	}
 	
 	fun unselectEntry() {
-		_uiState.update { it.copy(periodWithRangeToUpdate = null) }
+		_uiState.update {
+			it.copy(
+				periodWithRangeToUpdate = null,
+				isPeriodSaved = true
+			)
+		}
 	}
 	
 	fun savePeriodsRanges() {
@@ -71,6 +80,17 @@ class TermsSettingsViewModel @Inject constructor(
 			?: throw IllegalStateException("Tried to save period but period ranges are null")
 		val periodToUpdate = uiState.value.periodWithRangeToUpdate
 			?: throw IllegalStateException("Tried to save period but it's null")
+		val startDate = Utils.periodRangeEntryToLocalDate(periodToUpdate.range.start)
+		val endDate = Utils.periodRangeEntryToLocalDate(periodToUpdate.range.end)
+		if (startDate.isAfter(endDate)) {
+			_uiState.update {
+				it.copy(
+					errorMessage = R.string.start_is_after_end_error,
+					isPeriodSaved = false
+				)
+			}
+			return
+		}
 		viewModelScope.launch(ioDispatcher) {
 			val newPeriodsRanges = allPeriodRanges
 				.filterNot { it.period == periodToUpdate.period }
@@ -78,7 +98,12 @@ class TermsSettingsViewModel @Inject constructor(
 				.sortedBy { it.period.ordinal }
 				.toPersistentList()
 			
-			_uiState.update { it.copy(allPeriodRanges = newPeriodsRanges) }
+			_uiState.update {
+				it.copy(
+					allPeriodRanges = newPeriodsRanges,
+					isPeriodSaved = true
+				)
+			}
 			unselectEntry()
 		}
 	}
@@ -112,6 +137,10 @@ class TermsSettingsViewModel @Inject constructor(
 			userPreferencesRepository.setPeriodsRanges(periodsRanges)
 			_uiState.update { it.copy(isSaved = true) }
 		}
+	}
+	
+	fun clearErrorMessage() {
+		_uiState.update { it.copy(errorMessage = null) }
 	}
 	
 }

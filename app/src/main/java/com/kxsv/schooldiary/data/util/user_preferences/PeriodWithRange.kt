@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class PeriodWithRange(
 	val period: Period,
-	val range: Range,
+	val range: PeriodDateRange,
 )

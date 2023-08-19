@@ -230,5 +230,6 @@
     <string name="term">Term</string>
     <string name="semester">Semester</string>
     <string name="current_education_period_type">Current period type</string>
+    <string name="start_is_after_end_error">Start date cannot be after end date</string>
 
 </resources>
