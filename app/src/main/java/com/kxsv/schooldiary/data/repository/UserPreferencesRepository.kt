@@ -1,10 +1,17 @@
 package com.kxsv.schooldiary.data.repository
 
+import com.kxsv.schooldiary.data.util.user_preferences.PeriodType
+import com.kxsv.schooldiary.data.util.user_preferences.PeriodWithRange
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.coroutines.flow.Flow
 
 interface UserPreferencesRepository {
 	
 	fun observeTargetMark(): Flow<Double>
+	
+	fun observeEducationPeriodType(): Flow<PeriodType>
+	
+	fun observePeriodsRanges(): Flow<PersistentList<PeriodWithRange>>
 	
 	fun observeRoundRule(): Flow<Double>
 	
@@ -23,6 +30,14 @@ interface UserPreferencesRepository {
 	suspend fun getTargetMark(): Double
 	
 	suspend fun setTargetMark(targetMark: Double)
+	
+	suspend fun getEducationPeriodType(): PeriodType
+	
+	suspend fun setEducationPeriodType(educationPeriodType: PeriodType)
+	
+	suspend fun getPeriodsRanges(): PersistentList<PeriodWithRange>
+	
+	suspend fun setPeriodsRanges(periodsRanges: PersistentList<PeriodWithRange>)
 	
 	suspend fun getRoundRule(): Double
 	

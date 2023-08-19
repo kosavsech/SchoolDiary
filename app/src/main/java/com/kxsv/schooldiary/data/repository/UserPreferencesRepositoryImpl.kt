@@ -2,6 +2,9 @@ package com.kxsv.schooldiary.data.repository
 
 import androidx.datastore.core.DataStore
 import com.kxsv.schooldiary.data.local.user_preferences.UserPreferences
+import com.kxsv.schooldiary.data.util.user_preferences.PeriodType
+import com.kxsv.schooldiary.data.util.user_preferences.PeriodWithRange
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -16,6 +19,18 @@ class UserPreferencesRepositoryImpl @Inject constructor(
 	override fun observeTargetMark(): Flow<Double> {
 		return dataStore.data.map {
 			it.defaultTargetMark
+		}
+	}
+	
+	override fun observeEducationPeriodType(): Flow<PeriodType> {
+		return dataStore.data.map {
+			it.educationPeriodType
+		}
+	}
+	
+	override fun observePeriodsRanges(): Flow<PersistentList<PeriodWithRange>> {
+		return dataStore.data.map {
+			it.periodsRanges
 		}
 	}
 	
@@ -68,6 +83,26 @@ class UserPreferencesRepositoryImpl @Inject constructor(
 	override suspend fun setTargetMark(targetMark: Double) {
 		dataStore.updateData {
 			it.copy(defaultTargetMark = targetMark)
+		}
+	}
+	
+	override suspend fun getEducationPeriodType(): PeriodType {
+		return dataStore.data.first().educationPeriodType
+	}
+	
+	override suspend fun setEducationPeriodType(educationPeriodType: PeriodType) {
+		dataStore.updateData {
+			it.copy(educationPeriodType = educationPeriodType)
+		}
+	}
+	
+	override suspend fun getPeriodsRanges(): PersistentList<PeriodWithRange> {
+		return dataStore.data.first().periodsRanges
+	}
+	
+	override suspend fun setPeriodsRanges(periodsRanges: PersistentList<PeriodWithRange>) {
+		dataStore.updateData {
+			it.copy(periodsRanges = periodsRanges)
 		}
 	}
 	

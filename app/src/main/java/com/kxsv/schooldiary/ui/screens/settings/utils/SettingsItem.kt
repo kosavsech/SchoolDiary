@@ -9,7 +9,7 @@ sealed class SettingsItemType {
 	class Toggleable(val state: Boolean?) : SettingsItemType()
 }
 
-data class SettingsScreenItem(
+data class SettingsItem(
 	@StringRes val label: Int,
 	val type: SettingsItemType,
 	val onValueChange: (Any) -> Unit,

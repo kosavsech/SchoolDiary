@@ -253,6 +253,29 @@ fun SettingsTopAppBar(
 	)
 }
 
+
+@Composable
+fun GeneralSettingsTopAppBar(
+	onBack: () -> Unit,
+) {
+	TopAppBar(
+		title = { Text(text = stringResource(id = R.string.general_settings)) },
+		navigationIcon = { BackIconButton(onBack = onBack) },
+		modifier = Modifier.fillMaxWidth(),
+	)
+}
+
+@Composable
+fun TermsSettingsTopAppBar(
+	onBack: () -> Unit,
+) {
+	TopAppBar(
+		title = { Text(text = stringResource(id = R.string.terms_settings)) },
+		navigationIcon = { BackIconButton(onBack = onBack) },
+		modifier = Modifier.fillMaxWidth(),
+	)
+}
+
 @Composable
 fun ScheduleTopAppBar(
 	onChangePattern: () -> Unit,

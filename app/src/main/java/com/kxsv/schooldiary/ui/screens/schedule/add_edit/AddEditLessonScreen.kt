@@ -398,7 +398,8 @@ private fun DateRow(
 	DatePickerDialog(
 		dialogState = datePickerDialog,
 		onDateChanged = onDateChanged,
-		date = date
+		initialDate = date,
+		allowedDateValidator = { it.dayOfWeek != DayOfWeek.SUNDAY }
 	)
 }
 
@@ -446,10 +447,9 @@ private fun SubjectRow(
 private fun DatePickerDialog(
 	dialogState: MaterialDialogState,
 	onDateChanged: (LocalDate) -> Unit,
-	date: LocalDate?,
+	initialDate: LocalDate?,
+	allowedDateValidator: (LocalDate) -> Boolean = { true },
 ) {
-	val initialDate = date ?: Utils.currentDate
-	
 	MaterialDialog(
 		dialogState = dialogState,
 		buttons = {
@@ -458,10 +458,10 @@ private fun DatePickerDialog(
 		}
 	) {
 		datepicker(
-			initialDate = initialDate,
+			initialDate = initialDate ?: Utils.currentDate,
 			waitForPositiveButton = true,
 			// TODO: add option in settings to configure this behaviour
-			allowedDateValidator = { it.dayOfWeek != DayOfWeek.SUNDAY },
+			allowedDateValidator = allowedDateValidator,
 			onDateChange = onDateChanged
 		)
 	}
@@ -537,6 +537,7 @@ private fun DatePickerPreview() {
 	DatePickerDialog(
 		dialogState = rememberMaterialDialogState(true),
 		onDateChanged = {},
-		date = LocalDate.now().minusDays(1)
+		initialDate = LocalDate.now().minusDays(1),
+		allowedDateValidator = { it.dayOfWeek != DayOfWeek.SUNDAY }
 	)
 }

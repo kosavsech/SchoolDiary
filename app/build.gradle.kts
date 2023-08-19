@@ -62,13 +62,13 @@ dependencies {
 	implementation("androidx.startup:startup-runtime:1.1.1")
 	implementation("androidx.core:core-ktx:1.10.1")
 	implementation("androidx.appcompat:appcompat:1.6.1")
+	implementation("androidx.activity:activity-compose:1.7.2")
+	implementation("androidx.constraintlayout:constraintlayout-compose:1.0.1")
+	
 	implementation(project(":dialogs-core"))
 	implementation(project(":dialogs-datetime"))
 	implementation(project(":ychart-mod"))
 	implementation(project(":segmentedprogressbar"))
-	testImplementation("junit:junit:4.13.2")
-	androidTestImplementation("androidx.test.ext:junit:1.1.5")
-	androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 	
 	// Compose dependencies
 	val composeVersion = "1.5.0"
@@ -87,10 +87,6 @@ dependencies {
 	implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
 	implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
 	implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
-	
-	implementation("androidx.activity:activity-compose:1.7.2")
-	implementation("androidx.constraintlayout:constraintlayout-compose:1.0.1")
-	
 	
 	// Coroutines
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
@@ -112,7 +108,7 @@ dependencies {
 	implementation("com.google.code.gson:gson:2.10.1")
 	
 	// https://github.com/aclassen/ComposeReorderable/releases/latest
-	implementation("org.burnoutcrew.composereorderable:reorderable:0.9.6")
+//	implementation("org.burnoutcrew.composereorderable:reorderable:0.9.6")
 	
 	// Kotlin Extensions and Coroutines support for Room
 	implementation("androidx.room:room-ktx:2.5.2")
@@ -132,11 +128,14 @@ dependencies {
 	// WorkManager
 	val workManagerVersion = "2.9.0-alpha02"
 	implementation("androidx.work:work-runtime:$workManagerVersion")
-//	implementation("androidx.work:work-runtime-ktx:$workManagerVersion")
 	
 	// compose-destinations
 	implementation("io.github.raamcosta.compose-destinations:core:1.9.51")
 	ksp("io.github.raamcosta.compose-destinations:ksp:1.9.51")
+	
+	testImplementation("junit:junit:4.13.2")
+	androidTestImplementation("androidx.test.ext:junit:1.1.5")
+	androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 }
 kapt {
 	correctErrorTypes = true

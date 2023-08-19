@@ -209,4 +209,26 @@
     <string name="corrupted_class">This class is corrupted</string>
     <string name="leading_icon_of_row">Leading icon of row</string>
     <string name="override_lesson_cabinet">Override lesson cabinet</string>
+    <string name="education_period_type_not_found">Education period type not found</string>
+    <string name="periods_ranges_not_found">Education periods ranges not found</string>
+    <string name="general_settings">General</string>
+    <string name="terms_settings">Terms</string>
+    <string name="non_functional_category">Non functional category was clicked</string>
+    <string name="choose_start_of_period_title">Choose start date:</string>
+    <string name="choose_end_of_period_title">Choose end date:</string>
+    <string name="configure_term">"Configure %1$s term "</string>
+    <string name="configure_semester">Configure %1$s semester</string>
+    <string name="start_date_label">Start date</string>
+    <string name="end_date_label">End date</string>
+    <string-array name="ordinals">
+        <item>0th</item>
+        <item>1st</item>
+        <item>2nd</item>
+        <item>3rd</item>
+        <item>4th</item>
+    </string-array>
+    <string name="term">Term</string>
+    <string name="semester">Semester</string>
+    <string name="current_education_period_type">Current period type</string>
+
 </resources>
