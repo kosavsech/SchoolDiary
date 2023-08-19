@@ -4,6 +4,7 @@ import android.util.Log
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import com.kxsv.schooldiary.data.util.Mark
+import com.kxsv.schooldiary.data.util.user_preferences.PeriodWithRange
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import java.time.Instant
@@ -18,12 +19,53 @@ import kotlin.math.floor
 
 private const val TAG = "Utils"
 
-const val MINUTES_PER_HOUR = 60
-const val SECONDS_PER_MINUTE = 60
-const val SECONDS_PER_HOUR = SECONDS_PER_MINUTE * MINUTES_PER_HOUR
-
 object Utils {
 	val currentDate: LocalDate = LocalDate.of(2023, 5, 15)
+	
+	fun Collection<PeriodWithRange>.getCurrentPeriod(): EduPerformancePeriod? {
+		if (this.isEmpty()) return null
+		
+		val lastPeriodEnd =
+			periodRangeEntryToLocalDate(this.maxByOrNull { it.period.ordinal }!!.range.end)
+		
+		var holidayCandidate: Pair<PeriodWithRange?, Long> = Pair(null, 366)
+		if (currentDate.isAfter(lastPeriodEnd)) {
+			return EduPerformancePeriod.FOURTH
+		} else {
+			this.forEach { periodWithRange ->
+				val startDate = periodRangeEntryToLocalDate(periodWithRange.range.start)
+				val endDate = periodRangeEntryToLocalDate(periodWithRange.range.end)
+				val periodTimeRange = startDate..endDate
+				
+				if (currentDate in periodTimeRange) {
+					Log.d(
+						TAG,
+						"getCurrentPeriod() returned: ${periodWithRange.period.convertToEduPerformancePeriod()}"
+					)
+					return periodWithRange.period.convertToEduPerformancePeriod()
+				} else {
+					val daysUntilEnd = currentDate.until(endDate, ChronoUnit.DAYS)
+					if (daysUntilEnd > 0) {
+						Log.d(TAG, "getCurrentPeriod() skipped: $periodWithRange")
+						return@forEach
+					}
+					if (daysUntilEnd < holidayCandidate.second) {
+						Log.d(TAG, "getCurrentPeriod: was $holidayCandidate")
+						holidayCandidate = Pair(periodWithRange, daysUntilEnd)
+						Log.d(TAG, "getCurrentPeriod: become $holidayCandidate")
+					}
+				}
+			}
+		}
+		
+		val result = if (holidayCandidate.first != null) {
+			holidayCandidate.first!!.period.convertToEduPerformancePeriod()
+		} else {
+			null
+		}
+		Log.d(TAG, "getCurrentPeriod() returned candidate: $result")
+		return result
+	}
 	
 	fun List<PatternStrokeEntity>.getCurrentLessonIndexByTime(currentTime: LocalTime): Int? {
 		if (this.isEmpty()) return null
@@ -117,10 +159,31 @@ object Utils {
 		"${date.monthValue}_${date.dayOfMonth}"
 	
 	fun periodRangeEntryToLocalDate(value: String): LocalDate = value.let {
-		val monthValue = it.split("_")[0].toInt()
+		val periodMonth = it.split("_")[0].toInt()
 		val dayOfMonth = it.split("_")[1].toInt()
 		
-		return LocalDate.of(LocalDate.now().year, monthValue, dayOfMonth)
+		val firstPartOfStudyYear = 9..12
+		val secondPartOfStudyYear = 1..5
+		
+		val currentMonth = LocalDate.now().monthValue
+		val currentYear = LocalDate.now().year
+		
+		val year = when (currentMonth) {
+			in firstPartOfStudyYear -> {
+				when (periodMonth) {
+					in secondPartOfStudyYear -> currentYear + 1
+					else -> currentYear
+				}
+			}
+			
+			else -> {
+				when (periodMonth) {
+					in firstPartOfStudyYear -> currentYear - 1
+					else -> currentYear
+				}
+			}
+		}
+		return LocalDate.of(year, periodMonth, dayOfMonth)
 	}
 	
 	fun timestampToLocalDate(value: Long?): LocalDate? =

@@ -5,10 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceWithSubject
 import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.repository.EduPerformanceRepository
+import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
+import com.kxsv.schooldiary.data.util.user_preferences.Period.Companion.getTypeByPeriod
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.util.WhileUiSubscribed
+import com.kxsv.schooldiary.util.Utils.getCurrentPeriod
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -24,16 +27,17 @@ data class EduPerformanceUiState(
 	val eduPerformanceList: List<EduPerformanceWithSubject> = emptyList(),
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
-	val period: EduPerformancePeriod = EduPerformancePeriod.FOURTH,
+	val period: EduPerformancePeriod = EduPerformancePeriod.FIRST,
 )
 
 @HiltViewModel
 class EduPerformanceViewModel @Inject constructor(
 	private val eduPerformanceRepository: EduPerformanceRepository,
+	private val userPreferencesRepository: UserPreferencesRepository,
 	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
-	private val _period = MutableStateFlow(EduPerformancePeriod.FOURTH)
+	private val _period = MutableStateFlow(EduPerformancePeriod.FIRST)
 	
 	@OptIn(ExperimentalCoroutinesApi::class)
 	private val _eduPerformanceAsync = _period
@@ -43,7 +47,9 @@ class EduPerformanceViewModel @Inject constructor(
 		.stateIn(viewModelScope, WhileUiSubscribed, emptyList())
 	
 	private val _uiState = MutableStateFlow(EduPerformanceUiState())
-	val uiState = combine(_uiState, _eduPerformanceAsync, _period) { state, gradesAsync, period ->
+	val uiState = combine(
+		_uiState, _eduPerformanceAsync, _period
+	) { state, gradesAsync, period ->
 		state.copy(
 			eduPerformanceList = gradesAsync,
 			period = period,
@@ -51,7 +57,16 @@ class EduPerformanceViewModel @Inject constructor(
 	}.stateIn(viewModelScope, WhileUiSubscribed, EduPerformanceUiState())
 	
 	init {
-//		refresh()
+		viewModelScope.launch(ioDispatcher) {
+			val periodType = userPreferencesRepository.getEducationPeriodType()
+			val periodsRanges = userPreferencesRepository.getPeriodsRanges()
+				.filter { getTypeByPeriod(it.period) == periodType }
+			val currentPeriod = periodsRanges.getCurrentPeriod()
+			if (currentPeriod != null) {
+				changePeriod(currentPeriod)
+			}
+			refresh()
+		}
 	}
 	// todo add showeditresult message
 	

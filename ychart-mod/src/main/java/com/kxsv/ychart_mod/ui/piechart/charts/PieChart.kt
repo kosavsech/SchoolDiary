@@ -20,7 +20,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -83,7 +83,7 @@ fun PieChart(
 		progressSize.add(sweepAngles[x] + progressSize[x - 1])
 	}
 	
-	var activePie by rememberSaveable { mutableStateOf(NO_SELECTED_SLICE) }
+	var activePie by rememberSaveable { mutableIntStateOf(NO_SELECTED_SLICE) }
 	val accessibilitySheetState =
 		rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
 	val scope = rememberCoroutineScope()

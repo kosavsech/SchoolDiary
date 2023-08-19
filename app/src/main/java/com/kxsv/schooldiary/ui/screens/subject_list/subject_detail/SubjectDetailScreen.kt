@@ -222,7 +222,6 @@ private fun SubjectContent(
 					targetMark = targetMark,
 					roundRule = roundRule
 				)
-				Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.vertical_margin)))
 				
 				val fivesCount = remember(eduPerformance.marks) {
 					eduPerformance.marks.count { it == Mark.FIVE }.toFloat()
@@ -255,13 +254,15 @@ private fun SubjectContent(
 					showSliceLabels = true,
 					labelVisible = true,
 					labelType = PieChartConfig.LabelType.BOTH,
-					sumUnit = "unit"
+					sumUnit = "unit",
+					backgroundColor = MaterialTheme.colorScheme.background,
+					isClickOnSliceEnabled = false
 				)
 				
 				Column(
 					modifier = Modifier
 						.height(300.dp)
-						.padding(horizontal = dimensionResource(R.dimen.horizontal_margin))
+//						.padding(horizontal = dimensionResource(R.dimen.horizontal_margin))
 				) {
 					PieChart(
 						modifier = Modifier,

@@ -12,6 +12,7 @@ import com.kxsv.schooldiary.data.repository.GradeRepository
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
+import com.kxsv.schooldiary.data.util.user_preferences.Period
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
@@ -20,9 +21,11 @@ import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.ui.util.Async
 import com.kxsv.schooldiary.ui.util.WhileUiSubscribed
+import com.kxsv.schooldiary.util.Utils.getCurrentPeriod
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -52,6 +55,7 @@ private data class AsyncData(
 	val eduPerformance: EduPerformanceEntity? = null,
 )
 
+@Suppress("DeferredResultUnused")
 @HiltViewModel
 class SubjectDetailViewModel @Inject constructor(
 	private val subjectRepository: SubjectRepository,
@@ -119,8 +123,19 @@ class SubjectDetailViewModel @Inject constructor(
 	
 	init {
 		viewModelScope.launch(ioDispatcher) {
-			_uiState.update {
-				it.copy(roundRule = userPreferencesRepository.getRoundRule())
+			async {
+				val periodType = userPreferencesRepository.getEducationPeriodType()
+				val periodsRanges = userPreferencesRepository.getPeriodsRanges()
+					.filter { Period.getTypeByPeriod(it.period) == periodType }
+				val currentPeriod = periodsRanges.getCurrentPeriod()
+				if (currentPeriod != null) {
+					changePeriod(currentPeriod)
+				}
+			}
+			async {
+				_uiState.update {
+					it.copy(roundRule = userPreferencesRepository.getRoundRule())
+				}
 			}
 		}
 	}
