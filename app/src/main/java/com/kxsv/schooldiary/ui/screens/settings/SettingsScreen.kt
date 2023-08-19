@@ -12,8 +12,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Stars
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.Icon
@@ -39,7 +41,9 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.SettingsTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.SettingsScreenNavActions
 import com.kxsv.schooldiary.ui.screens.destinations.GeneralSettingsScreenDestination
+import com.kxsv.schooldiary.ui.screens.destinations.GradeSettingsScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.TermsSettingsScreenDestination
+import com.kxsv.schooldiary.ui.screens.destinations.TimetableSettingsScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.TypedDestination
 import com.kxsv.schooldiary.ui.screens.settings.utils.SettingsScreenCategory
 import com.kxsv.schooldiary.ui.theme.AppTheme
@@ -101,6 +105,16 @@ private fun SettingsContent(
 			icon = Icons.Outlined.CalendarMonth,
 			label = R.string.terms_settings,
 			destination = TermsSettingsScreenDestination
+		),
+		SettingsScreenCategory(
+			icon = Icons.Outlined.AccessTime,
+			label = R.string.timetable_settings,
+			destination = TimetableSettingsScreenDestination
+		),
+		SettingsScreenCategory(
+			icon = Icons.Outlined.Stars,
+			label = R.string.grade_settings,
+			destination = GradeSettingsScreenDestination
 		),
 	)
 	LoadingContent(

@@ -266,11 +266,33 @@ fun GeneralSettingsTopAppBar(
 }
 
 @Composable
+fun GradeSettingsTopAppBar(
+	onBack: () -> Unit,
+) {
+	TopAppBar(
+		title = { Text(text = stringResource(id = R.string.grade_settings)) },
+		navigationIcon = { BackIconButton(onBack = onBack) },
+		modifier = Modifier.fillMaxWidth(),
+	)
+}
+
+@Composable
 fun TermsSettingsTopAppBar(
 	onBack: () -> Unit,
 ) {
 	TopAppBar(
 		title = { Text(text = stringResource(id = R.string.terms_settings)) },
+		navigationIcon = { BackIconButton(onBack = onBack) },
+		modifier = Modifier.fillMaxWidth(),
+	)
+}
+
+@Composable
+fun TimetableSettingsTopAppBar(
+	onBack: () -> Unit,
+) {
+	TopAppBar(
+		title = { Text(text = stringResource(id = R.string.timetable_settings)) },
 		navigationIcon = { BackIconButton(onBack = onBack) },
 		modifier = Modifier.fillMaxWidth(),
 	)

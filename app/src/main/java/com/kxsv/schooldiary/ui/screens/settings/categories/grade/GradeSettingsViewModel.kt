@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.ui.screens.settings.categories.general
+package com.kxsv.schooldiary.ui.screens.settings.categories.grade
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,15 +14,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-data class GeneralSettingsUiState(
-	val suppressInitLogin: Boolean? = null,
+data class GradeSettingsUiState(
+	val defaultTargetMark: Double? = null,
+	val defaultRoundRule: Double? = null,
 	
 	val userMessage: Int? = null,
 	val userMessageArgs: Array<out Any>? = null,
@@ -30,24 +30,26 @@ data class GeneralSettingsUiState(
 )
 
 private data class AsyncData(
-	val suppressInitLogin: Boolean? = null,
+	val defaultTargetMark: Double? = null,
+	val defaultRoundRule: Double? = null,
 )
 
 @HiltViewModel
-class GeneralSettingsViewModel @Inject constructor(
+class GradeSettingsViewModel @Inject constructor(
 	private val userPreferencesRepository: UserPreferencesRepository,
 	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
-	private val _temp = flowOf(0)
-	private val _suppressInitLogin = userPreferencesRepository.observeInitLoginSuppression()
+	private val _defaultTargetMark = userPreferencesRepository.observeTargetMark()
+	private val _defaultRoundRule = userPreferencesRepository.observeRoundRule()
 	
 	private val _asyncData = combine(
-		flow = _temp,
-		flow2 = _suppressInitLogin,
-	) { _, suppressLogin ->
+		flow = _defaultTargetMark,
+		flow2 = _defaultRoundRule,
+	) { targetMark, roundRule ->
 		AsyncData(
-			suppressInitLogin = suppressLogin,
+			defaultTargetMark = targetMark,
+			defaultRoundRule = roundRule,
 		)
 	}
 		.map { handleAsyncData(it) }
@@ -55,13 +57,14 @@ class GeneralSettingsViewModel @Inject constructor(
 		.stateIn(viewModelScope, WhileUiSubscribed, Async.Loading)
 	
 	private fun handleAsyncData(asyncData: AsyncData): Async<AsyncData> {
-		if (asyncData.suppressInitLogin == null) return Async.Error(R.string.login_suppression_not_found)
+		if (asyncData.defaultTargetMark == null) return Async.Error(R.string.default_target_mark_not_found)
+		if (asyncData.defaultRoundRule == null) return Async.Error(R.string.default_round_rule_not_found)
 		
 		return Async.Success(asyncData)
 	}
 	
-	private val _uiState = MutableStateFlow(GeneralSettingsUiState())
-	val uiState: StateFlow<GeneralSettingsUiState> = combine(
+	private val _uiState = MutableStateFlow(GradeSettingsUiState())
+	val uiState: StateFlow<GradeSettingsUiState> = combine(
 		_uiState, _asyncData
 	) { state, asyncData ->
 		when (asyncData) {
@@ -69,16 +72,20 @@ class GeneralSettingsViewModel @Inject constructor(
 			is Async.Error -> state.copy(userMessage = asyncData.errorMessage)
 			is Async.Success -> {
 				state.copy(
-					suppressInitLogin = asyncData.data.suppressInitLogin,
+					defaultTargetMark = asyncData.data.defaultTargetMark,
+					defaultRoundRule = asyncData.data.defaultRoundRule,
 				)
 			}
 		}
-	}.stateIn(viewModelScope, WhileUiSubscribed, GeneralSettingsUiState(isLoading = true))
+	}.stateIn(viewModelScope, WhileUiSubscribed, GradeSettingsUiState(isLoading = true))
 	
-	fun changeLoginSuppression(newValue: Boolean) = viewModelScope.launch(ioDispatcher) {
-		userPreferencesRepository.setInitLoginSuppression(newValue)
+	fun changeDefaultTargetMark(newTarget: Double) = viewModelScope.launch(ioDispatcher) {
+		userPreferencesRepository.setTargetMark(newTarget)
 	}
 	
+	fun changeDefaultRoundRule(newRule: Double) = viewModelScope.launch(ioDispatcher) {
+		userPreferencesRepository.setRoundRule(newRule)
+	}
 	
 	fun snackbarMessageShown() {
 		_uiState.update {

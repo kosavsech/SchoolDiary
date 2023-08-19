@@ -1,4 +1,4 @@
-package com.kxsv.schooldiary.ui.screens.settings.categories.general
+package com.kxsv.schooldiary.ui.screens.settings.categories.timetable
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -24,60 +26,116 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
-import com.kxsv.schooldiary.ui.main.app_bars.topbar.GeneralSettingsTopAppBar
+import com.kxsv.schooldiary.ui.main.app_bars.topbar.TimetableSettingsTopAppBar
 import com.kxsv.schooldiary.ui.screens.settings.utils.SettingsItem
 import com.kxsv.schooldiary.ui.screens.settings.utils.SettingsItemType
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.vanpra.composematerialdialogs.MaterialDialog
+import com.vanpra.composematerialdialogs.MaterialDialogState
+import com.vanpra.composematerialdialogs.input
+import com.vanpra.composematerialdialogs.message
+import com.vanpra.composematerialdialogs.rememberMaterialDialogState
+import com.vanpra.composematerialdialogs.title
 
 @Destination
 @Composable
-fun GeneralSettingsScreen(
+fun TimetableSettingsScreen(
 	destinationsNavigator: DestinationsNavigator,
-	viewModel: GeneralSettingsViewModel = hiltViewModel(),
+	viewModel: TimetableSettingsViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState,
 ) {
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		topBar = {
-			GeneralSettingsTopAppBar(onBack = { destinationsNavigator.popBackStack() })
+			TimetableSettingsTopAppBar(onBack = { destinationsNavigator.popBackStack() })
 		},
 		modifier = Modifier.fillMaxSize(),
 	) { paddingValues ->
 		val uiState = viewModel.uiState.collectAsState().value
+		val lessonDurationDialogState = rememberMaterialDialogState(false)
 		
-		val changeLoginSuppression = remember<(Boolean) -> Unit> {
-			{ viewModel.changeLoginSuppression(it) }
+		val changeDefaultLessonDuration = remember<(Long) -> Unit> {
+			{ viewModel.changeDefaultLessonDuration(it) }
 		}
-		GeneralSettingsContent(
+		TimetableSettingsContent(
 			modifier = Modifier.padding(paddingValues),
 			loading = uiState.isLoading,
-			loginSuppression = uiState.suppressInitLogin,
-			onLoginSuppressionChange = changeLoginSuppression,
+			lessonDurationDialogState = lessonDurationDialogState,
+			defaultLessonDuration = uiState.defaultLessonDuration,
 		)
 		
+		LessonDurationDialog(
+			lessonDurationDialogState = lessonDurationDialogState,
+			defaultLessonDuration = uiState.defaultLessonDuration,
+			onInputSave = changeDefaultLessonDuration,
+		)
 	}
 }
 
 @Composable
-private fun GeneralSettingsContent(
+private fun LessonDurationDialog(
+	lessonDurationDialogState: MaterialDialogState,
+	defaultLessonDuration: Long?,
+	onInputSave: (Long) -> Unit,
+) {
+	val focusManager = LocalFocusManager.current
+	MaterialDialog(
+		dialogState = lessonDurationDialogState,
+		buttons = {
+			positiveButton(res = R.string.btn_save)
+			negativeButton(res = R.string.btn_cancel)
+		},
+	) {
+		title(res = R.string.enter_default_lesson_duration_dialog_title)
+		message(res = R.string.default_lesson_duration_description)
+		input(
+			label = "Default lesson duration",
+			prefill = defaultLessonDuration?.toString() ?: stringResource(id = R.string.not_found),
+			isTextValid = {
+				it.toLongOrNull() != null && (it.toLong() in 20..60)
+			},
+			errorMessage = "Ensure that duration is at least 20 and not more than 60",
+			onInput = { onInputSave(it.toLong()) },
+			waitForPositiveButton = true,
+			keyboardOptions = KeyboardOptions(
+				imeAction = ImeAction.Done,
+				autoCorrect = false,
+				capitalization = KeyboardCapitalization.None,
+				keyboardType = KeyboardType.NumberPassword
+			),
+			keyboardActions = KeyboardActions(
+				onDone = { focusManager.clearFocus() }
+			)
+		)
+	}
+}
+
+
+@Composable
+private fun TimetableSettingsContent(
 	modifier: Modifier,
 	loading: Boolean,
-	loginSuppression: Boolean?,
-	onLoginSuppressionChange: (Boolean) -> Unit,
+	lessonDurationDialogState: MaterialDialogState,
+	defaultLessonDuration: Long?,
 ) {
 	val settingItems = listOf(
 		SettingsItem(
-			label = R.string.login_suppression,
-			type = SettingsItemType.Toggleable(state = loginSuppression),
-			onValueChange = { onLoginSuppressionChange(it as Boolean) },
+			label = R.string.default_lesson_duration,
+			type = SettingsItemType.Input(currentValue = defaultLessonDuration?.toString()),
+			onValueChange = {},
+			onClick = { lessonDurationDialogState.show() },
 		),
 	)
 	LoadingContent(
