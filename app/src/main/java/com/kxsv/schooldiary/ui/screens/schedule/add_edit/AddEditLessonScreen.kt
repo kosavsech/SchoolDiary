@@ -537,7 +537,7 @@ private fun DatePickerPreview() {
 	DatePickerDialog(
 		dialogState = rememberMaterialDialogState(true),
 		onDateChanged = {},
-		initialDate = LocalDate.now().minusDays(1),
+		initialDate = Utils.currentDate.minusDays(1),
 		allowedDateValidator = { it.dayOfWeek != DayOfWeek.SUNDAY }
 	)
 }

@@ -1177,7 +1177,7 @@ private val previewTasks1 = listOf(
 		taskEntity = TaskEntity(
 			title = "стр 52-53 выучить, записи в тетради-подготовка к СР по астрономии, параграф 30+ конспекты тренировочных заданий уроков 46,47,49,50 на РЭШ",
 			description = "",
-			dueDate = LocalDate.now().plusDays(1),
+			dueDate = Utils.currentDate.plusDays(1),
 			subjectMasterId = "1"
 		),
 		SubjectEntity("Физика", subjectId = "1")
@@ -1186,7 +1186,7 @@ private val previewTasks1 = listOf(
 		taskEntity = TaskEntity(
 			title = "короче короткое задание там да",
 			description = "",
-			dueDate = LocalDate.now().plusDays(1),
+			dueDate = Utils.currentDate.plusDays(1),
 			subjectMasterId = "2"
 		),
 		SubjectEntity("Русский язык", subjectId = "2")
@@ -1200,12 +1200,12 @@ private val previewItems = listOf(
 		tasks = previewTasks1,
 		pattern = previewCurrentPattern
 	),
-	/*MainScreenItem(LocalDate.now().plusDays(1), previewClasses2, previewTasks1),
-	MainScreenItem(LocalDate.now().plusDays(2), previewClasses2),
-	MainScreenItem(LocalDate.now().plusDays(3), previewClasses1),
-	MainScreenItem(LocalDate.now().plusDays(4), previewClasses1),
-	MainScreenItem(LocalDate.now().plusDays(5), previewClasses1),
-	MainScreenItem(LocalDate.now().plusDays(6), previewClasses1),*/
+	/*MainScreenItem(Utils.currentDate.plusDays(1), previewClasses2, previewTasks1),
+	MainScreenItem(Utils.currentDate.plusDays(2), previewClasses2),
+	MainScreenItem(Utils.currentDate.plusDays(3), previewClasses1),
+	MainScreenItem(Utils.currentDate.plusDays(4), previewClasses1),
+	MainScreenItem(Utils.currentDate.plusDays(5), previewClasses1),
+	MainScreenItem(Utils.currentDate.plusDays(6), previewClasses1),*/
 )
 
 @Preview

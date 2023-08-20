@@ -36,13 +36,13 @@ import com.kxsv.schooldiary.data.util.Mark.Companion.getStringValueFrom
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.GradesTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.GradesScreenNavActions
 import com.kxsv.schooldiary.ui.util.LoadingContent
+import com.kxsv.schooldiary.util.Utils
 import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.FULL_ROUTE_PLACEHOLDER
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -189,7 +189,7 @@ private fun SubjectsContentPreview() {
 					GradeEntity(
 						mark = Mark.FIVE,
 						typeOfWork = "Самостоятельная работа",
-						date = LocalDate.now(),
+						date = Utils.currentDate,
 						fetchDateTime = LocalDateTime.now(),
 						subjectMasterId = "0",
 					),
@@ -210,7 +210,7 @@ private fun SubjectItemPreview() {
 				GradeEntity(
 					mark = Mark.FIVE,
 					typeOfWork = "Самостоятельная работа",
-					date = LocalDate.now(),
+					date = Utils.currentDate,
 					fetchDateTime = LocalDateTime.now(),
 					subjectMasterId = "0",
 				),

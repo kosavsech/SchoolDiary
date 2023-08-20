@@ -39,21 +39,21 @@ object Utils {
 				val periodTimeRange = startDate..endDate
 				
 				if (currentDate in periodTimeRange) {
-					Log.d(
+					/*Log.d(
 						TAG,
 						"getCurrentPeriod() returned: ${periodWithRange.period.convertToEduPerformancePeriod()}"
-					)
+					)*/
 					return periodWithRange.period.convertToEduPerformancePeriod()
 				} else {
 					val daysUntilEnd = currentDate.until(endDate, ChronoUnit.DAYS)
 					if (daysUntilEnd > 0) {
-						Log.d(TAG, "getCurrentPeriod() skipped: $periodWithRange")
+//						Log.d(TAG, "getCurrentPeriod() skipped: $periodWithRange")
 						return@forEach
 					}
 					if (daysUntilEnd < holidayCandidate.second) {
-						Log.d(TAG, "getCurrentPeriod: was $holidayCandidate")
+//						Log.d(TAG, "getCurrentPeriod: was $holidayCandidate")
 						holidayCandidate = Pair(periodWithRange, daysUntilEnd)
-						Log.d(TAG, "getCurrentPeriod: become $holidayCandidate")
+//						Log.d(TAG, "getCurrentPeriod: become $holidayCandidate")
 					}
 				}
 			}
@@ -64,7 +64,7 @@ object Utils {
 		} else {
 			null
 		}
-		Log.d(TAG, "getCurrentPeriod() returned candidate: $result")
+//		Log.d(TAG, "getCurrentPeriod() returned candidate: $result")
 		return result
 	}
 	
@@ -130,16 +130,16 @@ object Utils {
 	 */
 	fun Collection<Int>.getNextLessonsIndices(n: Int, startIndex: Int?): List<Int>? {
 		if (startIndex == null) {
-			Log.d(TAG, "getNextLessonsIndices: startIndex == null")
+//			Log.d(TAG, "getNextLessonsIndices: startIndex == null")
 			return null
 		}
 		if (this.isEmpty()) return null
-		
-		Log.d(TAG, "getNextLessonsIndices: this: $this")
+
+//		Log.d(TAG, "getNextLessonsIndices: this: $this")
 		val indicesSublist = this.filter { it >= startIndex }.toList()
-		Log.d(TAG, "getNextLessonsIndices: indicesSublist: $indicesSublist")
+//		Log.d(TAG, "getNextLessonsIndices: indicesSublist: $indicesSublist")
 		if (indicesSublist.isEmpty()) {
-			Log.d(TAG, "getNextLessonsIndices: indicesSublist.isEmpty()")
+//			Log.d(TAG, "getNextLessonsIndices: indicesSublist.isEmpty()")
 			return null
 		}
 		
@@ -148,7 +148,7 @@ object Utils {
 			if (result.size == n) return result
 			result.add(it)
 		}
-		Log.d(TAG, "getNextLessonsIndices() returned: $result")
+//		Log.d(TAG, "getNextLessonsIndices() returned: $result")
 		return result
 	}
 	
@@ -166,8 +166,8 @@ object Utils {
 		val firstPartOfStudyYear = 9..12
 		val secondPartOfStudyYear = 1..5
 		
-		val currentMonth = LocalDate.now().monthValue
-		val currentYear = LocalDate.now().year
+		val currentMonth = currentDate.monthValue
+		val currentYear = currentDate.year
 		
 		val year = when (currentMonth) {
 			in firstPartOfStudyYear -> {
@@ -274,88 +274,107 @@ object Utils {
 		return result
 	}
 	
+	private fun <T> List<T>.isEqualsIgnoreOrder(other: List<T>) =
+		this.size == other.size && this.toSet() == other.toSet()
+	
 	fun calculateRealizableBadMarks(
 		roundRule: Double,
 		lowerBound: Double,
 		avgMark: Double,
 		sum: Int,
 		valueSum: Double,
-	): Map<String, Map<String, Int?>?> {
-		fun calculateGrades(vararg grade: Int): Map<String, Int?>? {
-			var processAvg = avgMark
-			when (grade.size) {
+	): List<RealizableBadMarks> {
+		fun calculateGrades(strategy: BadMarkStrategy): RealizableBadMarks? {
+			var currentInProcessAvg = avgMark
+			val strategyGrades = strategy.getIntValuesOfGrades()
+			if (strategyGrades.first() == null) return null
+			when (strategyGrades.size) {
 				1 -> {
-					var gradeCount: Int =
-						if (grade.first() >= roundWithRule(processAvg, roundRule)) {
-							Log.w(TAG, "calculateGrades: auto-skip of ${grade[0]}")
+					var firstGradeCount: Int =
+						if (strategyGrades.first()!!
+							>= roundWithRule(currentInProcessAvg, roundRule)
+						) {
+							Log.w(TAG, "calculateGrades: auto-skip of ${strategyGrades[0]}")
 							return null
 						} else {
-							0
+							1
 						}
 					
-					while (processAvg > lowerBound && gradeCount != 66) {
-						processAvg =
-							(valueSum + grade.first() * (gradeCount + 1)) / (sum + (gradeCount + 1))
-						if (processAvg < lowerBound) {
-							// early quit because can't stand gradeCount increase
-							return if (gradeCount == 0) {
-								Log.w(
-									TAG,
-									"calculateGrades: semi-auto-skip on fail after first try ${grade[0]}"
-								)
-								null
+					while (true) {
+						val valueOfFirstGradeAdded = strategyGrades.first()!! * firstGradeCount
+						val finalValue = valueSum + valueOfFirstGradeAdded
+						val finalSum = sum + firstGradeCount
+						
+						(finalValue / finalSum).let {
+							if (it >= lowerBound) {
+								Log.d(TAG, "currentInProcessAvg: $it > $lowerBound")
+								currentInProcessAvg = it
 							} else {
-								mapOf(Pair(grade.first().toString(), gradeCount))
+								return if ((firstGradeCount - 1) != 0) {
+									val result = RealizableBadMarks(
+										strategy = strategy,
+										count = listOf(firstGradeCount - 1)
+									)
+									Log.d(TAG, "calculateGrades(1) returned: $result")
+									result
+								} else {
+									null
+								}
 							}
 						}
-						gradeCount++
+						firstGradeCount++
 					}
-					return if (gradeCount == 0) {
-						null
-					} else {
-						mapOf(Pair(grade.first().toString(), gradeCount))
-					}
+					
 				}
 				
 				2 -> {
-					val maxGrade = maxOf(grade[0], grade[1])
-					if (maxGrade >= roundWithRule(processAvg, roundRule)) {
-						Log.w(TAG, "calculateGrades: auto-skip of ${grade[0]} and ${grade[1]}")
+					val maxGrade = maxOf(strategyGrades.first()!!, strategyGrades.last()!!)
+					if (maxGrade >= roundWithRule(currentInProcessAvg, roundRule)) {
+						Log.w(
+							TAG,
+							"calculateGrades: auto-skip of ${strategyGrades[0]} and ${strategyGrades[1]}"
+						)
 						return null
 					}
 					
-					var firstGradeCount = 0
-					var secondGradeCount = 0
 					var applyingFirstGrade = true
+					var firstGradeCount = 1
+					var secondGradeCount = 0
+					
 					var isSecondGradeBanned = false
 					var isFirstGradeBanned = false
 					
-					while (processAvg > lowerBound && firstGradeCount != 66) {
-						if (applyingFirstGrade) firstGradeCount++ else secondGradeCount++
+					while (true) {
+						val valueOfFirstGradeAdded = strategyGrades.first()!! * firstGradeCount
+						val valueOfSecondGradeAdded = strategyGrades.last()!! * secondGradeCount
+						val finalValue =
+							valueSum + valueOfFirstGradeAdded + valueOfSecondGradeAdded
+						val finalSum = sum + firstGradeCount + secondGradeCount
 						
-						val tryPassCheckValue =
-							(valueSum + (grade[0] * firstGradeCount) + (grade[1] * secondGradeCount)) /
-									(sum + firstGradeCount + secondGradeCount)
-						
-						if (tryPassCheckValue < lowerBound) {
-							if (applyingFirstGrade) {
-								firstGradeCount--; isFirstGradeBanned = true
+						(finalValue / finalSum).let {
+							if (it >= lowerBound) {
+								currentInProcessAvg = it
 							} else {
-								secondGradeCount--; isSecondGradeBanned = true
+								if (applyingFirstGrade) {
+									firstGradeCount--
+									isFirstGradeBanned = true
+								} else {
+									secondGradeCount--
+									isSecondGradeBanned = true
+								}
 							}
-						} else {
-							processAvg = tryPassCheckValue
 						}
 						
 						applyingFirstGrade = if (isFirstGradeBanned || isSecondGradeBanned) {
 							if (isFirstGradeBanned && isSecondGradeBanned) {
-								return if (firstGradeCount == 0 || secondGradeCount == 0) {
-									null
-								} else {
-									mapOf(
-										Pair(grade[0].toString(), firstGradeCount),
-										Pair(grade[1].toString(), secondGradeCount)
+								return if (firstGradeCount != 0 && secondGradeCount != 0) {
+									val result = RealizableBadMarks(
+										strategy = strategy,
+										count = listOf(firstGradeCount, secondGradeCount)
 									)
+									result
+								} else {
+									null
 								}
 							} else {
 								!isFirstGradeBanned
@@ -367,35 +386,49 @@ object Utils {
 							// casual in-progress behaviour of switcher
 							!applyingFirstGrade
 						}
+						if (applyingFirstGrade) firstGradeCount++ else secondGradeCount++
 					}
-					return if (firstGradeCount == 0 || secondGradeCount == 0) {
-						null
-					} else {
-						mapOf(
-							Pair(grade[0].toString(), firstGradeCount),
-							Pair(grade[1].toString(), secondGradeCount)
-						)
-					}
-					
 				}
 				
 				else -> return null
 			}
 		}
 		
-		val result: MutableMap<String, Map<String, Int?>?> = mutableMapOf()
-		
-		result["4_"] = calculateGrades(4)
-		result["4_3"] = calculateGrades(4, 3)
-		result["3_4"] = calculateGrades(3, 4)
-		result["3_"] = calculateGrades(3)
-		result["3_2"] = calculateGrades(3, 2)
-		result["2_3"] = calculateGrades(2, 3)
-		result["2_"] = calculateGrades(2)
-		
-		Log.d(TAG, "calculateRealizableBadMarks() returned: $result")
+		val result = mutableListOf<RealizableBadMarks>()
+		BadMarkStrategy.values().forEach { badMarkStrategy ->
+			calculateGrades(badMarkStrategy)?.let { newCalculatedRealizable ->
+				result.add(newCalculatedRealizable)
+			}
+		}
 		return result
 	}
+	
+	enum class BadMarkStrategy(private val mark1: Mark, private val mark2: Mark?) {
+		FOURS(Mark.FOUR, null),
+		FOURS_THREES(Mark.FOUR, Mark.THREE),
+		THREES(Mark.THREE, null),
+		THREES_TWOS(Mark.THREE, Mark.TWO),
+		TWOS(Mark.TWO, null);
+		
+		
+		fun getIntValuesOfGrades(): List<Int?> {
+			return if (this.mark2?.value != null) {
+				listOf(this.mark1.value, this.mark2.value)
+			} else {
+				listOf(this.mark1.value)
+			}
+		}
+		
+		operator fun component1(): Int = this.mark1.value!!
+		
+		operator fun component2(): Int? = this.mark2?.value
+		
+	}
+	
+	data class RealizableBadMarks(
+		val strategy: BadMarkStrategy,
+		val count: List<Int?>,
+	)
 	
 	fun ClosedRange<LocalDate>.toList(limiter: Long? = null): List<LocalDate> {
 		val dates = mutableListOf(this.start)

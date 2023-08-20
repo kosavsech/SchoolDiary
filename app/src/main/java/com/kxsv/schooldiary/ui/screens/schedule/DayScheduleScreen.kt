@@ -792,7 +792,7 @@ private fun DayScheduleContentPreview() {
 					)
 				),
 			),
-			selectedDate = LocalDate.now(),
+			selectedDate = Utils.currentDate,
 			currentPattern = previewCurrentPattern,
 			onRefresh = {},
 			changeDate = {},
@@ -814,7 +814,7 @@ private fun LessonDialogPreview() {
 				subject = SubjectEntity(fullName = "Английский язык", cabinet = "316"),
 				lesson = LessonEntity(index = 0)
 			),
-			selectedDate = LocalDate.now(),
+			selectedDate = Utils.currentDate,
 			currentPattern = previewCurrentPattern,
 			onDeleteClass = {},
 			onEditClass = {},

@@ -13,6 +13,7 @@ import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.screens.navArgs
+import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.nonEmptyTrim
 import com.kxsv.schooldiary.util.Utils.timestampToLocalDate
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -64,7 +65,7 @@ class AddEditLessonViewModel @Inject constructor(
 			loadLesson(lessonId)
 		} else {
 			val preSetDate = timestampToLocalDate(datestamp)
-			updateDate(preSetDate ?: LocalDate.now())
+			updateDate(preSetDate ?: Utils.currentDate)
 		}
 	}
 	

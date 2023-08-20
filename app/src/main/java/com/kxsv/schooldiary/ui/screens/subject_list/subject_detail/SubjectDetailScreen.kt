@@ -383,25 +383,21 @@ private fun TargetGradeProgress(
 				text = "To not ruin current mark:",
 				style = MaterialTheme.typography.titleMedium,
 			)
-			val isRealizableBadMarksNotEmpty = remember(realizableBadMarks) {
-				realizableBadMarks.map { it.value }.find { it != null } != null
-			}
-			if (isRealizableBadMarksNotEmpty) {
-				realizableBadMarks.forEach { (mark, count) ->
-					key(mark, count) {
-						if (count != null) {
-							val (mark1, mark2) = mark.split("_")
-							Text(
-								text = "No more than $mark1 x ${count[mark1]} times" +
-										if (mark2.isNotEmpty() && count[mark2] != 0) {
-											" with $mark2 x ${count[mark2]} times"
-										} else {
-											""
-										},
-								style = MaterialTheme.typography.titleMedium,
-								modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding))
-							)
-						}
+			
+			if (realizableBadMarks.isNotEmpty()) {
+				realizableBadMarks.forEach { (strategy, count) ->
+					key(strategy, count) {
+						val (mark1, mark2) = strategy
+						Text(
+							text = "No more than $mark1 x ${count.first()} times" +
+									if (mark2 != null && count.last() != null) {
+										" with $mark2 x ${count.last()} times"
+									} else {
+										""
+									},
+							style = MaterialTheme.typography.titleMedium,
+							modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding))
+						)
 					}
 				}
 			} else {
