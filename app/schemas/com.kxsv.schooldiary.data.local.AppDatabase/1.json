@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "29af749ee444b8170e732c9610628ee1",
+    "identityHash": "aec0aa117c45bae3c66fcc3ddf936624",
     "entities": [
       {
         "tableName": "timePattern",
@@ -564,7 +564,7 @@
       },
       {
         "tableName": "task",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`title` TEXT NOT NULL, `description` TEXT NOT NULL, `dueDate` INTEGER NOT NULL, `subjectMasterId` TEXT, `isDone` INTEGER NOT NULL, `isFetched` INTEGER NOT NULL, `taskId` TEXT NOT NULL, PRIMARY KEY(`taskId`), FOREIGN KEY(`subjectMasterId`) REFERENCES `subject`(`subjectId`) ON UPDATE NO ACTION ON DELETE SET DEFAULT )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`title` TEXT NOT NULL, `description` TEXT NOT NULL, `dueDate` INTEGER NOT NULL, `subjectMasterId` TEXT, `fetchedTitleBoundToId` TEXT, `isDone` INTEGER NOT NULL, `isFetched` INTEGER NOT NULL, `taskId` TEXT NOT NULL, PRIMARY KEY(`taskId`), FOREIGN KEY(`subjectMasterId`) REFERENCES `subject`(`subjectId`) ON UPDATE NO ACTION ON DELETE SET DEFAULT )",
         "fields": [
           {
             "fieldPath": "title",
@@ -587,6 +587,12 @@
           {
             "fieldPath": "subjectMasterId",
             "columnName": "subjectMasterId",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "fetchedTitleBoundToId",
+            "columnName": "fetchedTitleBoundToId",
             "affinity": "TEXT",
             "notNull": false
           },
@@ -644,7 +650,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '29af749ee444b8170e732c9610628ee1')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'aec0aa117c45bae3c66fcc3ddf936624')"
     ]
   }
 }

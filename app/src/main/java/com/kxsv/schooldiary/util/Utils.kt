@@ -20,13 +20,14 @@ import kotlin.math.floor
 private const val TAG = "Utils"
 
 object Utils {
+	val taskDueDateFormatterLong: DateTimeFormatter = DateTimeFormatter.ofPattern("eeee, MMMM d")
 	val currentDate: LocalDate = LocalDate.of(2023, 5, 15)
 	
 	fun Collection<PeriodWithRange>.getCurrentPeriod(): EduPerformancePeriod? {
 		if (this.isEmpty()) return null
 		
 		val lastPeriodEnd =
-			periodRangeEntryToLocalDate(this.maxByOrNull { it.period.ordinal }!!.range.end)
+			periodRangeEntryToLocalDate(this.maxBy { it.period.ordinal }.range.end)
 		
 		var holidayCandidate: Pair<PeriodWithRange?, Long> = Pair(null, 366)
 		if (currentDate.isAfter(lastPeriodEnd)) {

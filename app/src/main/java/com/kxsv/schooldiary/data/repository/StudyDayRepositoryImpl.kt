@@ -38,6 +38,13 @@ class StudyDayRepositoryImpl @Inject constructor(
 		return studyDayDataSource.getByDateWithSchedulesAndSubjects(date)
 	}
 	
+	override suspend fun getDateForNextLessonOfSubject(
+		subjectId: String,
+		startDate: LocalDate,
+	): LocalDate? {
+		return studyDayDataSource.getDateForNextLessonOfSubject(subjectId, startDate)
+	}
+	
 	override suspend fun create(studyDay: StudyDayEntity): Long {
 		return studyDayDataSource.upsert(studyDay)
 	}

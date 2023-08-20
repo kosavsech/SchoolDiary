@@ -19,6 +19,15 @@ interface StudyDayRepository {
 	
 	suspend fun getDayAndSchedulesWithSubjectsByDate(date: LocalDate): StudyDayWithSchedulesAndSubjects?
 	
+	/**
+	 * Get date for next lesson of subject
+	 *
+	 * @param subjectId
+	 * @param startDate not included in search range
+	 * @return
+	 */
+	suspend fun getDateForNextLessonOfSubject(subjectId: String, startDate: LocalDate): LocalDate?
+	
 	suspend fun create(studyDay: StudyDayEntity): Long
 	
 	suspend fun update(studyDay: StudyDayEntity)

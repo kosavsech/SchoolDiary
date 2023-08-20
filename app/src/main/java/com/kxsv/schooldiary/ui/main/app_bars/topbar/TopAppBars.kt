@@ -457,20 +457,12 @@ fun CopyScheduleForDayTopAppBar(date: String? = "", onBack: () -> Unit) {
 fun SubjectDetailTopAppBar(
 	title: String,
 	onBack: () -> Unit,
-	onFetchSchedule: () -> Unit,
 	onDelete: () -> Unit,
 ) {
 	TopAppBar(
 		title = { Text(text = title) },
 		navigationIcon = { BackIconButton(onBack) },
 		actions = {
-			IconButton(onClick = onFetchSchedule) {
-				Icon(
-					imageVector = Icons.Filled.CloudDownload,
-					contentDescription = stringResource(id = R.string.fetch_schedule),
-					tint = MaterialTheme.colorScheme.onSurfaceVariant
-				)
-			}
 			IconButton(onClick = onDelete) {
 				Icon(
 					imageVector = Icons.Filled.Delete,

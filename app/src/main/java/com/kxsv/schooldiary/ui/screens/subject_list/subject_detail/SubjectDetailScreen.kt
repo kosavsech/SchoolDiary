@@ -99,12 +99,11 @@ fun SubjectDetailScreen(
 		topBar = {
 			SubjectDetailTopAppBar(
 				title = uiState.subjectWithTeachers?.subject?.getName() ?: "",
-				onBack = { navigator.popBackStack() },
-				onDelete = {
-					viewModel.deleteSubject()
-					navigator.backWithResult(DELETE_RESULT_OK)
-				}
-			)
+				onBack = { navigator.popBackStack() }
+			) {
+				viewModel.deleteSubject()
+				navigator.backWithResult(DELETE_RESULT_OK)
+			}
 		},
 	) { paddingValues ->
 		val targetMarkDialogState = rememberMaterialDialogState(false)

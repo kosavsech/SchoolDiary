@@ -10,6 +10,7 @@ import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.task.TaskEntity
 import com.kxsv.schooldiary.data.remote.dtos.TaskDto
 import com.kxsv.schooldiary.data.remote.util.NetworkException
+import com.kxsv.schooldiary.data.repository.StudyDayRepository
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.data.repository.TaskRepository
 import com.kxsv.schooldiary.di.util.AppDispatchers
@@ -56,6 +57,7 @@ data class AddEditTaskUiState(
 @HiltViewModel
 class AddEditTaskViewModel @Inject constructor(
 	private val taskRepository: TaskRepository,
+	private val studyDayRepository: StudyDayRepository,
 	subjectRepository: SubjectRepository,
 	savedStateHandle: SavedStateHandle,
 	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
@@ -223,6 +225,8 @@ class AddEditTaskViewModel @Inject constructor(
 	}
 	
 	fun changeDate(newDueDate: LocalDate) {
+		if (isEditingFetchedTask) throw RuntimeException("Due-date shouldn't be changed when editing fetched task")
+		
 		if (uiState.value.dueDate != newDueDate) {
 			clearIsFetchedTag()
 			_uiState.update { it.copy(dueDate = newDueDate) }
@@ -230,9 +234,20 @@ class AddEditTaskViewModel @Inject constructor(
 	}
 	
 	fun changeSubject(newSubject: SubjectEntity) {
-		if (uiState.value.subject != newSubject) {
+		if (isEditingFetchedTask) throw RuntimeException("Subject shouldn't be changed when editing fetched task")
+		viewModelScope.launch(ioDispatcher) {
 			clearIsFetchedTag()
-			_uiState.update { it.copy(subject = newSubject) }
+			val nextLessonDate = studyDayRepository
+				.getDateForNextLessonOfSubject(
+					subjectId = newSubject.subjectId,
+					startDate = Utils.currentDate
+				)
+			_uiState.update {
+				it.copy(
+					subject = newSubject,
+					dueDate = nextLessonDate ?: Utils.currentDate.plusDays(1)
+				)
+			}
 		}
 	}
 	

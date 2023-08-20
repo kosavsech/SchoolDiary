@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -49,6 +50,7 @@ import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AddEditTaskScreenNavActions
 import com.kxsv.schooldiary.ui.util.LoadingContent
+import com.kxsv.schooldiary.util.Utils
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.result.ResultBackNavigator
@@ -58,7 +60,6 @@ import com.vanpra.composematerialdialogs.listItems
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 import com.vanpra.composematerialdialogs.title
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 private const val TAG = "AddEditTaskScreen"
 
@@ -271,7 +272,8 @@ private fun AddEditSubjectContent(
 						onImmutableFieldEdit()
 					}
 				}
-				.padding(vertical = dimensionResource(id = R.dimen.vertical_margin))
+				.padding(vertical = dimensionResource(id = R.dimen.vertical_margin)),
+				verticalAlignment = Alignment.CenterVertically
 			) {
 				Icon(
 					imageVector = Icons.Default.School,
@@ -300,17 +302,17 @@ private fun AddEditSubjectContent(
 						onImmutableFieldEdit()
 					}
 				}
-				.padding(vertical = dimensionResource(id = R.dimen.vertical_margin))
-			
+				.padding(vertical = dimensionResource(id = R.dimen.vertical_margin)),
+				verticalAlignment = Alignment.CenterVertically
 			) {
 				Icon(
 					imageVector = Icons.Default.CalendarMonth,
 					contentDescription = stringResource(R.string.due_date)
 				)
 				Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.horizontal_margin)))
-				val text = dueDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy"))
+				val dueDateText = dueDate.format(Utils.taskDueDateFormatterLong)
 				Text(
-					text = text,
+					text = dueDateText,
 					style = MaterialTheme.typography.bodyMedium
 				)
 				

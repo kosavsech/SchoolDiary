@@ -82,7 +82,7 @@ class LessonRepositoryImpl @Inject constructor(
 		return withContext(ioDispatcher) {
 			withTimeout(15000L) {
 				val startRange = Utils.currentDate
-				val endRange = startRange.plusDays(7)
+				val endRange = startRange.plusDays(14)
 				val newSchedules: MutableMap<LocalDate, Utils.ScheduleCompareResult> =
 					mutableMapOf()
 				

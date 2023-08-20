@@ -36,10 +36,10 @@ import com.kxsv.schooldiary.ui.main.app_bars.topbar.TaskDetailTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.TasksDetailNavActions
 import com.kxsv.schooldiary.ui.util.LoadingContent
+import com.kxsv.schooldiary.util.Utils
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.result.ResultBackNavigator
-import java.time.format.DateTimeFormatter
 
 data class TaskDetailScreenNavArgs(
 	val taskId: String,
@@ -159,7 +159,7 @@ private fun TaskContent(
 					Spacer(modifier = Modifier.padding(horizontal = 8.dp))
 					Column(verticalArrangement = Arrangement.Center) {
 						Text(
-							text = taskEntity.dueDate.format(DateTimeFormatter.ofPattern("d MMM yyyy")),
+							text = taskEntity.dueDate.format(Utils.taskDueDateFormatterLong),
 							style = MaterialTheme.typography.titleMedium,
 						)
 						Text(
