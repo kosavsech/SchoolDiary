@@ -41,6 +41,7 @@ data class AddEditTaskUiState(
 	val subject: SubjectEntity? = null,
 	val dueDate: LocalDate = Utils.currentDate.plusDays(1),
 	
+	val fetchedTitleBoundToId: String? = null,
 	val availableSubjects: List<SubjectEntity> = emptyList(),
 	val fetchedVariants: List<TaskDto>? = null,
 	
@@ -99,7 +100,7 @@ class AddEditTaskViewModel @Inject constructor(
 							description = taskWithSubject.taskEntity.description,
 							dueDate = taskWithSubject.taskEntity.dueDate,
 							subject = taskWithSubject.subject,
-							isFetched = taskWithSubject.taskEntity.isFetched,
+							isFetched = isEditingFetchedTask,
 							isLoading = false
 						)
 					}
@@ -142,6 +143,7 @@ class AddEditTaskViewModel @Inject constructor(
 						description = uiState.value.description,
 						dueDate = uiState.value.dueDate,
 						subjectMasterId = subjectMasterId,
+						fetchedTitleBoundToId = uiState.value.fetchedTitleBoundToId,
 						isFetched = uiState.value.isFetched,
 					),
 					fetchedLessonIndex = uiState.value.selectedFetchedVariantIndex
@@ -165,8 +167,9 @@ class AddEditTaskViewModel @Inject constructor(
 					description = uiState.value.description,
 					dueDate = uiState.value.dueDate,
 					subjectMasterId = subjectMasterId,
-					isFetched = uiState.value.isFetched,
-					taskId = taskId
+					fetchedTitleBoundToId = uiState.value.fetchedTitleBoundToId,
+					isFetched = isEditingFetchedTask,
+					taskId = taskId,
 				)
 			)
 			_uiState.update { it.copy(isTaskSaved = true) }
@@ -198,11 +201,15 @@ class AddEditTaskViewModel @Inject constructor(
 	}
 	
 	private fun clearIsFetchedTag() {
-		_uiState.update { it.copy(selectedFetchedVariantIndex = null, isFetched = false) }
+		if (!isEditingFetchedTask)
+			_uiState.update { it.copy(selectedFetchedVariantIndex = null, isFetched = false) }
 	}
 	
 	fun changeTitle(newTitle: String) {
 		if (uiState.value.title != newTitle.trim()) {
+			if (isEditingFetchedTask && uiState.value.fetchedTitleBoundToId == null) {
+				_uiState.update { it.copy(fetchedTitleBoundToId = uiState.value.title) }
+			}
 			clearIsFetchedTag()
 			_uiState.update { it.copy(title = newTitle.trim()) }
 		}

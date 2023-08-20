@@ -205,7 +205,7 @@ class GradeSyncWorker @AssistedInject constructor(
 		notificationManager.createNotificationChannel(gradeChannel)
 	}
 	
-	private fun GradeEntity.isSameAs(gradeEntity: GradeEntity): Boolean {
+	private fun GradeEntity.isContentEqual(gradeEntity: GradeEntity): Boolean {
 		if (this.gradeId != gradeEntity.gradeId) return false
 		if (this.mark != gradeEntity.mark) return false
 		if (this.typeOfWork != gradeEntity.typeOfWork) return false
@@ -229,7 +229,10 @@ class GradeSyncWorker @AssistedInject constructor(
 							return@run null
 						}
 					}
-					if (relevantFetchedGrade == null || !localGrade.isSameAs(relevantFetchedGrade.grade)) {
+					if (relevantFetchedGrade == null || !localGrade.isContentEqual(
+							relevantFetchedGrade.grade
+						)
+					) {
 						gradeRepository.deleteGrade(localGrade.gradeId)
 					}
 				}

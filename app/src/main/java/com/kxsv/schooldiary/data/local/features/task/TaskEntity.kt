@@ -25,6 +25,7 @@ data class TaskEntity(
 	val description: String = "",
 	val dueDate: LocalDate,
 	val subjectMasterId: String?,
+	val fetchedTitleBoundToId: String? = null,
 	val isDone: Boolean = false,
 	val isFetched: Boolean = false,
 	@PrimaryKey

@@ -10,10 +10,10 @@ import java.time.format.DateTimeFormatter
 fun TaskDto.toTaskEntity(): TaskEntity {
 	return TaskEntity(
 		title = title,
-		dueDate = dueDate,
 		description = "Fetched from edu.tatar on ${
 			LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
 		}",
+		dueDate = dueDate,
 		subjectMasterId = subject.subjectId,
 		isFetched = true,
 		taskId = generateTaskId(dueDate, subject.subjectId, lessonIndex)
@@ -26,10 +26,10 @@ fun TaskDto.toTaskWithSubject(): TaskWithSubject {
 	return TaskWithSubject(
 		TaskEntity(
 			title = title,
-			dueDate = dueDate,
 			description = "Fetched from edu.tatar on ${
 				LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
 			}",
+			dueDate = dueDate,
 			subjectMasterId = subject.subjectId,
 			isFetched = true,
 			taskId = generateTaskId(dueDate, subject.subjectId, lessonIndex)

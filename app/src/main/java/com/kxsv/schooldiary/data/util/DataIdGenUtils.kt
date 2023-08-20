@@ -53,6 +53,15 @@ object DataIdGenUtils {
 		return subjectFullName.trim().lowercase().replace(" ", "_")
 	}
 	
+	/**
+	 * Generate based on dueDate, subjectId, lessonIndex(could be several tasks for same subject but
+	 * on different indexes in schedule.
+	 *
+	 * @param dueDate
+	 * @param subjectId
+	 * @param lessonIndex
+	 * @return
+	 */
 	fun generateTaskId(
 		dueDate: LocalDate,
 		subjectId: String,

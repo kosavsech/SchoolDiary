@@ -146,8 +146,8 @@ class TaskRepositoryImpl @Inject constructor(
 			.parse(dayInfo = dayInfo, date = date, subject = subjectIndexed.value)
 		
 		if (netTaskVariants.isEmpty()) return@withContext emptyList<TaskWithSubject>()
-		
 		val localTasks = getByDateAndSubject(date, subjectIndexed.value.subjectId)
+		
 		val fetchedTasksWithSubjects = netTaskVariants.toTasksWithSubject()
 		
 		if (localTasks.isEmpty()) {
@@ -157,16 +157,40 @@ class TaskRepositoryImpl @Inject constructor(
 		
 		val newTasksForSubject = mutableListOf<TaskWithSubject>()
 		val localTasksAssociated = localTasks.associateBy { it.taskId }
-		
-		fetchedTasksWithSubjects.forEach {
-			val isFetchedPreviously = localTasksAssociated.containsKey(it.taskEntity.taskId)
+		localTasks.forEach { localTask ->
+			if (localTask.taskId.split("_")[0].toInt() >= 100) return@forEach
+			val relevantFetchedTask = fetchedTasksWithSubjects.run {
+				val index = this
+					.map { it.taskEntity }
+					.sortedBy { it.taskId }
+					.binarySearchBy(localTask.taskId) { it.taskId }
+				if (index != -1) {
+					return@run this[index]
+				} else {
+					return@run null
+				}
+			}
+			if (relevantFetchedTask == null || !localTask.isContentEqual(relevantFetchedTask.taskEntity)) {
+				taskDataSource.deleteById(localTask.taskId)
+			}
+		}
+		fetchedTasksWithSubjects.forEach { fetchedTask ->
+			val wereFetchedBefore = localTasksAssociated.containsKey(fetchedTask.taskEntity.taskId)
 			
-			if (!isFetchedPreviously) {
-				newTasksForSubject.add(it)
-				taskDataSource.upsert(it.taskEntity)
+			if (!wereFetchedBefore) {
+				newTasksForSubject.add(fetchedTask)
+				taskDataSource.upsert(fetchedTask.taskEntity)
 			}
 		}
 		return@withContext newTasksForSubject
+	}
+	
+	private fun TaskEntity.isContentEqual(localTask: TaskEntity): Boolean {
+		if (this.taskId != localTask.taskId) return false
+		if (this.title != localTask.title && this.title != localTask.fetchedTitleBoundToId) {
+			return false
+		}
+		return true
 	}
 	
 	/**
@@ -198,15 +222,15 @@ class TaskRepositoryImpl @Inject constructor(
 	
 	override suspend fun createTask(task: TaskEntity, fetchedLessonIndex: Int?): String {
 		if (task.subjectMasterId == null) throw RuntimeException("Shouldn't be called with null subjectMasterId")
-		val localTasks = taskDataSource
+		val localManualTasks = taskDataSource
 			.getByDateAndSubject(task.dueDate, task.subjectMasterId)
 			.filter { !it.isFetched }
 		
 		val lessonIndex = fetchedLessonIndex
-			?: if (localTasks.isEmpty()) { // first local(user entered title by hand) task on this day
+			?: if (localManualTasks.isEmpty()) { // first local(user entered title by hand) task on this day
 				100
 			} else {
-				localTasks.maxOf { it.taskId.split("_")[0].toInt() } + 1
+				localManualTasks.maxOf { it.taskId.split("_")[0].toInt() } + 1
 			}
 		val taskId = generateTaskId(
 			dueDate = task.dueDate,
