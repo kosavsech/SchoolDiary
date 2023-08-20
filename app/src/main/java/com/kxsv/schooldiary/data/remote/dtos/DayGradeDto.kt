@@ -7,7 +7,7 @@ data class DayGradeDto(
 	val mark: Mark,
 	val typeOfWork: String,
 	val date: LocalDate,
-	val subjectAncestorName: String,
+	val subjectAncestorFullName: String,
 	val index: Int,
 	val lessonIndex: Int,
 )

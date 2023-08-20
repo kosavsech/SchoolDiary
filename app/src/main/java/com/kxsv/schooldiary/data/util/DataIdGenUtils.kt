@@ -8,11 +8,41 @@ import java.time.ZoneId
 object DataIdGenUtils {
 	private val zoneForIdGen = ZoneId.of("Europe/Moscow")
 	
-	fun generateGradeId(date: LocalDate, index: Int, lessonIndex: Int): String {
+	/**
+	 * Generate based on grade date, index(e.g could be 2 grades for one lesson),
+	 * lesson index(e.g could be 2 same subjects but different timings), subjectId
+	 *
+	 * @return gradeId
+	 */
+	fun generateGradeId(
+		date: LocalDate,
+		index: Int,
+		lessonIndex: Int,
+		subjectFullName: String,
+	): String {
 		val dateStamp = date.atStartOfDay(zoneForIdGen).toEpochSecond().toString()
 		val gradeIndex = index.toString()
 		val lessonIndexString = lessonIndex.toString()
-		return (dateStamp + "_" + gradeIndex + "_" + lessonIndexString)
+		val subjectId =
+			if (subjectFullName.contains("_")) subjectFullName
+			else generateSubjectId(subjectFullName)
+		
+		return (dateStamp + "_" + gradeIndex + "_" + lessonIndexString + "_" + subjectId)
+	}
+	
+	/**
+	 * Generate based on grade date, index(e.g could be 2 grades for one lesson),
+	 * lesson index(e.g could be 2 same subjects but different timings), subjectId
+	 *
+	 * @return gradeId
+	 */
+	fun DayGradeDto.generateId(): String {
+		return generateGradeId(
+			date = date,
+			index = index,
+			lessonIndex = lessonIndex,
+			subjectFullName = subjectAncestorFullName
+		)
 	}
 	
 	fun generateTeacherId(teacherFullName: String): String {
@@ -21,10 +51,6 @@ object DataIdGenUtils {
 	
 	fun generateSubjectId(subjectFullName: String): String {
 		return subjectFullName.trim().lowercase().replace(" ", "_")
-	}
-	
-	fun DayGradeDto.generateGradeId(): String {
-		return generateGradeId(date, index, lessonIndex)
 	}
 	
 	fun generateTaskId(
@@ -38,6 +64,6 @@ object DataIdGenUtils {
 	}
 	
 	fun EduPerformanceDto.generateEduPerformanceId(): String {
-		return (subjectAncestorName + "_" + period.toString())
+		return (generateSubjectId(subjectAncestorName) + "_" + period.name)
 	}
 }

@@ -94,7 +94,7 @@ class PatternsViewModel @Inject constructor(
 	
 	fun updateDefaultPatternId(patternId: Long) = viewModelScope.launch {
 		userPreferencesRepository.setPatternId(patternId)
-//		_uiState.update { it.copy(defaultPatternId = patternId) }
+//		_uiState.upsert { it.copy(defaultPatternId = patternId) }
 		showEditResultMessage(SELECTED_DEFAULT_PATTERN_OK)
 	}
 	

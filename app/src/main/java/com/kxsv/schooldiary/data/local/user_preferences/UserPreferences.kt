@@ -43,7 +43,8 @@ data class UserPreferences(
 			PeriodDateRange(start = "1_9", end = "5_31")
 		)
 	),
-	val defaultPatternId: Long = 0L,
+	val defaultPatternId: Long = 1L,
+	
 	val eduLogin: String? = null,
 	val eduPassword: String? = null,
 	val authCookie: String? = null,

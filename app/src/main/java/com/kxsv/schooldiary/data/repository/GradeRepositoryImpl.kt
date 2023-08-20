@@ -74,30 +74,43 @@ class GradeRepositoryImpl @Inject constructor(
 	override suspend fun fetchRecentGradesWithTeachers(): Pair<MutableList<DayGradeDto>, MutableMap<TeacherDto, MutableSet<String>>> {
 		return withContext(ioDispatcher) {
 			withTimeout(15000L) {
-				val fetchedGrades: MutableList<DayGradeDto> = mutableListOf()
-				val fetchedTeachers: MutableMap<TeacherDto, MutableSet<String>> = mutableMapOf()
+				val fetchedGrades = mutableListOf<DayGradeDto>()
+				val fetchedTeachersWithSubjects = mutableMapOf<TeacherDto, MutableSet<String>>()
 				
 				val startRange = Utils.currentDate
 				(startRange.minusDays(14)..startRange).toList().forEach { date ->
 					if (date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
-					val teachersAndGradesWithSubject = async { fetchGradesByDate(date) }.await()
-					teachersAndGradesWithSubject.first.keys.forEach {
-						val subjectNames = fetchedTeachers.getOrDefault(it, mutableSetOf())
-						subjectNames.addAll(teachersAndGradesWithSubject.first.getValue(it))
-						fetchedTeachers[it] = subjectNames
+					
+					@Suppress("DeferredResultUnused")
+					async {
+						val teachersWithSubjectAndGradeDtos = fetchGradesByDate(date)
+						
+						val gradeDtos = teachersWithSubjectAndGradeDtos.second
+						fetchedGrades.addAll(gradeDtos)
+						
+						val teacherDtoSetMap = teachersWithSubjectAndGradeDtos.first
+						teacherDtoSetMap.forEach { teacherDtoSetEntry ->
+							fetchedTeachersWithSubjects.run {
+								val teacherSubjectNames = fetchedTeachersWithSubjects
+									.getOrDefault(teacherDtoSetEntry.key, mutableSetOf())
+									.apply { this.addAll(teacherDtoSetEntry.value) }
+								
+								this[teacherDtoSetEntry.key] = teacherSubjectNames
+							}
+						}
 					}
-					
-					val gradesWithSubject = teachersAndGradesWithSubject.second
-					
-					fetchedGrades.addAll(gradesWithSubject)
 				}
-				Pair(fetchedGrades, fetchedTeachers)
+				Pair(fetchedGrades, fetchedTeachersWithSubjects)
 			}
 		}
 	}
 	
 	override suspend fun getGradesWithSubjects(): List<GradeWithSubject> {
 		return gradeDataSource.getAllWithSubjects()
+	}
+	
+	override suspend fun getGradesByDate(date: LocalDate): List<GradeEntity> {
+		return gradeDataSource.getAllByDate(date)
 	}
 	
 	override suspend fun getGrade(gradeId: String): GradeEntity? {
@@ -112,13 +125,14 @@ class GradeRepositoryImpl @Inject constructor(
 		val gradeId = generateGradeId(
 			date = grade.date,
 			index = grade.index,
-			lessonIndex = grade.lessonIndex
+			lessonIndex = grade.lessonIndex,
+			subjectFullName = grade.subjectMasterId
 		)
 		gradeDataSource.upsert(grade.copy(gradeId = gradeId))
 		return gradeId
 	}
 	
-	override suspend fun update(grade: GradeEntity) {
+	override suspend fun upsert(grade: GradeEntity) {
 		gradeDataSource.upsert(grade)
 	}
 	

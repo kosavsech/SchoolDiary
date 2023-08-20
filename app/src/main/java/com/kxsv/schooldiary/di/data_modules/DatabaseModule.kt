@@ -85,7 +85,7 @@ object DatabaseModule {
 		private suspend fun populateDatabase() {
 			val timePatternEntities = listOf(
 				TimePatternWithStrokes(
-					timePattern = TimePatternEntity("Default"),
+					timePattern = TimePatternEntity("Default", 1),
 					strokes = listOf(
 						PatternStrokeEntity(
 							index = 0,

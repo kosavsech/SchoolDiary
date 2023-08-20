@@ -20,9 +20,9 @@ import androidx.work.WorkerParameters
 import com.kxsv.schooldiary.app.sync.initializers.SyncConstraints
 import com.kxsv.schooldiary.app.sync.initializers.syncForegroundInfo
 import com.kxsv.schooldiary.data.local.features.associative_tables.subject_teacher.SubjectTeacher
+import com.kxsv.schooldiary.data.local.features.grade.GradeEntity
 import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
-import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity.Companion.shortName
 import com.kxsv.schooldiary.data.mapper.toGradeWithSubject
 import com.kxsv.schooldiary.data.remote.dtos.TeacherDto
 import com.kxsv.schooldiary.data.remote.util.NetworkException
@@ -30,6 +30,7 @@ import com.kxsv.schooldiary.data.repository.GradeRepository
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.data.repository.SubjectTeacherRepository
 import com.kxsv.schooldiary.data.repository.TeacherRepository
+import com.kxsv.schooldiary.data.util.DataIdGenUtils.generateSubjectId
 import com.kxsv.schooldiary.data.util.DataIdGenUtils.generateTeacherId
 import com.kxsv.schooldiary.data.util.Mark
 import com.kxsv.schooldiary.di.util.AppDispatchers.IO
@@ -99,12 +100,12 @@ class GradeSyncWorker @AssistedInject constructor(
 						Log.e(
 							TAG,
 							"updateTeachersDatabase: SchoolDiary: Couldn't localize grade ${it.mark}" +
-									" on date ${it.date} for ${it.subjectAncestorName}.", e
+									" on date ${it.date} for ${it.subjectAncestorFullName}.", e
 						)
 						Handler(Looper.getMainLooper()).post {
 							Toast.makeText(
 								appContext,
-								"SchoolDiary: Couldn't localize grade ${it.mark} on date ${it.date} for ${it.subjectAncestorName}.\n" + e.message,
+								"SchoolDiary: Couldn't localize grade ${it.mark} on date ${it.date} for ${it.subjectAncestorFullName}.\n" + e.message,
 								Toast.LENGTH_LONG
 							).show()
 						}
@@ -204,27 +205,49 @@ class GradeSyncWorker @AssistedInject constructor(
 		notificationManager.createNotificationChannel(gradeChannel)
 	}
 	
+	private fun GradeEntity.isSameAs(gradeEntity: GradeEntity): Boolean {
+		if (this.gradeId != gradeEntity.gradeId) return false
+		if (this.mark != gradeEntity.mark) return false
+		if (this.typeOfWork != gradeEntity.typeOfWork) return false
+		return true
+	}
+	
 	private suspend fun updateDatabase(fetchedGradeEntities: List<GradeWithSubject>): List<GradeWithSubject> {
 		return withContext(ioDispatcher) {
 			val newGradesFound: MutableList<GradeWithSubject> = mutableListOf()
-			for (fetchedGradeEntity in fetchedGradeEntities) {
-				val gradeId = fetchedGradeEntity.grade.gradeId
-				val isGradeExisted = Utils.measurePerformanceInMS(
-					{ time, result ->
-						Log.d(
-							TAG, "gradeDataSource.getById($gradeId): $time ms\n found = $result"
+			fetchedGradeEntities.groupBy { it.grade.date }.forEach { dateAndFetchedGrades ->
+				val savedGradesOnDate = gradeRepository.getGradesByDate(dateAndFetchedGrades.key)
+				savedGradesOnDate.forEach { localGrade ->
+					val relevantFetchedGrade = dateAndFetchedGrades.value.run {
+						val index = this
+							.map { it.grade }
+							.sortedBy { it.gradeId }
+							.binarySearchBy(localGrade.gradeId) { it.gradeId }
+						if (index != -1) {
+							return@run this[index]
+						} else {
+							return@run null
+						}
+					}
+					if (relevantFetchedGrade == null || !localGrade.isSameAs(relevantFetchedGrade.grade)) {
+						gradeRepository.deleteGrade(localGrade.gradeId)
+					}
+				}
+				dateAndFetchedGrades.value.forEach { fetchedGradeEntity ->
+					val isGradeExisted =
+						gradeRepository.getGrade(fetchedGradeEntity.grade.gradeId) != null
+					if (!isGradeExisted) {
+						gradeRepository.upsert(fetchedGradeEntity.grade)
+						newGradesFound.add(fetchedGradeEntity)
+						Log.i(
+							TAG, "updateDatabase: FOUND NEW GRADE:" +
+									"\n${fetchedGradeEntity.grade} ${fetchedGradeEntity.grade.date}\n" +
+									fetchedGradeEntity.subject.getName()
 						)
 					}
-				) {
-					gradeRepository.getGrade(gradeId) != null
-				}
-				gradeRepository.update(fetchedGradeEntity.grade)
-				if (!isGradeExisted) {
-					newGradesFound.add(fetchedGradeEntity)
-					Log.i(TAG, "updateDatabase: FOUND NEW GRADE:\n${fetchedGradeEntity.grade}")
 				}
 			}
-			newGradesFound
+			return@withContext newGradesFound
 		}
 	}
 	
@@ -234,20 +257,11 @@ class GradeSyncWorker @AssistedInject constructor(
 				val fullName = fetchedTeacher.key.lastName.trim() + " " +
 						fetchedTeacher.key.firstName.trim() + " " +
 						fetchedTeacher.key.patronymic.trim()
+				
 				val teacherId = generateTeacherId(fullName)
-				val existedTeacher = Utils.measurePerformanceInMS(
-					{ time, result ->
-						Log.e(
-							TAG,
-							"isTeacherExisted(${fetchedTeacher.key.lastName}): $time ms\n found = $result"
-						)
-					}
-				) {
-					teacherRepository.getById(teacherId)
-				}
-				val teacher = if (existedTeacher != null) {
-					existedTeacher
-				} else {
+				val isTeacherExisted = teacherRepository.getById(teacherId) != null
+				
+				if (!isTeacherExisted) {
 					val newTeacher = TeacherEntity(
 						lastName = fetchedTeacher.key.lastName,
 						firstName = fetchedTeacher.key.firstName,
@@ -255,37 +269,15 @@ class GradeSyncWorker @AssistedInject constructor(
 						phoneNumber = "",
 						teacherId = teacherId
 					)
-					Log.d(
-						TAG, "updateTeachersDatabase: upserted teacher(${newTeacher.lastName})"
-					)
 					teacherRepository.upsert(newTeacher)
-					newTeacher
+					Log.d(
+						TAG, "updateTeachersDatabase: FOUND NEW TEACHER(${newTeacher.lastName})"
+					)
 				}
 				fetchedTeacher.value.forEach { subjectName ->
-					try {
-						val subject = subjectRepository.getSubjectByName(subjectName)
-							?: throw NoSuchElementException("There is no saved subject with name $subjectName")
-						
-						subjectTeacherRepository.createSubjectTeacher(
-							SubjectTeacher(
-								subject.subjectId,
-								teacherId
-							)
-						)
-					} catch (e: NoSuchElementException) {
-						Log.e(
-							TAG,
-							"updateTeachersDatabase: Failed link ${teacher.shortName()}) to $subjectName.",
-							e
-						)
-						Handler(Looper.getMainLooper()).post {
-							Toast.makeText(
-								appContext,
-								"SchoolDiary: Failed link ${teacher.shortName()}) to $subjectName." + e.message,
-								Toast.LENGTH_LONG
-							).show()
-						}
-					}
+					subjectTeacherRepository.upsert(
+						SubjectTeacher(generateSubjectId(subjectName), teacherId)
+					)
 				}
 			}
 		}

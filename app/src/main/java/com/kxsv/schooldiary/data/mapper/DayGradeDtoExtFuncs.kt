@@ -5,15 +5,15 @@ import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
 import com.kxsv.schooldiary.data.local.features.subject.SubjectDao
 import com.kxsv.schooldiary.data.remote.dtos.DayGradeDto
 import com.kxsv.schooldiary.data.repository.SubjectRepository
-import com.kxsv.schooldiary.data.util.DataIdGenUtils.generateGradeId
+import com.kxsv.schooldiary.data.util.DataIdGenUtils.generateId
 import java.time.LocalDateTime
 
 suspend fun DayGradeDto.toGradeEntity(
 	subjectDataSource: SubjectDao,
 ): GradeEntity {
 	try {
-		val subject = subjectDataSource.getByName(subjectAncestorName)
-			?: throw NoSuchElementException("There is no subject with name $subjectAncestorName")
+		val subject = subjectDataSource.getByName(subjectAncestorFullName)
+			?: throw NoSuchElementException("There is no subject with name $subjectAncestorFullName")
 		
 		
 		return GradeEntity(
@@ -24,7 +24,7 @@ suspend fun DayGradeDto.toGradeEntity(
 			typeOfWork = typeOfWork,
 			index = index,
 			lessonIndex = lessonIndex,
-			gradeId = generateGradeId()
+			gradeId = this.generateId()
 		)
 		
 	} catch (e: NoSuchElementException) {
@@ -39,8 +39,8 @@ suspend fun List<DayGradeDto>.toGradeEntities(
 suspend fun DayGradeDto.toGradeWithSubject(
 	subjectDataSource: SubjectDao,
 ): GradeWithSubject {
-	val subject = subjectDataSource.getByName(subjectAncestorName)
-		?: throw NoSuchElementException("There is no subject with name $subjectAncestorName")
+	val subject = subjectDataSource.getByName(subjectAncestorFullName)
+		?: throw NoSuchElementException("There is no subject with name $subjectAncestorFullName")
 	
 	return GradeWithSubject(
 		grade = GradeEntity(
@@ -51,7 +51,7 @@ suspend fun DayGradeDto.toGradeWithSubject(
 			typeOfWork = typeOfWork,
 			index = index,
 			lessonIndex = lessonIndex,
-			gradeId = generateGradeId()
+			gradeId = this.generateId()
 		),
 		subject = subject
 	)
@@ -60,8 +60,8 @@ suspend fun DayGradeDto.toGradeWithSubject(
 suspend fun DayGradeDto.toGradeWithSubject(
 	subjectRepository: SubjectRepository,
 ): GradeWithSubject {
-	val subject = subjectRepository.getSubjectByName(subjectAncestorName)
-		?: throw NoSuchElementException("There is no subject with name $subjectAncestorName")
+	val subject = subjectRepository.getSubjectByName(subjectAncestorFullName)
+		?: throw NoSuchElementException("There is no subject with name $subjectAncestorFullName")
 	
 	return GradeWithSubject(
 		grade = GradeEntity(
@@ -72,7 +72,7 @@ suspend fun DayGradeDto.toGradeWithSubject(
 			typeOfWork = typeOfWork,
 			index = index,
 			lessonIndex = lessonIndex,
-			gradeId = generateGradeId()
+			gradeId = this.generateId()
 		),
 		subject = subject
 	)

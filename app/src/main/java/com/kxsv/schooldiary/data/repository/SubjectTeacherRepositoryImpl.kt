@@ -10,7 +10,7 @@ class SubjectTeacherRepositoryImpl @Inject constructor(
 	private val subjectTeacherDataSource: SubjectTeacherDao,
 ) : SubjectTeacherRepository {
 	
-	override suspend fun createSubjectTeacher(subjectTeacher: SubjectTeacher) {
+	override suspend fun upsert(subjectTeacher: SubjectTeacher) {
 		subjectTeacherDataSource.upsert(subjectTeacher)
 	}
 	

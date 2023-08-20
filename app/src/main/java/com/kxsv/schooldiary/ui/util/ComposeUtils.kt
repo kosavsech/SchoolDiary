@@ -98,7 +98,7 @@ import kotlin.math.roundToInt
  * @param empty (state) when true, display [emptyContent]
  * @param emptyContent (slot) the content to display for the empty state
  * @param isContentScrollable (state) when true, doesn't apply vertical scroll modifier
- * @param onRefresh (event) event to request refresh. Can be null, so user cannot drag update
+ * @param onRefresh (event) event to request refresh. Can be null, so user cannot drag upsert
  * @param content (slot) the main content to show
  */
 @OptIn(ExperimentalMaterialApi::class)

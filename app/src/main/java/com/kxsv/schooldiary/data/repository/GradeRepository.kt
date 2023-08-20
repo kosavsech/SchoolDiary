@@ -33,13 +33,15 @@ interface GradeRepository {
 	
 	suspend fun getGradesWithSubjects(): List<GradeWithSubject>
 	
+	suspend fun getGradesByDate(date: LocalDate): List<GradeEntity>
+	
 	suspend fun getGrade(gradeId: String): GradeEntity?
 	
 	suspend fun getGradeWithSubject(gradeId: String): GradeWithSubject?
 	
 	suspend fun create(grade: GradeEntity): String
 	
-	suspend fun update(grade: GradeEntity)
+	suspend fun upsert(grade: GradeEntity)
 	
 	suspend fun upsertAll(grades: List<GradeEntity>)
 	

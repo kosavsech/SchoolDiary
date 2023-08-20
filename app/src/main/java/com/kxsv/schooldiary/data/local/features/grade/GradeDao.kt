@@ -3,6 +3,7 @@ package com.kxsv.schooldiary.data.local.features.grade
 import androidx.room.*
 import com.kxsv.schooldiary.data.local.features.DatabaseConstants.GRADE_TABLE_NAME
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
 
 @Dao
 interface GradeDao {
@@ -33,6 +34,9 @@ interface GradeDao {
 	@Transaction
 	@Query("SELECT * FROM $GRADE_TABLE_NAME ORDER BY date DESC")
 	suspend fun getAllWithSubjects(): List<GradeWithSubject>
+	
+	@Query("SELECT * FROM $GRADE_TABLE_NAME WHERE date = :date ORDER BY lessonIndex DESC")
+	suspend fun getAllByDate(date: LocalDate): List<GradeEntity>
 	
 	@Query("SELECT * FROM $GRADE_TABLE_NAME WHERE gradeId = :gradeId")
 	suspend fun getById(gradeId: String): GradeEntity?

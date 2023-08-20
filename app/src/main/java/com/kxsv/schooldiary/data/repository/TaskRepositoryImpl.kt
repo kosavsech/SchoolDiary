@@ -81,7 +81,7 @@ class TaskRepositoryImpl @Inject constructor(
 	override suspend fun fetchSoonTasks(): List<TaskWithSubject> {
 		return withContext(ioDispatcher) {
 			withTimeout(15000L) {
-				val result: MutableList<TaskWithSubject> = mutableListOf()
+				val result = mutableListOf<TaskWithSubject>()
 				val startRange = Utils.currentDate
 				val endRange = startRange.plusDays(7)
 				

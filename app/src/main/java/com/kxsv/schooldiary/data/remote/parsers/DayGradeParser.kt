@@ -61,7 +61,7 @@ class DayGradeParser {
 						mark = Mark.fromInput(gradeItem.value)!!,
 						typeOfWork = gradeItem.typeOfWork,
 						date = localDate,
-						subjectAncestorName = subjectAncestorName,
+						subjectAncestorFullName = subjectAncestorName,
 						index = gradeItem.index,
 						lessonIndex = lessonIndex
 					)

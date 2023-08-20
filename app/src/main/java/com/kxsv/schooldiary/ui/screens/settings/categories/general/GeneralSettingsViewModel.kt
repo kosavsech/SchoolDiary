@@ -88,11 +88,11 @@ class GeneralSettingsViewModel @Inject constructor(
 	
 	
 	/*private fun showSnackbarMessage(message: Int) {
-		_uiState.update { it.copy(userMessage = message) }
+		_uiState.upsert { it.copy(userMessage = message) }
 	}
 	
 	private fun setSnackbarArgs(vararg args: Any) {
-		_uiState.update { it.copy(userMessageArgs = args) }
+		_uiState.upsert { it.copy(userMessageArgs = args) }
 	}*/
 	
 }

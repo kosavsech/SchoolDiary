@@ -24,7 +24,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Text
@@ -35,7 +34,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import com.kxsv.schooldiary.R
@@ -86,7 +84,7 @@ fun AddEditTaskTopAppBar(
 				Icon(
 					imageVector = Icons.Filled.CloudDownload,
 					contentDescription = stringResource(id = R.string.fetch_task),
-					tint = LocalContentColor.current
+					tint = MaterialTheme.colorScheme.onSurfaceVariant
 				)
 			}
 		},
@@ -179,6 +177,7 @@ fun TasksTopAppBar(
 				Icon(
 					imageVector = Icons.Default.Sort,
 					contentDescription = stringResource(R.string.grades_sort_type),
+					tint = MaterialTheme.colorScheme.onSurfaceVariant
 				)
 				DropdownMenu(
 					expanded = expanded,
@@ -315,7 +314,7 @@ fun ScheduleTopAppBar(
 				Icon(
 					imageVector = Icons.Filled.CloudDownload,
 					contentDescription = stringResource(id = R.string.fetch_schedule),
-					tint = LocalContentColor.current
+					tint = MaterialTheme.colorScheme.onSurfaceVariant
 				)
 			}
 			ScheduleMoreActions(
@@ -356,7 +355,7 @@ private fun GradesMoreActions(
 		Icon(
 			imageVector = Icons.Default.Sort,
 			contentDescription = stringResource(R.string.grades_sort_type),
-			tint = MaterialTheme.colorScheme.onSurface
+			tint = MaterialTheme.colorScheme.onSurfaceVariant
 		)
 		DropdownMenu(
 			expanded = expanded,
@@ -376,7 +375,7 @@ private fun GradesMoreActions(
 						Icon(
 							imageVector = it.icon,
 							contentDescription = "",
-							tint = LocalContentColor.current
+							tint = MaterialTheme.colorScheme.onSurfaceVariant
 						)
 					},
 					colors = MenuDefaults.itemColors(
@@ -402,7 +401,7 @@ private fun ScheduleMoreActions(
 		Icon(
 			imageVector = Icons.Default.MoreVert,
 			contentDescription = stringResource(R.string.more_actions),
-			tint = MaterialTheme.colorScheme.onSurface
+			tint = MaterialTheme.colorScheme.onSurfaceVariant
 		)
 		DropdownMenu(
 			expanded = expanded.value,
@@ -413,8 +412,9 @@ private fun ScheduleMoreActions(
 				onClick = { onChangePattern(); expanded.value = false },
 				leadingIcon = {
 					Icon(
-						Icons.Default.Schedule,
-						stringResource(R.string.change_pattern),
+						imageVector = Icons.Default.Schedule,
+						contentDescription = stringResource(R.string.change_pattern),
+						tint = MaterialTheme.colorScheme.onSurfaceVariant
 					)
 				}
 			)
@@ -425,7 +425,7 @@ private fun ScheduleMoreActions(
 					Icon(
 						Icons.Default.Today,
 						stringResource(R.string.copy_schedule_day),
-						tint = Color.Black
+						tint = MaterialTheme.colorScheme.onSurfaceVariant
 					)
 				}
 			)
@@ -434,8 +434,9 @@ private fun ScheduleMoreActions(
 				onClick = { onCopyDateRangeSchedule(); expanded.value = false },
 				leadingIcon = {
 					Icon(
-						Icons.Default.DateRange,
-						stringResource(R.string.copy_schedule_date_range),
+						imageVector = Icons.Default.DateRange,
+						contentDescription = stringResource(R.string.copy_schedule_date_range),
+						tint = MaterialTheme.colorScheme.onSurfaceVariant
 					)
 				}
 			)
@@ -453,13 +454,29 @@ fun CopyScheduleForDayTopAppBar(date: String? = "", onBack: () -> Unit) {
 }
 
 @Composable
-fun SubjectDetailTopAppBar(title: String, onBack: () -> Unit, onDelete: () -> Unit) {
+fun SubjectDetailTopAppBar(
+	title: String,
+	onBack: () -> Unit,
+	onFetchSchedule: () -> Unit,
+	onDelete: () -> Unit,
+) {
 	TopAppBar(
 		title = { Text(text = title) },
 		navigationIcon = { BackIconButton(onBack) },
 		actions = {
+			IconButton(onClick = onFetchSchedule) {
+				Icon(
+					imageVector = Icons.Filled.CloudDownload,
+					contentDescription = stringResource(id = R.string.fetch_schedule),
+					tint = MaterialTheme.colorScheme.onSurfaceVariant
+				)
+			}
 			IconButton(onClick = onDelete) {
-				Icon(Icons.Filled.Delete, stringResource(id = R.string.menu_back))
+				Icon(
+					imageVector = Icons.Filled.Delete,
+					contentDescription = stringResource(id = R.string.menu_back),
+					tint = MaterialTheme.colorScheme.onSurfaceVariant
+				)
 			}
 		},
 		modifier = Modifier.fillMaxWidth()
@@ -475,7 +492,7 @@ fun TaskDetailTopAppBar(onBack: () -> Unit, onDelete: () -> Unit, onEdit: () -> 
 				Icon(
 					imageVector = Icons.Filled.Close,
 					contentDescription = stringResource(id = R.string.task_topbar_close),
-					tint = LocalContentColor.current
+					tint = MaterialTheme.colorScheme.onSurfaceVariant
 				)
 			}
 		},
@@ -484,14 +501,14 @@ fun TaskDetailTopAppBar(onBack: () -> Unit, onDelete: () -> Unit, onEdit: () -> 
 				Icon(
 					imageVector = Icons.Filled.Edit,
 					contentDescription = stringResource(id = R.string.edit_task),
-					tint = LocalContentColor.current
+					tint = MaterialTheme.colorScheme.onSurfaceVariant
 				)
 			}
 			IconButton(onClick = onDelete) {
 				Icon(
 					imageVector = Icons.Filled.Delete,
 					contentDescription = stringResource(id = R.string.menu_back),
-					tint = LocalContentColor.current
+					tint = MaterialTheme.colorScheme.onSurfaceVariant
 				)
 			}
 		},
