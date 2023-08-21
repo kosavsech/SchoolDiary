@@ -1,11 +1,13 @@
 {
-  "latestVersion": "0.1.1",
-  "latestVersionCode": 2,
-  "url": "https://github.com/javiersantos/AppUpdater/releases",
-  "releaseNotes": [
-    "- First evolution",
-    "- Second evolution",
-    "- Bug fixes"
-  ],
-  "isCritical": false
+  {
+    "latestVersion": "0.1.1",
+    "latestVersionCode": 2,
+    "url": "https://github.com/javiersantos/AppUpdater/releases",
+    "releaseNotes": [
+      "- First evolution",
+      "- Second evolution",
+      "- Bug fixes"
+    ],
+    "isCritical": false
+  }
 }
