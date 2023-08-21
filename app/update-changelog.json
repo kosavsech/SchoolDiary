@@ -1,13 +1,16 @@
 [
-  {
-    "latestVersion": "0.1.1",
-    "latestVersionCode": 2,
-    "url": "https://github.com/javiersantos/AppUpdater/releases",
-    "releaseNotes": [
-      "- First evolution",
-      "- Second evolution",
-      "- Bug fixes"
-    ],
-    "isCritical": false
-  }
+    {
+        "version": "testVer",
+        "versionCode": 2,
+        "apk": "https://github.com/javiersantos/AppUpdater/releases",
+        "releaseNotes": "noNotes here",
+        "isCritical": false
+    },
+    {
+        "version": "testVer2",
+        "versionCode": 3,
+        "apk": "https://github.com/javiersantos/AppUpdater/releases",
+        "releaseNotes": "noNotes here",
+        "isCritical": false
+    }
 ]
