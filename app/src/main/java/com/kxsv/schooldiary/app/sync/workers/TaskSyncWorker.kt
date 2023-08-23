@@ -5,15 +5,21 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationChannelGroup
 import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.TaskStackBuilder
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.util.Log
 import androidx.core.app.ActivityCompat
+import androidx.core.net.toUri
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkerParameters
+import com.kxsv.schooldiary.R
+import com.kxsv.schooldiary.app.MainActivity
 import com.kxsv.schooldiary.app.sync.initializers.SyncConstraints
 import com.kxsv.schooldiary.app.sync.initializers.syncForegroundInfo
 import com.kxsv.schooldiary.data.local.features.task.TaskWithSubject
@@ -23,6 +29,8 @@ import com.kxsv.schooldiary.di.util.NotificationsConstants
 import com.kxsv.schooldiary.di.util.NotificationsConstants.NETWORK_CHANNEL_GROUP_ID
 import com.kxsv.schooldiary.di.util.TaskNotification
 import com.kxsv.schooldiary.di.util.TaskSummaryNotification
+import com.kxsv.schooldiary.ui.screens.destinations.TaskDetailScreenDestination
+import com.kxsv.schooldiary.ui.screens.grade_list.MY_URI
 import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -130,11 +138,32 @@ class TaskSyncWorker @AssistedInject constructor(
 		val subjectName = taskWithSubject.subject.getName()
 		val title = subjectName.take(10) + if (subjectName.length > 10) "... " else " " +
 				taskWithSubject.taskEntity.dueDate.format(DateTimeFormatter.ISO_LOCAL_DATE)
-		val text = taskWithSubject.taskEntity.title
-		
+		Log.d(TAG, "createNotification: title is $title")
+		val text = when (taskWithSubject.taskEntity.fetchedTitleBoundToId) {
+			null -> taskWithSubject.taskEntity.title
+			appContext.getString(R.string.remote_task_absent) -> appContext.getString(R.string.remote_task_absent)
+			else -> appContext.getString(R.string.remote_task_updated)
+		}
+		Log.d(TAG, "createNotification: text is $text")
+		val validTaskDetailScreenRoute = TaskDetailScreenDestination(
+			taskId = taskWithSubject.taskEntity.taskId,
+			isTitleBoundToIdVisible = (taskWithSubject.taskEntity.fetchedTitleBoundToId != null)
+		)
+		val uriForTaskDetailScreen = "$MY_URI/$validTaskDetailScreenRoute".toUri()
+		val clickIntent = Intent(
+			Intent.ACTION_VIEW,
+			uriForTaskDetailScreen,
+			appContext,
+			MainActivity::class.java
+		)
+		val clickPendingIntent: PendingIntent = TaskStackBuilder.create(appContext).run {
+			addNextIntentWithParentStack(clickIntent)
+			getPendingIntent(3, PendingIntent.FLAG_IMMUTABLE)
+		}
 		return taskNotificationBuilder
 			.setContentTitle(title)
 			.setContentText(text)
+			.setContentIntent(clickPendingIntent)
 			.build()
 	}
 	

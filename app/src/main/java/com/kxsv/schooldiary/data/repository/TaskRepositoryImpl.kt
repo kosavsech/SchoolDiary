@@ -1,5 +1,7 @@
 package com.kxsv.schooldiary.data.repository
 
+import android.content.res.Resources
+import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.lesson.LessonDao
 import com.kxsv.schooldiary.data.local.features.study_day.StudyDayDao
 import com.kxsv.schooldiary.data.local.features.subject.SubjectDao
@@ -103,9 +105,10 @@ class TaskRepositoryImpl @Inject constructor(
 	 */
 	private suspend fun fetchTasksOnDate(date: LocalDate): MutableList<TaskWithSubject> {
 		return withContext(ioDispatcher) {
-			val dateNewTasks: MutableList<TaskWithSubject> = mutableListOf()
+			val dateNewTasks = mutableListOf<TaskWithSubject>()
+			
 			val localSchedule = async { lessonDataSource.getAllWithSubjectByDate(date) }
-			val dayInfo = webService.getDayInfo(date)
+			val dayInfo = async { webService.getDayInfo(date) }
 			
 			val subjectsIndexed = if (localSchedule.await().isNotEmpty()) {
 				val localClassesMapped = mutableMapOf<Int, SubjectEntity>()
@@ -115,7 +118,7 @@ class TaskRepositoryImpl @Inject constructor(
 				localClassesMapped
 			} else {
 				LessonParser()
-					.parse(dayInfo = dayInfo, localDate = date)
+					.parse(dayInfo = dayInfo.await(), localDate = date)
 					.toSubjectEntitiesIndexed(subjectDataSource, studyDayDataSource)
 			}
 			
@@ -123,7 +126,7 @@ class TaskRepositoryImpl @Inject constructor(
 				dateNewTasks.addAll(
 					fetchTasksForSubject(
 						subjectIndexed = subjectIndexed,
-						dayInfo = dayInfo,
+						dayInfo = dayInfo.await(),
 						date = date
 					)
 				)
@@ -159,24 +162,43 @@ class TaskRepositoryImpl @Inject constructor(
 		}
 		
 		val newTasksForSubject = mutableListOf<TaskWithSubject>()
-		val localTasksAssociated = localTasks.associateBy { it.taskId }
+		
 		localTasks.forEach { localTask ->
 			if (localTask.taskId.split("_")[0].toInt() >= 100) return@forEach
+			
 			val relevantFetchedTask = fetchedTasksWithSubjects.run {
-				val index = this
-					.map { it.taskEntity }
+				val index = this.map { it.taskEntity }
 					.sortedBy { it.taskId }
 					.binarySearchBy(localTask.taskId) { it.taskId }
-				if (index != -1) {
-					return@run this[index]
-				} else {
-					return@run null
+				
+				return@run if (index != -1) this[index] else null
+			}
+			if (relevantFetchedTask == null && localTask.fetchedTitleBoundToId == null) {
+				taskDataSource.deleteById(localTask.taskId)
+			} else {
+				if (localTask.subjectMasterId != null) {
+					if (relevantFetchedTask == null) {
+						Resources.getSystem().getString(R.string.remote_task_absent)
+					} else if (!localTask.isContentEqual(relevantFetchedTask.taskEntity)) {
+						relevantFetchedTask.taskEntity.fetchedTitleBoundToId
+					} else {
+						null
+					}?.let { newFetchedTitleBoundToId ->
+						subjectDataSource.getById(localTask.subjectMasterId)?.let { subject ->
+							newTasksForSubject.add(
+								TaskWithSubject(
+									taskEntity = localTask.copy(
+										fetchedTitleBoundToId = newFetchedTitleBoundToId
+									),
+									subject = subject
+								)
+							)
+						}
+					}
 				}
 			}
-			if (relevantFetchedTask == null || !localTask.isContentEqual(relevantFetchedTask.taskEntity)) {
-				taskDataSource.deleteById(localTask.taskId)
-			}
 		}
+		val localTasksAssociated = localTasks.associateBy { it.taskId }
 		fetchedTasksWithSubjects.forEach { fetchedTask ->
 			val wereFetchedBefore = localTasksAssociated.containsKey(fetchedTask.taskEntity.taskId)
 			

@@ -121,7 +121,7 @@ private fun LoginContent(
 				TextField(
 					value = eduLogin,
 					onValueChange = eduLoginUpdate,
-					label = { Text(text = stringResource(R.string.login_text_field_lable)) },
+					label = { Text(text = stringResource(R.string.login_text_field_label)) },
 					keyboardOptions = KeyboardOptions(
 						imeAction = ImeAction.Next,
 						autoCorrect = false,
@@ -140,7 +140,7 @@ private fun LoginContent(
 				TextField(
 					value = eduPassword,
 					onValueChange = eduPasswordUpdate,
-					label = { Text(text = stringResource(R.string.password_text_field_lable)) },
+					label = { Text(text = stringResource(R.string.password_text_field_label)) },
 					trailingIcon = {
 						IconButton(onClick = {
 							coroutineScope.coroutineContext.cancelChildren()

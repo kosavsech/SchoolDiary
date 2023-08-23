@@ -1,5 +1,6 @@
 package com.kxsv.schooldiary.ui.screens.task_list.task_detail
 
+import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.FloatingActionButton
@@ -29,24 +31,36 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavBackStackEntry
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.task.TaskEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.TaskDetailTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.TasksDetailNavActions
+import com.kxsv.schooldiary.ui.screens.grade_list.MY_URI
+import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.util.Utils
+import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.FULL_ROUTE_PLACEHOLDER
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.result.ResultBackNavigator
 
 data class TaskDetailScreenNavArgs(
 	val taskId: String,
+	val isTitleBoundToIdVisible: Boolean = false,
 )
 
 @Destination(
-	navArgsDelegate = TaskDetailScreenNavArgs::class
+	navArgsDelegate = TaskDetailScreenNavArgs::class,
+	deepLinks = [
+		DeepLink(
+			action = Intent.ACTION_VIEW,
+			uriPattern = "$MY_URI/$FULL_ROUTE_PLACEHOLDER"
+		)
+	]
 )
 @Composable
 fun TaskDetailScreen(
@@ -54,12 +68,15 @@ fun TaskDetailScreen(
 	resultNavigator: ResultBackNavigator<Int>,
 	viewModel: TaskDetailViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState,
+	backStackEntry: NavBackStackEntry,
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
 	val navigator = TasksDetailNavActions(
 		destinationsNavigator = destinationsNavigator,
 		resultBackNavigator = resultNavigator
 	)
+	val isTitleBoundToIdVisible =
+		backStackEntry.navArgs<TaskDetailScreenNavArgs>().isTitleBoundToIdVisible
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		modifier = Modifier.fillMaxSize(),
@@ -93,6 +110,7 @@ fun TaskDetailScreen(
 		
 		TaskContent(
 			isLoading = uiState.isLoading,
+			isTitleBoundToIdVisible = isTitleBoundToIdVisible,
 			taskEntity = uiState.taskWithSubject?.taskEntity,
 			subjectEntity = uiState.taskWithSubject?.subject,
 			modifier = Modifier.padding(paddingValues)
@@ -112,6 +130,7 @@ fun TaskDetailScreen(
 @Composable
 private fun TaskContent(
 	isLoading: Boolean,
+	isTitleBoundToIdVisible: Boolean,
 	taskEntity: TaskEntity?,
 	subjectEntity: SubjectEntity?,
 	modifier: Modifier,
@@ -181,6 +200,27 @@ private fun TaskContent(
 							text = taskEntity.description,
 							style = MaterialTheme.typography.titleMedium,
 						)
+					}
+				}
+				if (isTitleBoundToIdVisible) {
+					Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.vertical_margin)))
+					Row(verticalAlignment = Alignment.CenterVertically) {
+						Icon(
+							imageVector = Icons.Default.Cloud,
+							contentDescription = stringResource(R.string.remote_task),
+							modifier = Modifier.size(18.dp)
+						)
+						Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+						Column(verticalArrangement = Arrangement.Center) {
+							Text(
+								text = taskEntity.fetchedTitleBoundToId ?: "is null",
+								style = MaterialTheme.typography.titleMedium,
+							)
+							Text(
+								text = stringResource(R.string.remote_task),
+								style = MaterialTheme.typography.labelMedium,
+							)
+						}
 					}
 				}
 			}

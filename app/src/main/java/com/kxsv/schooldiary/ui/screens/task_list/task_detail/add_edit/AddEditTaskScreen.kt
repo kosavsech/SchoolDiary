@@ -1,6 +1,7 @@
 package com.kxsv.schooldiary.ui.screens.task_list.task_detail.add_edit
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +13,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.School
@@ -43,12 +45,15 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavBackStackEntry
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditTaskTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AddEditTaskScreenNavActions
+import com.kxsv.schooldiary.ui.screens.navArgs
+import com.kxsv.schooldiary.ui.screens.task_list.task_detail.TaskDetailScreenNavArgs
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.util.Utils
 import com.ramcosta.composedestinations.annotation.Destination
@@ -66,10 +71,11 @@ private const val TAG = "AddEditTaskScreen"
 data class AddEditTaskScreenNavArgs(
 	val taskId: String?,
 	val isEditingFetchedTask: Boolean,
+	val isTitleBoundToIdVisible: Boolean = false,
 )
 
 @Destination(
-	navArgsDelegate = AddEditTaskScreenNavArgs::class
+	navArgsDelegate = AddEditTaskScreenNavArgs::class,
 )
 @Composable
 fun AddEditTaskScreen(
@@ -77,12 +83,15 @@ fun AddEditTaskScreen(
 	resultNavigator: ResultBackNavigator<Int>,
 	viewModel: AddEditTaskViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState,
+	backStackEntry: NavBackStackEntry,
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
 	val navigator = AddEditTaskScreenNavActions(
 		destinationsNavigator = destinationsNavigator,
 		resultNavigator = resultNavigator
 	)
+	val isTitleBoundToIdVisible =
+		backStackEntry.navArgs<TaskDetailScreenNavArgs>().isTitleBoundToIdVisible
 	
 	LaunchedEffect(uiState.isTaskSaved) {
 		if (uiState.isTaskSaved) {
@@ -137,10 +146,12 @@ fun AddEditTaskScreen(
 			modifier = Modifier.padding(paddingValues),
 			isLoading = uiState.isLoading,
 			isEditingFetchedTask = viewModel.isEditingFetchedTask,
+			isTitleBoundToIdVisible = isTitleBoundToIdVisible,
 			name = uiState.title,
 			description = uiState.description,
 			dueDate = uiState.dueDate,
 			subject = uiState.subject,
+			fetchedTitleBoundToId = uiState.fetchedTitleBoundToId,
 			availableSubjects = uiState.availableSubjects,
 			onImmutableFieldEdit = onImmutableFieldEdit,
 			changeTitle = changeTitle,
@@ -197,11 +208,13 @@ private fun AddEditSubjectContent(
 	modifier: Modifier = Modifier,
 	isLoading: Boolean,
 	isEditingFetchedTask: Boolean,
+	isTitleBoundToIdVisible: Boolean,
 	name: String,
 	description: String,
 	dueDate: LocalDate,
 	subject: SubjectEntity?,
 	availableSubjects: List<SubjectEntity>,
+	fetchedTitleBoundToId: String?,
 	onImmutableFieldEdit: () -> Unit,
 	changeTitle: (String) -> Unit,
 	changeDescription: (String) -> Unit,
@@ -353,6 +366,27 @@ private fun AddEditSubjectContent(
 				colors = textFieldColors,
 			)
 			
+			if (isTitleBoundToIdVisible) {
+				Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.vertical_margin)))
+				Row(verticalAlignment = Alignment.CenterVertically) {
+					Icon(
+						imageVector = Icons.Default.Cloud,
+						contentDescription = stringResource(R.string.remote_task),
+						modifier = Modifier.size(18.dp)
+					)
+					Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+					Column(verticalArrangement = Arrangement.Center) {
+						Text(
+							text = fetchedTitleBoundToId ?: "is null",
+							style = MaterialTheme.typography.titleMedium,
+						)
+						Text(
+							text = stringResource(R.string.remote_task),
+							style = MaterialTheme.typography.labelMedium,
+						)
+					}
+				}
+			}
 			MaterialDialog(
 				dialogState = subjectDialog,
 				buttons = {

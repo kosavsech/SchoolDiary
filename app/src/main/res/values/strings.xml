@@ -96,7 +96,7 @@
     <string name="display_name_hint">Display name</string>
     <string name="no_classes_label">No classes for this day</string>
     <string name="access_temporarily_blocked">Access to server is temporarily blocked</string>
-    <string name="blank_inupt">You haven\'t entered login or password</string>
+    <string name="blank_input">You haven\'t entered login or password</string>
     <string name="auth_failure">Something unexpected has happened</string>
     <string name="incorrect_auth_data">You\'ve entered wrong login or password</string>
     <string name="not_logged_in">You\'re not logged to site</string>
@@ -150,8 +150,8 @@
     <string name="successfully_copied_date_range_schedule_0">Copied schedule from range %1$s - %2$s to range %3$s - %4$s.\nTimings were not copied.</string>
     <string name="successfully_copied_date_range_schedule_1">Copied schedule from range %1$s - %2$s to range %3$s - %4$s.\nTimings copied too.</string>
     <string name="login_btn">Login</string>
-    <string name="login_text_field_lable">Login</string>
-    <string name="password_text_field_lable">Password</string>
+    <string name="login_text_field_label">Login</string>
+    <string name="password_text_field_label">Password</string>
     <string name="toggle_password_visibility">Toggle password visibility</string>
     <string name="auth_session_is_expired">Your auth session is expired</string>
     <string name="login_dialog_title">edu.tatar login</string>
@@ -241,9 +241,12 @@
     <string name="new_version_found">New version found</string>
     <string name="new_critical_update_found">New critical update found</string>
     <string name="page_not_found">Page not found(404)</string>
-    <string name="exception_occured">Exception occured on fetch</string>
+    <string name="exception_occurred">Exception occurred on fetch</string>
     <string name="appupdater_download_notification_title">SchoolDiary</string>
     <string name="appupdater_download_notification_desc">Downloading new version</string>
     <string name="dismiss_available">You can dismiss dialog and download will still countinue in background</string>
+    <string name="remote_task_updated">Teacher changed task</string>
+    <string name="remote_task_absent">Remote task deleted or moved to another day</string>
+    <string name="remote_task">Remote task</string>
 
 </resources>

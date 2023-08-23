@@ -110,7 +110,7 @@ class EduPerformanceViewModel @Inject constructor(
 				_uiState.update { it.copy(isLoading = false) }
 			} catch (e: Exception) {
 				_uiState.update { it.copy(isLoading = false) }
-				showSnackbarMessage(R.string.exception_occured)
+				showSnackbarMessage(R.string.exception_occurred)
 			}
 		}
 	}

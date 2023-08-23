@@ -70,7 +70,7 @@ class LoginViewModel @Inject constructor(
 	private fun processAuthError(authError: NetworkError) {
 		when (authError) {
 			NetworkError.AccessTemporarilyBlocked -> showSnackbarMessage(R.string.access_temporarily_blocked)
-			NetworkError.BlankInput -> showSnackbarMessage(R.string.blank_inupt)
+			NetworkError.BlankInput -> showSnackbarMessage(R.string.blank_input)
 			NetworkError.IncorrectAuthData -> showSnackbarMessage(R.string.incorrect_auth_data)
 			NetworkError.NotLoggedIn -> showSnackbarMessage(R.string.not_logged_in)
 			is NetworkError.GeneralError -> showSnackbarMessage(R.string.auth_failure)

@@ -108,23 +108,10 @@ object NotificationModule {
 	fun provideTaskNotificationBuilder(
 		@ApplicationContext context: Context,
 	): Notification.Builder {
-		
-		val clickIntent = Intent(
-			Intent.ACTION_VIEW,
-			TasksScreenDestination.deepLinks.first().uriPattern!!.toUri(),
-			context,
-			MainActivity::class.java
-		)
-		val clickPendingIntent: PendingIntent = TaskStackBuilder.create(context).run {
-			addNextIntentWithParentStack(clickIntent)
-			getPendingIntent(3, PendingIntent.FLAG_IMMUTABLE)
-		}
-		
 		return Notification.Builder(context, TASK_CHANNEL_ID)
 			.setSmallIcon(R.mipmap.ic_launcher)
 			.setVisibility(Notification.VISIBILITY_PUBLIC)
 			.setAutoCancel(true)
-			.setContentIntent(clickPendingIntent)
 			.setGroup(FETCHED_TASKS_GROUP_ID)
 	}
 	
