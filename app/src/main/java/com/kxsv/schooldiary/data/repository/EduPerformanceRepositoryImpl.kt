@@ -60,6 +60,11 @@ class EduPerformanceRepositoryImpl @Inject constructor(
 	
 	/**
 	 * @throws NetworkException.NotLoggedInException
+	 * @throws java.net.MalformedURLException
+	 * @throws org.jsoup.HttpStatusException
+	 * @throws org.jsoup.UnsupportedMimeTypeException
+	 * @throws java.net.SocketTimeoutException
+	 * @throws java.io.IOException
 	 */
 	override suspend fun fetchEduPerformanceByTerm(term: EduPerformancePeriod): List<EduPerformanceDto> {
 		val rows = webService.getTermEduPerformance(term.value)
@@ -72,6 +77,11 @@ class EduPerformanceRepositoryImpl @Inject constructor(
 	
 	/**
 	 * @throws NetworkException.NotLoggedInException
+	 * @throws java.net.MalformedURLException
+	 * @throws org.jsoup.HttpStatusException
+	 * @throws org.jsoup.UnsupportedMimeTypeException
+	 * @throws java.net.SocketTimeoutException
+	 * @throws java.io.IOException
 	 */
 	override suspend fun fetchEduPerformance(): Unit = withContext(ioDispatcher) {
 		for (termIndex in 0..4) {

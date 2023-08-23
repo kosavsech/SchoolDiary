@@ -6,6 +6,7 @@ sealed class NetworkError {
 	object IncorrectAuthData : NetworkError()
 	object NotLoggedIn : NetworkError()
 	object NotActualAuthSession : NetworkError()
+	object PageNotFound : NetworkError()
 	data class GeneralError(
 		val message: String? = null,
 		val cause: Throwable? = null,

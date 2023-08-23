@@ -32,7 +32,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
+import com.kxsv.schooldiary.data.util.AppVersionState
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.SubjectsTopAppBar
+import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AppUpdateNavActions
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.SubjectsScreenNavActions
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.ramcosta.composedestinations.annotation.Destination
@@ -50,6 +52,22 @@ fun SubjectsScreen(
 	snackbarHostState: SnackbarHostState,
 ) {
 	val navigator = SubjectsScreenNavActions(destinationsNavigator = destinationsNavigator)
+	val updateDialog = AppUpdateNavActions(destinationsNavigator = destinationsNavigator)
+	val toShowUpdateDialog = viewModel.toShowUpdateDialog.collectAsState().value
+	LaunchedEffect(toShowUpdateDialog) {
+		when (toShowUpdateDialog) {
+			is AppVersionState.MustUpdate -> {
+				updateDialog.onMandatoryUpdate(toShowUpdateDialog.update)
+			}
+			
+			is AppVersionState.ShouldUpdate -> {
+				updateDialog.onAvailableUpdate(toShowUpdateDialog.update)
+				viewModel.onUpdateDialogShown()
+			}
+			
+			else -> Unit
+		}
+	}
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		topBar = { SubjectsTopAppBar(openDrawer = { coroutineScope.launch { drawerState.open() } }) },

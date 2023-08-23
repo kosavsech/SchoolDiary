@@ -1,6 +1,10 @@
 package com.kxsv.schooldiary.data.remote
 
 import android.util.Log
+import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
+import com.google.gson.reflect.TypeToken
+import com.kxsv.schooldiary.data.remote.dtos.UpdateDto
 import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.remote.util.RemoteUtils.handleErrorResponse
 import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
@@ -8,11 +12,13 @@ import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.Dispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
-import okio.IOException
 import org.jsoup.Connection
+import org.jsoup.HttpStatusException
 import org.jsoup.Jsoup
+import org.jsoup.UnsupportedMimeTypeException
 import org.jsoup.nodes.Document
 import org.jsoup.select.Elements
+import java.io.IOException
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
@@ -24,6 +30,42 @@ class WebServiceImpl @Inject constructor(
 	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : WebService {
 	
+	override suspend fun getLatestAppVersion(): UpdateDto? {
+		return try {
+			val data = withContext(ioDispatcher) {
+				Jsoup.connect(UPDATE_CHANGELOG_URL)
+					.ignoreContentType(true)
+					.execute()
+					.body()
+			}
+			
+			val listType = object : TypeToken<List<UpdateDto>>() {}.type
+			val content = Gson().fromJson<List<UpdateDto>>(data, listType)
+			content.firstOrNull()
+		} catch (e: JsonSyntaxException) {
+			Log.e(TAG, "getLatestAppVersion: exception", e)
+			null
+		} catch (e: java.net.MalformedURLException) {
+			Log.e(TAG, "getLatestAppVersion: exception", e)
+			null
+		} catch (e: HttpStatusException) {
+			Log.e(TAG, "getLatestAppVersion: exception", e)
+			null
+		} catch (e: UnsupportedMimeTypeException) {
+			Log.e(TAG, "getLatestAppVersion: exception", e)
+			null
+		} catch (e: java.net.SocketTimeoutException) {
+			Log.e(TAG, "getLatestAppVersion: exception", e)
+			null
+		} catch (e: IOException) {
+			Log.e(TAG, "getLatestAppVersion: exception", e)
+			null
+		} catch (e: Exception) {
+			Log.e(TAG, "getLatestAppVersion: exception", e)
+			null
+		}
+	}
+	
 	/**
 	 * Edu tatar auth
 	 *
@@ -31,10 +73,10 @@ class WebServiceImpl @Inject constructor(
 	 * @throws NetworkException.NotLoggedInException
 	 * @throws NetworkException.AccessTemporarilyBlockedException
 	 * @throws NetworkException.BlankInputException
-	 * @throws IOException on error
+	 * @throws NetworkException.PageNotFound
+	 * @throws IOException if couldn't parse document
 	 */
 	override suspend fun eduTatarAuth(login: String, password: String) {
-		Log.i(TAG, "eduTatarAuth() called with login: $login, password: $password")
 		val response = withContext(ioDispatcher) {
 			Jsoup.connect("$BASE_URL/logon")
 				.method(Connection.Method.POST)
@@ -56,6 +98,8 @@ class WebServiceImpl @Inject constructor(
 	 * @param localDate
 	 * @return
 	 * @throws NetworkException.NotLoggedInException
+	 * @throws NetworkException.PageNotFound
+	 * @throws IOException if couldn't parse document
 	 */
 	override suspend fun getDayInfo(localDate: LocalDate): Elements {
 		val dayPage = getDayPage(localDate)
@@ -64,6 +108,8 @@ class WebServiceImpl @Inject constructor(
 	
 	/**
 	 * @throws NetworkException.NotLoggedInException
+	 * @throws NetworkException.PageNotFound
+	 * @throws IOException if couldn't parse document
 	 */
 	override suspend fun getTermEduPerformance(term: String): Elements {
 		val termPage = getTermPage(term)
@@ -71,16 +117,18 @@ class WebServiceImpl @Inject constructor(
 	}
 	
 	/**
-	 * Get edu.tatar.ru page with [targetSegment] directory. If cookie is null or expired,
-	 * try to authenticate and re-launch operation.
+	 * Get edu.tatar.ru page with [targetSegment] directory.
+	 *
+	 * If cookie is null or expired, try to authenticate and re-launch operation.
 	 *
 	 * @param targetSegment
 	 * @return [not parsed document of page][Document]
 	 * @throws NetworkException.NotLoggedInException
+	 * @throws NetworkException.PageNotFound
 	 * @throws IOException if couldn't parse document
 	 */
 	private suspend fun getPage(targetSegment: String): Document {
-		Log.d(TAG, "getPage() called with: targetSegment = $targetSegment")
+		Log.d(TAG, "getPage(targetSegment = $targetSegment) is called")
 		// TODO: add exception on eduLogin or eduPassword is null or empty, show dialog
 		//  where user can re-enter auth data
 		val login = userPreferencesRepository.getEduLogin()
@@ -92,22 +140,24 @@ class WebServiceImpl @Inject constructor(
 			val doc = withContext(ioDispatcher) {
 				val cookie = userPreferencesRepository.getAuthCookie()
 					?: throw NetworkException.NotActualAuthSessionException
-				Jsoup.connect("$BASE_URL$targetSegment").cookie(AUTH_COOKIE, cookie).get()
+				
+				Jsoup.connect("$BASE_URL$targetSegment")
+					.cookie(AUTH_COOKIE, cookie)
+					.get()
 			}
-			Log.d(TAG, doc.location())
-			if (doc.location().contains("login") or doc.location().contains("message")) {
+			if (doc.location().contains("login") || doc.location().contains("message")) {
 				throw NetworkException.NotActualAuthSessionException
+			} else if (!doc.location().contains(targetSegment)) {
+				throw NetworkException.PageNotFound
 			}
+			Log.d(
+				TAG,
+				"getPage(targetSegment = $targetSegment) returned: doc of URL ${doc.location()}"
+			)
 			doc
-		} catch (e: NetworkException) {
-			if (e == NetworkException.NotActualAuthSessionException) {
-				eduTatarAuth(login = login, password = password)
-				getPage(targetSegment)
-			} else {
-				throw e
-			}
-		} catch (e: IOException) {
-			throw e
+		} catch (e: NetworkException.NotActualAuthSessionException) {
+			eduTatarAuth(login = login, password = password)
+			getPage(targetSegment)
 		}
 		
 	}
@@ -117,6 +167,8 @@ class WebServiceImpl @Inject constructor(
 	 *
 	 * @param localDate
 	 * @throws NetworkException.NotLoggedInException
+	 * @throws NetworkException.PageNotFound
+	 * @throws IOException if couldn't parse document
 	 * @return parsed document of page
 	 */
 	private suspend fun getDayPage(localDate: LocalDate): Document {
@@ -129,6 +181,8 @@ class WebServiceImpl @Inject constructor(
 	 *
 	 * @param term to get, could be "year" also
 	 * @throws NetworkException.NotLoggedInException
+	 * @throws NetworkException.PageNotFound
+	 * @throws IOException if couldn't parse document
 	 * @return parsed document of page
 	 */
 	private suspend fun getTermPage(term: String): Document {
@@ -138,5 +192,7 @@ class WebServiceImpl @Inject constructor(
 	companion object {
 		const val AUTH_COOKIE = "DNSID"
 		const val BASE_URL = "https://edu.tatar.ru"
+		const val UPDATE_CHANGELOG_URL =
+			"https://raw.githubusercontent.com/kosavsech/SchoolDiary/master/app/update-changelog.json"
 	}
 }

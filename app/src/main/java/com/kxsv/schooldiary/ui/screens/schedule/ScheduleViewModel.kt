@@ -18,7 +18,9 @@ import com.kxsv.schooldiary.data.repository.PatternStrokeRepository
 import com.kxsv.schooldiary.data.repository.StudyDayRepository
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.data.repository.TimePatternRepository
+import com.kxsv.schooldiary.data.repository.UpdateRepository
 import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
+import com.kxsv.schooldiary.data.util.AppVersionState
 import com.kxsv.schooldiary.di.util.AppDispatchers.IO
 import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
@@ -73,6 +75,7 @@ class ScheduleViewModel @Inject constructor(
 	private val studyDayRepository: StudyDayRepository,
 	private val patternRepository: TimePatternRepository,
 	private val userPreferencesRepository: UserPreferencesRepository,
+	private val updateRepository: UpdateRepository,
 	@Dispatcher(IO) private val ioDispatcher: CoroutineDispatcher,
 	savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -87,7 +90,25 @@ class ScheduleViewModel @Inject constructor(
 	private var scheduleRetrieveJob: Job? = null
 	private var scheduleFetchJob: Job? = null
 	
+	val toShowUpdateDialog = MutableStateFlow<AppVersionState>(AppVersionState.NotFound)
+	
+	private fun observeIsUpdateAvailable() {
+		viewModelScope.launch(ioDispatcher) {
+			updateRepository.isUpdateAvailable.collect {
+				toShowUpdateDialog.value = it
+			}
+		}
+	}
+	
+	fun onUpdateDialogShown() {
+		viewModelScope.launch(ioDispatcher) {
+			toShowUpdateDialog.value = AppVersionState.Suppressed
+			updateRepository.suppressUpdateUntilNextAppStart()
+		}
+	}
+	
 	init {
+		observeIsUpdateAvailable()
 		onDayChangeUpdate(date = timestampToLocalDate(dateStamp) ?: Utils.currentDate)
 		if (showComparison == true) fetchSchedule()
 	}
@@ -461,7 +482,7 @@ class ScheduleViewModel @Inject constructor(
 			loadLocalScheduleOnDate(toDate)
 			updateTimingsByStudyDay(cloneDay)
 		} catch (e: NetworkException) {
-			Log.e(TAG, "copyNetSchedule: exception on login", e)
+			Log.e(TAG, "copyNetSchedule: exception on connection", e)
 		} catch (e: IOException) {
 			Log.e(TAG, "copyNetSchedule: exception on response parseTerm", e)
 		} catch (e: Exception) {

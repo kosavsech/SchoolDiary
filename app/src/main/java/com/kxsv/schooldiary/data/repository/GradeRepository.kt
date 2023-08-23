@@ -28,6 +28,8 @@ interface GradeRepository {
 	
 	/**
 	 * @throws NetworkException.NotLoggedInException
+	 * @throws NetworkException.PageNotFound
+	 * @throws java.io.IOException if couldn't parse document
 	 */
 	suspend fun fetchRecentGradesWithTeachers(): Pair<MutableList<DayGradeDto>, MutableMap<TeacherDto, MutableSet<String>>>
 	

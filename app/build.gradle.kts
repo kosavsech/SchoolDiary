@@ -14,12 +14,12 @@ android {
 	
 	defaultConfig {
 		applicationId = "com.kxsv.schooldiary"
-		minSdk = 27
+		minSdk = 28
 		compileSdk = 34
 		//noinspection OldTargetApi
 		targetSdk = 33
 		versionCode = 1
-		versionName = "0.8.0.0:pre-alpha"
+		versionName = "0.1.0:pre-alpha"
 		
 		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 		vectorDrawables {
@@ -69,13 +69,14 @@ dependencies {
 	implementation(project(":dialogs-datetime"))
 	implementation(project(":ychart-mod"))
 	implementation(project(":segmentedprogressbar"))
+	implementation(project(":appupdater-core"))
 	
 	// Compose dependencies
 	val composeVersion = "1.5.0"
 	implementation("androidx.compose.ui:ui:$composeVersion")
 	implementation("androidx.compose.material:material:$composeVersion")
-	implementation("androidx.compose.ui:ui-tooling-preview:$composeVersion")
 	debugImplementation("androidx.compose.ui:ui-tooling:$composeVersion")
+	implementation("androidx.compose.ui:ui-tooling-preview:$composeVersion")
 	androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.5.0")
 	debugImplementation("androidx.compose.ui:ui-test-manifest:1.5.0")
 	implementation("androidx.navigation:navigation-compose:2.7.0")
@@ -104,15 +105,15 @@ dependencies {
 	implementation("androidx.room:room-runtime:$roomVersion")
 	ksp("androidx.room:room-compiler:$roomVersion")
 	
+	// Kotlin Extensions and Coroutines support for Room
+	implementation("androidx.room:room-ktx:2.5.2")
+	implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+	
 	// https://mvnrepository.com/artifact/com.google.code.gson/gson
 	implementation("com.google.code.gson:gson:2.10.1")
 	
 	// https://github.com/aclassen/ComposeReorderable/releases/latest
 //	implementation("org.burnoutcrew.composereorderable:reorderable:0.9.6")
-	
-	// Kotlin Extensions and Coroutines support for Room
-	implementation("androidx.room:room-ktx:2.5.2")
-	implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
 	
 	// Jsoup
 	implementation("org.jsoup:jsoup:1.16.1")

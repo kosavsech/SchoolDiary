@@ -176,8 +176,16 @@ class SubjectDetailViewModel @Inject constructor(
 	 * @throws NetworkException.NotLoggedInException
 	 */
 	fun refresh() {
+		_uiState.update { it.copy(isLoading = true) }
+		
 		viewModelScope.launch(ioDispatcher) {
-			eduPerformanceRepository.fetchEduPerformance()
+			try {
+				eduPerformanceRepository.fetchEduPerformance()
+				_uiState.update { it.copy(isLoading = false) }
+			} catch (e: Exception) {
+				_uiState.update { it.copy(isLoading = false) }
+				showSnackbarMessage(R.string.exception_occured)
+			}
 		}
 	}
 	

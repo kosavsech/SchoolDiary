@@ -1,6 +1,10 @@
 package com.kxsv.schooldiary.util
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.util.Log
+import androidx.compose.ui.platform.LocalContext
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import com.kxsv.schooldiary.data.util.Mark
@@ -22,6 +26,18 @@ private const val TAG = "Utils"
 object Utils {
 	val taskDueDateFormatterLong: DateTimeFormatter = DateTimeFormatter.ofPattern("eeee, MMMM d")
 	val currentDate: LocalDate = LocalDate.of(2023, 5, 15)
+	
+	/**
+	 * Tries to return an [Activity] instance from the compose [LocalContext]
+	 *
+	 * @return Either an [Activity] instance or null
+	 */
+	internal fun Context.getActivity(): Activity? = when (this) {
+		is Activity -> this
+		is ContextWrapper -> baseContext.getActivity()
+		else -> null
+	}
+	
 	
 	fun Collection<PeriodWithRange>.getCurrentPeriod(): EduPerformancePeriod? {
 		if (this.isEmpty()) return null

@@ -40,24 +40,16 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.LoginDialogNavActions
 import com.kxsv.schooldiary.ui.util.Indicator
+import com.kxsv.schooldiary.ui.util.NonDismissibleDialog
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
-import com.ramcosta.composedestinations.spec.DestinationStyle
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-
-object NonDismissibleDialog : DestinationStyle.Dialog {
-	override val properties = DialogProperties(
-		dismissOnClickOutside = false,
-		dismissOnBackPress = false,
-	)
-}
 
 private const val TAG = "LoginDialog"
 

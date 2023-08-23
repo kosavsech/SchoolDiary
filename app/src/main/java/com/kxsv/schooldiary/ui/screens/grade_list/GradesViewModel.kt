@@ -13,6 +13,8 @@ import com.kxsv.schooldiary.app.sync.workers.GradeSyncWorker
 import com.kxsv.schooldiary.app.sync.workers.delegatedData
 import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
 import com.kxsv.schooldiary.data.repository.GradeRepository
+import com.kxsv.schooldiary.data.repository.UpdateRepository
+import com.kxsv.schooldiary.data.util.AppVersionState
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
@@ -47,6 +49,7 @@ private const val UNIQUE_WORK_NAME = "GradesScreenFetchSync"
 class GradesViewModel @Inject constructor(
 	private val gradeRepository: GradeRepository,
 	private val workManager: WorkManager,
+	private val updateRepository: UpdateRepository,
 	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
@@ -72,7 +75,25 @@ class GradesViewModel @Inject constructor(
 	
 	private var fetchJob: Job? = null
 	
+	val toShowUpdateDialog = MutableStateFlow<AppVersionState>(AppVersionState.NotFound)
+	
+	private fun observeIsUpdateAvailable() {
+		viewModelScope.launch(ioDispatcher) {
+			updateRepository.isUpdateAvailable.collect {
+				toShowUpdateDialog.value = it
+			}
+		}
+	}
+	
+	fun onUpdateDialogShown() {
+		viewModelScope.launch(ioDispatcher) {
+			toShowUpdateDialog.value = AppVersionState.Suppressed
+			updateRepository.suppressUpdateUntilNextAppStart()
+		}
+	}
+	
 	init {
+		observeIsUpdateAvailable()
 		fetchGrades()
 	}
 	

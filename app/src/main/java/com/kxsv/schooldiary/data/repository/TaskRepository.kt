@@ -27,10 +27,17 @@ interface TaskRepository {
 	
 	/**
 	 * @throws NetworkException.NotLoggedInException
+	 * @throws NetworkException.PageNotFound
+	 * @throws java.io.IOException if couldn't parse document
 	 * @return List of new tasks, which were not cached before
 	 */
 	suspend fun fetchSoonTasks(): List<TaskWithSubject>
 	
+	/**
+	 * @throws NetworkException.NotLoggedInException
+	 * @throws NetworkException.PageNotFound
+	 * @throws java.io.IOException if couldn't parse document
+	 */
 	suspend fun fetchTaskVariantsForSubjectByDate(
 		date: LocalDate,
 		subject: SubjectEntity,

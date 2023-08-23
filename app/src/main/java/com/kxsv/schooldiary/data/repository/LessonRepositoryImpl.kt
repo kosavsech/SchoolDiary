@@ -21,9 +21,9 @@ import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.toList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import java.time.DayOfWeek
 import java.time.LocalDate
 import javax.inject.Inject
@@ -69,6 +69,8 @@ class LessonRepositoryImpl @Inject constructor(
 	
 	/**
 	 * @throws NetworkException.NotLoggedInException
+	 * @throws NetworkException.PageNotFound
+	 * @throws java.io.IOException if couldn't parse document
 	 */
 	override suspend fun fetchLessonsOnDate(localDate: LocalDate): List<LessonDto> {
 		val dayInfo = webService.getDayInfo(localDate)
@@ -77,28 +79,27 @@ class LessonRepositoryImpl @Inject constructor(
 	
 	/**
 	 * @throws NetworkException.NotLoggedInException
-	 */
-	override suspend fun fetchSoonSchedule(): Map<LocalDate, Utils.ScheduleCompareResult> {
-		return withContext(ioDispatcher) {
-			withTimeout(15000L) {
-				val startRange = Utils.currentDate
-				val endRange = startRange.plusDays(14)
-				val newSchedules: MutableMap<LocalDate, Utils.ScheduleCompareResult> =
-					mutableMapOf()
-				
-				(startRange..endRange).toList().forEach { date ->
-					if (date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
-					@Suppress("DeferredResultUnused")
-					async {
-						val compareResult = fetchCompareSchedule(date = date)
-						if (compareResult != null) newSchedules[date] = compareResult
-					}
+	 * @throws NetworkException.PageNotFound
+	 * @throws java.io.IOException if couldn't parse document
+	 * */
+	override suspend fun fetchSoonSchedule(): Map<LocalDate, Utils.ScheduleCompareResult> =
+		coroutineScope {
+			val startRange = Utils.currentDate
+			val endRange = startRange.plusDays(14)
+			val newSchedules: MutableMap<LocalDate, Utils.ScheduleCompareResult> =
+				mutableMapOf()
+			
+			(startRange..endRange).toList().forEach { date ->
+				if (date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
+				@Suppress("DeferredResultUnused")
+				async {
+					val compareResult = fetchCompareSchedule(date = date)
+					if (compareResult != null) newSchedules[date] = compareResult
 				}
-				
-				return@withTimeout newSchedules
 			}
+			
+			return@coroutineScope newSchedules
 		}
-	}
 	
 	/**
 	 * Fetch schedule on date
@@ -108,11 +109,13 @@ class LessonRepositoryImpl @Inject constructor(
 	 * if no local schedule on [date], [ScheduleCompareResult]([isSameAs][com.kxsv.schooldiary.data.repository.LessonRepositoryImpl.ScheduleCompareResult.isSameAs] = [true][Boolean])
 	 * if local schedule is equal to fetched, ([isSameAs][Utils.ScheduleCompareResult.isDifferent] = [false][Boolean]),
 	 * if not
+	 * @throws NetworkException.NotLoggedInException
+	 * @throws NetworkException.PageNotFound
+	 * @throws java.io.IOException if couldn't parse document
 	 */
+	
 	private suspend fun fetchCompareSchedule(date: LocalDate): Utils.ScheduleCompareResult? {
 		return withContext(ioDispatcher) {
-			val dayInfo = async { webService.getDayInfo(date) }
-			
 			val localSchedule = async {
 				val mappedLocalSchedule = mutableMapOf<Int, SubjectEntity>()
 				lessonDataSource.getAllWithSubjectByDate(date).forEach {
@@ -120,9 +123,9 @@ class LessonRepositoryImpl @Inject constructor(
 				}
 				mappedLocalSchedule
 			}
+			val dayInfo = webService.getDayInfo(date)
 			val remoteSchedule = async {
-				LessonParser()
-					.parse(dayInfo = dayInfo.await(), localDate = date)
+				LessonParser().parse(dayInfo = dayInfo, localDate = date)
 			}
 			
 			if (localSchedule.await().isEmpty()) {

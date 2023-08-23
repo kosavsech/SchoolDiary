@@ -67,8 +67,10 @@ import com.kxsv.schooldiary.data.local.features.lesson.LessonEntity
 import com.kxsv.schooldiary.data.local.features.lesson.LessonWithSubject
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
+import com.kxsv.schooldiary.data.util.AppVersionState
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.ScheduleTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.ScheduleNavGraph
+import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AppUpdateNavActions
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.DayScheduleScreenNavActions
 import com.kxsv.schooldiary.ui.screens.destinations.AddEditLessonScreenDestination
 import com.kxsv.schooldiary.ui.screens.destinations.DateRangeScheduleCopyScreenDestination
@@ -128,6 +130,22 @@ fun DayScheduleScreen(
 ) {
 	val navigator = DayScheduleScreenNavActions(destinationsNavigator = destinationsNavigator)
 	val uiState = viewModel.uiState.collectAsState().value
+	val updateDialog = AppUpdateNavActions(destinationsNavigator = destinationsNavigator)
+	val toShowUpdateDialog = viewModel.toShowUpdateDialog.collectAsState().value
+	LaunchedEffect(toShowUpdateDialog) {
+		when (toShowUpdateDialog) {
+			is AppVersionState.MustUpdate -> {
+				updateDialog.onMandatoryUpdate(toShowUpdateDialog.update)
+			}
+			
+			is AppVersionState.ShouldUpdate -> {
+				updateDialog.onAvailableUpdate(toShowUpdateDialog.update)
+				viewModel.onUpdateDialogShown()
+			}
+			
+			else -> Unit
+		}
+	}
 	lessonAddEditResult.onNavResult { result ->
 		when (result) {
 			is NavResult.Canceled -> {}

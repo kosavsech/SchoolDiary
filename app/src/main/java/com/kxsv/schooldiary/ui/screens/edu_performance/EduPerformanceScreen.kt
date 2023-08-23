@@ -23,6 +23,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -35,10 +36,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceWithSubject
+import com.kxsv.schooldiary.data.util.AppVersionState
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import com.kxsv.schooldiary.data.util.Mark
 import com.kxsv.schooldiary.data.util.Mark.Companion.getStringValueFrom
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.EduPerformanceTopAppBar
+import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AppUpdateNavActions
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.EduPerformanceScreenNavActions
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.ui.util.TermSelector
@@ -59,6 +62,22 @@ fun EduPerformanceScreen(
 	snackbarHostState: SnackbarHostState,
 ) {
 	val navigator = EduPerformanceScreenNavActions(destinationsNavigator = destinationsNavigator)
+	val updateDialog = AppUpdateNavActions(destinationsNavigator = destinationsNavigator)
+	val toShowUpdateDialog = viewModel.toShowUpdateDialog.collectAsState().value
+	LaunchedEffect(toShowUpdateDialog) {
+		when (toShowUpdateDialog) {
+			is AppVersionState.MustUpdate -> {
+				updateDialog.onMandatoryUpdate(toShowUpdateDialog.update)
+			}
+			
+			is AppVersionState.ShouldUpdate -> {
+				updateDialog.onAvailableUpdate(toShowUpdateDialog.update)
+				viewModel.onUpdateDialogShown()
+			}
+			
+			else -> Unit
+		}
+	}
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		topBar = {
@@ -69,7 +88,7 @@ fun EduPerformanceScreen(
 		val uiState = viewModel.uiState.collectAsState().value
 		
 		EduPerformanceContent(
-			loading = uiState.isLoading,
+			isLoading = uiState.isLoading,
 			eduPerformanceList = uiState.eduPerformanceList,
 			onPeriodChange = { viewModel.changePeriod(it) },
 			onEduPerformanceClick = { eduPerformanceId ->
@@ -84,7 +103,7 @@ fun EduPerformanceScreen(
 
 @Composable
 private fun EduPerformanceContent(
-	loading: Boolean,
+	isLoading: Boolean,
 	eduPerformanceList: List<EduPerformanceWithSubject>,
 	onPeriodChange: (EduPerformancePeriod) -> Unit,
 	onEduPerformanceClick: (String) -> Unit,
@@ -94,7 +113,7 @@ private fun EduPerformanceContent(
 ) {
 	LoadingContent(
 		modifier = modifier,
-		loading = loading,
+		loading = isLoading,
 		empty = eduPerformanceList.isEmpty(),
 		emptyContent = {
 			Column {

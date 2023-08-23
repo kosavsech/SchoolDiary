@@ -2,10 +2,13 @@ package com.kxsv.schooldiary.ui.screens.edu_performance
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceWithSubject
 import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.repository.EduPerformanceRepository
+import com.kxsv.schooldiary.data.repository.UpdateRepository
 import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
+import com.kxsv.schooldiary.data.util.AppVersionState
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import com.kxsv.schooldiary.data.util.user_preferences.Period.Companion.getTypeByPeriod
 import com.kxsv.schooldiary.di.util.AppDispatchers
@@ -34,6 +37,7 @@ data class EduPerformanceUiState(
 class EduPerformanceViewModel @Inject constructor(
 	private val eduPerformanceRepository: EduPerformanceRepository,
 	private val userPreferencesRepository: UserPreferencesRepository,
+	private val updateRepository: UpdateRepository,
 	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
@@ -56,7 +60,25 @@ class EduPerformanceViewModel @Inject constructor(
 		)
 	}.stateIn(viewModelScope, WhileUiSubscribed, EduPerformanceUiState())
 	
+	val toShowUpdateDialog = MutableStateFlow<AppVersionState>(AppVersionState.NotFound)
+	
+	private fun observeIsUpdateAvailable() {
+		viewModelScope.launch(ioDispatcher) {
+			updateRepository.isUpdateAvailable.collect {
+				toShowUpdateDialog.value = it
+			}
+		}
+	}
+	
+	fun onUpdateDialogShown() {
+		viewModelScope.launch(ioDispatcher) {
+			toShowUpdateDialog.value = AppVersionState.Suppressed
+			updateRepository.suppressUpdateUntilNextAppStart()
+		}
+	}
+	
 	init {
+		observeIsUpdateAvailable()
 		viewModelScope.launch(ioDispatcher) {
 			val periodType = userPreferencesRepository.getEducationPeriodType()
 			val periodsRanges = userPreferencesRepository.getPeriodsRanges()
@@ -80,8 +102,16 @@ class EduPerformanceViewModel @Inject constructor(
 	 * @throws NetworkException.NotLoggedInException
 	 */
 	fun refresh() {
+		_uiState.update { it.copy(isLoading = true) }
+		
 		viewModelScope.launch(ioDispatcher) {
-			eduPerformanceRepository.fetchEduPerformance()
+			try {
+				eduPerformanceRepository.fetchEduPerformance()
+				_uiState.update { it.copy(isLoading = false) }
+			} catch (e: Exception) {
+				_uiState.update { it.copy(isLoading = false) }
+				showSnackbarMessage(R.string.exception_occured)
+			}
 		}
 	}
 	

@@ -1,6 +1,7 @@
 package com.kxsv.schooldiary.app
 
 import android.app.Application
+import com.kxsv.schooldiary.app.sync.initializers.AppVersionSync
 import com.kxsv.schooldiary.app.sync.initializers.GradesSync
 import com.kxsv.schooldiary.app.sync.initializers.ScheduleSync
 import com.kxsv.schooldiary.app.sync.initializers.SubjectsSync
@@ -13,6 +14,7 @@ class SchoolDiaryApp : Application() {
 	override fun onCreate() {
 		super.onCreate()
 		
+		AppVersionSync.initialize(this)
 		GradesSync.initialize(this)
 		ScheduleSync.initialize(this)
 		SubjectsSync.initialize(this)

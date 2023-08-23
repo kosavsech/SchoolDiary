@@ -75,6 +75,7 @@ class LoginViewModel @Inject constructor(
 			NetworkError.NotLoggedIn -> showSnackbarMessage(R.string.not_logged_in)
 			is NetworkError.GeneralError -> showSnackbarMessage(R.string.auth_failure)
 			NetworkError.NotActualAuthSession -> showSnackbarMessage(R.string.auth_session_is_expired)
+			NetworkError.PageNotFound -> showSnackbarMessage(R.string.page_not_found)
 		}
 	}
 	

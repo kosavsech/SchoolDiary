@@ -21,6 +21,8 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
+import org.jsoup.HttpStatusException
+import org.jsoup.UnsupportedMimeTypeException
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
@@ -65,29 +67,28 @@ class SubjectsSyncWorker @AssistedInject constructor(
 				updateDatabase(fetchedSubjects)
 			}
 			return Result.success()
+		} catch (e: NetworkException) {
+			Log.e(TAG, "fetchSubjectNames: NetworkException on fetch", e)
+			return Result.failure()
+		} catch (e: TimeoutCancellationException) {
+			Log.e(TAG, "fetchSubjectNames: connection timed-out", e)
+			// TODO: show message that couldn't connect to site
+			return Result.retry()
+		} catch (e: java.net.MalformedURLException) {
+			return Result.failure()
+		} catch (e: HttpStatusException) {
+			Log.e(TAG, "fetchSubjectNames: exception on connect")
+			return Result.failure()
+		} catch (e: UnsupportedMimeTypeException) {
+			return Result.failure()
+		} catch (e: java.net.SocketTimeoutException) {
+			return Result.failure()
+		} catch (e: IOException) {
+			Log.e(TAG, "fetchSubjectNames: exception on response parse", e)
+			return Result.failure()
 		} catch (e: Exception) {
-			when (e) {
-				is NetworkException -> {
-					Log.e(TAG, "fetchSubjectNames: you're not logged in", e)
-					return Result.failure()
-				}
-				
-				is IOException -> {
-					Log.e(TAG, "fetchSubjectNames: exception on response parse", e)
-					return Result.failure()
-				}
-				
-				is TimeoutCancellationException -> {
-					Log.e(TAG, "fetchSubjectNames: connection timed-out", e)
-					return Result.retry()
-					// TODO: show message that couldn't connect to site
-				}
-				
-				else -> {
-					Log.e(TAG, "fetchSubjectNames: exception", e)
-					return Result.failure()
-				}
-			}
+			Log.e(TAG, "fetchSubjectNames: exception", e)
+			return Result.failure()
 		}
 	}
 	

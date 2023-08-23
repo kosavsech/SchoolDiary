@@ -24,9 +24,9 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import org.jsoup.select.Elements
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -78,31 +78,34 @@ class TaskRepositoryImpl @Inject constructor(
 	 * @throws TimeoutCancellationException
 	 * @return List of new tasks, which were not cached before
 	 */
-	override suspend fun fetchSoonTasks(): List<TaskWithSubject> {
-		return withContext(ioDispatcher) {
-			withTimeout(15000L) {
-				val result = mutableListOf<TaskWithSubject>()
-				val startRange = Utils.currentDate
-				val endRange = startRange.plusDays(7)
-				
-				(startRange..endRange).toList().forEach { date ->
-					if (date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
-					@Suppress("DeferredResultUnused")
-					async {
-						result.addAll(fetchTasksOnDate(date = date))
-					}
+	override suspend fun fetchSoonTasks(): List<TaskWithSubject> =
+		coroutineScope {
+			val result = mutableListOf<TaskWithSubject>()
+			val startRange = Utils.currentDate
+			val endRange = startRange.plusDays(7)
+			
+			(startRange..endRange).toList().forEach { date ->
+				if (date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
+				@Suppress("DeferredResultUnused")
+				async {
+					result.addAll(fetchTasksOnDate(date = date))
 				}
-				
-				return@withTimeout result
 			}
+			
+			return@coroutineScope result
+			
 		}
-	}
 	
+	/**
+	 * @throws NetworkException.NotLoggedInException
+	 * @throws NetworkException.PageNotFound
+	 * @throws java.io.IOException if couldn't parse document
+	 */
 	private suspend fun fetchTasksOnDate(date: LocalDate): MutableList<TaskWithSubject> {
 		return withContext(ioDispatcher) {
 			val dateNewTasks: MutableList<TaskWithSubject> = mutableListOf()
 			val localSchedule = async { lessonDataSource.getAllWithSubjectByDate(date) }
-			val dayInfo = async { webService.getDayInfo(date) }
+			val dayInfo = webService.getDayInfo(date)
 			
 			val subjectsIndexed = if (localSchedule.await().isNotEmpty()) {
 				val localClassesMapped = mutableMapOf<Int, SubjectEntity>()
@@ -112,7 +115,7 @@ class TaskRepositoryImpl @Inject constructor(
 				localClassesMapped
 			} else {
 				LessonParser()
-					.parse(dayInfo = dayInfo.await(), localDate = date)
+					.parse(dayInfo = dayInfo, localDate = date)
 					.toSubjectEntitiesIndexed(subjectDataSource, studyDayDataSource)
 			}
 			
@@ -120,7 +123,7 @@ class TaskRepositoryImpl @Inject constructor(
 				dateNewTasks.addAll(
 					fetchTasksForSubject(
 						subjectIndexed = subjectIndexed,
-						dayInfo = dayInfo.await(),
+						dayInfo = dayInfo,
 						date = date
 					)
 				)
@@ -195,6 +198,8 @@ class TaskRepositoryImpl @Inject constructor(
 	
 	/**
 	 * @throws NetworkException.NotLoggedInException
+	 * @throws NetworkException.PageNotFound
+	 * @throws java.io.IOException if couldn't parse document
 	 */
 	override suspend fun fetchTaskVariantsForSubjectByDate(
 		date: LocalDate,

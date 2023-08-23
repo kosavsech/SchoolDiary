@@ -31,9 +31,11 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.grade.GradeEntity
 import com.kxsv.schooldiary.data.local.features.grade.GradeWithSubject
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
+import com.kxsv.schooldiary.data.util.AppVersionState
 import com.kxsv.schooldiary.data.util.Mark
 import com.kxsv.schooldiary.data.util.Mark.Companion.getStringValueFrom
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.GradesTopAppBar
+import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AppUpdateNavActions
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.GradesScreenNavActions
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.util.Utils
@@ -66,6 +68,22 @@ fun GradesScreen(
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
 	val navigator = GradesScreenNavActions(destinationsNavigator = destinationsNavigator)
+	val updateDialog = AppUpdateNavActions(destinationsNavigator = destinationsNavigator)
+	val toShowUpdateDialog = viewModel.toShowUpdateDialog.collectAsState().value
+	LaunchedEffect(toShowUpdateDialog) {
+		when (toShowUpdateDialog) {
+			is AppVersionState.MustUpdate -> {
+				updateDialog.onMandatoryUpdate(toShowUpdateDialog.update)
+			}
+			
+			is AppVersionState.ShouldUpdate -> {
+				updateDialog.onAvailableUpdate(toShowUpdateDialog.update)
+				viewModel.onUpdateDialogShown()
+			}
+			
+			else -> Unit
+		}
+	}
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		topBar = {

@@ -10,14 +10,15 @@ import com.kxsv.schooldiary.data.remote.parsers.DayGradeParser
 import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.util.DataIdGenUtils.generateGradeId
 import com.kxsv.schooldiary.di.util.AppDispatchers
+import com.kxsv.schooldiary.di.util.ApplicationScope
 import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.toList
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import java.time.DayOfWeek
 import java.time.LocalDate
 import javax.inject.Inject
@@ -30,6 +31,7 @@ class GradeRepositoryImpl @Inject constructor(
 	private val gradeDataSource: GradeDao,
 	private val webService: WebService,
 	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
+	@ApplicationScope private val scope: CoroutineScope,
 ) : GradeRepository {
 	
 	override fun observeAllOrderedByMarkDate(): Flow<List<GradeEntity>> {
@@ -62,6 +64,8 @@ class GradeRepositoryImpl @Inject constructor(
 	
 	/**
 	 * @throws NetworkException.NotLoggedInException
+	 * @throws NetworkException.PageNotFound
+	 * @throws java.io.IOException if couldn't parse document
 	 */
 	override suspend fun fetchGradesByDate(localDate: LocalDate): Pair<Map<TeacherDto, Set<String>>, List<DayGradeDto>> {
 		val dayInfo = webService.getDayInfo(localDate)
@@ -70,38 +74,37 @@ class GradeRepositoryImpl @Inject constructor(
 	
 	/**
 	 * @throws NetworkException.NotLoggedInException
+	 * @throws NetworkException.PageNotFound
+	 * @throws java.io.IOException if couldn't parse document
 	 */
 	override suspend fun fetchRecentGradesWithTeachers(): Pair<MutableList<DayGradeDto>, MutableMap<TeacherDto, MutableSet<String>>> {
-		return withContext(ioDispatcher) {
-			withTimeout(15000L) {
-				val fetchedGrades = mutableListOf<DayGradeDto>()
-				val fetchedTeachersWithSubjects = mutableMapOf<TeacherDto, MutableSet<String>>()
-				
-				val startRange = Utils.currentDate
-				(startRange.minusDays(14)..startRange).toList().forEach { date ->
-					if (date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
+		return coroutineScope {
+			val fetchedGrades = mutableListOf<DayGradeDto>()
+			val fetchedTeachersWithSubjects = mutableMapOf<TeacherDto, MutableSet<String>>()
+			
+			val startRange = Utils.currentDate
+			(startRange.minusDays(14)..startRange).toList().forEach { date ->
+				if (date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
+				@Suppress("DeferredResultUnused")
+				async {
+					val teachersWithSubjectAndGradeDtos = fetchGradesByDate(date)
 					
-					@Suppress("DeferredResultUnused")
-					async {
-						val teachersWithSubjectAndGradeDtos = fetchGradesByDate(date)
-						
-						val gradeDtos = teachersWithSubjectAndGradeDtos.second
-						fetchedGrades.addAll(gradeDtos)
-						
-						val teacherDtoSetMap = teachersWithSubjectAndGradeDtos.first
-						teacherDtoSetMap.forEach { teacherDtoSetEntry ->
-							fetchedTeachersWithSubjects.run {
-								val teacherSubjectNames = fetchedTeachersWithSubjects
-									.getOrDefault(teacherDtoSetEntry.key, mutableSetOf())
-									.apply { this.addAll(teacherDtoSetEntry.value) }
-								
-								this[teacherDtoSetEntry.key] = teacherSubjectNames
-							}
+					val gradeDtos = teachersWithSubjectAndGradeDtos.second
+					fetchedGrades.addAll(gradeDtos)
+					
+					val teacherDtoSetMap = teachersWithSubjectAndGradeDtos.first
+					teacherDtoSetMap.forEach { teacherDtoSetEntry ->
+						fetchedTeachersWithSubjects.run {
+							val teacherSubjectNames = fetchedTeachersWithSubjects
+								.getOrDefault(teacherDtoSetEntry.key, mutableSetOf())
+								.apply { this.addAll(teacherDtoSetEntry.value) }
+							
+							this[teacherDtoSetEntry.key] = teacherSubjectNames
 						}
 					}
 				}
-				Pair(fetchedGrades, fetchedTeachersWithSubjects)
 			}
+			return@coroutineScope Pair(fetchedGrades, fetchedTeachersWithSubjects)
 		}
 	}
 	

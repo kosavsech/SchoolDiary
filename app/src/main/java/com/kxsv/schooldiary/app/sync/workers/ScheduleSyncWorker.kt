@@ -32,6 +32,8 @@ import com.kxsv.schooldiary.util.Utils
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.TimeoutCancellationException
+import org.jsoup.HttpStatusException
+import org.jsoup.UnsupportedMimeTypeException
 import java.io.IOException
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -106,29 +108,28 @@ class ScheduleSyncWorker @AssistedInject constructor(
 				return Result.success()
 			}
 			return Result.success()
+		} catch (e: NetworkException) {
+			Log.e(TAG, "fetchSoonSchedule: NetworkException on fetch", e)
+			return Result.failure()
+		} catch (e: TimeoutCancellationException) {
+			Log.e(TAG, "fetchSoonSchedule: connection timed-out", e)
+			// TODO: show message that couldn't connect to site
+			return Result.retry()
+		} catch (e: java.net.MalformedURLException) {
+			return Result.failure()
+		} catch (e: HttpStatusException) {
+			Log.e(TAG, "fetchSoonSchedule: exception on connect")
+			return Result.failure()
+		} catch (e: UnsupportedMimeTypeException) {
+			return Result.failure()
+		} catch (e: java.net.SocketTimeoutException) {
+			return Result.failure()
+		} catch (e: IOException) {
+			Log.e(TAG, "fetchSoonSchedule: exception on response parse", e)
+			return Result.failure()
 		} catch (e: Exception) {
-			when (e) {
-				is NetworkException -> {
-					Log.e(TAG, "fetchSchedule: NetworkException on fetch", e)
-					return Result.failure()
-				}
-				
-				is IOException -> {
-					Log.e(TAG, "fetchSchedule: exception on response parse", e)
-					return Result.failure()
-				}
-				
-				is TimeoutCancellationException -> {
-					Log.e(TAG, "fetchSchedule: connection timed-out", e)
-					return Result.retry()
-					// TODO: show message that couldn't connect to site
-				}
-				
-				else -> {
-					Log.e(TAG, "fetchSchedule: exception", e)
-					return Result.failure()
-				}
-			}
+			Log.e(TAG, "fetchSoonSchedule: exception", e)
+			return Result.failure()
 		}
 	}
 	

@@ -20,6 +20,8 @@ import com.kxsv.schooldiary.data.repository.TeacherRepository
 import com.kxsv.schooldiary.data.repository.TeacherRepositoryImpl
 import com.kxsv.schooldiary.data.repository.TimePatternRepository
 import com.kxsv.schooldiary.data.repository.TimePatternRepositoryImpl
+import com.kxsv.schooldiary.data.repository.UpdateRepository
+import com.kxsv.schooldiary.data.repository.UpdateRepositoryImpl
 import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
 import com.kxsv.schooldiary.data.repository.UserPreferencesRepositoryImpl
 import dagger.Binds
@@ -75,5 +77,9 @@ abstract class RepositoryModule {
 	@Binds
 	@Singleton
 	abstract fun bindSubjectTeacherRepository(repository: SubjectTeacherRepositoryImpl): SubjectTeacherRepository
+	
+	@Binds
+	@Singleton
+	abstract fun bindUpdateRepository(repository: UpdateRepositoryImpl): UpdateRepository
 }
 

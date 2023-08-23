@@ -29,11 +29,15 @@ interface LessonRepository {
 	
 	/**
 	 * @throws NetworkException.NotLoggedInException
+	 * @throws NetworkException.PageNotFound
+	 * @throws java.io.IOException if couldn't parse document
 	 */
 	suspend fun fetchLessonsOnDate(localDate: LocalDate): List<LessonDto>
 	
 	/**
 	 * @throws NetworkException.NotLoggedInException
+	 * @throws NetworkException.PageNotFound
+	 * @throws java.io.IOException if couldn't parse document
 	 */
 	suspend fun fetchSoonSchedule(): Map<LocalDate, Utils.ScheduleCompareResult>
 	

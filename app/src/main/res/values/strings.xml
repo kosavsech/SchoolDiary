@@ -233,5 +233,17 @@
     <string name="start_is_after_end_error">Start date cannot be after end date</string>
     <string name="timetable_settings">Timetable</string>
     <string name="grade_settings">Grading system</string>
+    <string name="current_version">Current version is %1$s</string>
+    <string name="update_version">"Update version is %1$s"</string>
+    <string name="btn_update">Update</string>
+    <string name="btn_dismiss">Dismiss</string>
+    <string name="update_in_progress">Please wait</string>
+    <string name="new_version_found">New version found</string>
+    <string name="new_critical_update_found">New critical update found</string>
+    <string name="page_not_found">Page not found(404)</string>
+    <string name="exception_occured">Exception occured on fetch</string>
+    <string name="appupdater_download_notification_title">SchoolDiary</string>
+    <string name="appupdater_download_notification_desc">Downloading new version</string>
+    <string name="dismiss_available">You can dismiss dialog and download will still countinue in background</string>
 
 </resources>

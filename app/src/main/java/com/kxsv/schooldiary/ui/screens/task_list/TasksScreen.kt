@@ -44,8 +44,10 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.task.TaskEntity
 import com.kxsv.schooldiary.data.local.features.task.TaskWithSubject
+import com.kxsv.schooldiary.data.util.AppVersionState
 import com.kxsv.schooldiary.ui.main.app_bars.bottombar.TasksBottomAppBar
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.TasksTopAppBar
+import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AppUpdateNavActions
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.TasksScreenNavActions
 import com.kxsv.schooldiary.ui.screens.destinations.TaskDetailScreenDestination
 import com.kxsv.schooldiary.ui.screens.grade_list.MY_URI
@@ -83,6 +85,22 @@ fun TasksScreen(
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
 	val navigator = TasksScreenNavActions(destinationsNavigator = destinationsNavigator)
+	val updateDialog = AppUpdateNavActions(destinationsNavigator = destinationsNavigator)
+	val toShowUpdateDialog = viewModel.toShowUpdateDialog.collectAsState().value
+	LaunchedEffect(toShowUpdateDialog) {
+		when (toShowUpdateDialog) {
+			is AppVersionState.MustUpdate -> {
+				updateDialog.onMandatoryUpdate(toShowUpdateDialog.update)
+			}
+			
+			is AppVersionState.ShouldUpdate -> {
+				updateDialog.onAvailableUpdate(toShowUpdateDialog.update)
+				viewModel.onUpdateDialogShown()
+			}
+			
+			else -> Unit
+		}
+	}
 	taskDeleteResult.onNavResult { result ->
 		when (result) {
 			is NavResult.Canceled -> {}
