@@ -469,7 +469,12 @@ private fun CurrentDay(
 		ElevatedCard(
 			elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.0.dp)
 		) {
-			Column(modifier = Modifier.padding(dimensionResource(R.dimen.list_item_padding))) {
+			Column(
+				modifier = Modifier
+					.padding(
+						horizontal = dimensionResource(R.dimen.vertical_margin)
+					)
+			) {
 				var currentTime by remember { mutableStateOf(LocalTime.now()) }
 				LaunchedEffect(currentTime) {
 					delay(CURRENT_DAY_INFO_UPDATE_TIMING)
@@ -579,8 +584,8 @@ private fun CurrentDay(
 						style = MaterialTheme.typography.displayMedium
 					)
 				}
+				ShowMore(onScheduleShowMore)
 			}
-			ShowMore(onScheduleShowMore)
 		}
 	}
 }
@@ -601,7 +606,11 @@ private fun ScheduleDay(
 		ElevatedCard(
 			elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.0.dp)
 		) {
-			Column(modifier = Modifier.padding(dimensionResource(R.dimen.list_item_padding))) {
+			Column(
+				modifier = Modifier.padding(
+					start = dimensionResource(R.dimen.vertical_margin)
+				)
+			) {
 				key(tasks) {
 					TasksOverview(
 						tasks = tasks,
@@ -609,9 +618,10 @@ private fun ScheduleDay(
 						onTaskClicked = onTaskClicked
 					)
 				}
+				ShowMore(onTasksShowMore)
 			}
-			ShowMore(onTasksShowMore)
 		}
+		Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding)))
 		classes.forEach {
 			key(it.value, it.key) {
 				LessonShort(
@@ -644,7 +654,6 @@ fun ShowMore(
 			)
 			.padding(
 				vertical = dimensionResource(id = R.dimen.vertical_margin),
-				horizontal = dimensionResource(id = R.dimen.list_item_padding)
 			),
 		horizontalArrangement = Arrangement.Start,
 		verticalAlignment = Alignment.CenterVertically
@@ -669,7 +678,13 @@ private fun TasksOverview(
 	onTaskChecked: (String, Boolean) -> Unit,
 	onTaskClicked: (String) -> Unit,
 ) {
-	Column(modifier = Modifier.fillMaxWidth()) {
+	Column(
+		modifier = Modifier
+			.fillMaxWidth()
+			.padding(
+				horizontal = dimensionResource(R.dimen.vertical_margin),
+			)
+	) {
 		val noTasks = remember(tasks) { tasks.isEmpty() }
 		val pendingTasks = remember(tasks) { tasks.filterNot { it.taskEntity.isDone } }
 		val message = remember(noTasks, pendingTasks) {
@@ -709,7 +724,8 @@ private fun TasksOverviewItem(
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
-			.clickable { onTaskClicked(taskEntity.taskEntity.taskId) },
+			.clickable { onTaskClicked(taskEntity.taskEntity.taskId) }
+			.padding(vertical = dimensionResource(R.dimen.list_item_padding)),
 		horizontalArrangement = Arrangement.SpaceBetween,
 		verticalAlignment = Alignment.CenterVertically
 	) {
@@ -859,7 +875,9 @@ private fun LessonDetailed(
 			.fillMaxWidth()
 			.clip(MaterialTheme.shapes.medium)
 			.clickable { onLessonClick() }
-			.padding(dimensionResource(R.dimen.horizontal_margin)),
+			.padding(
+				vertical = dimensionResource(R.dimen.horizontal_margin),
+			),
 	) {
 		Row(
 			verticalAlignment = Alignment.CenterVertically
@@ -1053,8 +1071,7 @@ private fun LessonBrief(
 			.clip(MaterialTheme.shapes.medium)
 			.clickable { onLessonClick() }
 			.padding(
-				horizontal = dimensionResource(R.dimen.horizontal_margin),
-				vertical = dimensionResource(id = R.dimen.list_item_padding) / 2
+				vertical = dimensionResource(id = R.dimen.list_item_padding)
 			),
 	) {
 		Row(
@@ -1120,7 +1137,8 @@ private fun LessonShort(
 ) {
 	Row(
 		modifier = Modifier.padding(
-			horizontal = dimensionResource(R.dimen.horizontal_margin),
+			horizontal = dimensionResource(R.dimen.list_item_padding),
+			vertical = dimensionResource(R.dimen.list_item_padding) / 3,
 		),
 		verticalAlignment = Alignment.CenterVertically,
 	) {
@@ -1132,7 +1150,7 @@ private fun LessonShort(
 		Text(
 			text = timingText,
 			style = MaterialTheme.typography.labelSmall,
-			modifier = Modifier.weight(0.45f)
+			modifier = Modifier.weight(0.48f)
 		)
 		Row(
 			modifier = Modifier.weight(1f),
@@ -1212,8 +1230,14 @@ private val previewTasks1 = listOf(
 )
 
 private val previewItems = listOf(
-	MainScreenItem(
+	/*MainScreenItem(
 		date = Utils.currentDate,
+		classes = previewClasses1,
+		tasks = previewTasks1,
+		pattern = previewCurrentPattern
+	),*/
+	MainScreenItem(
+		date = Utils.currentDate.plusDays(1),
 		classes = previewClasses1,
 		tasks = previewTasks1,
 		pattern = previewCurrentPattern
