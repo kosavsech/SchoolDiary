@@ -1,6 +1,7 @@
 package com.kxsv.schooldiary.ui.screens.task_list
 
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.ExistingWorkPolicy
@@ -21,11 +22,13 @@ import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
+import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.ui.util.Async
 import com.kxsv.schooldiary.ui.util.TasksDateFilterType
 import com.kxsv.schooldiary.ui.util.TasksDoneFilterType
 import com.kxsv.schooldiary.ui.util.WhileUiSubscribed
 import com.kxsv.schooldiary.util.Utils
+import com.kxsv.ychart_mod.common.extensions.isNotNull
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
@@ -60,9 +63,14 @@ class TasksViewModel @Inject constructor(
 	private val workManager: WorkManager,
 	private val updateRepository: UpdateRepository,
 	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
+	savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 	
-	private val _dateFilterType = MutableStateFlow(TasksDateFilterType.NEXT_WEEK)
+	private val navArgs = savedStateHandle.navArgs<TasksScreenNavArgs>()
+	val dateStamp = navArgs.dateStamp
+	
+	private val _dateFilterType =
+		MutableStateFlow(if (dateStamp.isNotNull()) TasksDateFilterType.SPECIFIC_DATE else TasksDateFilterType.NEXT_WEEK)
 	
 	private val _doneFilterType = MutableStateFlow(TasksDoneFilterType.ALL)
 	
@@ -81,50 +89,57 @@ class TasksViewModel @Inject constructor(
 			}
 		}
 	
-	private val _filteredTasksAsync = _dateFilterType
-		.combine(_tasksDoneFilteredFlow) { dateFilterType, tasks ->
-			val today = Utils.currentDate
-			when (dateFilterType) {
-				TasksDateFilterType.YESTERDAY -> {
-					tasks.filter {
-						it.taskEntity.dueDate == today.minusDays(1)
-					}
+	private val _filteredTasksAsync = combine(
+		_dateFilterType, _tasksDoneFilteredFlow
+	) { dateFilterType, tasks ->
+		val today = Utils.currentDate
+		when (dateFilterType) {
+			TasksDateFilterType.SPECIFIC_DATE -> {
+				tasks.filter {
+					it.taskEntity.dueDate == Utils.datestampToLocalDate(dateStamp)
 				}
-				
-				TasksDateFilterType.TODAY -> {
-					tasks.filter {
-						it.taskEntity.dueDate == today
-					}
-				}
-				
-				TasksDateFilterType.TOMORROW -> {
-					tasks.filter {
-						it.taskEntity.dueDate == today.plusDays(1)
-					}
-				}
-				
-				TasksDateFilterType.NEXT_WEEK -> {
-					tasks.filter {
-						it.taskEntity.dueDate.isAfter(today) &&
-								it.taskEntity.dueDate.isBefore(today.plusDays(8))
-					}
-				}
-				
-				TasksDateFilterType.THIS_MONTH -> {
-					tasks.filter {
-						it.taskEntity.dueDate.month == today.month
-					}
-				}
-				
-				TasksDateFilterType.NEXT_MONTH -> {
-					tasks.filter {
-						it.taskEntity.dueDate.month == today.month.plus(1)
-					}
-				}
-				
-				TasksDateFilterType.ALL -> tasks
 			}
-		}.map { Async.Success(it) }
+			
+			TasksDateFilterType.YESTERDAY -> {
+				tasks.filter {
+					it.taskEntity.dueDate == today.minusDays(1)
+				}
+			}
+			
+			TasksDateFilterType.TODAY -> {
+				tasks.filter {
+					it.taskEntity.dueDate == today
+				}
+			}
+			
+			TasksDateFilterType.TOMORROW -> {
+				tasks.filter {
+					it.taskEntity.dueDate == today.plusDays(1)
+				}
+			}
+			
+			TasksDateFilterType.NEXT_WEEK -> {
+				tasks.filter {
+					it.taskEntity.dueDate.isAfter(today) &&
+							it.taskEntity.dueDate.isBefore(today.plusDays(8))
+				}
+			}
+			
+			TasksDateFilterType.THIS_MONTH -> {
+				tasks.filter {
+					it.taskEntity.dueDate.month == today.month
+				}
+			}
+			
+			TasksDateFilterType.NEXT_MONTH -> {
+				tasks.filter {
+					it.taskEntity.dueDate.month == today.month.plus(1)
+				}
+			}
+			
+			TasksDateFilterType.ALL -> tasks
+		}
+	}.map { Async.Success(it) }
 		.catch<Async<List<TaskWithSubject>>> {
 			Log.e(TAG, "tasksAsync error: ", it)
 			emit(

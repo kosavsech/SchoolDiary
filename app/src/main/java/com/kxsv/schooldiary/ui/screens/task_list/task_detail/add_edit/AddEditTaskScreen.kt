@@ -53,7 +53,6 @@ import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AddEditTaskScreenNavActions
 import com.kxsv.schooldiary.ui.screens.navArgs
-import com.kxsv.schooldiary.ui.screens.task_list.task_detail.TaskDetailScreenNavArgs
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.util.Utils
 import com.ramcosta.composedestinations.annotation.Destination
@@ -72,6 +71,7 @@ data class AddEditTaskScreenNavArgs(
 	val taskId: String?,
 	val isEditingFetchedTask: Boolean,
 	val isTitleBoundToIdVisible: Boolean = false,
+	val dateStamp: Long? = null,
 )
 
 @Destination(
@@ -91,7 +91,7 @@ fun AddEditTaskScreen(
 		resultNavigator = resultNavigator
 	)
 	val isTitleBoundToIdVisible =
-		backStackEntry.navArgs<TaskDetailScreenNavArgs>().isTitleBoundToIdVisible
+		backStackEntry.navArgs<AddEditTaskScreenNavArgs>().isTitleBoundToIdVisible
 	
 	LaunchedEffect(uiState.isTaskSaved) {
 		if (uiState.isTaskSaved) {

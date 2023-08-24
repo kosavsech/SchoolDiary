@@ -248,5 +248,7 @@
     <string name="remote_task_updated">Teacher changed task</string>
     <string name="remote_task_absent">Remote task deleted or moved to another day</string>
     <string name="remote_task">Remote task</string>
+    <string name="specific_date">%1$s</string>
+    <string name="something_went_wrong">Something went wrong</string>
 
 </resources>

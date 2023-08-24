@@ -20,6 +20,7 @@ import com.kxsv.schooldiary.ui.util.Async
 import com.kxsv.schooldiary.ui.util.WhileUiSubscribed
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
+import com.kxsv.ychart_mod.common.extensions.isNotNull
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
@@ -66,6 +67,7 @@ class AddEditTaskViewModel @Inject constructor(
 	private val navArgs: AddEditTaskScreenNavArgs = savedStateHandle.navArgs()
 	val taskId: String? = navArgs.taskId
 	val isEditingFetchedTask: Boolean = navArgs.isEditingFetchedTask
+	private val dateStamp: Long? = navArgs.dateStamp
 	
 	private val _subjectsAsync = subjectRepository.observeAll()
 		.map { Async.Success(it) }
@@ -78,7 +80,12 @@ class AddEditTaskViewModel @Inject constructor(
 		when (subjects) {
 			Async.Loading -> state.copy(isLoading = true)
 			is Async.Error -> state.copy(userMessage = subjects.errorMessage)
-			is Async.Success -> state.copy(availableSubjects = subjects.data)
+			is Async.Success -> {
+				state.copy(
+					availableSubjects = subjects.data,
+					dueDate = if (dateStamp.isNotNull()) Utils.datestampToLocalDate(dateStamp)!! else state.dueDate
+				)
+			}
 		}
 		
 	}.stateIn(viewModelScope, WhileUiSubscribed, AddEditTaskUiState(isLoading = true))

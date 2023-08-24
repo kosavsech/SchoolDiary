@@ -203,10 +203,10 @@ object Utils {
 		return LocalDate.of(year, periodMonth, dayOfMonth)
 	}
 	
-	fun timestampToLocalDate(value: Long?): LocalDate? =
+	fun datestampToLocalDate(value: Long?): LocalDate? =
 		value?.let { Instant.ofEpochSecond(it).atZone(ZoneId.of("Europe/Moscow")).toLocalDate() }
 	
-	fun localDateToTimestamp(date: LocalDate?): Long? =
+	fun localDateToDatestamp(date: LocalDate?): Long? =
 		date?.atStartOfDay(ZoneId.of("Europe/Moscow"))?.toEpochSecond()
 	
 	fun Double.stringRoundTo(n: Int): String {

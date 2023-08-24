@@ -30,8 +30,8 @@ import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.ui.screens.patterns.PatternSelectionResult
 import com.kxsv.schooldiary.util.ListExtensionFunctions.copyExclusively
 import com.kxsv.schooldiary.util.Utils
+import com.kxsv.schooldiary.util.Utils.datestampToLocalDate
 import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
-import com.kxsv.schooldiary.util.Utils.timestampToLocalDate
 import com.kxsv.schooldiary.util.Utils.toList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
@@ -109,7 +109,7 @@ class ScheduleViewModel @Inject constructor(
 	
 	init {
 		observeIsUpdateAvailable()
-		onDayChangeUpdate(date = timestampToLocalDate(dateStamp) ?: Utils.currentDate)
+		onDayChangeUpdate(date = datestampToLocalDate(dateStamp) ?: Utils.currentDate)
 		if (showComparison == true) fetchSchedule()
 	}
 	

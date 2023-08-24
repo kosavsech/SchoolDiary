@@ -7,9 +7,13 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 class TasksScreenNavActions(
 	override val destinationsNavigator: DestinationsNavigator,
 ) : NavActions {
-	fun onAddTask() {
+	fun onAddTask(dateStamp: Long?) {
 		destinationsNavigator.navigate(
-			AddEditTaskScreenDestination(taskId = null, isEditingFetchedTask = false)
+			AddEditTaskScreenDestination(
+				taskId = null,
+				isEditingFetchedTask = false,
+				dateStamp = dateStamp
+			)
 		)
 	}
 	

@@ -156,12 +156,12 @@ class ScheduleSyncWorker @AssistedInject constructor(
 		
 		val validDayScheduleScreenRoute = if (schedule.value.isNew) {
 			DayScheduleScreenDestination(
-				datestamp = Utils.localDateToTimestamp(schedule.key),
+				datestamp = Utils.localDateToDatestamp(schedule.key),
 				showComparison = false
 			).route
 		} else {
 			DayScheduleScreenDestination(
-				datestamp = Utils.localDateToTimestamp(schedule.key),
+				datestamp = Utils.localDateToDatestamp(schedule.key),
 				showComparison = true
 			).route
 		}

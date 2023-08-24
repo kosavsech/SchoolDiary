@@ -12,7 +12,7 @@ class TasksDetailNavActions(
 		destinationsNavigator.navigate(
 			AddEditTaskScreenDestination(
 				taskId = taskId,
-				isEditingFetchedTask = isEditingFetchedTask
+				isEditingFetchedTask = isEditingFetchedTask,
 			)
 		)
 	}

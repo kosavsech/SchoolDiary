@@ -20,7 +20,9 @@ class MainScreenNavActions(
 	}
 	
 	fun onTasksShowMore(date: LocalDate) {
-		destinationsNavigator.navigate(TasksScreenDestination())
+		destinationsNavigator.navigate(
+			TasksScreenDestination(dateStamp = Utils.localDateToDatestamp(date))
+		)
 	}
 	
 	fun onAddEditClass(lessonId: Long?) {
@@ -32,7 +34,7 @@ class MainScreenNavActions(
 	fun onScheduleShowMore() {
 		destinationsNavigator.navigate(
 			DayScheduleScreenDestination(
-				datestamp = Utils.localDateToTimestamp(Utils.currentDate),
+				datestamp = Utils.localDateToDatestamp(Utils.currentDate),
 				showComparison = null
 			)
 		)

@@ -81,7 +81,7 @@ import com.kxsv.schooldiary.ui.screens.patterns.PatternSelectionResult
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.ui.util.displayText
 import com.kxsv.schooldiary.util.Utils
-import com.kxsv.schooldiary.util.Utils.localDateToTimestamp
+import com.kxsv.schooldiary.util.Utils.localDateToDatestamp
 import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.FULL_ROUTE_PLACEHOLDER
@@ -205,7 +205,7 @@ fun DayScheduleScreen(
 					coroutineScope.launch {
 						if (viewModel.isScheduleRemote()) viewModel.localiseCachedNetClasses()
 						navigator.onAddEditClass(
-							datestamp = localDateToTimestamp(uiState.selectedDate)!!,
+							datestamp = localDateToDatestamp(uiState.selectedDate)!!,
 							lessonId = null
 						)
 					}

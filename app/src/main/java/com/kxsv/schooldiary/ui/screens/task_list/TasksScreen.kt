@@ -66,7 +66,12 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
+data class TasksScreenNavArgs(
+	val dateStamp: Long?,
+)
+
 @Destination(
+	navArgsDelegate = TasksScreenNavArgs::class,
 	deepLinks = [
 		DeepLink(
 			action = Intent.ACTION_VIEW,
@@ -84,6 +89,11 @@ fun TasksScreen(
 	snackbarHostState: SnackbarHostState,
 ) {
 	val uiState = viewModel.uiState.collectAsState().value
+	val formattedDate =
+		Utils.datestampToLocalDate(viewModel.dateStamp)
+			?.format(DateTimeFormatter.ofPattern("MMM-dd"))
+			?: stringResource(R.string.something_went_wrong)
+	
 	val navigator = TasksScreenNavActions(destinationsNavigator = destinationsNavigator)
 	val updateDialog = AppUpdateNavActions(destinationsNavigator = destinationsNavigator)
 	val toShowUpdateDialog = viewModel.toShowUpdateDialog.collectAsState().value
@@ -119,8 +129,10 @@ fun TasksScreen(
 		},
 		bottomBar = {
 			TasksBottomAppBar(
-				selectedDataFilterText = stringResource(id = uiState.dateFilterType.getLocalisedStringId()),
-				onAddTask = { navigator.onAddTask() },
+				selectedDataFilterText = stringResource(
+					uiState.dateFilterType.getLocalisedStringId(), formattedDate
+				),
+				onAddTask = { navigator.onAddTask(viewModel.dateStamp) },
 				onDateFilterChoose = { viewModel.changeDataFilter(it) }
 			)
 		},

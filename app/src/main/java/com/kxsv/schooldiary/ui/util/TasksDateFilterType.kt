@@ -9,7 +9,8 @@ enum class TasksDateFilterType {
 	NEXT_WEEK,
 	THIS_MONTH,
 	NEXT_MONTH,
-	ALL;
+	ALL,
+	SPECIFIC_DATE;
 	
 	
 	fun getLocalisedStringId(): Int {
@@ -21,6 +22,7 @@ enum class TasksDateFilterType {
 			THIS_MONTH -> R.string.this_month_filter
 			NEXT_MONTH -> R.string.next_month_filter
 			ALL -> R.string.all_filter
+			SPECIFIC_DATE -> R.string.specific_date
 		}
 	}
 }
