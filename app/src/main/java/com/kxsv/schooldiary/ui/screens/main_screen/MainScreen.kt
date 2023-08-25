@@ -1,11 +1,9 @@
 package com.kxsv.schooldiary.ui.screens.main_screen
 
-import androidx.annotation.StringRes
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -38,7 +36,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -80,11 +77,6 @@ import com.kxsv.schooldiary.ui.main.app_bars.topbar.MainTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AppUpdateNavActions
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.MainScreenNavActions
 import com.kxsv.schooldiary.ui.screens.destinations.AddEditLessonScreenDestination
-import com.kxsv.schooldiary.ui.screens.destinations.DayScheduleScreenDestination
-import com.kxsv.schooldiary.ui.screens.destinations.EduPerformanceScreenDestination
-import com.kxsv.schooldiary.ui.screens.destinations.GradesScreenDestination
-import com.kxsv.schooldiary.ui.screens.destinations.TasksScreenDestination
-import com.kxsv.schooldiary.ui.screens.destinations.TypedDestination
 import com.kxsv.schooldiary.ui.theme.AppTheme
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.util.Utils
@@ -133,6 +125,9 @@ fun MainScreen(
 	snackbarHostState: SnackbarHostState,
 ) {
 	val navigator = MainScreenNavActions(destinationsNavigator = destinationsNavigator)
+	val onNavigate = remember<(String) -> Unit> {
+		{ navigator.chipNavigate(route = it) }
+	}
 	lessonAddEditResult.onNavResult { result ->
 		when (result) {
 			is NavResult.Canceled -> {}
@@ -160,7 +155,10 @@ fun MainScreen(
 	Scaffold(
 		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 		topBar = {
-			MainTopAppBar(openDrawer = { coroutineScope.launch { drawerState.open() } })
+			MainTopAppBar(
+				onNavigate = onNavigate,
+				openDrawer = { coroutineScope.launch { drawerState.open() } }
+			)
 		},
 		modifier = Modifier.fillMaxSize(),
 	) { paddingValues ->
@@ -216,9 +214,7 @@ fun MainScreen(
 		val onTasksShowMore = remember<(LocalDate) -> Unit> {
 			{ navigator.onTasksShowMore(date = it) }
 		}
-		val onNavigate = remember<(String) -> Unit> {
-			{ navigator.chipNavigate(route = it) }
-		}
+		
 		MainScreenContent(
 			modifier = Modifier.padding(paddingValues),
 			isLoading = uiState.isLoading,
@@ -231,7 +227,6 @@ fun MainScreen(
 			onTaskChecked = onTaskChecked,
 			onTaskClicked = onTaskClicked,
 			onTasksShowMore = onTasksShowMore,
-			onNavigate = onNavigate
 		)
 		
 		val unselectClass = remember {
@@ -363,7 +358,6 @@ private fun MainScreenContent(
 	onTaskClicked: (String) -> Unit,
 	onTaskChecked: (String, Boolean) -> Unit,
 	onTasksShowMore: (LocalDate) -> Unit,
-	onNavigate: (String) -> Unit,
 ) {
 	LoadingContent(
 		modifier = modifier,
@@ -373,7 +367,6 @@ private fun MainScreenContent(
 		onRefresh = onRefresh
 	) {
 		Column {
-			ChipSection(onNavigate = onNavigate)
 			Column(
 				modifier = Modifier
 					.verticalScroll(rememberScrollState())
@@ -412,49 +405,6 @@ private fun MainScreenContent(
 	}
 }
 
-
-@Composable
-private fun ChipSection(
-	onNavigate: (String) -> Unit,
-) {
-	data class NavButton(
-		@StringRes val res: Int,
-		val destination: TypedDestination<out Any>,
-	)
-	
-	val buttons = listOf(
-		NavButton(res = R.string.timetable, destination = DayScheduleScreenDestination),
-		NavButton(res = R.string.tasks_title, destination = TasksScreenDestination),
-		NavButton(res = R.string.grades_title, destination = GradesScreenDestination),
-		NavButton(res = R.string.report_card_title, destination = EduPerformanceScreenDestination),
-	)
-	
-	Row(
-		modifier = Modifier
-			.fillMaxWidth()
-			.horizontalScroll(rememberScrollState())
-			.padding(vertical = dimensionResource(R.dimen.vertical_margin)),
-		verticalAlignment = Alignment.CenterVertically,
-		horizontalArrangement = Arrangement.SpaceBetween
-	) {
-		buttons.forEach {
-			key(it.res) {
-				OutlinedButton(
-					onClick = { onNavigate(it.destination.route) },
-					modifier = Modifier.padding(
-						horizontal = dimensionResource(R.dimen.list_item_padding)
-					),
-				) {
-					Text(
-						text = stringResource(it.res),
-						style = MaterialTheme.typography.labelMedium
-					)
-				}
-			}
-		}
-	}
-}
-
 @Composable
 private fun CurrentDay(
 	classes: Map<Int, LessonWithSubject>,
@@ -469,12 +419,7 @@ private fun CurrentDay(
 		ElevatedCard(
 			elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.0.dp)
 		) {
-			Column(
-				modifier = Modifier
-					.padding(
-						horizontal = dimensionResource(R.dimen.vertical_margin)
-					)
-			) {
+			Column {
 				var currentTime by remember { mutableStateOf(LocalTime.now()) }
 				LaunchedEffect(currentTime) {
 					delay(CURRENT_DAY_INFO_UPDATE_TIMING)
@@ -584,8 +529,8 @@ private fun CurrentDay(
 						style = MaterialTheme.typography.displayMedium
 					)
 				}
-				ShowMore(onScheduleShowMore)
 			}
+			ShowMore(onScheduleShowMore)
 		}
 	}
 }
@@ -606,11 +551,7 @@ private fun ScheduleDay(
 		ElevatedCard(
 			elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.0.dp)
 		) {
-			Column(
-				modifier = Modifier.padding(
-					start = dimensionResource(R.dimen.vertical_margin)
-				)
-			) {
+			Column {
 				key(tasks) {
 					TasksOverview(
 						tasks = tasks,
@@ -618,8 +559,8 @@ private fun ScheduleDay(
 						onTaskClicked = onTaskClicked
 					)
 				}
-				ShowMore(onTasksShowMore)
 			}
+			ShowMore(onTasksShowMore)
 		}
 		Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding)))
 		classes.forEach {
@@ -652,9 +593,7 @@ fun ShowMore(
 				),
 				onClick = onClick
 			)
-			.padding(
-				vertical = dimensionResource(id = R.dimen.vertical_margin),
-			),
+			.padding(dimensionResource(id = R.dimen.vertical_margin)),
 		horizontalArrangement = Arrangement.Start,
 		verticalAlignment = Alignment.CenterVertically
 	) {
@@ -681,9 +620,6 @@ private fun TasksOverview(
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
-			.padding(
-				horizontal = dimensionResource(R.dimen.vertical_margin),
-			)
 	) {
 		val noTasks = remember(tasks) { tasks.isEmpty() }
 		val pendingTasks = remember(tasks) { tasks.filterNot { it.taskEntity.isDone } }
@@ -725,7 +661,11 @@ private fun TasksOverviewItem(
 		modifier = Modifier
 			.fillMaxWidth()
 			.clickable { onTaskClicked(taskEntity.taskEntity.taskId) }
-			.padding(vertical = dimensionResource(R.dimen.list_item_padding)),
+			.padding(
+				top = dimensionResource(R.dimen.list_item_padding),
+				bottom = dimensionResource(R.dimen.list_item_padding),
+				start = dimensionResource(R.dimen.horizontal_margin)
+			),
 		horizontalArrangement = Arrangement.SpaceBetween,
 		verticalAlignment = Alignment.CenterVertically
 	) {
@@ -877,6 +817,7 @@ private fun LessonDetailed(
 			.clickable { onLessonClick() }
 			.padding(
 				vertical = dimensionResource(R.dimen.horizontal_margin),
+				horizontal = dimensionResource(R.dimen.horizontal_margin),
 			),
 	) {
 		Row(
@@ -1071,7 +1012,8 @@ private fun LessonBrief(
 			.clip(MaterialTheme.shapes.medium)
 			.clickable { onLessonClick() }
 			.padding(
-				vertical = dimensionResource(id = R.dimen.list_item_padding)
+				vertical = dimensionResource(id = R.dimen.list_item_padding),
+				horizontal = dimensionResource(R.dimen.horizontal_margin),
 			),
 	) {
 		Row(
@@ -1230,12 +1172,12 @@ private val previewTasks1 = listOf(
 )
 
 private val previewItems = listOf(
-	/*MainScreenItem(
+	MainScreenItem(
 		date = Utils.currentDate,
 		classes = previewClasses1,
 		tasks = previewTasks1,
 		pattern = previewCurrentPattern
-	),*/
+	),
 	MainScreenItem(
 		date = Utils.currentDate.plusDays(1),
 		classes = previewClasses1,
@@ -1267,7 +1209,6 @@ private fun MainScreenContentPreview() {
 				onTaskClicked = {},
 				onTaskChecked = { _, _ -> },
 				onTasksShowMore = {},
-				onNavigate = {}
 			)
 		}
 	}

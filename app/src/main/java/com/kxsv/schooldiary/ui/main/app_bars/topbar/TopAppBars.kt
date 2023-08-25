@@ -4,7 +4,13 @@ package com.kxsv.schooldiary.ui.main.app_bars.topbar
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -26,17 +32,27 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import com.kxsv.schooldiary.R
+import com.kxsv.schooldiary.ui.screens.destinations.DayScheduleScreenDestination
+import com.kxsv.schooldiary.ui.screens.destinations.EduPerformanceScreenDestination
+import com.kxsv.schooldiary.ui.screens.destinations.GradesScreenDestination
+import com.kxsv.schooldiary.ui.screens.destinations.TasksScreenDestination
+import com.kxsv.schooldiary.ui.screens.destinations.TypedDestination
 import com.kxsv.schooldiary.ui.util.GradesSortType
 import com.kxsv.schooldiary.ui.util.TasksDoneFilterType
 
@@ -221,13 +237,64 @@ fun GradesTopAppBar(
 
 @Composable
 fun MainTopAppBar(
+	onNavigate: (String) -> Unit,
 	openDrawer: () -> Unit,
 ) {
-	TopAppBar(
-		title = { Text(text = stringResource(id = R.string.main_menu_title)) },
-		navigationIcon = { DrawerIconButton(openDrawer) },
-		modifier = Modifier.fillMaxWidth(),
+	Column {
+		TopAppBar(
+			title = { Text(text = stringResource(id = R.string.main_menu_title)) },
+			navigationIcon = { DrawerIconButton(openDrawer) },
+			modifier = Modifier.fillMaxWidth(),
+			colors = TopAppBarDefaults.topAppBarColors(
+				containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
+			)
+		)
+		MainScreenChipSection(onNavigate)
+	}
+}
+
+@Composable
+private fun MainScreenChipSection(
+	onNavigate: (String) -> Unit,
+) {
+	data class NavButton(
+		@StringRes val res: Int,
+		val destination: TypedDestination<out Any>,
 	)
+	
+	val buttons = listOf(
+		NavButton(res = R.string.timetable, destination = DayScheduleScreenDestination),
+		NavButton(res = R.string.tasks_title, destination = TasksScreenDestination),
+		NavButton(res = R.string.grades_title, destination = GradesScreenDestination),
+		NavButton(res = R.string.report_card_title, destination = EduPerformanceScreenDestination),
+	)
+	
+	Row(
+		modifier = Modifier
+			.fillMaxWidth()
+			.horizontalScroll(rememberScrollState())
+			.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f))
+//			.background(MaterialTheme.colorScheme.background)
+			.padding(bottom = dimensionResource(R.dimen.vertical_margin)),
+		verticalAlignment = Alignment.CenterVertically,
+		horizontalArrangement = Arrangement.SpaceBetween
+	) {
+		buttons.forEach {
+			key(it.res) {
+				OutlinedButton(
+					onClick = { onNavigate(it.destination.route) },
+					modifier = Modifier.padding(
+						horizontal = dimensionResource(R.dimen.list_item_padding)
+					),
+				) {
+					Text(
+						text = stringResource(it.res),
+						style = MaterialTheme.typography.labelMedium
+					)
+				}
+			}
+		}
+	}
 }
 
 @Composable
