@@ -76,7 +76,7 @@ fun LoginDialog(
 	val onLoggedIn = remember {
 		{
 			viewModel.onLoggedIn()
-			navigator.onLoggedIn()
+			navigator.onLoggedIn(uiState.startScreen)
 		}
 	}
 	LaunchedEffect(uiState.loggedIn) {

@@ -2,10 +2,13 @@ package com.kxsv.schooldiary.data.repository
 
 import com.kxsv.schooldiary.data.util.user_preferences.PeriodType
 import com.kxsv.schooldiary.data.util.user_preferences.PeriodWithRange
+import com.kxsv.schooldiary.data.util.user_preferences.StartScreen
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.coroutines.flow.Flow
 
 interface UserPreferencesRepository {
+	
+	fun observeStartScreen(): Flow<StartScreen>
 	
 	fun observeTargetMark(): Flow<Double>
 	
@@ -34,6 +37,10 @@ interface UserPreferencesRepository {
 	suspend fun getEducationPeriodType(): PeriodType
 	
 	suspend fun setEducationPeriodType(educationPeriodType: PeriodType)
+	
+	suspend fun getStartScreen(): StartScreen
+	
+	suspend fun setStartScreen(startScreen: StartScreen)
 	
 	suspend fun getPeriodsRanges(): PersistentList<PeriodWithRange>
 	

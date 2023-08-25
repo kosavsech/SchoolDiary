@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import com.kxsv.schooldiary.data.local.user_preferences.UserPreferences
 import com.kxsv.schooldiary.data.util.user_preferences.PeriodType
 import com.kxsv.schooldiary.data.util.user_preferences.PeriodWithRange
+import com.kxsv.schooldiary.data.util.user_preferences.StartScreen
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -15,6 +16,12 @@ import javax.inject.Singleton
 class UserPreferencesRepositoryImpl @Inject constructor(
 	private val dataStore: DataStore<UserPreferences>,
 ) : UserPreferencesRepository {
+	
+	override fun observeStartScreen(): Flow<StartScreen> {
+		return dataStore.data.map {
+			it.startScreen
+		}
+	}
 	
 	override fun observeTargetMark(): Flow<Double> {
 		return dataStore.data.map {
@@ -93,6 +100,16 @@ class UserPreferencesRepositoryImpl @Inject constructor(
 	override suspend fun setEducationPeriodType(educationPeriodType: PeriodType) {
 		dataStore.updateData {
 			it.copy(educationPeriodType = educationPeriodType)
+		}
+	}
+	
+	override suspend fun getStartScreen(): StartScreen {
+		return dataStore.data.first().startScreen
+	}
+	
+	override suspend fun setStartScreen(startScreen: StartScreen) {
+		dataStore.updateData {
+			it.copy(startScreen = startScreen)
 		}
 	}
 	

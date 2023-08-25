@@ -1,12 +1,12 @@
 package com.kxsv.schooldiary.ui.main.navigation.nav_actions
 
-import com.kxsv.schooldiary.ui.screens.destinations.MainScreenDestination
+import com.kxsv.schooldiary.data.util.user_preferences.StartScreen
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
 class LoginDialogNavActions(
 	override val destinationsNavigator: DestinationsNavigator,
 ) : NavActions {
-	fun onLoggedIn() {
-		destinationsNavigator.navigate(MainScreenDestination)
+	fun onLoggedIn(startScreen: StartScreen) {
+		destinationsNavigator.navigate(startScreen.route.route)
 	}
 }

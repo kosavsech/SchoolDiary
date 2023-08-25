@@ -198,12 +198,12 @@
     <string name="default_round_rule_not_found">Default round rule not found</string>
     <string name="enter_default_round_rule_dialog_title">Enter default round rule:</string>
     <string name="default_round_rule">Default grade round rule</string>
-    <string name="default_round_rule_description">This value will be used in realizable bad marks and marks until target mark calculation.</string>
+    <string name="default_round_rule_description">This value will be used as minimum tenth part of mark to get grade. This is used in calculation of realizable bad marks and calculation of marks until goal.</string>
     <string name="successfully_deleted_task_message">Task deleted</string>
     <string name="successfully_saved_task_message">Task saved</string>
     <string name="successfully_added_task_message">Task added</string>
-    <string name="default_target_mark_description">This value will be used in marks until target calculation as global default</string>
-    <string name="default_lesson_duration_description">This value will be used to suggest pattern stroke end time</string>
+    <string name="default_target_mark_description">This value will be used as target for calculation of marks until goal, unless subject has specific target mark specified</string>
+    <string name="default_lesson_duration_description">This value will be used to suggest pattern stroke\'s end time</string>
     <string name="too_early_time_for_such_index">The time is too early for such an index</string>
     <string name="too_late_time_for_such_index">The time is too late for such an index</string>
     <string name="corrupted_class">This class is corrupted</string>
@@ -250,5 +250,7 @@
     <string name="remote_task">Remote task</string>
     <string name="specific_date">%1$s</string>
     <string name="something_went_wrong">Something went wrong</string>
+    <string name="current_start_screen">Current start screen</string>
+    <string name="start_screen_not_found">Start screen not found</string>
 
 </resources>

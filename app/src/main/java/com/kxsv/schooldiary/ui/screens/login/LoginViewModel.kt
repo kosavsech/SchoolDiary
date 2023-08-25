@@ -18,6 +18,8 @@ import com.kxsv.schooldiary.app.sync.workers.delegatedData
 import com.kxsv.schooldiary.data.remote.WebService
 import com.kxsv.schooldiary.data.remote.util.NetworkError
 import com.kxsv.schooldiary.data.remote.util.NetworkException
+import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
+import com.kxsv.schooldiary.data.util.user_preferences.StartScreen
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.Dispatcher
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -38,11 +40,13 @@ data class LoginUiState(
 	val eduPassword: String = "",
 	val errorMessage: Int? = null,
 	val loggedIn: Boolean = false,
+	val startScreen: StartScreen = StartScreen.MAIN_SCREEN,
 	val isLoading: Boolean = false,
 )
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
+	private val userPreferencesRepository: UserPreferencesRepository,
 	private val webService: WebService,
 	private val workManager: WorkManager,
 	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
@@ -50,6 +54,12 @@ class LoginViewModel @Inject constructor(
 	
 	private val _uiState = MutableStateFlow(LoginUiState())
 	val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
+	
+	init {
+		viewModelScope.launch(ioDispatcher) {
+			_uiState.update { it.copy(startScreen = userPreferencesRepository.getStartScreen()) }
+		}
+	}
 	
 	fun snackbarMessageShown() {
 		_uiState.update { it.copy(errorMessage = null) }

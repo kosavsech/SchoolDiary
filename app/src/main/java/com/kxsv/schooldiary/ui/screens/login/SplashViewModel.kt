@@ -28,12 +28,13 @@ class SplashViewModel @Inject constructor(
 	
 	init {
 		viewModelScope.launch(ioDispatcher) {
+			val startScreen = async { userPreferencesRepository.getStartScreen() }
 			val suppressed = async { userPreferencesRepository.getInitLoginSuppression() }
 			val login = async { userPreferencesRepository.getEduLogin() }
 			val password = async { userPreferencesRepository.getEduPassword() }
 			if (suppressed.await()) {
 				Log.w(TAG, "suppressed: proceed to schedule screen")
-				_startDestination.value = NavGraphs.root.startRoute
+				_startDestination.value = startScreen.await().route
 				login.cancel()
 				password.cancel()
 				return@launch
@@ -42,7 +43,7 @@ class SplashViewModel @Inject constructor(
 			val firstTime = (login.await().isNullOrBlank() or password.await().isNullOrBlank())
 			if (!firstTime) {
 				Log.i(TAG, "NOT FIRST time: ")
-				_startDestination.value = NavGraphs.root.startRoute
+				_startDestination.value = startScreen.await().route
 				return@launch
 			} else {
 				Log.i(TAG, "first time: ")

@@ -5,6 +5,7 @@ import com.kxsv.schooldiary.data.util.user_preferences.PeriodDateRange
 import com.kxsv.schooldiary.data.util.user_preferences.PeriodType
 import com.kxsv.schooldiary.data.util.user_preferences.PeriodWithRange
 import com.kxsv.schooldiary.data.util.user_preferences.PersistentListSerializer
+import com.kxsv.schooldiary.data.util.user_preferences.StartScreen
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.serialization.Serializable
@@ -15,6 +16,7 @@ data class UserPreferences(
 	val defaultRoundRule: Double = 0.6,
 	val defaultLessonDuration: Long = 45,
 	val suppressInitLogin: Boolean = false,
+	val startScreen: StartScreen = StartScreen.MAIN_SCREEN,
 	val educationPeriodType: PeriodType = PeriodType.SEMESTERS,
 	@Serializable(PersistentListSerializer::class)
 	val periodsRanges: PersistentList<PeriodWithRange> = persistentListOf(

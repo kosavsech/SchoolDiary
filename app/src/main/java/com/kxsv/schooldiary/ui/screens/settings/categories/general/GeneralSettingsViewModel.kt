@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
+import com.kxsv.schooldiary.data.util.user_preferences.StartScreen
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.util.Async
@@ -14,7 +15,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -23,6 +23,7 @@ import javax.inject.Inject
 
 data class GeneralSettingsUiState(
 	val suppressInitLogin: Boolean? = null,
+	val startScreen: StartScreen? = null,
 	
 	val userMessage: Int? = null,
 	val userMessageArgs: Array<out Any>? = null,
@@ -30,6 +31,7 @@ data class GeneralSettingsUiState(
 )
 
 private data class AsyncData(
+	val startScreen: StartScreen? = null,
 	val suppressInitLogin: Boolean? = null,
 )
 
@@ -39,14 +41,15 @@ class GeneralSettingsViewModel @Inject constructor(
 	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 	
-	private val _temp = flowOf(0)
+	private val _startScreen = userPreferencesRepository.observeStartScreen()
 	private val _suppressInitLogin = userPreferencesRepository.observeInitLoginSuppression()
 	
 	private val _asyncData = combine(
-		flow = _temp,
+		flow = _startScreen,
 		flow2 = _suppressInitLogin,
-	) { _, suppressLogin ->
+	) { startScreen, suppressLogin ->
 		AsyncData(
+			startScreen = startScreen,
 			suppressInitLogin = suppressLogin,
 		)
 	}
@@ -56,6 +59,7 @@ class GeneralSettingsViewModel @Inject constructor(
 	
 	private fun handleAsyncData(asyncData: AsyncData): Async<AsyncData> {
 		if (asyncData.suppressInitLogin == null) return Async.Error(R.string.login_suppression_not_found)
+		if (asyncData.startScreen == null) return Async.Error(R.string.start_screen_not_found)
 		
 		return Async.Success(asyncData)
 	}
@@ -69,6 +73,7 @@ class GeneralSettingsViewModel @Inject constructor(
 			is Async.Error -> state.copy(userMessage = asyncData.errorMessage)
 			is Async.Success -> {
 				state.copy(
+					startScreen = asyncData.data.startScreen,
 					suppressInitLogin = asyncData.data.suppressInitLogin,
 				)
 			}
@@ -84,6 +89,10 @@ class GeneralSettingsViewModel @Inject constructor(
 		_uiState.update {
 			it.copy(userMessage = null, userMessageArgs = null)
 		}
+	}
+	
+	fun changeStartScreen(startScreen: StartScreen) = viewModelScope.launch(ioDispatcher) {
+		userPreferencesRepository.setStartScreen(startScreen)
 	}
 	
 	
