@@ -15,7 +15,6 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -34,10 +33,10 @@ import androidx.compose.ui.unit.dp
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.ui.util.TasksDateFilterType
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TasksBottomAppBar(
 	selectedDataFilterText: String,
+	isSpecificDatePresent: Boolean,
 	onAddTask: () -> Unit,
 	onDateFilterChoose: (TasksDateFilterType) -> Unit,
 ) {
@@ -47,7 +46,13 @@ fun TasksBottomAppBar(
 			.clickable { expanded = !expanded }
 			.fillMaxWidth(),
 	) {
-		val dataFilterOptions = TasksDateFilterType.values()
+		val dataFilterOptions = TasksDateFilterType.values().let { dateFilterTypes ->
+			return@let if (isSpecificDatePresent) {
+				dateFilterTypes.toList()
+			} else {
+				dateFilterTypes.filterNot { it == TasksDateFilterType.SPECIFIC_DATE }
+			}
+		}
 		Row {
 			DropdownMenu(
 				expanded = expanded,

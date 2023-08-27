@@ -83,6 +83,12 @@ class UserPreferencesRepositoryImpl @Inject constructor(
 		}
 	}
 	
+	override fun observeCalendarScrollPaged(): Flow<Boolean> {
+		return dataStore.data.map {
+			it.calendarScrollPaged
+		}
+	}
+	
 	override suspend fun getTargetMark(): Double {
 		return dataStore.data.first().defaultTargetMark
 	}
@@ -187,5 +193,13 @@ class UserPreferencesRepositoryImpl @Inject constructor(
 	
 	override suspend fun setInitLoginSuppression(value: Boolean) {
 		dataStore.updateData { it.copy(suppressInitLogin = value) }
+	}
+	
+	override suspend fun getCalendarScrollPaged(): Boolean {
+		return dataStore.data.first().calendarScrollPaged
+	}
+	
+	override suspend fun setCalendarScrollPaged(value: Boolean) {
+		dataStore.updateData { it.copy(calendarScrollPaged = value) }
 	}
 }

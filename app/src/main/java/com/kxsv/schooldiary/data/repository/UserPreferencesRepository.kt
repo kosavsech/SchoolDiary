@@ -30,6 +30,8 @@ interface UserPreferencesRepository {
 	
 	fun observeInitLoginSuppression(): Flow<Boolean>
 	
+	fun observeCalendarScrollPaged(): Flow<Boolean>
+	
 	suspend fun getTargetMark(): Double
 	
 	suspend fun setTargetMark(targetMark: Double)
@@ -73,4 +75,8 @@ interface UserPreferencesRepository {
 	suspend fun getInitLoginSuppression(): Boolean
 	
 	suspend fun setInitLoginSuppression(value: Boolean)
+	
+	suspend fun getCalendarScrollPaged(): Boolean
+	
+	suspend fun setCalendarScrollPaged(value: Boolean)
 }

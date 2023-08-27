@@ -238,6 +238,7 @@ fun DayScheduleScreen(
 			fetchedClasses = uiState.fetchedClasses,
 			selectedDate = uiState.selectedDate,
 			currentPattern = uiState.currentTimings,
+			calendarScrollPaged = uiState.calendarScrollPaged,
 			onRefresh = onRefresh,
 			changeDate = changeDate,
 			scheduleChoose = scheduleChoose,
@@ -391,13 +392,14 @@ private fun DayScheduleContent(
 	fetchedClasses: Map<Int, LessonWithSubject>?,
 	selectedDate: LocalDate,
 	currentPattern: List<PatternStrokeEntity>,
+	calendarScrollPaged: Boolean,
 	onRefresh: () -> Unit,
 	changeDate: (LocalDate) -> Unit,
 	scheduleChoose: (Int) -> Unit,
 	onClassClick: (LessonWithSubject) -> Unit,
 ) {
 	Column(modifier = modifier) {
-		CalendarLine(changeDate = changeDate, selectedDate = selectedDate)
+		CalendarLine(changeDate, selectedDate, calendarScrollPaged)
 		if (fetchedClasses != null) {
 			ScheduleComparisonTable(
 				loading = loading,
@@ -591,6 +593,7 @@ private fun ScheduleForDay(
 private fun CalendarLine(
 	changeDate: (LocalDate) -> Unit,
 	selectedDate: LocalDate,
+	calendarScrollPaged: Boolean,
 ) {
 	val currentDate = remember { Utils.currentDate }
 	val startDate = remember { currentDate.minusDays(600) }
@@ -609,7 +612,7 @@ private fun CalendarLine(
 			WeekCalendar(
 				modifier = Modifier.padding(vertical = 4.dp),
 				state = state,
-				calendarScrollPaged = false,
+				calendarScrollPaged = calendarScrollPaged,
 				dayContent = { day ->
 					if (day.date.dayOfWeek != DayOfWeek.SUNDAY) {
 						Day(date = day.date, selected = selectedDate == day.date) {
@@ -636,7 +639,7 @@ private fun Day(
 		modifier = Modifier
 			// If paged scrolling is disabled (calendarScrollPaged = false),
 			// you must set the day width on the WeekCalendar!
-			.width(screenWidth / 7)
+			.width(screenWidth / 6)
 			.padding(2.dp)
 			.clip(RoundedCornerShape(20.dp))
 			.background(color = MaterialTheme.colorScheme.surfaceVariant)
@@ -812,10 +815,12 @@ private fun DayScheduleContentPreview() {
 			),
 			selectedDate = Utils.currentDate,
 			currentPattern = previewCurrentPattern,
+			calendarScrollPaged = false,
 			onRefresh = {},
 			changeDate = {},
-			scheduleChoose = { }
-		) {}
+			scheduleChoose = { },
+			onClassClick = {}
+		)
 	}
 }
 

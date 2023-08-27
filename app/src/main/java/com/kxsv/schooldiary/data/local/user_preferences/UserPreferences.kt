@@ -46,6 +46,7 @@ data class UserPreferences(
 		)
 	),
 	val defaultPatternId: Long = 1L,
+	val calendarScrollPaged: Boolean = false,
 	
 	val eduLogin: String? = null,
 	val eduPassword: String? = null,

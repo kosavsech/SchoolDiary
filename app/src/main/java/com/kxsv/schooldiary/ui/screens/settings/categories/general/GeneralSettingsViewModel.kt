@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class GeneralSettingsUiState(
+	val calendarScrollPaged: Boolean? = null,
 	val suppressInitLogin: Boolean? = null,
 	val startScreen: StartScreen? = null,
 	
@@ -33,6 +34,7 @@ data class GeneralSettingsUiState(
 private data class AsyncData(
 	val startScreen: StartScreen? = null,
 	val suppressInitLogin: Boolean? = null,
+	val calendarScrollPaged: Boolean? = null,
 )
 
 @HiltViewModel
@@ -43,14 +45,17 @@ class GeneralSettingsViewModel @Inject constructor(
 	
 	private val _startScreen = userPreferencesRepository.observeStartScreen()
 	private val _suppressInitLogin = userPreferencesRepository.observeInitLoginSuppression()
+	private val _calendarScrollPaged = userPreferencesRepository.observeCalendarScrollPaged()
 	
 	private val _asyncData = combine(
-		flow = _startScreen,
-		flow2 = _suppressInitLogin,
-	) { startScreen, suppressLogin ->
+		_startScreen,
+		_suppressInitLogin,
+		_calendarScrollPaged
+	) { startScreen, suppressLogin, calendarScrollPaged ->
 		AsyncData(
 			startScreen = startScreen,
 			suppressInitLogin = suppressLogin,
+			calendarScrollPaged = calendarScrollPaged
 		)
 	}
 		.map { handleAsyncData(it) }
@@ -60,6 +65,7 @@ class GeneralSettingsViewModel @Inject constructor(
 	private fun handleAsyncData(asyncData: AsyncData): Async<AsyncData> {
 		if (asyncData.suppressInitLogin == null) return Async.Error(R.string.login_suppression_not_found)
 		if (asyncData.startScreen == null) return Async.Error(R.string.start_screen_not_found)
+		if (asyncData.calendarScrollPaged == null) return Async.Error(R.string.calendar_scroll_paged_not_found)
 		
 		return Async.Success(asyncData)
 	}
@@ -75,6 +81,7 @@ class GeneralSettingsViewModel @Inject constructor(
 				state.copy(
 					startScreen = asyncData.data.startScreen,
 					suppressInitLogin = asyncData.data.suppressInitLogin,
+					calendarScrollPaged = asyncData.data.calendarScrollPaged
 				)
 			}
 		}
@@ -84,17 +91,19 @@ class GeneralSettingsViewModel @Inject constructor(
 		userPreferencesRepository.setInitLoginSuppression(newValue)
 	}
 	
-	
-	fun snackbarMessageShown() {
-		_uiState.update {
-			it.copy(userMessage = null, userMessageArgs = null)
-		}
+	fun changeCalendarScrollPaged(newValue: Boolean) = viewModelScope.launch(ioDispatcher) {
+		userPreferencesRepository.setCalendarScrollPaged(newValue)
 	}
 	
 	fun changeStartScreen(startScreen: StartScreen) = viewModelScope.launch(ioDispatcher) {
 		userPreferencesRepository.setStartScreen(startScreen)
 	}
 	
+	fun snackbarMessageShown() {
+		_uiState.update {
+			it.copy(userMessage = null, userMessageArgs = null)
+		}
+	}
 	
 	/*private fun showSnackbarMessage(message: Int) {
 		_uiState.upsert { it.copy(userMessage = message) }

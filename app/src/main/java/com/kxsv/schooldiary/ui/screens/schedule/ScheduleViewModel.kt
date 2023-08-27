@@ -62,6 +62,8 @@ data class DayScheduleUiState(
 	val selectedRefCalendarDay: CalendarDay? = null, // unique for DayScheduleCopyScreen
 	val refRange: ClosedRange<LocalDate>? = null,
 	val destRange: ClosedRange<LocalDate>? = null,
+	val calendarScrollPaged: Boolean = false,
+	
 	val userMessage: Int? = null,
 	val userMessageArgs: Array<out Any>? = null,
 	val isLoading: Boolean = false,
@@ -108,9 +110,18 @@ class ScheduleViewModel @Inject constructor(
 	}
 	
 	init {
+		getCalendarScrollPaged()
 		observeIsUpdateAvailable()
 		onDayChangeUpdate(date = datestampToLocalDate(dateStamp) ?: Utils.currentDate)
 		if (showComparison == true) fetchSchedule()
+	}
+	
+	private fun getCalendarScrollPaged() {
+		viewModelScope.launch(ioDispatcher) {
+			_uiState.update {
+				it.copy(calendarScrollPaged = userPreferencesRepository.getCalendarScrollPaged())
+			}
+		}
 	}
 	
 	fun snackbarMessageShown() {

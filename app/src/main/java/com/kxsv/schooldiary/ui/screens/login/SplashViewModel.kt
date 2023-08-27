@@ -34,7 +34,7 @@ class SplashViewModel @Inject constructor(
 			val password = async { userPreferencesRepository.getEduPassword() }
 			if (suppressed.await()) {
 				Log.w(TAG, "suppressed: proceed to schedule screen")
-				_startDestination.value = startScreen.await().route
+				_startDestination.value = startScreen.await().value
 				login.cancel()
 				password.cancel()
 				return@launch
@@ -43,7 +43,7 @@ class SplashViewModel @Inject constructor(
 			val firstTime = (login.await().isNullOrBlank() or password.await().isNullOrBlank())
 			if (!firstTime) {
 				Log.i(TAG, "NOT FIRST time: ")
-				_startDestination.value = startScreen.await().route
+				_startDestination.value = startScreen.await().value
 				return@launch
 			} else {
 				Log.i(TAG, "first time: ")

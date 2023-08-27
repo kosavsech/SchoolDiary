@@ -7,6 +7,6 @@ class LoginDialogNavActions(
 	override val destinationsNavigator: DestinationsNavigator,
 ) : NavActions {
 	fun onLoggedIn(startScreen: StartScreen) {
-		destinationsNavigator.navigate(startScreen.route.route)
+		destinationsNavigator.navigate(startScreen.value.route)
 	}
 }

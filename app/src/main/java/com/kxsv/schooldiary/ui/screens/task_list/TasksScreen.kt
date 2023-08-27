@@ -92,7 +92,6 @@ fun TasksScreen(
 	val formattedDate =
 		Utils.datestampToLocalDate(viewModel.dateStamp)
 			?.format(DateTimeFormatter.ofPattern("MMM-dd"))
-			?: stringResource(R.string.something_went_wrong)
 	
 	val navigator = TasksScreenNavActions(destinationsNavigator = destinationsNavigator)
 	val updateDialog = AppUpdateNavActions(destinationsNavigator = destinationsNavigator)
@@ -130,11 +129,12 @@ fun TasksScreen(
 		bottomBar = {
 			TasksBottomAppBar(
 				selectedDataFilterText = stringResource(
-					uiState.dateFilterType.getLocalisedStringId(), formattedDate
+					uiState.dateFilterType.getLocalisedStringId(),
+					formattedDate ?: stringResource(R.string.something_went_wrong)
 				),
-				onAddTask = { navigator.onAddTask(viewModel.dateStamp) },
-				onDateFilterChoose = { viewModel.changeDataFilter(it) }
-			)
+				isSpecificDatePresent = formattedDate != null,
+				onAddTask = { navigator.onAddTask(viewModel.dateStamp) }
+			) { viewModel.changeDataFilter(it) }
 		},
 		modifier = Modifier.fillMaxSize(),
 	) { paddingValues ->
