@@ -31,6 +31,7 @@ android {
 		release {
 			isMinifyEnabled = false
 			signingConfig = signingConfigs.getByName("debug")
+			isDebuggable = false
 //            proguardFiles(
 //                getvalaultProguardFile("proguard-android.txt"),
 //                "proguard-rules.pro"

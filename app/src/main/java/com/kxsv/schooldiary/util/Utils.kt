@@ -25,7 +25,7 @@ private const val TAG = "Utils"
 
 object Utils {
 	val taskDueDateFormatterLong: DateTimeFormatter = DateTimeFormatter.ofPattern("eeee, MMMM d")
-	val currentDate: LocalDate = LocalDate.of(2023, 5, 15)
+	val currentDate: LocalDate = LocalDate.now()
 	
 	/**
 	 * Tries to return an [Activity] instance from the compose [LocalContext]

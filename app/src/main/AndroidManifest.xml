@@ -40,9 +40,9 @@
         <!--                tools:node="remove" />-->
         <!--        </provider>-->
 
-        <profileable
-            android:enabled="true"
-            android:shell="true" />
+        <!--        <profileable-->
+        <!--            android:enabled="true"-->
+        <!--            android:shell="true" />-->
     </application>
 
 </manifest>

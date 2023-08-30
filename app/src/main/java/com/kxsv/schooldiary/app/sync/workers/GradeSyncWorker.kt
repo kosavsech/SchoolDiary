@@ -1,12 +1,13 @@
 package com.kxsv.schooldiary.app.sync.workers
 
 import android.Manifest
+import android.app.Activity
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationChannelGroup
 import android.app.NotificationManager
 import android.content.Context
-import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -39,7 +40,9 @@ import com.kxsv.schooldiary.di.util.GradeNotification
 import com.kxsv.schooldiary.di.util.GradeSummaryNotification
 import com.kxsv.schooldiary.di.util.NotificationsConstants.GRADE_CHANNEL_ID
 import com.kxsv.schooldiary.di.util.NotificationsConstants.NETWORK_CHANNEL_GROUP_ID
+import com.kxsv.schooldiary.util.PERMISSION_REQUEST_CODE
 import com.kxsv.schooldiary.util.Utils
+import com.kxsv.schooldiary.util.isPermissionGranted
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineDispatcher
@@ -126,10 +129,7 @@ class GradeSyncWorker @AssistedInject constructor(
 				updateTeachersDatabase(fetchedGradesWithTeachers.second)
 			}
 			
-			if (ActivityCompat
-					.checkSelfPermission(appContext, Manifest.permission.POST_NOTIFICATIONS) ==
-				PackageManager.PERMISSION_GRANTED
-			) {
+			if (appContext.isPermissionGranted(Manifest.permission.POST_NOTIFICATIONS)) {
 				Log.d(TAG, "DEBUG newGradeEntities: $newGradeEntities")
 				if (newGradeEntities.isNotEmpty()) {
 					notificationManager.notify(1, createSummaryNotification())
@@ -139,19 +139,17 @@ class GradeSyncWorker @AssistedInject constructor(
 						)
 					}
 				}
-				
-			} else {
-				// TODO: Consider calling
-				//    ActivityCompat#requestPermissions
-				// here to request the missing permissions, and then overriding
-				//   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-				//                                          int[] grantResults)
-				// to handle the case where the user grants the permission. See the documentation
-				// for ActivityCompat#requestPermissions for more details.
-				
 				return Result.success()
+			} else {
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+					ActivityCompat.requestPermissions(
+						appContext as Activity,
+						arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+						PERMISSION_REQUEST_CODE
+					)
+				}
+				return Result.failure()
 			}
-			return Result.success()
 		} catch (e: NetworkException) {
 			Log.e(TAG, "fetchRecentGradesWithTeachers: NetworkException on fetch", e)
 			return Result.failure()
