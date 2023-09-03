@@ -1,16 +1,9 @@
 [
     {
-        "version": "testVer",
+        "version": "0.1.0-alpha",
         "versionCode": 2,
-        "apk": "https://github.com/javiersantos/AppUpdater/releases",
-        "releaseNotes": "noNotes here",
+        "apk": "https://github.com/kosavsech/SchoolDiary/releases/download/v0.1.0-alpha/app-release.apk",
+        "releaseNotes": "Initial release",
         "isCritical": false
     },
-    {
-        "version": "testVer2",
-        "versionCode": 3,
-        "apk": "https://github.com/javiersantos/AppUpdater/releases",
-        "releaseNotes": "noNotes here",
-        "isCritical": false
-    }
 ]
