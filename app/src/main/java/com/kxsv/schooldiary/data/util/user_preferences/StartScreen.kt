@@ -1,0 +1,34 @@
+package com.kxsv.schooldiary.data.util.user_preferences
+
+import androidx.annotation.StringRes
+import com.kxsv.schooldiary.R
+import com.kxsv.schooldiary.ui.screens.NavGraphs
+import com.kxsv.schooldiary.ui.screens.destinations.EduPerformanceScreenDestination
+import com.kxsv.schooldiary.ui.screens.destinations.GradesScreenDestination
+import com.kxsv.schooldiary.ui.screens.destinations.MainScreenDestination
+import com.kxsv.schooldiary.ui.screens.destinations.TasksScreenDestination
+import com.kxsv.schooldiary.ui.screens.settings.utils.ISettingsDropDownChoice
+import com.ramcosta.composedestinations.spec.Route
+
+enum class StartScreen(
+	override val value: Route,
+	@StringRes override val textRes: Int,
+) : ISettingsDropDownChoice {
+	MAIN_SCREEN(MainScreenDestination, R.string.main_menu_title),
+	SCHEDULE(NavGraphs.schedule, R.string.timetable),
+	GRADE_FEED(GradesScreenDestination, R.string.grades_title),
+	AGENDA(TasksScreenDestination, R.string.agenda_title),
+	REPORT_CARD(EduPerformanceScreenDestination, R.string.report_card_title);
+	
+	companion object {
+		fun fromValue(input: Route): StartScreen = when (input) {
+			MainScreenDestination -> MAIN_SCREEN
+			NavGraphs.schedule -> SCHEDULE
+			GradesScreenDestination -> GRADE_FEED
+			TasksScreenDestination -> AGENDA
+			EduPerformanceScreenDestination -> REPORT_CARD
+			
+			else -> throw IllegalArgumentException("Wrong start screen input value($input)")
+		}
+	}
+}
