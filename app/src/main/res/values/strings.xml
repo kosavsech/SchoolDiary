@@ -254,5 +254,6 @@
     <string name="start_screen_not_found">Start screen not found</string>
     <string name="calendar_scroll_paged">Calendar scroll paged</string>
     <string name="calendar_scroll_paged_not_found">Calendar scroll paged not found</string>
+    <string name="year">Year</string>
 
 </resources>

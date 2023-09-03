@@ -18,8 +18,8 @@ android {
 		compileSdk = 34
 		//noinspection OldTargetApi
 		targetSdk = 33
-		versionCode = 1
-		versionName = "0.1.0:pre-alpha"
+		versionCode = 2
+		versionName = "0.1.0:alpha"
 		
 		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 		vectorDrawables {
@@ -29,13 +29,12 @@ android {
 	
 	buildTypes {
 		release {
-			isMinifyEnabled = false
-			signingConfig = signingConfigs.getByName("debug")
+			isMinifyEnabled = true
 			isDebuggable = false
-//            proguardFiles(
-//                getvalaultProguardFile("proguard-android.txt"),
-//                "proguard-rules.pro"
-//            )
+			proguardFiles(
+				getDefaultProguardFile("proguard-android.txt"),
+				"proguard-rules.pro"
+			)
 		}
 	}
 	buildFeatures {

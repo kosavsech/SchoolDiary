@@ -45,6 +45,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import java.io.IOException
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
@@ -112,7 +113,10 @@ class ScheduleViewModel @Inject constructor(
 	init {
 		getCalendarScrollPaged()
 		observeIsUpdateAvailable()
-		onDayChangeUpdate(date = datestampToLocalDate(dateStamp) ?: Utils.currentDate)
+		val startDate = datestampToLocalDate(dateStamp) ?: Utils.currentDate.let {
+			if (it.dayOfWeek == DayOfWeek.SUNDAY) it.plusDays(1) else it
+		}
+		onDayChangeUpdate(date = startDate)
 		if (showComparison == true) fetchSchedule()
 	}
 	

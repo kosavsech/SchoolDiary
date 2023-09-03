@@ -67,7 +67,7 @@ class EduPerformanceRepositoryImpl @Inject constructor(
 	 * @throws java.io.IOException
 	 */
 	override suspend fun fetchEduPerformanceByTerm(term: EduPerformancePeriod): List<EduPerformanceDto> {
-		val rows = webService.getTermEduPerformance(term.value)
+		val rows = webService.getTermEduPerformance(term)
 		return if (term != EduPerformancePeriod.YEAR) {
 			EduPerformanceParser().parseTerm(rows, term)
 		} else {

@@ -13,6 +13,7 @@ import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import com.kxsv.schooldiary.data.util.user_preferences.Period
+import com.kxsv.schooldiary.data.util.user_preferences.PeriodType
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
@@ -28,6 +29,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
@@ -70,6 +72,8 @@ class SubjectDetailViewModel @Inject constructor(
 	val subjectId = navArgs.subjectId
 	
 	private val _period = MutableStateFlow(EduPerformancePeriod.FOURTH)
+	private val _periodType = MutableStateFlow(PeriodType.SEMESTERS)
+	val periodType = _periodType.asStateFlow()
 	
 	private val _subjectWithTeachersAsync = subjectRepository.observeSubjectWithTeachers(subjectId)
 	
@@ -125,6 +129,7 @@ class SubjectDetailViewModel @Inject constructor(
 		viewModelScope.launch(ioDispatcher) {
 			async {
 				val periodType = userPreferencesRepository.getEducationPeriodType()
+				_periodType.update { periodType }
 				val periodsRanges = userPreferencesRepository.getPeriodsRanges()
 					.filter { Period.getTypeByPeriod(it.period) == periodType }
 				val currentPeriod = periodsRanges.getCurrentPeriod()

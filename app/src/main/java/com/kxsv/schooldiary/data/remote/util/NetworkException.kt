@@ -7,7 +7,7 @@ sealed class NetworkException(message: String? = null) : Exception(message) {
 	object IncorrectAuthDataException : NetworkException()
 	object NotLoggedInException : NetworkException()
 	object NotActualAuthSessionException : NetworkException()
-	object PageNotFound : NetworkException()
+	data class PageNotFound(override val message: String?) : NetworkException()
 	
 	fun mapToNetworkError(): NetworkError {
 		return when (this) {
@@ -31,7 +31,7 @@ sealed class NetworkException(message: String? = null) : Exception(message) {
 				NetworkError.NotActualAuthSession
 			}
 			
-			PageNotFound -> {
+			is PageNotFound -> {
 				NetworkError.PageNotFound
 			}
 			

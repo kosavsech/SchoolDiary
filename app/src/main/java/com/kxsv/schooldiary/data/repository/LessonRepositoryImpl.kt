@@ -128,7 +128,7 @@ class LessonRepositoryImpl @Inject constructor(
 				LessonParser().parse(dayInfo = dayInfo, localDate = date)
 			}
 			
-			if (localSchedule.await().isEmpty()) {
+			if (localSchedule.await().isEmpty() && remoteSchedule.await().isNotEmpty()) {
 				Log.d(TAG, "fetchCompareSchedule: new schedule saved for date = $date")
 				remoteSchedule.await().save(lessonDataSource, subjectDataSource, studyDayDataSource)
 				return@withContext Utils.ScheduleCompareResult(isNew = true, isDifferent = false)
@@ -137,17 +137,16 @@ class LessonRepositoryImpl @Inject constructor(
 				val remoteIndexed = remoteSchedule.await()
 					.toSubjectEntitiesIndexed(subjectDataSource, studyDayDataSource)
 				
-				if (local.isSameAs(remoteIndexed)) {
-					Log.d(TAG, "fetchCompareSchedule: schedule is same for date = $date")
-					return@withContext null
-				} else {
+				if (remoteIndexed.isNotEmpty() && !local.isSameAs(remoteIndexed)) {
 					Log.d(TAG, "fetchCompareSchedule: schedule is different for date = $date")
 					return@withContext Utils.ScheduleCompareResult(
 						isNew = false,
 						isDifferent = true
 					)
+				} else {
+					Log.d(TAG, "fetchCompareSchedule: schedule is same for date = $date")
+					return@withContext null
 				}
-				
 			}
 		}
 	}

@@ -2,6 +2,7 @@ package com.kxsv.schooldiary.data.remote
 
 import com.kxsv.schooldiary.data.remote.dtos.UpdateDto
 import com.kxsv.schooldiary.data.remote.util.NetworkException
+import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import org.jsoup.select.Elements
 import java.time.LocalDate
 
@@ -40,6 +41,6 @@ interface WebService {
 	 * @throws NetworkException.PageNotFound
 	 * @throws java.io.IOException if couldn't parse document
 	 */
-	suspend fun getTermEduPerformance(term: String): Elements
+	suspend fun getTermEduPerformance(term: EduPerformancePeriod): Elements
 	
 }

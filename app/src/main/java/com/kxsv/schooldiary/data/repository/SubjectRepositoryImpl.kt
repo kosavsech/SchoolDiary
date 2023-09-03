@@ -10,6 +10,8 @@ import com.kxsv.schooldiary.data.remote.WebService
 import com.kxsv.schooldiary.data.remote.parsers.SubjectParser
 import com.kxsv.schooldiary.data.util.DataIdGenUtils.generateSubjectId
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
+import com.kxsv.schooldiary.data.util.user_preferences.Period
+import com.kxsv.schooldiary.util.Utils.getCurrentPeriod
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -18,6 +20,7 @@ import javax.inject.Singleton
 class SubjectRepositoryImpl @Inject constructor(
 	private val subjectDataSource: SubjectDao,
 	private val subjectTeacherDataSource: SubjectTeacherDao,
+	private val userPreferencesRepository: UserPreferencesRepository,
 	private val webService: WebService,
 ) : SubjectRepository {
 	
@@ -38,7 +41,11 @@ class SubjectRepositoryImpl @Inject constructor(
 	}
 	
 	override suspend fun fetchSubjectNames(): MutableList<String> {
-		val termYearRows = webService.getTermEduPerformance(term = EduPerformancePeriod.YEAR.value)
+		val periodType = userPreferencesRepository.getEducationPeriodType()
+		val periodsRanges = userPreferencesRepository.getPeriodsRanges()
+			.filter { Period.getTypeByPeriod(it.period) == periodType }
+		val currentPeriod = periodsRanges.getCurrentPeriod() ?: EduPerformancePeriod.FIRST
+		val termYearRows = webService.getTermEduPerformance(term = currentPeriod)
 		return SubjectParser().parse(termYearRows)
 	}
 	

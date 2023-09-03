@@ -25,7 +25,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,6 +39,7 @@ import com.kxsv.schooldiary.data.util.AppVersionState
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import com.kxsv.schooldiary.data.util.Mark
 import com.kxsv.schooldiary.data.util.Mark.Companion.getStringValueFrom
+import com.kxsv.schooldiary.data.util.user_preferences.PeriodType
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.EduPerformanceTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AppUpdateNavActions
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.EduPerformanceScreenNavActions
@@ -90,6 +90,7 @@ fun EduPerformanceScreen(
 		EduPerformanceContent(
 			isLoading = uiState.isLoading,
 			eduPerformanceList = uiState.eduPerformanceList,
+			periodType = viewModel.periodType.collectAsState().value,
 			onPeriodChange = { viewModel.changePeriod(it) },
 			onEduPerformanceClick = { eduPerformanceId ->
 				navigator.onEduPerformanceClick(eduPerformanceId)
@@ -105,6 +106,7 @@ fun EduPerformanceScreen(
 private fun EduPerformanceContent(
 	isLoading: Boolean,
 	eduPerformanceList: List<EduPerformanceWithSubject>,
+	periodType: PeriodType,
 	onPeriodChange: (EduPerformancePeriod) -> Unit,
 	onEduPerformanceClick: (String) -> Unit,
 	currentEduPerformancePeriod: EduPerformancePeriod,
@@ -120,7 +122,7 @@ private fun EduPerformanceContent(
 				TermSelector(
 					currentPeriod = currentEduPerformancePeriod,
 					onPeriodChange = onPeriodChange,
-					buttons = remember { Utils.PeriodButton.all }
+					buttons = Utils.getPeriodButtons(periodType = periodType, withYear = true)
 				)
 				Text(text = "No subjects yet")
 			}
@@ -132,7 +134,7 @@ private fun EduPerformanceContent(
 			TermSelector(
 				currentPeriod = currentEduPerformancePeriod,
 				onPeriodChange = onPeriodChange,
-				buttons = remember { Utils.PeriodButton.all }
+				buttons = Utils.getPeriodButtons(periodType = periodType, withYear = true)
 			)
 			LazyColumn {
 				items(eduPerformanceList) { performanceWithSubject ->

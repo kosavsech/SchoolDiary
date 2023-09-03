@@ -72,7 +72,7 @@ class GradeSyncWorker @AssistedInject constructor(
 	
 	companion object {
 		fun startUpSyncWork() =
-			PeriodicWorkRequestBuilder<DelegatingWorker>(360, TimeUnit.MINUTES)
+			PeriodicWorkRequestBuilder<DelegatingWorker>(60, TimeUnit.MINUTES)
 				.setConstraints(SyncConstraints)
 				.setInputData(GradeSyncWorker::class.delegatedData())
 //				.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)

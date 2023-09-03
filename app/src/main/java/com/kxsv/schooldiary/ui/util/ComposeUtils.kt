@@ -199,7 +199,7 @@ fun TermSelector(
 			.horizontalScroll(rememberScrollState(initial = currentPeriod.ordinal))
 			.padding(vertical = dimensionResource(R.dimen.list_item_padding)),
 		verticalAlignment = Alignment.CenterVertically,
-		horizontalArrangement = Arrangement.SpaceBetween
+		horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.list_item_padding))
 	) {
 		buttons.forEach {
 			key(it.text) {

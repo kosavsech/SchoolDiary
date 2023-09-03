@@ -4,10 +4,16 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.util.Log
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
+import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import com.kxsv.schooldiary.data.util.Mark
+import com.kxsv.schooldiary.data.util.user_preferences.Period
+import com.kxsv.schooldiary.data.util.user_preferences.PeriodType
 import com.kxsv.schooldiary.data.util.user_preferences.PeriodWithRange
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -468,34 +474,36 @@ object Utils {
 	data class PeriodButton(
 		val text: String,
 		val callbackPeriod: EduPerformancePeriod,
-	) {
-		companion object {
-			val allTerms = listOf(
-				PeriodButton(text = "First term", callbackPeriod = EduPerformancePeriod.FIRST),
+	)
+	
+	@Composable
+	fun getPeriodButtons(periodType: PeriodType, withYear: Boolean): List<PeriodButton> {
+		val periods = if (periodType == PeriodType.TERMS) {
+			Period.values().toList().dropLast(2)
+		} else {
+			Period.values().toList().drop(4)
+		}.map { it.convertToEduPerformancePeriod() } as MutableList<EduPerformancePeriod>
+		if (withYear) periods.add(EduPerformancePeriod.YEAR)
+		
+		val result = periods.map {
+			if (it != EduPerformancePeriod.YEAR) {
 				PeriodButton(
-					text = "Second term",
-					callbackPeriod = EduPerformancePeriod.SECOND
-				),
-				PeriodButton(text = "Third term", callbackPeriod = EduPerformancePeriod.THIRD),
+					text = stringArrayResource(R.array.ordinals)[it.value.toInt()] + " " + stringResource(
+						when (periodType) {
+							PeriodType.TERMS -> R.string.term
+							PeriodType.SEMESTERS -> R.string.semester
+						}
+					),
+					callbackPeriod = it
+				)
+			} else {
 				PeriodButton(
-					text = "Fourth term",
-					callbackPeriod = EduPerformancePeriod.FOURTH
-				),
-			)
-			val all = listOf(
-				PeriodButton(text = "First term", callbackPeriod = EduPerformancePeriod.FIRST),
-				PeriodButton(
-					text = "Second term",
-					callbackPeriod = EduPerformancePeriod.SECOND
-				),
-				PeriodButton(text = "Third term", callbackPeriod = EduPerformancePeriod.THIRD),
-				PeriodButton(
-					text = "Fourth term",
-					callbackPeriod = EduPerformancePeriod.FOURTH
-				),
-				PeriodButton(text = "Year", callbackPeriod = EduPerformancePeriod.YEAR),
-			)
+					text = stringResource(R.string.year),
+					callbackPeriod = it
+				)
+			}
 		}
+		return result
 	}
 	
 	data class ScheduleCompareResult(

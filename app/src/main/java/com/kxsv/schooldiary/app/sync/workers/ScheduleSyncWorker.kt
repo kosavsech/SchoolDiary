@@ -57,7 +57,7 @@ class ScheduleSyncWorker @AssistedInject constructor(
 	
 	companion object {
 		fun startUpSyncWork() =
-			PeriodicWorkRequestBuilder<DelegatingWorker>(360, TimeUnit.MINUTES)
+			PeriodicWorkRequestBuilder<DelegatingWorker>(180, TimeUnit.MINUTES)
 				.setConstraints(SyncConstraints)
 				.setInputData(ScheduleSyncWorker::class.delegatedData())
 				.build()

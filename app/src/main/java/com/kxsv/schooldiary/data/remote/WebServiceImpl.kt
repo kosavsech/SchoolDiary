@@ -8,6 +8,7 @@ import com.kxsv.schooldiary.data.remote.dtos.UpdateDto
 import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.remote.util.RemoteUtils.handleErrorResponse
 import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
+import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.Dispatcher
 import kotlinx.coroutines.CoroutineDispatcher
@@ -111,7 +112,7 @@ class WebServiceImpl @Inject constructor(
 	 * @throws NetworkException.PageNotFound
 	 * @throws IOException if couldn't parse document
 	 */
-	override suspend fun getTermEduPerformance(term: String): Elements {
+	override suspend fun getTermEduPerformance(term: EduPerformancePeriod): Elements {
 		val termPage = getTermPage(term)
 		return termPage.select("table > tbody > tr")
 	}
@@ -148,7 +149,7 @@ class WebServiceImpl @Inject constructor(
 			if (doc.location().contains("login") || doc.location().contains("message")) {
 				throw NetworkException.NotActualAuthSessionException
 			} else if (!doc.location().contains(targetSegment)) {
-				throw NetworkException.PageNotFound
+				throw NetworkException.PageNotFound(message = "current location = ${doc.location()}\ntarget segment = $targetSegment")
 			}
 			Log.d(
 				TAG,
@@ -185,8 +186,12 @@ class WebServiceImpl @Inject constructor(
 	 * @throws IOException if couldn't parse document
 	 * @return parsed document of page
 	 */
-	private suspend fun getTermPage(term: String): Document {
-		return getPage("/user/diary/term?term=$term")
+	private suspend fun getTermPage(term: EduPerformancePeriod): Document {
+		return if (term != EduPerformancePeriod.YEAR) {
+			getPage("/user/diary/term?term=${term.value}")
+		} else {
+			getPage("/user/diary/year?term=${term.value}")
+		}
 	}
 	
 	companion object {

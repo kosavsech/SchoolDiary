@@ -44,6 +44,7 @@ import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity.Companion.
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import com.kxsv.schooldiary.data.util.Mark
 import com.kxsv.schooldiary.data.util.Mark.Companion.getStringValueFrom
+import com.kxsv.schooldiary.data.util.user_preferences.PeriodType
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.SubjectDetailTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.SubjectDetailScreenNavActions
@@ -123,6 +124,7 @@ fun SubjectDetailScreen(
 			targetMarkDialogState = targetMarkDialogState,
 			isLoading = uiState.isLoading,
 			currentPeriod = uiState.period,
+			periodType = viewModel.periodType.collectAsState().value,
 			subjectWithTeachers = uiState.subjectWithTeachers,
 			targetMark = uiState.targetMark,
 			roundRule = uiState.roundRule,
@@ -163,6 +165,7 @@ private fun SubjectContent(
 	targetMarkDialogState: MaterialDialogState,
 	isLoading: Boolean,
 	currentPeriod: EduPerformancePeriod,
+	periodType: PeriodType,
 	subjectWithTeachers: SubjectWithTeachers?,
 	targetMark: Double,
 	roundRule: Double,
@@ -209,68 +212,69 @@ private fun SubjectContent(
 			TermSelector(
 				currentPeriod = currentPeriod,
 				onPeriodChange = onPeriodChange,
-				buttons = remember { Utils.PeriodButton.allTerms }
+				buttons = Utils.getPeriodButtons(periodType = periodType, withYear = false)
 			)
 			Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding)))
 			
 			// TODO: make noContent cover
 			if (eduPerformance != null) {
-				TargetGradeProgress(
-					targetMarkDialogState = targetMarkDialogState,
-					performanceEntity = eduPerformance,
-					targetMark = targetMark,
-					roundRule = roundRule
-				)
-				
-				val fivesCount = remember(eduPerformance.marks) {
-					eduPerformance.marks.count { it == Mark.FIVE }.toFloat()
-				}
-				val fourthsCount = remember(eduPerformance.marks) {
-					eduPerformance.marks.count { it == Mark.FOUR }.toFloat()
-				}
-				val threesCount = remember(eduPerformance.marks) {
-					eduPerformance.marks.count { it == Mark.THREE }.toFloat()
-				}
-				val twosCount = remember(eduPerformance.marks) {
-					eduPerformance.marks.count { it == Mark.TWO }.toFloat()
-				}
-				
-				val pieChartData = PieChartData(
-					slices = listOf(
-						PieChartData.Slice("5", fivesCount, Color(0xFF5200D5)),
-						PieChartData.Slice("4", fourthsCount, Color(0xFF2A7511)),
-						PieChartData.Slice("3", threesCount, Color(0xFFF68300)),
-						PieChartData.Slice("2", twosCount, Color(0xFFD10000)),
-					), plotType = PlotType.Pie
-				)
-				val pieChartConfig = PieChartConfig(
-					activeSliceAlpha = 0.9f,
-					isEllipsizeEnabled = true,
-					sliceLabelEllipsizeAt = TextUtils.TruncateAt.MIDDLE,
-					sliceLabelTypeface = Typeface.defaultFromStyle(Typeface.ITALIC),
-					isAnimationEnable = true,
-					chartPadding = 40,
-					showSliceLabels = true,
-					labelVisible = true,
-					labelType = PieChartConfig.LabelType.BOTH,
-					sumUnit = "unit",
-					backgroundColor = MaterialTheme.colorScheme.background,
-					isClickOnSliceEnabled = false
-				)
-				
-				Column(
-					modifier = Modifier
-						.height(300.dp)
-//						.padding(horizontal = dimensionResource(R.dimen.horizontal_margin))
-				) {
-					PieChart(
-						modifier = Modifier,
-						pieChartData = pieChartData,
-						pieChartConfig = pieChartConfig
+				if (eduPerformance.marks.isNotEmpty()) {
+					TargetGradeProgress(
+						targetMarkDialogState = targetMarkDialogState,
+						performanceEntity = eduPerformance,
+						targetMark = targetMark,
+						roundRule = roundRule
 					)
+					val fivesCount = remember(eduPerformance.marks) {
+						eduPerformance.marks.count { it == Mark.FIVE }.toFloat()
+					}
+					val fourthsCount = remember(eduPerformance.marks) {
+						eduPerformance.marks.count { it == Mark.FOUR }.toFloat()
+					}
+					val threesCount = remember(eduPerformance.marks) {
+						eduPerformance.marks.count { it == Mark.THREE }.toFloat()
+					}
+					val twosCount = remember(eduPerformance.marks) {
+						eduPerformance.marks.count { it == Mark.TWO }.toFloat()
+					}
+					
+					val pieChartData = PieChartData(
+						slices = listOf(
+							PieChartData.Slice("5", fivesCount, Color(0xFF5200D5)),
+							PieChartData.Slice("4", fourthsCount, Color(0xFF2A7511)),
+							PieChartData.Slice("3", threesCount, Color(0xFFF68300)),
+							PieChartData.Slice("2", twosCount, Color(0xFFD10000)),
+						), plotType = PlotType.Pie
+					)
+					val pieChartConfig = PieChartConfig(
+						activeSliceAlpha = 0.9f,
+						isEllipsizeEnabled = true,
+						sliceLabelEllipsizeAt = TextUtils.TruncateAt.MIDDLE,
+						sliceLabelTypeface = Typeface.defaultFromStyle(Typeface.ITALIC),
+						isAnimationEnable = true,
+						chartPadding = 40,
+						showSliceLabels = true,
+						labelVisible = true,
+						labelType = PieChartConfig.LabelType.BOTH,
+						sumUnit = "unit",
+						backgroundColor = MaterialTheme.colorScheme.background,
+						isClickOnSliceEnabled = false
+					)
+					
+					Column(
+						modifier = Modifier
+							.height(300.dp)
+//						.padding(horizontal = dimensionResource(R.dimen.horizontal_margin))
+					) {
+						PieChart(
+							modifier = Modifier,
+							pieChartData = pieChartData,
+							pieChartConfig = pieChartConfig
+						)
+					}
 				}
+				GradesHistory(grades = grades, onGradeClick = onGradeClick)
 			}
-			GradesHistory(grades = grades, onGradeClick = onGradeClick)
 		}
 	}
 }
