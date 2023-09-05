@@ -4,7 +4,7 @@
         "versionCode": 4,
         "apk": "https://github.com/kosavsech/SchoolDiary/releases/download/v0.1.1-alpha.1/app-release.apk",
         "releaseNotes": "Finally fixed task space instant trim",
-        "isCritical": true
+        "isCritical": false
     },
     {
         "version": "0.1.1-alpha",
