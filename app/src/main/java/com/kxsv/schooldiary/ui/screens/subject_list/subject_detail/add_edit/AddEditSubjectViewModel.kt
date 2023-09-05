@@ -225,9 +225,9 @@ class AddEditSubjectViewModel @Inject constructor(
 	private suspend fun createNewSubject() {
 		subjectRepository.createSubject(
 			subject = SubjectEntity(
-				uiState.value.fullName.trim(),
-				uiState.value.displayName.nonEmptyTrim(),
-				uiState.value.cabinet.nonEmptyTrim()
+				fullName = uiState.value.fullName.trim(),
+				cabinet = uiState.value.displayName.nonEmptyTrim(),
+				displayName = uiState.value.cabinet.nonEmptyTrim()
 			),
 			teachersIds = uiState.value.selectedTeachersIds
 		)

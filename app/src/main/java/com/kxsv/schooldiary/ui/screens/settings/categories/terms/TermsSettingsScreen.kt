@@ -22,7 +22,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,6 +48,7 @@ import com.kxsv.schooldiary.data.util.user_preferences.PeriodWithRange
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.TermsSettingsTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.util.LoadingContent
+import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.kxsv.schooldiary.util.Utils.localDateToPeriodRangeEntry
 import com.kxsv.schooldiary.util.Utils.periodRangeEntryToLocalDate
 import com.ramcosta.composedestinations.annotation.Destination
@@ -84,7 +84,7 @@ fun TermsSettingsScreen(
 		}
 	}
 	Scaffold(
-		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+		snackbarHost = { AppSnackbarHost(hostState = snackbarHostState) },
 		topBar = {
 			TermsSettingsTopAppBar(onBack = { destinationsNavigator.popBackStack() })
 		},

@@ -115,17 +115,22 @@ object DatabaseModule {
 						PatternStrokeEntity(
 							index = 5,
 							startTime = LocalTime.of(13, 30),
-							endTime = LocalTime.of(14, 20)
+							endTime = LocalTime.of(14, 15)
 						),
 						PatternStrokeEntity(
 							index = 6,
-							startTime = LocalTime.of(14, 30),
-							endTime = LocalTime.of(15, 15)
+							startTime = LocalTime.of(14, 25),
+							endTime = LocalTime.of(15, 10)
+						),
+						PatternStrokeEntity(
+							index = 7,
+							startTime = LocalTime.of(15, 20),
+							endTime = LocalTime.of(16, 5)
 						),
 					)
 				),
 				TimePatternWithStrokes(
-					timePattern = TimePatternEntity("Monday"),
+					timePattern = TimePatternEntity("Monday/Thursday"),
 					strokes = listOf(
 						PatternStrokeEntity(
 							index = 0,
@@ -139,28 +144,33 @@ object DatabaseModule {
 						),
 						PatternStrokeEntity(
 							index = 2,
-							startTime = LocalTime.of(10, 15),
-							endTime = LocalTime.of(10, 55)
+							startTime = LocalTime.of(10, 20),
+							endTime = LocalTime.of(11, 0)
 						),
 						PatternStrokeEntity(
 							index = 3,
-							startTime = LocalTime.of(11, 5),
-							endTime = LocalTime.of(11, 45)
+							startTime = LocalTime.of(11, 10),
+							endTime = LocalTime.of(11, 50)
 						),
 						PatternStrokeEntity(
 							index = 4,
-							startTime = LocalTime.of(12, 5),
-							endTime = LocalTime.of(12, 45)
+							startTime = LocalTime.of(12, 10),
+							endTime = LocalTime.of(12, 50)
 						),
 						PatternStrokeEntity(
 							index = 5,
-							startTime = LocalTime.of(13, 0),
-							endTime = LocalTime.of(13, 40)
+							startTime = LocalTime.of(13, 5),
+							endTime = LocalTime.of(13, 45)
 						),
 						PatternStrokeEntity(
 							index = 6,
-							startTime = LocalTime.of(13, 50),
-							endTime = LocalTime.of(14, 30)
+							startTime = LocalTime.of(13, 55),
+							endTime = LocalTime.of(14, 35)
+						),
+						PatternStrokeEntity(
+							index = 7,
+							startTime = LocalTime.of(14, 45),
+							endTime = LocalTime.of(15, 25)
 						),
 					)
 				),
@@ -199,8 +209,13 @@ object DatabaseModule {
 						),
 						PatternStrokeEntity(
 							index = 6,
-							startTime = LocalTime.of(13, 40),
-							endTime = LocalTime.of(14, 20)
+							startTime = LocalTime.of(13, 45),
+							endTime = LocalTime.of(14, 25)
+						),
+						PatternStrokeEntity(
+							index = 7,
+							startTime = LocalTime.of(14, 35),
+							endTime = LocalTime.of(15, 10)
 						),
 					)
 				),

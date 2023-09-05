@@ -25,7 +25,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,12 +54,14 @@ import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AddEditTaskScreenNavA
 import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.util.Utils
+import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.result.ResultBackNavigator
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.datetime.date.datepicker
 import com.vanpra.composematerialdialogs.listItems
+import com.vanpra.composematerialdialogs.listItemsSingleChoice
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 import com.vanpra.composematerialdialogs.title
 import java.time.LocalDate
@@ -108,7 +109,7 @@ fun AddEditTaskScreen(
 	}
 	Scaffold(
 		modifier = Modifier.fillMaxSize(),
-		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+		snackbarHost = { AppSnackbarHost(hostState = snackbarHostState) },
 		topBar = {
 			AddEditTaskTopAppBar(
 				onBack = onBack,
@@ -387,6 +388,17 @@ private fun AddEditSubjectContent(
 					}
 				}
 			}
+			val availableSubjectsNames = remember(availableSubjects) {
+				availableSubjects.map { subjectEntity ->
+					subjectEntity.getName()
+				}
+			}
+			val initialSelection = remember(availableSubjectsNames, subject) {
+				subject?.let { subjectEntity ->
+					availableSubjectsNames.indexOf(subjectEntity.getName())
+						.let { if (it == -1) null else it }
+				}
+			}
 			MaterialDialog(
 				dialogState = subjectDialog,
 				buttons = {
@@ -394,13 +406,14 @@ private fun AddEditSubjectContent(
 				}
 			) {
 				title(res = R.string.pick_subject_hint)
-				listItems(
-					list = availableSubjects.map { subjectEntity ->
-						subjectEntity.getName()
+				listItemsSingleChoice(
+					list = availableSubjectsNames,
+					waitForPositiveButton = true,
+					initialSelection = initialSelection,
+					onChoiceChange = { index ->
+						changeSubject(availableSubjects[index])
 					}
-				) { index, _ ->
-					changeSubject(availableSubjects[index])
-				}
+				)
 			}
 			
 			MaterialDialog(

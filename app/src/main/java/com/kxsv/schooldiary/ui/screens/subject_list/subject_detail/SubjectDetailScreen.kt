@@ -19,7 +19,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,6 +50,7 @@ import com.kxsv.schooldiary.ui.main.navigation.nav_actions.SubjectDetailScreenNa
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.ui.util.TermSelector
 import com.kxsv.schooldiary.util.Utils
+import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.kxsv.schooldiary.util.Utils.calculateMarksUntilTarget
 import com.kxsv.schooldiary.util.Utils.calculateRealizableBadMarks
 import com.kxsv.schooldiary.util.Utils.getLowerBoundForMark
@@ -95,7 +95,7 @@ fun SubjectDetailScreen(
 	)
 	val uiState = viewModel.uiState.collectAsState().value
 	Scaffold(
-		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+		snackbarHost = { AppSnackbarHost(hostState = snackbarHostState) },
 		modifier = Modifier.fillMaxSize(),
 		topBar = {
 			SubjectDetailTopAppBar(

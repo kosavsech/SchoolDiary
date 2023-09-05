@@ -22,7 +22,6 @@ import androidx.compose.material3.DrawerState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -54,6 +53,7 @@ import com.kxsv.schooldiary.ui.screens.grade_list.MY_URI
 import com.kxsv.schooldiary.ui.theme.AppTheme
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.util.Utils
+import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.FULL_ROUTE_PLACEHOLDER
@@ -119,7 +119,7 @@ fun TasksScreen(
 		}
 	}
 	Scaffold(
-		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+		snackbarHost = { AppSnackbarHost(hostState = snackbarHostState) },
 		topBar = {
 			TasksTopAppBar(
 				openDrawer = { coroutineScope.launch { drawerState.open() } },

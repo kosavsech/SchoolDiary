@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -26,6 +25,7 @@ import com.kxsv.schooldiary.ui.screens.settings.utils.GetSettingItemComposable
 import com.kxsv.schooldiary.ui.screens.settings.utils.SettingsItem
 import com.kxsv.schooldiary.ui.screens.settings.utils.SettingsItemType
 import com.kxsv.schooldiary.ui.util.LoadingContent
+import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.vanpra.composematerialdialogs.MaterialDialog
@@ -43,7 +43,7 @@ fun TimetableSettingsScreen(
 	snackbarHostState: SnackbarHostState,
 ) {
 	Scaffold(
-		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+		snackbarHost = { AppSnackbarHost(hostState = snackbarHostState) },
 		topBar = {
 			TimetableSettingsTopAppBar(onBack = { destinationsNavigator.popBackStack() })
 		},

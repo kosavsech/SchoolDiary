@@ -16,7 +16,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -37,6 +36,7 @@ import com.kxsv.schooldiary.ui.main.app_bars.topbar.SubjectsTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AppUpdateNavActions
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.SubjectsScreenNavActions
 import com.kxsv.schooldiary.ui.util.LoadingContent
+import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.CoroutineScope
@@ -69,7 +69,7 @@ fun SubjectsScreen(
 		}
 	}
 	Scaffold(
-		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+		snackbarHost = { AppSnackbarHost(hostState = snackbarHostState) },
 		topBar = { SubjectsTopAppBar(openDrawer = { coroutineScope.launch { drawerState.open() } }) },
 		modifier = Modifier.fillMaxSize(),
 		floatingActionButton = {

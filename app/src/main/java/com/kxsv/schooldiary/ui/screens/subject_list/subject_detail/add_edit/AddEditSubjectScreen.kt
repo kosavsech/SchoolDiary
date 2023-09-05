@@ -26,7 +26,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -53,6 +52,7 @@ import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AddEditSubjectScreenNavActions
 import com.kxsv.schooldiary.ui.screens.teacher_list.AddEditTeacherDialog
 import com.kxsv.schooldiary.ui.util.LoadingContent
+import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.result.ResultBackNavigator
@@ -94,7 +94,7 @@ fun AddEditSubjectScreen(
 	val saveSubject = remember { { viewModel.saveSubject() } }
 	Scaffold(
 		modifier = Modifier.fillMaxSize(),
-		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+		snackbarHost = { AppSnackbarHost(hostState = snackbarHostState) },
 		topBar = { AddEditSubjectTopAppBar { navigator.popBackStack() } },
 		floatingActionButton = {
 			Row {
@@ -223,7 +223,8 @@ private fun AddEditSubjectContent(
 				placeholder = {
 					Text(
 						text = stringResource(id = R.string.full_name_hint),
-						style = MaterialTheme.typography.headlineSmall
+						style = MaterialTheme.typography.headlineSmall,
+						color = MaterialTheme.colorScheme.onSurface
 					)
 				},
 				textStyle = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
@@ -246,7 +247,8 @@ private fun AddEditSubjectContent(
 				placeholder = {
 					Text(
 						text = stringResource(id = R.string.display_name_hint),
-						style = MaterialTheme.typography.headlineSmall
+						style = MaterialTheme.typography.headlineSmall,
+						color = MaterialTheme.colorScheme.onSurface
 					)
 				},
 				textStyle = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
@@ -269,7 +271,8 @@ private fun AddEditSubjectContent(
 				placeholder = {
 					Text(
 						text = stringResource(id = R.string.cabinet_hint),
-						style = MaterialTheme.typography.headlineSmall
+						style = MaterialTheme.typography.headlineSmall,
+						color = MaterialTheme.colorScheme.onSurface
 					)
 				},
 				textStyle = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),

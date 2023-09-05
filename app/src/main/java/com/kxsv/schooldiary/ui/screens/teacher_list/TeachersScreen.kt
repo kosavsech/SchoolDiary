@@ -20,7 +20,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -39,6 +38,7 @@ import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity.Companion.shortName
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.TeachersTopAppBar
 import com.kxsv.schooldiary.ui.util.LoadingContent
+import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.ramcosta.composedestinations.annotation.Destination
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 import kotlinx.coroutines.CoroutineScope
@@ -55,7 +55,7 @@ fun TeachersScreen(
 ) {
 	val teacherDialogState = rememberMaterialDialogState(false)
 	Scaffold(
-		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+		snackbarHost = { AppSnackbarHost(hostState = snackbarHostState) },
 		modifier = Modifier.fillMaxSize(),
 		topBar = { TeachersTopAppBar(openDrawer = { coroutineScope.launch { drawerState.open() } }) },
 		floatingActionButton = {

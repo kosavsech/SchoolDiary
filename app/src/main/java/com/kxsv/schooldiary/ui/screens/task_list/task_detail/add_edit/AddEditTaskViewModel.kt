@@ -148,8 +148,8 @@ class AddEditTaskViewModel @Inject constructor(
 			try {
 				taskRepository.createTask(
 					task = TaskEntity(
-						title = uiState.value.title,
-						description = uiState.value.description,
+						title = uiState.value.title.trim(),
+						description = uiState.value.description.trim(),
 						dueDate = uiState.value.dueDate,
 						subjectMasterId = subjectMasterId,
 						fetchedTitleBoundToId = uiState.value.fetchedTitleBoundToId,
@@ -172,8 +172,8 @@ class AddEditTaskViewModel @Inject constructor(
 		viewModelScope.launch(ioDispatcher) {
 			taskRepository.updateTask(
 				task = TaskEntity(
-					title = uiState.value.title,
-					description = uiState.value.description,
+					title = uiState.value.title.trim(),
+					description = uiState.value.description.trim(),
 					dueDate = uiState.value.dueDate,
 					subjectMasterId = subjectMasterId,
 					fetchedTitleBoundToId = uiState.value.fetchedTitleBoundToId,
@@ -220,14 +220,14 @@ class AddEditTaskViewModel @Inject constructor(
 				_uiState.update { it.copy(fetchedTitleBoundToId = uiState.value.title) }
 			}
 			clearIsFetchedTag()
-			_uiState.update { it.copy(title = newTitle.trim()) }
+			_uiState.update { it.copy(title = newTitle) }
 		}
 	}
 	
 	fun changeDescription(newDescription: String) {
 		if (uiState.value.description != newDescription.trim()) {
 			clearIsFetchedTag()
-			_uiState.update { it.copy(description = newDescription.trim()) }
+			_uiState.update { it.copy(description = newDescription) }
 		}
 	}
 	

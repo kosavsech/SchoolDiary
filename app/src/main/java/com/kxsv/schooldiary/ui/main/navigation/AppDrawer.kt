@@ -1,10 +1,13 @@
 package com.kxsv.schooldiary.ui.main.navigation
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material.icons.rounded.Home
@@ -84,7 +87,14 @@ fun AppModalDrawer(
 		drawerState = drawerState,
 		drawerContent = {
 			ModalDrawerSheet {
-				Column(modifier = Modifier.fillMaxSize(0.80f)) {
+				Column(
+					modifier = Modifier
+						.fillMaxWidth(0.80f)
+						.verticalScroll(
+							rememberScrollState(),
+							flingBehavior = ScrollableDefaults.flingBehavior()
+						)
+				) {
 					Text(
 						text = stringResource(id = R.string.app_name),
 						style = MaterialTheme.typography.displaySmall,

@@ -37,7 +37,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -80,6 +79,7 @@ import com.kxsv.schooldiary.ui.screens.destinations.AddEditLessonScreenDestinati
 import com.kxsv.schooldiary.ui.theme.AppTheme
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.util.Utils
+import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.kxsv.schooldiary.util.Utils.fromLocalTime
 import com.kxsv.schooldiary.util.Utils.getCurrentLessonIndexByTime
 import com.kxsv.schooldiary.util.Utils.getIndexOfClosestLessonToTime
@@ -153,7 +153,7 @@ fun MainScreen(
 		}
 	}
 	Scaffold(
-		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+		snackbarHost = { AppSnackbarHost(hostState = snackbarHostState) },
 		topBar = {
 			MainTopAppBar(
 				onNavigate = onNavigate,

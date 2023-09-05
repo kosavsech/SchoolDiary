@@ -147,8 +147,10 @@ class AddEditLessonViewModel @Inject constructor(
 		
 		viewModelScope.launch(ioDispatcher) {
 			subjectRepository.getAll().let { subjects ->
-				val updatedInitialSelectionIndex = subjects
-					.binarySearch(uiState.value.pickedSubject, compareBy { it?.displayName })
+				val updatedInitialSelectionIndex =
+					subjects.indexOf(uiState.value.pickedSubject).let {
+						if (it == -1) null else it
+					}
 				
 				_uiState.update {
 					it.copy(

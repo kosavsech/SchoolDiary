@@ -18,7 +18,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,6 +41,7 @@ import com.kxsv.schooldiary.ui.screens.grade_list.MY_URI
 import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.util.Utils
+import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.FULL_ROUTE_PLACEHOLDER
@@ -78,7 +78,7 @@ fun TaskDetailScreen(
 	val isTitleBoundToIdVisible =
 		backStackEntry.navArgs<TaskDetailScreenNavArgs>().isTitleBoundToIdVisible
 	Scaffold(
-		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+		snackbarHost = { AppSnackbarHost(hostState = snackbarHostState) },
 		modifier = Modifier.fillMaxSize(),
 		topBar = {
 			TaskDetailTopAppBar(

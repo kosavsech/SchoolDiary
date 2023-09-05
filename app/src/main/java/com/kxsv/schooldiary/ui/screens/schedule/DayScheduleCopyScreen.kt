@@ -32,7 +32,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -70,6 +69,7 @@ import com.kxsv.schooldiary.ui.main.navigation.ScheduleNavGraph
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.DayScheduleCopyScreenNavActions
 import com.kxsv.schooldiary.ui.util.displayText
 import com.kxsv.schooldiary.ui.util.rememberFirstCompletelyVisibleMonth
+import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.result.ResultBackNavigator
@@ -116,7 +116,7 @@ fun DayScheduleCopyScreen(
 				)
 			)
 		},
-		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+		snackbarHost = { AppSnackbarHost(hostState = snackbarHostState) },
 		floatingActionButton = {
 			val showButton =
 				remember(key1 = uiState.selectedRefCalendarDay, key2 = uiState.classes) {

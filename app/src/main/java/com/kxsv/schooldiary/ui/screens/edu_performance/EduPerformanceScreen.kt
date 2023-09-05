@@ -19,7 +19,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,6 +45,7 @@ import com.kxsv.schooldiary.ui.main.navigation.nav_actions.EduPerformanceScreenN
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.ui.util.TermSelector
 import com.kxsv.schooldiary.util.Utils
+import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.kxsv.schooldiary.util.Utils.stringRoundTo
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -79,7 +79,7 @@ fun EduPerformanceScreen(
 		}
 	}
 	Scaffold(
-		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+		snackbarHost = { AppSnackbarHost(hostState = snackbarHostState) },
 		topBar = {
 			EduPerformanceTopAppBar(openDrawer = { coroutineScope.launch { drawerState.open() } })
 		},

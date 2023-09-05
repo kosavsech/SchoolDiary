@@ -15,7 +15,6 @@ import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,6 +32,7 @@ import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditGradeTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.GradeDetailScreenNavActions
 import com.kxsv.schooldiary.ui.util.LoadingContent
+import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import java.time.LocalDate
@@ -55,7 +55,7 @@ fun GradeDetailScreen(
 	val navigator = GradeDetailScreenNavActions(destinationsNavigator = destinationsNavigator)
 	Scaffold(
 		modifier = Modifier.fillMaxSize(),
-		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+		snackbarHost = { AppSnackbarHost(hostState = snackbarHostState) },
 		topBar = { AddEditGradeTopAppBar { navigator.popBackStack() } },
 	) { paddingValues ->
 		

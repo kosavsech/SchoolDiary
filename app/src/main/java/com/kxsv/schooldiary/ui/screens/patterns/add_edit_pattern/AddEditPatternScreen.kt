@@ -22,7 +22,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,6 +44,7 @@ import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditPatternTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AddEditPatternScreenNavActions
 import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.ui.util.LoadingContent
+import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.kxsv.schooldiary.util.Utils.fromLocalTime
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -81,7 +81,7 @@ fun AddEditPatternScreen(
 	val addEditStrokeDialogState = rememberMaterialDialogState(false)
 	Scaffold(
 		modifier = Modifier.fillMaxSize(),
-		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+		snackbarHost = { AppSnackbarHost(hostState = snackbarHostState) },
 		topBar = { AddEditPatternTopAppBar(title = topBarTitle) { navigator.popBackStack() } },
 		floatingActionButton = {
 			Row {

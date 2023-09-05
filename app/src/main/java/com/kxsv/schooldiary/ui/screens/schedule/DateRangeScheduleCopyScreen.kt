@@ -25,7 +25,6 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -64,6 +63,7 @@ import com.kxsv.schooldiary.ui.util.backgroundHighlight
 import com.kxsv.schooldiary.ui.util.displayText
 import com.kxsv.schooldiary.ui.util.rememberFirstCompletelyVisibleMonth
 import com.kxsv.schooldiary.util.Utils
+import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.result.ResultBackNavigator
@@ -117,7 +117,7 @@ fun DateRangeScheduleCopyScreen(
 				)
 			)
 		},
-		snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+		snackbarHost = { AppSnackbarHost(hostState = snackbarHostState) },
 		modifier = Modifier.fillMaxSize(),
 	) { paddingValues ->
 		
