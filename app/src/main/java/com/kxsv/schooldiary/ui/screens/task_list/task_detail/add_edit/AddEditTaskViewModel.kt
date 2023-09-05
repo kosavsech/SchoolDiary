@@ -215,20 +215,17 @@ class AddEditTaskViewModel @Inject constructor(
 	}
 	
 	fun changeTitle(newTitle: String) {
-		if (uiState.value.title != newTitle.trim()) {
-			if (isEditingFetchedTask && uiState.value.fetchedTitleBoundToId == null) {
-				_uiState.update { it.copy(fetchedTitleBoundToId = uiState.value.title) }
-			}
-			clearIsFetchedTag()
-			_uiState.update { it.copy(title = newTitle) }
+		if (isEditingFetchedTask && uiState.value.fetchedTitleBoundToId == null) {
+			_uiState.update { it.copy(fetchedTitleBoundToId = uiState.value.title) }
 		}
+		clearIsFetchedTag()
+		_uiState.update { it.copy(title = newTitle) }
+		
 	}
 	
 	fun changeDescription(newDescription: String) {
-		if (uiState.value.description != newDescription.trim()) {
-			clearIsFetchedTag()
-			_uiState.update { it.copy(description = newDescription) }
-		}
+		clearIsFetchedTag()
+		_uiState.update { it.copy(description = newDescription) }
 	}
 	
 	fun changeDate(newDueDate: LocalDate) {
