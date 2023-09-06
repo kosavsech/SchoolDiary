@@ -1,5 +1,12 @@
 [
     {
+        "version": "0.1.2-alpha",
+        "versionCode": 5,
+        "apk": "https://github.com/kosavsech/SchoolDiary/releases/download/v0.1.2-alpha/app-release.apk",
+        "releaseNotes": "Fixed select button absence in task subject choice.\nFixed on subject create cabinet field as display name save.\nRe-made subject names worker",
+        "isCritical": false
+    },
+    {
         "version": "0.1.1-alpha.1",
         "versionCode": 4,
         "apk": "https://github.com/kosavsech/SchoolDiary/releases/download/v0.1.1-alpha.1/app-release.apk",
