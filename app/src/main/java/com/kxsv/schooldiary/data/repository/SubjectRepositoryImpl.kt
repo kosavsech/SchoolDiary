@@ -9,7 +9,10 @@ import com.kxsv.schooldiary.data.local.features.subject.SubjectWithTeachers
 import com.kxsv.schooldiary.data.remote.WebService
 import com.kxsv.schooldiary.data.remote.parsers.SubjectParser
 import com.kxsv.schooldiary.data.util.DataIdGenUtils.generateSubjectId
+import com.kxsv.schooldiary.data.util.user_preferences.Period
 import com.kxsv.schooldiary.util.Utils
+import com.kxsv.schooldiary.util.Utils.isHoliday
+import com.kxsv.schooldiary.util.Utils.periodRangeEntryToLocalDate
 import com.kxsv.schooldiary.util.Utils.toList
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -17,7 +20,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import org.jsoup.select.Elements
-import java.time.DayOfWeek
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -46,15 +48,20 @@ class SubjectRepositoryImpl @Inject constructor(
 	}
 	
 	override suspend fun fetchSubjectNames(): List<String> = coroutineScope {
-		val startRange = Utils.currentDate
-		val endRange = startRange.plusDays(14)
-		val dayInfos = mutableListOf<Deferred<Elements>>()
+		val startRange = Utils.currentDate.minusDays(7)
+		val endRange = Utils.currentDate.plusDays(7)
 		
+		val periodType = userPreferencesRepository.getEducationPeriodType()
+		val periodsRanges = userPreferencesRepository.getPeriodsRanges()
+			.filter { Period.getTypeByPeriod(it.period) == periodType }
+			.map {
+				periodRangeEntryToLocalDate(it.range.start)..periodRangeEntryToLocalDate(it.range.end)
+			}
+		
+		val dayInfos = mutableListOf<Deferred<Elements>>()
 		(startRange..endRange).toList().forEach { date ->
-			if (date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
-			dayInfos.add(
-				async { webService.getDayInfo(date) }
-			)
+			if (isHoliday(date, periodsRanges)) return@forEach
+			dayInfos += async { webService.getDayInfo(date) }
 		}
 		
 		return@coroutineScope SubjectParser().parseDays(dayInfos.awaitAll())

@@ -21,6 +21,7 @@ import com.kxsv.schooldiary.data.util.user_preferences.PeriodType
 import com.kxsv.schooldiary.data.util.user_preferences.PeriodWithRange
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -46,6 +47,12 @@ object Utils {
 				contentColor = MaterialTheme.colorScheme.inverseOnSurface
 			)
 		}
+	}
+	
+	fun isHoliday(localDate: LocalDate, periodsRanges: List<ClosedRange<LocalDate>>): Boolean {
+		if (localDate.dayOfWeek == DayOfWeek.SUNDAY) return true
+		if (periodsRanges.all { localDate !in it }) return true
+		return false
 	}
 	
 	/**
