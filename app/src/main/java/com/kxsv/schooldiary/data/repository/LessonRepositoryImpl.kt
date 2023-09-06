@@ -70,7 +70,7 @@ class LessonRepositoryImpl @Inject constructor(
 	/**
 	 * @throws NetworkException.NotLoggedInException
 	 * @throws NetworkException.PageNotFound
-	 * @throws java.io.IOException if couldn't parse document
+	 * @throws java.io.IOException if couldn't parseTermRows document
 	 */
 	override suspend fun fetchLessonsOnDate(localDate: LocalDate): List<LessonDto> {
 		val dayInfo = webService.getDayInfo(localDate)
@@ -80,7 +80,7 @@ class LessonRepositoryImpl @Inject constructor(
 	/**
 	 * @throws NetworkException.NotLoggedInException
 	 * @throws NetworkException.PageNotFound
-	 * @throws java.io.IOException if couldn't parse document
+	 * @throws java.io.IOException if couldn't parseTermRows document
 	 * */
 	override suspend fun fetchSoonSchedule(): Map<LocalDate, Utils.ScheduleCompareResult> =
 		coroutineScope {
@@ -111,7 +111,7 @@ class LessonRepositoryImpl @Inject constructor(
 	 * if not
 	 * @throws NetworkException.NotLoggedInException
 	 * @throws NetworkException.PageNotFound
-	 * @throws java.io.IOException if couldn't parse document
+	 * @throws java.io.IOException if couldn't parseTermRows document
 	 */
 	
 	private suspend fun fetchCompareSchedule(date: LocalDate): Utils.ScheduleCompareResult? {

@@ -84,7 +84,7 @@ class SubjectsSyncWorker @AssistedInject constructor(
 		} catch (e: java.net.SocketTimeoutException) {
 			return Result.failure()
 		} catch (e: IOException) {
-			Log.e(TAG, "fetchSubjectNames: exception on response parse", e)
+			Log.e(TAG, "fetchSubjectNames: exception on response parseTermRows", e)
 			return Result.failure()
 		} catch (e: Exception) {
 			Log.e(TAG, "fetchSubjectNames: exception", e)

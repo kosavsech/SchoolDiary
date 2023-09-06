@@ -75,7 +75,7 @@ class WebServiceImpl @Inject constructor(
 	 * @throws NetworkException.AccessTemporarilyBlockedException
 	 * @throws NetworkException.BlankInputException
 	 * @throws NetworkException.PageNotFound
-	 * @throws IOException if couldn't parse document
+	 * @throws IOException if couldn't parseTermRows document
 	 */
 	override suspend fun eduTatarAuth(login: String, password: String) {
 		val response = withContext(ioDispatcher) {
@@ -100,7 +100,7 @@ class WebServiceImpl @Inject constructor(
 	 * @return
 	 * @throws NetworkException.NotLoggedInException
 	 * @throws NetworkException.PageNotFound
-	 * @throws IOException if couldn't parse document
+	 * @throws IOException if couldn't parseTermRows document
 	 */
 	override suspend fun getDayInfo(localDate: LocalDate): Elements {
 		val dayPage = getDayPage(localDate)
@@ -110,7 +110,7 @@ class WebServiceImpl @Inject constructor(
 	/**
 	 * @throws NetworkException.NotLoggedInException
 	 * @throws NetworkException.PageNotFound
-	 * @throws IOException if couldn't parse document
+	 * @throws IOException if couldn't parseTermRows document
 	 */
 	override suspend fun getTermEduPerformance(term: EduPerformancePeriod): Elements {
 		val termPage = getTermPage(term)
@@ -126,7 +126,7 @@ class WebServiceImpl @Inject constructor(
 	 * @return [not parsed document of page][Document]
 	 * @throws NetworkException.NotLoggedInException
 	 * @throws NetworkException.PageNotFound
-	 * @throws IOException if couldn't parse document
+	 * @throws IOException if couldn't parseTermRows document
 	 */
 	private suspend fun getPage(targetSegment: String): Document {
 		Log.d(TAG, "getPage(targetSegment = $targetSegment) is called")
@@ -169,7 +169,7 @@ class WebServiceImpl @Inject constructor(
 	 * @param localDate
 	 * @throws NetworkException.NotLoggedInException
 	 * @throws NetworkException.PageNotFound
-	 * @throws IOException if couldn't parse document
+	 * @throws IOException if couldn't parseTermRows document
 	 * @return parsed document of page
 	 */
 	private suspend fun getDayPage(localDate: LocalDate): Document {
@@ -183,7 +183,7 @@ class WebServiceImpl @Inject constructor(
 	 * @param term to get, could be "year" also
 	 * @throws NetworkException.NotLoggedInException
 	 * @throws NetworkException.PageNotFound
-	 * @throws IOException if couldn't parse document
+	 * @throws IOException if couldn't parseTermRows document
 	 * @return parsed document of page
 	 */
 	private suspend fun getTermPage(term: EduPerformancePeriod): Document {

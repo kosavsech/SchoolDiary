@@ -402,6 +402,7 @@ private fun AddEditSubjectContent(
 			MaterialDialog(
 				dialogState = subjectDialog,
 				buttons = {
+					positiveButton(res = R.string.btn_select)
 					negativeButton(res = R.string.btn_cancel)
 				}
 			) {

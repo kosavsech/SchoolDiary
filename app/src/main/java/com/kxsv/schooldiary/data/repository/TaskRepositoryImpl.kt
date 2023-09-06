@@ -101,7 +101,7 @@ class TaskRepositoryImpl @Inject constructor(
 	/**
 	 * @throws NetworkException.NotLoggedInException
 	 * @throws NetworkException.PageNotFound
-	 * @throws java.io.IOException if couldn't parse document
+	 * @throws java.io.IOException if couldn't parseTermRows document
 	 */
 	private suspend fun fetchTasksOnDate(date: LocalDate): MutableList<TaskWithSubject> {
 		return withContext(ioDispatcher) {
@@ -221,7 +221,7 @@ class TaskRepositoryImpl @Inject constructor(
 	/**
 	 * @throws NetworkException.NotLoggedInException
 	 * @throws NetworkException.PageNotFound
-	 * @throws java.io.IOException if couldn't parse document
+	 * @throws java.io.IOException if couldn't parseTermRows document
 	 */
 	override suspend fun fetchTaskVariantsForSubjectByDate(
 		date: LocalDate,

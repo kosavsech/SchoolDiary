@@ -10,7 +10,7 @@ interface WebService {
 	
 	/**
 	 * @throws NetworkException.PageNotFound
-	 * @throws java.io.IOException if couldn't parse document
+	 * @throws java.io.IOException if couldn't parseTermRows document
 	 */
 	suspend fun getLatestAppVersion(): UpdateDto?
 	
@@ -21,7 +21,7 @@ interface WebService {
 	 * @throws NetworkException.NotLoggedInException
 	 * @throws NetworkException.AccessTemporarilyBlockedException
 	 * @throws NetworkException.BlankInputException
-	 * @throws java.io.IOException if couldn't parse document
+	 * @throws java.io.IOException if couldn't parseTermRows document
 	 */
 	suspend fun eduTatarAuth(login: String, password: String)
 	
@@ -32,14 +32,14 @@ interface WebService {
 	 * @return
 	 * @throws NetworkException.NotLoggedInException
 	 * @throws NetworkException.PageNotFound
-	 * @throws java.io.IOException if couldn't parse document
+	 * @throws java.io.IOException if couldn't parseTermRows document
 	 */
 	suspend fun getDayInfo(localDate: LocalDate): Elements
 	
 	/**
 	 * @throws NetworkException.NotLoggedInException
 	 * @throws NetworkException.PageNotFound
-	 * @throws java.io.IOException if couldn't parse document
+	 * @throws java.io.IOException if couldn't parseTermRows document
 	 */
 	suspend fun getTermEduPerformance(term: EduPerformancePeriod): Elements
 	

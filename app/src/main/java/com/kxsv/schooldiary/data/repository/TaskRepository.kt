@@ -28,7 +28,7 @@ interface TaskRepository {
 	/**
 	 * @throws NetworkException.NotLoggedInException
 	 * @throws NetworkException.PageNotFound
-	 * @throws java.io.IOException if couldn't parse document
+	 * @throws java.io.IOException if couldn't parseTermRows document
 	 * @return List of new tasks, which were not cached before
 	 */
 	suspend fun fetchSoonTasks(): List<TaskWithSubject>
@@ -36,7 +36,7 @@ interface TaskRepository {
 	/**
 	 * @throws NetworkException.NotLoggedInException
 	 * @throws NetworkException.PageNotFound
-	 * @throws java.io.IOException if couldn't parse document
+	 * @throws java.io.IOException if couldn't parseTermRows document
 	 */
 	suspend fun fetchTaskVariantsForSubjectByDate(
 		date: LocalDate,

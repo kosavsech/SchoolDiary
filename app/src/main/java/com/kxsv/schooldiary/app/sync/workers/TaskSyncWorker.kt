@@ -118,7 +118,7 @@ class TaskSyncWorker @AssistedInject constructor(
 		} catch (e: java.net.SocketTimeoutException) {
 			return Result.failure()
 		} catch (e: IOException) {
-			Log.e(TAG, "fetchSoonTasks: exception on response parse", e)
+			Log.e(TAG, "fetchSoonTasks: exception on response parseTermRows", e)
 			return Result.failure()
 		} catch (e: Exception) {
 			Log.e(TAG, "fetchSoonTasks: exception", e)

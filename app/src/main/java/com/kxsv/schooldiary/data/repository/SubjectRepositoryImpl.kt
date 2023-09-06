@@ -9,10 +9,15 @@ import com.kxsv.schooldiary.data.local.features.subject.SubjectWithTeachers
 import com.kxsv.schooldiary.data.remote.WebService
 import com.kxsv.schooldiary.data.remote.parsers.SubjectParser
 import com.kxsv.schooldiary.data.util.DataIdGenUtils.generateSubjectId
-import com.kxsv.schooldiary.data.util.EduPerformancePeriod
-import com.kxsv.schooldiary.data.util.user_preferences.Period
-import com.kxsv.schooldiary.util.Utils.getCurrentPeriod
+import com.kxsv.schooldiary.util.Utils
+import com.kxsv.schooldiary.util.Utils.toList
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import org.jsoup.select.Elements
+import java.time.DayOfWeek
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -40,14 +45,21 @@ class SubjectRepositoryImpl @Inject constructor(
 		return subjectDataSource.observeByIdWithGrades(subjectId)
 	}
 	
-	override suspend fun fetchSubjectNames(): MutableList<String> {
-		val periodType = userPreferencesRepository.getEducationPeriodType()
-		val periodsRanges = userPreferencesRepository.getPeriodsRanges()
-			.filter { Period.getTypeByPeriod(it.period) == periodType }
-		val currentPeriod = periodsRanges.getCurrentPeriod() ?: EduPerformancePeriod.FIRST
-		val termYearRows = webService.getTermEduPerformance(term = currentPeriod)
-		return SubjectParser().parse(termYearRows)
+	override suspend fun fetchSubjectNames(): List<String> = coroutineScope {
+		val startRange = Utils.currentDate
+		val endRange = startRange.plusDays(14)
+		val dayInfos = mutableListOf<Deferred<Elements>>()
+		
+		(startRange..endRange).toList().forEach { date ->
+			if (date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
+			dayInfos.add(
+				async { webService.getDayInfo(date) }
+			)
+		}
+		
+		return@coroutineScope SubjectParser().parseDays(dayInfos.awaitAll())
 	}
+	
 	
 	override suspend fun getAll(): List<SubjectEntity> {
 		return subjectDataSource.getAll()

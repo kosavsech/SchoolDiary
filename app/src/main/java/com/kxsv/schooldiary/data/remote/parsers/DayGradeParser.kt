@@ -68,7 +68,7 @@ class DayGradeParser {
 				)
 			}
 		}
-		Log.d(TAG, "parse() returned:\n $teachers")
+		Log.d(TAG, "parseTermRows() returned:\n $teachers")
 		return Pair(teachers, grades)
 	}
 }

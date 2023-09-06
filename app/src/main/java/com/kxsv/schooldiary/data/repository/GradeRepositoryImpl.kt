@@ -65,7 +65,7 @@ class GradeRepositoryImpl @Inject constructor(
 	/**
 	 * @throws NetworkException.NotLoggedInException
 	 * @throws NetworkException.PageNotFound
-	 * @throws java.io.IOException if couldn't parse document
+	 * @throws java.io.IOException if couldn't parseTermRows document
 	 */
 	override suspend fun fetchGradesByDate(localDate: LocalDate): Pair<Map<TeacherDto, Set<String>>, List<DayGradeDto>> {
 		val dayInfo = webService.getDayInfo(localDate)
@@ -75,7 +75,7 @@ class GradeRepositoryImpl @Inject constructor(
 	/**
 	 * @throws NetworkException.NotLoggedInException
 	 * @throws NetworkException.PageNotFound
-	 * @throws java.io.IOException if couldn't parse document
+	 * @throws java.io.IOException if couldn't parseTermRows document
 	 */
 	override suspend fun fetchRecentGradesWithTeachers(): Pair<MutableList<DayGradeDto>, MutableMap<TeacherDto, MutableSet<String>>> {
 		return coroutineScope {

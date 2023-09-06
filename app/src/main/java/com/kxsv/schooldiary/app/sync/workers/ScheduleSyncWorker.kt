@@ -122,7 +122,7 @@ class ScheduleSyncWorker @AssistedInject constructor(
 		} catch (e: java.net.SocketTimeoutException) {
 			return Result.failure()
 		} catch (e: IOException) {
-			Log.e(TAG, "fetchSoonSchedule: exception on response parse", e)
+			Log.e(TAG, "fetchSoonSchedule: exception on response parseTermRows", e)
 			return Result.failure()
 		} catch (e: Exception) {
 			Log.e(TAG, "fetchSoonSchedule: exception", e)
