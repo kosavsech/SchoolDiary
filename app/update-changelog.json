@@ -1,5 +1,12 @@
 [
     {
+        "version": "0.1.3-alpha",
+        "versionCode": 6,
+        "apk": "https://github.com/kosavsech/SchoolDiary/releases/download/v0.1.3-alpha/app-release.apk",
+        "releaseNotes": "Fixed crash on empty task save.\nFixed new task notification title and on click callback.\nFixed subject add/edit text fields colors.",
+        "isCritical": false
+    },
+    {
         "version": "0.1.2-alpha",
         "versionCode": 5,
         "apk": "https://github.com/kosavsech/SchoolDiary/releases/download/v0.1.2-alpha/app-release.apk",

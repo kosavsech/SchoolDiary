@@ -130,6 +130,7 @@ class AddEditTaskViewModel @Inject constructor(
 		if (uiState.value.title.isEmpty() || uiState.value.subject == null) {
 			_uiState.update {
 				it.copy(userMessage = R.string.fill_required_fields_message)
+				return
 			}
 		}
 		

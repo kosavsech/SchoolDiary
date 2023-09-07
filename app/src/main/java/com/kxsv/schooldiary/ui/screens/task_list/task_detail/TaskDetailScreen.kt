@@ -49,7 +49,7 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.result.ResultBackNavigator
 
 data class TaskDetailScreenNavArgs(
-	val taskId: String,
+	val taskId: String = "0",
 	val isTitleBoundToIdVisible: Boolean = false,
 )
 

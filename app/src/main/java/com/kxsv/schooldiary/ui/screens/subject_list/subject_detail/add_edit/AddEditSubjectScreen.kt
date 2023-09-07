@@ -212,7 +212,8 @@ private fun AddEditSubjectContent(
 			val textFieldColors = TextFieldDefaults.outlinedTextFieldColors(
 				focusedBorderColor = Color.Transparent,
 				unfocusedBorderColor = Color.Transparent,
-				cursorColor = MaterialTheme.colorScheme.secondary.copy(alpha = ContentAlpha.high)
+				cursorColor = MaterialTheme.colorScheme.secondary.copy(alpha = ContentAlpha.high),
+				textColor = MaterialTheme.colorScheme.onSurface,
 			)
 			OutlinedTextField(
 				value = fullName,

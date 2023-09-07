@@ -7,7 +7,7 @@ import com.kxsv.schooldiary.data.util.DataIdGenUtils.generateTaskId
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-fun TaskDto.toTaskEntity(): TaskEntity {
+/*fun TaskDto.toTaskEntity(): TaskEntity {
 	return TaskEntity(
 		title = title,
 		description = "Fetched from edu.tatar on ${
@@ -20,7 +20,7 @@ fun TaskDto.toTaskEntity(): TaskEntity {
 	)
 }
 
-fun List<TaskDto>.toTaskEntities() = map { it.toTaskEntity() }
+fun List<TaskDto>.toTaskEntities() = map { it.toTaskEntity() }*/
 
 fun TaskDto.toTaskWithSubject(): TaskWithSubject {
 	return TaskWithSubject(

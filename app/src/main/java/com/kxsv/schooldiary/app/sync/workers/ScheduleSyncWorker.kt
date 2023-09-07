@@ -86,11 +86,7 @@ class ScheduleSyncWorker @AssistedInject constructor(
 						val uniqueId =
 							it.key.month.value.toString() + "_" + it.key.dayOfMonth.toString()
 						Log.d(TAG, "doWork: created unique id is $uniqueId")
-						notificationManager.notify(
-							uniqueId,
-							6,
-							createNotification(schedule = it)
-						)
+						notificationManager.notify(uniqueId, 6, createNotification(schedule = it))
 					}
 				}
 				

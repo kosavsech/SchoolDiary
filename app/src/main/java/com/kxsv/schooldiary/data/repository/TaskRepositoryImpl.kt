@@ -1,7 +1,5 @@
 package com.kxsv.schooldiary.data.repository
 
-import android.content.res.Resources
-import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.lesson.LessonDao
 import com.kxsv.schooldiary.data.local.features.study_day.StudyDayDao
 import com.kxsv.schooldiary.data.local.features.subject.SubjectDao
@@ -167,9 +165,8 @@ class TaskRepositoryImpl @Inject constructor(
 			if (localTask.taskId.split("_")[0].toInt() >= 100) return@forEach
 			
 			val relevantFetchedTask = fetchedTasksWithSubjects.run {
-				val index = this.map { it.taskEntity }
-					.sortedBy { it.taskId }
-					.binarySearchBy(localTask.taskId) { it.taskId }
+				val index = this.map { it.taskEntity }.sortedBy { it.taskId }
+					.indexOfFirst { it.taskId == localTask.taskId }
 				
 				return@run if (index != -1) this[index] else null
 			}
@@ -177,13 +174,14 @@ class TaskRepositoryImpl @Inject constructor(
 				taskDataSource.deleteById(localTask.taskId)
 			} else {
 				if (localTask.subjectMasterId != null) {
-					if (relevantFetchedTask == null) {
-						Resources.getSystem().getString(R.string.remote_task_absent)
+					val newFetchedTitleBoundToId = if (relevantFetchedTask == null) {
+						"remote_task_absent"
 					} else if (!localTask.isContentEqual(relevantFetchedTask.taskEntity)) {
 						relevantFetchedTask.taskEntity.fetchedTitleBoundToId
 					} else {
 						null
-					}?.let { newFetchedTitleBoundToId ->
+					}
+					if (newFetchedTitleBoundToId != null) {
 						subjectDataSource.getById(localTask.subjectMasterId)?.let { subject ->
 							newTasksForSubject.add(
 								TaskWithSubject(

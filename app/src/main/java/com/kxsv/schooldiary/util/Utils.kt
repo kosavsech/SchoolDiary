@@ -49,10 +49,11 @@ object Utils {
 		}
 	}
 	
-	fun isHoliday(localDate: LocalDate, periodsRanges: List<ClosedRange<LocalDate>>): Boolean {
-		if (localDate.dayOfWeek == DayOfWeek.SUNDAY) return true
-		if (periodsRanges.all { localDate !in it }) return true
-		return false
+	fun isHoliday(givenDate: LocalDate, periodsRanges: List<ClosedRange<LocalDate>>): Boolean {
+		if (givenDate.dayOfWeek == DayOfWeek.SUNDAY) return true
+		return periodsRanges.all { periodDateRange ->
+			givenDate !in periodDateRange
+		}
 	}
 	
 	/**

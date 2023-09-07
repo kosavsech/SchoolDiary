@@ -135,7 +135,9 @@ class GradeSyncWorker @AssistedInject constructor(
 					notificationManager.notify(1, createSummaryNotification())
 					newGradeEntities.forEach {
 						notificationManager.notify(
-							it.grade.gradeId, 2, createNotification(gradeEntity = it)
+							it.grade.gradeId,
+							2,
+							createNotification(gradeEntity = it)
 						)
 					}
 				}

@@ -133,21 +133,22 @@ class TaskSyncWorker @AssistedInject constructor(
 	
 	private fun createNotification(taskWithSubject: TaskWithSubject): Notification {
 		createNotificationChannel()
-		val subjectName = taskWithSubject.subject.getName()
-		val title = subjectName.take(10) + if (subjectName.length > 10) "... " else " " +
-				taskWithSubject.taskEntity.dueDate.format(DateTimeFormatter.ISO_LOCAL_DATE)
-		Log.d(TAG, "createNotification: title is $title")
+		val subjectNameShortened = taskWithSubject.subject.getName()
+			.take(10) + if (taskWithSubject.subject.getName().length > 10) "... " else " "
+		val dateText = taskWithSubject.taskEntity.dueDate.format(DateTimeFormatter.ISO_LOCAL_DATE)
+		val title = subjectNameShortened + dateText
+		
 		val text = when (taskWithSubject.taskEntity.fetchedTitleBoundToId) {
 			null -> taskWithSubject.taskEntity.title
-			appContext.getString(R.string.remote_task_absent) -> appContext.getString(R.string.remote_task_absent)
+			"remote_task_absent" -> appContext.getString(R.string.remote_task_absent)
 			else -> appContext.getString(R.string.remote_task_updated)
 		}
-		Log.d(TAG, "createNotification: text is $text")
+		
 		val validTaskDetailScreenRoute = TaskDetailScreenDestination(
 			taskId = taskWithSubject.taskEntity.taskId,
 			isTitleBoundToIdVisible = (taskWithSubject.taskEntity.fetchedTitleBoundToId != null)
-		)
-		val uriForTaskDetailScreen = "$MY_URI/$validTaskDetailScreenRoute".toUri()
+		).route
+		val uriForTaskDetailScreen = ("$MY_URI/$validTaskDetailScreenRoute").toUri()
 		val clickIntent = Intent(
 			Intent.ACTION_VIEW,
 			uriForTaskDetailScreen,
