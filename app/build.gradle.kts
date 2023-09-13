@@ -18,8 +18,8 @@ android {
 		compileSdk = 34
 		//noinspection OldTargetApi
 		targetSdk = 33
-		versionCode = 6
-		versionName = "0.1.3:alpha"
+		versionCode = 7
+		versionName = "0.1.4:alpha"
 		
 		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 		vectorDrawables {

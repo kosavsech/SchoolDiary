@@ -1,5 +1,12 @@
 [
     {
+        "version": "0.1.4-alpha",
+        "versionCode": 7,
+        "apk": "https://github.com/kosavsech/SchoolDiary/releases/download/v0.1.4-alpha/app-release.apk",
+        "releaseNotes": "Fixed strange behaviour of report card, by adding subjects names from EduPerformances fetching.\nFixed ui theme.\n\nDO NOT UPDATE if you have important information saved, it will be lost on update.",
+        "isCritical": false
+    },
+    {
         "version": "0.1.3-alpha",
         "versionCode": 6,
         "apk": "https://github.com/kosavsech/SchoolDiary/releases/download/v0.1.3-alpha/app-release.apk",

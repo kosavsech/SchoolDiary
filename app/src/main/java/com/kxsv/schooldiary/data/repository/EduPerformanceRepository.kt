@@ -34,13 +34,15 @@ interface EduPerformanceRepository {
 	 * @throws java.net.SocketTimeoutException
 	 * @throws java.io.IOException
 	 */
-	suspend fun fetchEduPerformance()
+	suspend fun fetchEduPerformance(): List<List<EduPerformanceDto>>
 	
 	suspend fun getEduPerformance(eduPerformanceId: String): EduPerformanceEntity?
 	
 	suspend fun createEduPerformance(eduPerformance: EduPerformanceEntity)
 	
 	suspend fun updateEduPerformance(eduPerformance: EduPerformanceEntity)
+	
+	suspend fun upsertAll(eduPerformances: List<EduPerformanceEntity>)
 	
 	suspend fun deleteAllEduPerformances()
 	

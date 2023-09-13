@@ -19,8 +19,8 @@ class SubjectParser {
 		return subjects
 	}
 	
-	fun parseDays(days: List<Elements>): List<String> {
-		val subjects = mutableListOf<String>()
+	fun parseDays(days: List<Elements>): MutableSet<String> {
+		val subjects = mutableSetOf<String>()
 		days.forEach { dayInfo ->
 			dayInfo.forEach { lesson ->
 				lesson.child(NetLessonColumn.SUBJECT.ordinal).text()

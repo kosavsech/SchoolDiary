@@ -84,9 +84,7 @@ internal fun UpdateDialogContent(
 							verticalAlignment = Alignment.CenterVertically,
 						) {
 							Indicator(size = 32.dp)
-							Column(
-								horizontalAlignment = Alignment.End
-							) {
+							Column {
 								Text(
 									text = stringResource(R.string.update_in_progress),
 									style = MaterialTheme.typography.bodyMedium,

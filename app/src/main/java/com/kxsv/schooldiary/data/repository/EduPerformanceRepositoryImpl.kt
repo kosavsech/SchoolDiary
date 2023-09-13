@@ -4,27 +4,31 @@ import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceDa
 import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceEntity
 import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceWithSubject
 import com.kxsv.schooldiary.data.local.features.subject.SubjectDao
-import com.kxsv.schooldiary.data.mapper.toEduPerformanceEntities
 import com.kxsv.schooldiary.data.remote.WebService
 import com.kxsv.schooldiary.data.remote.dtos.EduPerformanceDto
 import com.kxsv.schooldiary.data.remote.parsers.EduPerformanceParser
 import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
+import com.kxsv.schooldiary.data.util.user_preferences.PeriodType
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.ApplicationScope
 import com.kxsv.schooldiary.di.util.Dispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
+
+private const val TAG = "EduPerformanceRepositor"
 
 @Singleton
 class EduPerformanceRepositoryImpl @Inject constructor(
 	private val eduPerformanceDataSource: EduPerformanceDao,
+	private val userPreferencesRepository: UserPreferencesRepository,
 	private val webService: WebService,
 	private val subjectDataSource: SubjectDao,
 	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
@@ -83,15 +87,23 @@ class EduPerformanceRepositoryImpl @Inject constructor(
 	 * @throws java.net.SocketTimeoutException
 	 * @throws java.io.IOException
 	 */
-	override suspend fun fetchEduPerformance(): Unit = withContext(ioDispatcher) {
-		for (termIndex in 0..4) {
-			async {
+	override suspend fun fetchEduPerformance(): List<List<EduPerformanceDto>> = coroutineScope {
+		val periodType = userPreferencesRepository.getEducationPeriodType()
+		val termIndexRange = if (periodType == PeriodType.TERMS) {
+			0..3
+		} else {
+			0..1
+		}.toMutableList()
+		termIndexRange.add(4)
+		val performanceEntities = mutableListOf<Deferred<List<EduPerformanceDto>>>()
+		for (termIndex in termIndexRange) {
+			val performanceEntity = async {
 				val term = EduPerformancePeriod.values()[termIndex]
-				val performanceEntities = fetchEduPerformanceByTerm(term = term)
-					.toEduPerformanceEntities(subjectDataSource)
-				updateDatabase(performanceEntities)
+				fetchEduPerformanceByTerm(term = term)
 			}
+			performanceEntities.add(performanceEntity)
 		}
+		return@coroutineScope performanceEntities.awaitAll()
 	}
 	
 	override suspend fun getEduPerformance(eduPerformanceId: String): EduPerformanceEntity? {
@@ -106,6 +118,10 @@ class EduPerformanceRepositoryImpl @Inject constructor(
 		eduPerformanceDataSource.upsert(eduPerformance)
 	}
 	
+	override suspend fun upsertAll(eduPerformances: List<EduPerformanceEntity>) {
+		eduPerformanceDataSource.upsertAll(eduPerformances)
+	}
+	
 	override suspend fun deleteAllEduPerformances() {
 		eduPerformanceDataSource.deleteAll()
 	}
@@ -113,12 +129,5 @@ class EduPerformanceRepositoryImpl @Inject constructor(
 	override suspend fun deleteEduPerformance(eduPerformanceId: String) {
 		eduPerformanceDataSource.deleteById(eduPerformanceId)
 	}
-	
-	private suspend fun updateDatabase(performanceEntities: List<EduPerformanceEntity>) =
-		scope.launch {
-			for (performanceEntity in performanceEntities) {
-				eduPerformanceDataSource.upsert(performanceEntity)
-			}
-		}
 	
 }

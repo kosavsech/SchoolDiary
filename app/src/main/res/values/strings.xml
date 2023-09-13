@@ -244,7 +244,7 @@
     <string name="exception_occurred">Exception occurred on fetch</string>
     <string name="appupdater_download_notification_title">SchoolDiary</string>
     <string name="appupdater_download_notification_desc">Downloading new version</string>
-    <string name="dismiss_available">You can dismiss dialog and download will still countinue in background</string>
+    <string name="dismiss_available">You can dismiss dialog and download will still continue in background</string>
     <string name="remote_task_updated">Teacher changed task</string>
     <string name="remote_task_absent">Remote task deleted or moved to another day</string>
     <string name="remote_task">Remote task</string>

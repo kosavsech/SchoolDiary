@@ -1,5 +1,6 @@
 package com.kxsv.schooldiary.ui.screens.subject_list.subject_detail
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -7,6 +8,7 @@ import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceEntity
 import com.kxsv.schooldiary.data.local.features.grade.GradeEntity
 import com.kxsv.schooldiary.data.local.features.subject.SubjectWithTeachers
+import com.kxsv.schooldiary.data.mapper.toEduPerformanceEntities
 import com.kxsv.schooldiary.data.repository.EduPerformanceRepository
 import com.kxsv.schooldiary.data.repository.GradeRepository
 import com.kxsv.schooldiary.data.repository.SubjectRepository
@@ -56,6 +58,8 @@ private data class AsyncData(
 	val grades: List<GradeEntity> = emptyList(),
 	val eduPerformance: EduPerformanceEntity? = null,
 )
+
+private const val TAG = "SubjectDetailViewModel"
 
 @Suppress("DeferredResultUnused")
 @HiltViewModel
@@ -185,10 +189,22 @@ class SubjectDetailViewModel @Inject constructor(
 		
 		viewModelScope.launch(ioDispatcher) {
 			try {
-				eduPerformanceRepository.fetchEduPerformance()
+				eduPerformanceRepository.fetchEduPerformance().let {
+					it.forEach { performanceDtos ->
+						Log.d(
+							TAG, "performanceEntities.forEach: performanceDtos = $performanceDtos"
+						)
+						eduPerformanceRepository.upsertAll(
+							performanceDtos.toEduPerformanceEntities(
+								subjectRepository
+							)
+						)
+					}
+				}
 				_uiState.update { it.copy(isLoading = false) }
 			} catch (e: Exception) {
 				_uiState.update { it.copy(isLoading = false) }
+				Log.e(TAG, "refresh: ", e)
 				showSnackbarMessage(R.string.exception_occurred)
 			}
 		}

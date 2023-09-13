@@ -15,7 +15,7 @@ interface SubjectRepository {
 	
 	fun getSubjectWithGradesStream(subjectId: String): Flow<SubjectWithGrades>
 	
-	suspend fun fetchSubjectNames(): List<String>
+	suspend fun fetchSubjectNames(): Set<String>
 	
 	suspend fun getAll(): List<SubjectEntity>
 	

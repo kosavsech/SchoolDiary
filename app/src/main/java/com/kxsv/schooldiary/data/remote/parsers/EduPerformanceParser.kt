@@ -13,7 +13,13 @@ class EduPerformanceParser {
 		val eduPerformances = mutableListOf<EduPerformanceDto>()
 		rows.forEach { row ->
 			val subjectAncestorName = row.firstElementChild()?.text()?.trim()
-			if (subjectAncestorName == "ИТОГО" || subjectAncestorName.isNullOrBlank()) return@forEach
+			if (subjectAncestorName == "ИТОГО" || subjectAncestorName.isNullOrBlank()) {
+				Log.w(
+					TAG,
+					"parseTerm: early quit because subjectAncestorName = $subjectAncestorName(length = ${subjectAncestorName?.length ?: "null"})"
+				)
+				return@forEach
+			}
 			
 			val finalMark = row.lastElementChild()?.text()?.trim()?.let { Mark.fromInput(it) }
 			// dropLast(1) to get rid of finalMark, drop(1) to get rid of subject name,
@@ -31,7 +37,7 @@ class EduPerformanceParser {
 //			Log.d(TAG, "parseTerm: adding eduPerformance $eduPerformance")
 			eduPerformances.add(eduPerformance)
 		}
-//		Log.d(TAG, "parseTerm: result is $eduPerformances")
+//		Log.i(TAG, "parseTerm: result is $eduPerformances")
 		return eduPerformances
 	}
 	
@@ -66,5 +72,23 @@ class EduPerformanceParser {
 		}
 //		Log.d(TAG, "parseYear: result is $eduPerformances")
 		return eduPerformances
+	}
+	
+	fun parseNames(periods: List<Elements>): Set<String> {
+		val eduPerformancesSubjectsNames = mutableSetOf<String>()
+		periods.forEach { periodRows ->
+			periodRows.forEach { row ->
+				val subjectAncestorName = row.firstElementChild()?.text()?.trim()
+				if (subjectAncestorName != "ИТОГО" && !subjectAncestorName.isNullOrBlank()) {
+					eduPerformancesSubjectsNames.add(subjectAncestorName)
+				} else {
+					Log.w(
+						TAG,
+						"parseTerm: skip because subjectAncestorName = $subjectAncestorName(length = ${subjectAncestorName?.length ?: "null"})"
+					)
+				}
+			}
+		}
+		return eduPerformancesSubjectsNames
 	}
 }

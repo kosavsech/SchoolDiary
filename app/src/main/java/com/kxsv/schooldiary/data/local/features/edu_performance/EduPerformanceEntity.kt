@@ -22,7 +22,7 @@ import com.kxsv.schooldiary.data.util.Mark
 	indices = [Index(value = ["subjectMasterId"])]
 )
 data class EduPerformanceEntity(
-	val subjectMasterId: String? = null,
+	val subjectMasterId: String = "",
 	val marks: List<Mark?>,
 	val finalMark: Mark?,
 	val examMark: Mark?,

@@ -1,11 +1,14 @@
 package com.kxsv.schooldiary.ui.screens.edu_performance
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceWithSubject
+import com.kxsv.schooldiary.data.mapper.toEduPerformanceEntities
 import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.data.repository.EduPerformanceRepository
+import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.data.repository.UpdateRepository
 import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
 import com.kxsv.schooldiary.data.util.AppVersionState
@@ -35,9 +38,12 @@ data class EduPerformanceUiState(
 	val period: EduPerformancePeriod = EduPerformancePeriod.FIRST,
 )
 
+private const val TAG = "EduPerformanceViewModel"
+
 @HiltViewModel
 class EduPerformanceViewModel @Inject constructor(
 	private val eduPerformanceRepository: EduPerformanceRepository,
+	private val subjectRepository: SubjectRepository,
 	private val userPreferencesRepository: UserPreferencesRepository,
 	private val updateRepository: UpdateRepository,
 	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
@@ -111,10 +117,22 @@ class EduPerformanceViewModel @Inject constructor(
 		
 		viewModelScope.launch(ioDispatcher) {
 			try {
-				eduPerformanceRepository.fetchEduPerformance()
+				eduPerformanceRepository.fetchEduPerformance().let {
+					it.forEach { performanceDtos ->
+						Log.d(
+							TAG, "performanceEntities.forEach: performanceDtos = $performanceDtos"
+						)
+						eduPerformanceRepository.upsertAll(
+							performanceDtos.toEduPerformanceEntities(
+								subjectRepository
+							)
+						)
+					}
+				}
 				_uiState.update { it.copy(isLoading = false) }
 			} catch (e: Exception) {
 				_uiState.update { it.copy(isLoading = false) }
+				Log.e(TAG, "refresh: ", e)
 				showSnackbarMessage(R.string.exception_occurred)
 			}
 		}

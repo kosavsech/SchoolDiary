@@ -32,8 +32,8 @@ import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.Patt
 		GradeEntity::class, EduPerformanceEntity::class,
 		TaskEntity::class
 	],
-	version = 1,
-	exportSchema = true
+	version = 2,
+	exportSchema = false
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {

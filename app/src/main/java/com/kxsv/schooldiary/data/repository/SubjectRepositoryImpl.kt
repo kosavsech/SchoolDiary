@@ -7,9 +7,12 @@ import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.subject.SubjectWithGrades
 import com.kxsv.schooldiary.data.local.features.subject.SubjectWithTeachers
 import com.kxsv.schooldiary.data.remote.WebService
+import com.kxsv.schooldiary.data.remote.parsers.EduPerformanceParser
 import com.kxsv.schooldiary.data.remote.parsers.SubjectParser
 import com.kxsv.schooldiary.data.util.DataIdGenUtils.generateSubjectId
+import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import com.kxsv.schooldiary.data.util.user_preferences.Period
+import com.kxsv.schooldiary.data.util.user_preferences.PeriodType
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.isHoliday
 import com.kxsv.schooldiary.util.Utils.periodRangeEntryToLocalDate
@@ -47,7 +50,7 @@ class SubjectRepositoryImpl @Inject constructor(
 		return subjectDataSource.observeByIdWithGrades(subjectId)
 	}
 	
-	override suspend fun fetchSubjectNames(): List<String> = coroutineScope {
+	override suspend fun fetchSubjectNames(): Set<String> = coroutineScope {
 		val startRange = Utils.currentDate.minusDays(7)
 		val endRange = Utils.currentDate.plusDays(7)
 		
@@ -63,8 +66,22 @@ class SubjectRepositoryImpl @Inject constructor(
 			if (isHoliday(date, periodsRanges)) return@forEach
 			dayInfos += async { webService.getDayInfo(date) }
 		}
-		
-		return@coroutineScope SubjectParser().parseDays(dayInfos.awaitAll())
+		val termIndexRange = if (periodType == PeriodType.TERMS) {
+			0..3
+		} else {
+			0..1
+		}.toMutableList()
+		termIndexRange.add(4)
+		val subjectsFromReportCard = mutableListOf<Deferred<Elements>>()
+		for (termIndex in termIndexRange) {
+			subjectsFromReportCard += async {
+				val term = EduPerformancePeriod.values()[termIndex]
+				webService.getTermEduPerformance(term = term)
+			}
+		}
+		val result = SubjectParser().parseDays(dayInfos.awaitAll())
+		result.addAll(EduPerformanceParser().parseNames(subjectsFromReportCard.awaitAll()))
+		return@coroutineScope result
 	}
 	
 	
