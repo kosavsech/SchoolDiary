@@ -115,6 +115,7 @@ fun PieChart(
 		} else {
 			modifier
 				.aspectRatio(1f)
+				.background(pieChartConfig.backgroundColor)
 				.semantics {
 					contentDescription = pieChartConfig.accessibilityConfig.chartDescription
 				}
