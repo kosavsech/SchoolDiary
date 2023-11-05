@@ -51,9 +51,9 @@ import com.kxsv.schooldiary.ui.main.navigation.nav_actions.TasksScreenNavActions
 import com.kxsv.schooldiary.ui.screens.destinations.TaskDetailScreenDestination
 import com.kxsv.schooldiary.ui.screens.grade_list.MY_URI
 import com.kxsv.schooldiary.ui.theme.AppTheme
+import com.kxsv.schooldiary.ui.util.AppSnackbarHost
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.util.Utils
-import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.FULL_ROUTE_PLACEHOLDER
@@ -174,7 +174,7 @@ private fun TasksContent(
 ) {
 	LoadingContent(
 		modifier = modifier,
-		loading = isLoading,
+		isLoading = isLoading,
 		empty = tasksGroups.isEmpty(),
 		emptyContent = { Text(text = "No tasks yet") },
 		isContentScrollable = true,

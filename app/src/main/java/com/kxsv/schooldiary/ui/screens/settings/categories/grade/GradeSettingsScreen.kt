@@ -1,5 +1,6 @@
 package com.kxsv.schooldiary.ui.screens.settings.categories.grade
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,10 +25,11 @@ import com.kxsv.schooldiary.ui.main.app_bars.topbar.GradeSettingsTopAppBar
 import com.kxsv.schooldiary.ui.screens.settings.utils.GetSettingItemComposable
 import com.kxsv.schooldiary.ui.screens.settings.utils.SettingsItem
 import com.kxsv.schooldiary.ui.screens.settings.utils.SettingsItemType
+import com.kxsv.schooldiary.ui.util.AppSnackbarHost
 import com.kxsv.schooldiary.ui.util.LoadingContent
-import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
-import com.kxsv.schooldiary.util.Utils.roundTo
-import com.kxsv.schooldiary.util.Utils.stringRoundTo
+import com.kxsv.schooldiary.util.Extensions.roundTo
+import com.kxsv.schooldiary.util.Extensions.stringRoundTo
+import com.kxsv.ychart_mod.common.extensions.isNotNull
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.vanpra.composematerialdialogs.MaterialDialog
@@ -53,61 +55,86 @@ fun GradeSettingsScreen(
 	) { paddingValues ->
 		val uiState = viewModel.uiState.collectAsState().value
 		val targetMarkDialogState = rememberMaterialDialogState(false)
+		val lowerBoundMarkDialogState = rememberMaterialDialogState(false)
 		val roundRuleDialogState = rememberMaterialDialogState(false)
 		
-		val changeDefaultRoundRule = remember<(Double) -> Unit> {
-			{ viewModel.changeDefaultRoundRule(it) }
-		}
-		val changeDefaultTargetMark = remember<(Double) -> Unit> {
-			{ viewModel.changeDefaultTargetMark(it) }
-		}
 		GeneralSettingsContent(
 			modifier = Modifier.padding(paddingValues),
 			loading = uiState.isLoading,
 			targetMarkDialogState = targetMarkDialogState,
+			lowerBoundMarkDialogState = lowerBoundMarkDialogState,
 			roundRuleDialogState = roundRuleDialogState,
 			defaultTargetMark = uiState.defaultTargetMark,
+			defaultLowerBoundMark = uiState.defaultLowerBoundMark,
 			defaultRoundRule = uiState.defaultRoundRule,
 		)
 		
+		val changeDefaultRoundRule = remember<(Double) -> Unit> {
+			{ viewModel.changeDefaultRoundRule(it) }
+		}
 		RoundRuleDialog(
 			roundRuleDialogState = roundRuleDialogState,
 			defaultRoundRule = uiState.defaultRoundRule,
 			onInputSave = changeDefaultRoundRule,
 		)
-		TargetMarkDialog(
-			targetMarkDialogState = targetMarkDialogState,
-			defaultTargetMark = uiState.defaultTargetMark,
+		
+		val changeDefaultTargetMark = remember<(Double) -> Unit> {
+			{ viewModel.changeDefaultTargetMark(it) }
+		}
+		MarkDialog(
+			markDialogState = targetMarkDialogState,
+			prefillMark = uiState.defaultTargetMark,
 			onInputSave = changeDefaultTargetMark,
+			dialogTitleRes = R.string.enter_default_target_mark_dialog_title,
+			inputLabelRes = R.string.label_target_mark,
+			descriptionRes = R.string.default_target_mark_description,
+		)
+		
+		val changeDefaultLowerBoundMark = remember<(Double) -> Unit> {
+			{ viewModel.changeDefaultLowerBoundMark(it) }
+		}
+		MarkDialog(
+			markDialogState = lowerBoundMarkDialogState,
+			prefillMark = uiState.defaultLowerBoundMark,
+			onInputSave = changeDefaultLowerBoundMark,
+			dialogTitleRes = R.string.enter_default_lower_bound_mark_dialog_title,
+			inputLabelRes = R.string.label_lower_bound_mark,
+			descriptionRes = R.string.default_lower_bound_mark_description,
 		)
 	}
 }
 
 @Composable
-private fun TargetMarkDialog(
-	targetMarkDialogState: MaterialDialogState,
-	defaultTargetMark: Double?,
+private fun MarkDialog(
+	markDialogState: MaterialDialogState,
+	prefillMark: Double?,
 	onInputSave: (Double) -> Unit,
+	@StringRes dialogTitleRes: Int,
+	@StringRes inputLabelRes: Int,
+	@StringRes placeholderRes: Int = R.string.place_holder_mark,
+	@StringRes errorRes: Int = R.string.error_msg_mark_input,
+	@StringRes descriptionRes: Int? = null,
 ) {
 	val focusManager = LocalFocusManager.current
 	MaterialDialog(
-		dialogState = targetMarkDialogState,
+		dialogState = markDialogState,
 		buttons = {
 			positiveButton(res = R.string.btn_save)
 			negativeButton(res = R.string.btn_cancel)
 		},
 	) {
-		title(res = R.string.enter_default_target_mark_dialog_title)
-		message(res = R.string.default_target_mark_description)
+		title(res = dialogTitleRes)
+		if (descriptionRes.isNotNull()) {
+			message(res = descriptionRes)
+		}
 		input(
-			label = "Target mark",
-			prefill = defaultTargetMark?.stringRoundTo(2)
-				?: stringResource(id = R.string.not_found),
-			placeholder = "2.89",
+			label = stringResource(id = inputLabelRes),
+			prefill = prefillMark?.stringRoundTo(2) ?: stringResource(id = R.string.not_found),
+			placeholder = stringResource(id = placeholderRes),
 			isTextValid = {
 				it.toDoubleOrNull() != null && (it.toDouble() > 2.00 && it.toDouble() < 5.00)
 			},
-			errorMessage = "Follow the format.\nAlso ensure that target is more than 2 and is less than 5",
+			errorMessage = stringResource(id = errorRes),
 			onInput = { onInputSave(it.toDouble().roundTo(2)) },
 			waitForPositiveButton = true,
 			keyboardOptions = KeyboardOptions(
@@ -167,8 +194,10 @@ private fun GeneralSettingsContent(
 	modifier: Modifier,
 	loading: Boolean,
 	targetMarkDialogState: MaterialDialogState,
+	lowerBoundMarkDialogState: MaterialDialogState,
 	roundRuleDialogState: MaterialDialogState,
 	defaultTargetMark: Double?,
+	defaultLowerBoundMark: Double?,
 	defaultRoundRule: Double?,
 ) {
 	val settingItems = listOf(
@@ -179,6 +208,12 @@ private fun GeneralSettingsContent(
 			onClick = { targetMarkDialogState.show() },
 		),
 		SettingsItem(
+			label = R.string.default_lower_bound_mark,
+			type = SettingsItemType.Input(currentValue = defaultLowerBoundMark?.toString()),
+			onValueChange = {},
+			onClick = { lowerBoundMarkDialogState.show() },
+		),
+		SettingsItem(
 			label = R.string.default_round_rule,
 			type = SettingsItemType.Input(currentValue = defaultRoundRule?.toString()),
 			onValueChange = {},
@@ -187,7 +222,7 @@ private fun GeneralSettingsContent(
 	)
 	LoadingContent(
 		modifier = modifier,
-		loading = loading,
+		isLoading = loading,
 		empty = false,
 		isContentScrollable = false,
 	) {

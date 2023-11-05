@@ -18,8 +18,8 @@ import com.kxsv.schooldiary.data.util.DataIdGenUtils.generateTaskId
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.ApplicationScope
 import com.kxsv.schooldiary.di.util.Dispatcher
+import com.kxsv.schooldiary.util.Extensions.toList
 import com.kxsv.schooldiary.util.Utils
-import com.kxsv.schooldiary.util.Utils.toList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException

@@ -44,6 +44,9 @@ import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ProgressIndicatorDefaults
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -67,6 +70,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
@@ -78,9 +83,11 @@ import com.kizitonwose.calendar.core.CalendarMonth
 import com.kizitonwose.calendar.core.DayPosition
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
+import com.kxsv.schooldiary.data.util.user_preferences.Period
+import com.kxsv.schooldiary.data.util.user_preferences.PeriodType
 import com.kxsv.schooldiary.ui.util.ContinuousSelectionHelper.isInDateBetweenSelection
 import com.kxsv.schooldiary.ui.util.ContinuousSelectionHelper.isOutDateBetweenSelection
-import com.kxsv.schooldiary.util.Utils
+import com.kxsv.schooldiary.util.PeriodButton
 import kotlinx.coroutines.flow.filterNotNull
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -94,7 +101,7 @@ import kotlin.math.roundToInt
  * Display an initial empty state or swipe to refresh content.
  *
  * @param modifier the modifier to apply to this layout
- * @param loading (state) when true, display a loading spinner over [content]
+ * @param isLoading (state) when true, display a loading spinner over [content]
  * @param empty (state) when true, display [emptyContent]
  * @param emptyContent (slot) the content to display for the empty state
  * @param isContentScrollable (state) when true, doesn't apply vertical scroll modifier
@@ -105,21 +112,21 @@ import kotlin.math.roundToInt
 @Composable
 fun LoadingContent(
 	modifier: Modifier = Modifier,
-	loading: Boolean,
+	isLoading: Boolean,
 	empty: Boolean,
 	emptyContent: @Composable () -> Unit = { Text(text = "Empty") },
 	isContentScrollable: Boolean = false,
 	onRefresh: (() -> Unit)? = null,
 	content: @Composable () -> Unit,
 ) {
-	val isEmpty = empty && !loading
+	val isEmpty = empty && !isLoading
 	
 	val scrollModifier = if (!isContentScrollable || isEmpty) {
 		Modifier.verticalScroll(rememberScrollState())
 	} else Modifier
 	
-	val pullRefreshState = onRefresh?.let { rememberPullRefreshState(loading, it) }
-		?: rememberPullRefreshState(loading, {})
+	val pullRefreshState = onRefresh?.let { rememberPullRefreshState(isLoading, it) }
+		?: rememberPullRefreshState(isLoading, {})
 	
 	val pullRefreshModifier = if (onRefresh != null) {
 		Modifier.pullRefresh(pullRefreshState)
@@ -132,7 +139,7 @@ fun LoadingContent(
 			.then(scrollModifier),
 	) {
 		if (isEmpty) emptyContent() else content()
-		PullRefreshIndicator(loading, pullRefreshState, Modifier.align(Alignment.TopCenter))
+		PullRefreshIndicator(isLoading, pullRefreshState, Modifier.align(Alignment.TopCenter))
 	}
 	
 }
@@ -191,7 +198,7 @@ fun Indicator(
 fun TermSelector(
 	currentPeriod: EduPerformancePeriod,
 	onPeriodChange: (EduPerformancePeriod) -> Unit,
-	buttons: List<Utils.PeriodButton>,
+	buttons: List<PeriodButton>,
 ) {
 	Row(
 		modifier = Modifier
@@ -411,4 +418,45 @@ private data class DottedShape(
 		}
 		close()
 	})
+}
+
+@Composable
+fun getPeriodButtons(periodType: PeriodType, withYear: Boolean): List<PeriodButton> {
+	val periods = if (periodType == PeriodType.TERMS) {
+		Period.values().toList().dropLast(2)
+	} else {
+		Period.values().toList().drop(4)
+	}.map { it.convertToEduPerformancePeriod() } as MutableList<EduPerformancePeriod>
+	if (withYear) periods.add(EduPerformancePeriod.YEAR)
+	
+	val result = periods.map {
+		if (it != EduPerformancePeriod.YEAR) {
+			PeriodButton(
+				text = stringArrayResource(R.array.ordinals)[it.value.toInt()] + " " + stringResource(
+					when (periodType) {
+						PeriodType.TERMS -> R.string.term
+						PeriodType.SEMESTERS -> R.string.semester
+					}
+				),
+				callbackPeriod = it
+			)
+		} else {
+			PeriodButton(
+				text = stringResource(R.string.year),
+				callbackPeriod = it
+			)
+		}
+	}
+	return result
+}
+
+@Composable
+fun AppSnackbarHost(hostState: SnackbarHostState) {
+	SnackbarHost(hostState = hostState) { data ->
+		Snackbar(
+			snackbarData = data,
+			containerColor = MaterialTheme.colorScheme.inverseSurface,
+			contentColor = MaterialTheme.colorScheme.inverseOnSurface
+		)
+	}
 }

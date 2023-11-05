@@ -39,9 +39,9 @@ import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.TasksDetailNavActions
 import com.kxsv.schooldiary.ui.screens.grade_list.MY_URI
 import com.kxsv.schooldiary.ui.screens.navArgs
+import com.kxsv.schooldiary.ui.util.AppSnackbarHost
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.util.Utils
-import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.FULL_ROUTE_PLACEHOLDER
@@ -145,7 +145,7 @@ private fun TaskContent(
 	
 	LoadingContent(
 		modifier = commonModifier,
-		loading = isLoading,
+		isLoading = isLoading,
 		empty = (taskEntity == null && subjectEntity == null),
 		emptyContent = { Text(text = stringResource(R.string.no_data), modifier = commonModifier) },
 		isContentScrollable = true,

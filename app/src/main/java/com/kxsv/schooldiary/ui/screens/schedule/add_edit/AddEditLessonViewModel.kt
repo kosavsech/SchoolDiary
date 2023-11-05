@@ -12,10 +12,13 @@ import com.kxsv.schooldiary.data.repository.StudyDayRepository
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.Dispatcher
+import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
+import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.screens.navArgs
+import com.kxsv.schooldiary.util.Extensions.nonEmptyTrim
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.datestampToLocalDate
-import com.kxsv.schooldiary.util.Utils.nonEmptyTrim
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -95,6 +98,18 @@ class AddEditLessonViewModel @Inject constructor(
 		} else {
 			updateClass()
 		}
+	}
+	
+	fun showEditResultMessage(result: Int) {
+		when (result) {
+			EDIT_RESULT_OK -> showSnackbarMessage(R.string.successfully_saved_subject_message)
+			ADD_RESULT_OK -> showSnackbarMessage(R.string.successfully_added_subject_message)
+			DELETE_RESULT_OK -> showSnackbarMessage(R.string.successfully_deleted_subject_message)
+		}
+	}
+	
+	private fun showSnackbarMessage(message: Int) {
+		_uiState.update { it.copy(userMessage = message) }
 	}
 	
 	fun snackbarMessageShown() {

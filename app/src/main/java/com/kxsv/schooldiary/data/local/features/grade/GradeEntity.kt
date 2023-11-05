@@ -17,7 +17,7 @@ import java.time.LocalDateTime
 			entity = SubjectEntity::class,
 			parentColumns = ["subjectId"],
 			childColumns = ["subjectMasterId"],
-			onDelete = ForeignKey.RESTRICT
+			onDelete = ForeignKey.CASCADE
 		),
 	],
 	indices = [Index(value = ["subjectMasterId"])]

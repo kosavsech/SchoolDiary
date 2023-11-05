@@ -22,6 +22,7 @@ import javax.inject.Inject
 
 data class GradeSettingsUiState(
 	val defaultTargetMark: Double? = null,
+	val defaultLowerBoundMark: Double? = null,
 	val defaultRoundRule: Double? = null,
 	
 	val userMessage: Int? = null,
@@ -31,6 +32,7 @@ data class GradeSettingsUiState(
 
 private data class AsyncData(
 	val defaultTargetMark: Double? = null,
+	val defaultLowerBoundMark: Double? = null,
 	val defaultRoundRule: Double? = null,
 )
 
@@ -41,15 +43,18 @@ class GradeSettingsViewModel @Inject constructor(
 ) : ViewModel() {
 	
 	private val _defaultTargetMark = userPreferencesRepository.observeTargetMark()
+	private val _defaultLowerBoundMark = userPreferencesRepository.observeLowerBoundMark()
 	private val _defaultRoundRule = userPreferencesRepository.observeRoundRule()
 	
 	private val _asyncData = combine(
 		flow = _defaultTargetMark,
 		flow2 = _defaultRoundRule,
-	) { targetMark, roundRule ->
+		flow3 = _defaultLowerBoundMark
+	) { targetMark, roundRule, lowerBoundMark ->
 		AsyncData(
 			defaultTargetMark = targetMark,
 			defaultRoundRule = roundRule,
+			defaultLowerBoundMark = lowerBoundMark
 		)
 	}
 		.map { handleAsyncData(it) }
@@ -59,6 +64,7 @@ class GradeSettingsViewModel @Inject constructor(
 	private fun handleAsyncData(asyncData: AsyncData): Async<AsyncData> {
 		if (asyncData.defaultTargetMark == null) return Async.Error(R.string.default_target_mark_not_found)
 		if (asyncData.defaultRoundRule == null) return Async.Error(R.string.default_round_rule_not_found)
+		if (asyncData.defaultLowerBoundMark == null) return Async.Error(R.string.default_lower_bound_mark_not_found)
 		
 		return Async.Success(asyncData)
 	}
@@ -73,6 +79,7 @@ class GradeSettingsViewModel @Inject constructor(
 			is Async.Success -> {
 				state.copy(
 					defaultTargetMark = asyncData.data.defaultTargetMark,
+					defaultLowerBoundMark = asyncData.data.defaultLowerBoundMark,
 					defaultRoundRule = asyncData.data.defaultRoundRule,
 				)
 			}
@@ -81,6 +88,10 @@ class GradeSettingsViewModel @Inject constructor(
 	
 	fun changeDefaultTargetMark(newTarget: Double) = viewModelScope.launch(ioDispatcher) {
 		userPreferencesRepository.setTargetMark(newTarget)
+	}
+	
+	fun changeDefaultLowerBoundMark(newLowerBound: Double) = viewModelScope.launch(ioDispatcher) {
+		userPreferencesRepository.setLowerBoundMark(newLowerBound)
 	}
 	
 	fun changeDefaultRoundRule(newRule: Double) = viewModelScope.launch(ioDispatcher) {

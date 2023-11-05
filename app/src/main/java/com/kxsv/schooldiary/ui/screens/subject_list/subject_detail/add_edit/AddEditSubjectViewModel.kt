@@ -8,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
+import com.kxsv.schooldiary.data.repository.EduPerformanceRepository
+import com.kxsv.schooldiary.data.repository.GradeRepository
 import com.kxsv.schooldiary.data.repository.SubjectRepository
 import com.kxsv.schooldiary.data.repository.TeacherRepository
 import com.kxsv.schooldiary.di.util.AppDispatchers
@@ -16,7 +18,7 @@ import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.ui.util.Async
 import com.kxsv.schooldiary.ui.util.WhileUiSubscribed
-import com.kxsv.schooldiary.util.Utils.nonEmptyTrim
+import com.kxsv.schooldiary.util.Extensions.nonEmptyTrim
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,6 +56,8 @@ private const val TAG = "AddEditSubjectViewModel"
 class AddEditSubjectViewModel @Inject constructor(
 	private val subjectRepository: SubjectRepository,
 	private val teacherRepository: TeacherRepository,
+	private val eduPerformanceRepository: EduPerformanceRepository,
+	private val gradeRepository: GradeRepository,
 	@Dispatcher(AppDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 	savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -112,6 +116,7 @@ class AddEditSubjectViewModel @Inject constructor(
 			}
 			return
 		}
+		
 		viewModelScope.launch(ioDispatcher) {
 			try {
 				if (subjectId == null) {

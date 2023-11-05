@@ -13,26 +13,25 @@ import com.kxsv.schooldiary.data.repository.UpdateRepository
 import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
 import com.kxsv.schooldiary.data.util.AppVersionState
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
-import com.kxsv.schooldiary.data.util.user_preferences.Period.Companion.getTypeByPeriod
 import com.kxsv.schooldiary.data.util.user_preferences.PeriodType
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.util.WhileUiSubscribed
-import com.kxsv.schooldiary.util.Utils.getCurrentPeriod
+import com.kxsv.schooldiary.util.Utils.getCurrentPeriodForUi
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class EduPerformanceUiState(
-	val eduPerformanceList: List<EduPerformanceWithSubject> = emptyList(),
+	val allEduPerformances: List<EduPerformanceWithSubject> = emptyList(),
+	val eduPerformancesForPeriod: List<EduPerformanceWithSubject> = emptyList(),
+	val eduPerformance: EduPerformanceWithSubject? = null,
 	val isLoading: Boolean = false,
 	val userMessage: Int? = null,
 	val period: EduPerformancePeriod = EduPerformancePeriod.FIRST,
@@ -53,19 +52,15 @@ class EduPerformanceViewModel @Inject constructor(
 	private val _periodType = MutableStateFlow(PeriodType.SEMESTERS)
 	val periodType = _periodType.asStateFlow()
 	
-	@OptIn(ExperimentalCoroutinesApi::class)
-	private val _eduPerformanceAsync = _period
-		.flatMapLatest { period ->
-			eduPerformanceRepository.observeAllWithSubjectForPeriod(period)
-		}
-		.stateIn(viewModelScope, WhileUiSubscribed, emptyList())
+	private val _allEduPerformances = eduPerformanceRepository.observeAllWithSubject()
 	
 	private val _uiState = MutableStateFlow(EduPerformanceUiState())
 	val uiState = combine(
-		_uiState, _eduPerformanceAsync, _period
-	) { state, gradesAsync, period ->
+		_uiState, _allEduPerformances, _period
+	) { state, allEduPerformances, period ->
 		state.copy(
-			eduPerformanceList = gradesAsync,
+			allEduPerformances = allEduPerformances,
+			eduPerformancesForPeriod = allEduPerformances.filter { it.eduPerformance.period == period },
 			period = period,
 		)
 	}.stateIn(viewModelScope, WhileUiSubscribed, EduPerformanceUiState())
@@ -93,8 +88,10 @@ class EduPerformanceViewModel @Inject constructor(
 			val periodType = userPreferencesRepository.getEducationPeriodType()
 			_periodType.update { periodType }
 			val periodsRanges = userPreferencesRepository.getPeriodsRanges()
-				.filter { getTypeByPeriod(it.period) == periodType }
-			val currentPeriod = periodsRanges.getCurrentPeriod()
+			val currentPeriod = getCurrentPeriodForUi(
+				allPeriodRanges = periodsRanges,
+				periodType = periodType
+			)
 			if (currentPeriod != null) {
 				changePeriod(currentPeriod)
 			}
@@ -123,9 +120,7 @@ class EduPerformanceViewModel @Inject constructor(
 							TAG, "performanceEntities.forEach: performanceDtos = $performanceDtos"
 						)
 						eduPerformanceRepository.upsertAll(
-							performanceDtos.toEduPerformanceEntities(
-								subjectRepository
-							)
+							performanceDtos.toEduPerformanceEntities(subjectRepository)
 						)
 					}
 				}

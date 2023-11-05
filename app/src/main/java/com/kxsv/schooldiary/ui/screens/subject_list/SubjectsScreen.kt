@@ -35,10 +35,13 @@ import com.kxsv.schooldiary.data.util.AppVersionState
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.SubjectsTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AppUpdateNavActions
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.SubjectsScreenNavActions
+import com.kxsv.schooldiary.ui.screens.destinations.AddEditSubjectScreenDestination
+import com.kxsv.schooldiary.ui.util.AppSnackbarHost
 import com.kxsv.schooldiary.ui.util.LoadingContent
-import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.ramcosta.composedestinations.result.NavResult
+import com.ramcosta.composedestinations.result.ResultRecipient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -46,6 +49,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SubjectsScreen(
 	destinationsNavigator: DestinationsNavigator,
+	subjectAddEditResult: ResultRecipient<AddEditSubjectScreenDestination, Int>,
 	drawerState: DrawerState,
 	coroutineScope: CoroutineScope,
 	viewModel: SubjectsViewModel = hiltViewModel(),
@@ -66,6 +70,14 @@ fun SubjectsScreen(
 			}
 			
 			else -> Unit
+		}
+	}
+	subjectAddEditResult.onNavResult { result ->
+		when (result) {
+			is NavResult.Canceled -> {}
+			is NavResult.Value -> {
+				viewModel.showEditResultMessage(result.value)
+			}
 		}
 	}
 	Scaffold(
@@ -112,7 +124,7 @@ private fun SubjectsContent(
 ) {
 	LoadingContent(
 		modifier = modifier,
-		loading = loading,
+		isLoading = loading,
 		empty = subjects.isEmpty(),
 		emptyContent = { Text(text = "No subjects yet") },
 		isContentScrollable = true,

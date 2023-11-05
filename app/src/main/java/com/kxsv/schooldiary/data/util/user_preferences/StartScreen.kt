@@ -20,15 +20,4 @@ enum class StartScreen(
 	AGENDA(TasksScreenDestination, R.string.agenda_title),
 	REPORT_CARD(EduPerformanceScreenDestination, R.string.report_card_title);
 	
-	companion object {
-		fun fromValue(input: Route): StartScreen = when (input) {
-			MainScreenDestination -> MAIN_SCREEN
-			NavGraphs.schedule -> SCHEDULE
-			GradesScreenDestination -> GRADE_FEED
-			TasksScreenDestination -> AGENDA
-			EduPerformanceScreenDestination -> REPORT_CARD
-			
-			else -> throw IllegalArgumentException("Wrong start screen input value($input)")
-		}
-	}
 }

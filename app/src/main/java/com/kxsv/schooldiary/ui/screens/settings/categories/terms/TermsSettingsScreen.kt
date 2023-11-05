@@ -47,8 +47,8 @@ import com.kxsv.schooldiary.data.util.user_preferences.PeriodType
 import com.kxsv.schooldiary.data.util.user_preferences.PeriodWithRange
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.TermsSettingsTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
+import com.kxsv.schooldiary.ui.util.AppSnackbarHost
 import com.kxsv.schooldiary.ui.util.LoadingContent
-import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.kxsv.schooldiary.util.Utils.localDateToPeriodRangeEntry
 import com.kxsv.schooldiary.util.Utils.periodRangeEntryToLocalDate
 import com.ramcosta.composedestinations.annotation.Destination
@@ -189,7 +189,7 @@ private fun TermsSettingsContent(
 ) {
 	LoadingContent(
 		modifier = modifier,
-		loading = loading,
+		isLoading = loading,
 		empty = (allPeriodRanges.isNullOrEmpty() && currentPeriodType == null)
 	) {
 		if (currentPeriodType != null && allPeriodRanges != null) {

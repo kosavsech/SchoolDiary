@@ -28,11 +28,11 @@ import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.screens.navArgs
 import com.kxsv.schooldiary.ui.screens.patterns.PatternSelectionResult
+import com.kxsv.schooldiary.util.Extensions.toList
 import com.kxsv.schooldiary.util.ListExtensionFunctions.copyExclusively
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.datestampToLocalDate
 import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
-import com.kxsv.schooldiary.util.Utils.toList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher

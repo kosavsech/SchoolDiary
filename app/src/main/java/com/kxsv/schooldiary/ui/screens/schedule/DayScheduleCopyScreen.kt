@@ -2,35 +2,33 @@ package com.kxsv.schooldiary.ui.screens.schedule
 
 import android.os.Parcelable
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.darkColors
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowLeft
-import androidx.compose.material.icons.filled.ArrowRight
 import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.ripple.LocalRippleTheme
 import androidx.compose.material.ripple.RippleTheme
 import androidx.compose.material3.Divider
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -46,18 +44,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
 import com.kizitonwose.calendar.core.CalendarDay
-import com.kizitonwose.calendar.core.DayPosition
 import com.kizitonwose.calendar.core.OutDateStyle
 import com.kizitonwose.calendar.core.daysOfWeek
 import com.kizitonwose.calendar.core.nextMonth
@@ -67,9 +61,11 @@ import com.kxsv.schooldiary.data.local.features.lesson.LessonWithSubject
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.CopyScheduleForDayTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.ScheduleNavGraph
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.DayScheduleCopyScreenNavActions
-import com.kxsv.schooldiary.ui.util.displayText
+import com.kxsv.schooldiary.ui.screens.attendance.CalendarHeader
+import com.kxsv.schooldiary.ui.screens.attendance.DayInCalendar
+import com.kxsv.schooldiary.ui.screens.attendance.MonthHeaderInCalendar
+import com.kxsv.schooldiary.ui.util.AppSnackbarHost
 import com.kxsv.schooldiary.ui.util.rememberFirstCompletelyVisibleMonth
-import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.result.ResultBackNavigator
@@ -80,7 +76,6 @@ import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 import com.vanpra.composematerialdialogs.title
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -212,8 +207,7 @@ fun DayScheduleCopyContent(
 	
 	Column(
 		modifier = modifier
-			.fillMaxSize()
-			.background(Color.DarkGray),
+			.fillMaxSize(),
 	) {
 		val state = rememberCalendarState(
 			startMonth = startMonth,
@@ -233,7 +227,7 @@ fun DayScheduleCopyContent(
 		CompositionLocalProvider(LocalContentColor provides darkColors().onSurface) {
 			CalendarHeader(
 				modifier = Modifier
-					.background(Color.Magenta.copy(red = 0.56F, alpha = 0.85f))
+					.background(MaterialTheme.colorScheme.primaryContainer)
 					.padding(horizontal = 8.dp, vertical = 12.dp),
 				currentMonth = visibleMonth.yearMonth,
 				goToPrevious = {
@@ -251,109 +245,100 @@ fun DayScheduleCopyContent(
 				modifier = Modifier.wrapContentWidth(),
 				state = state,
 				dayContent = { day ->
-					CompositionLocalProvider(LocalRippleTheme provides Example3RippleTheme) {
-						Day(
-							day = day,
-							isSelected = selectedCalendarDay == day,
-						) { clicked ->
-							updateSelectedCalendarDay(clicked)
-						}
+					DayInCalendar(
+						day = day,
+						isSelected = selectedCalendarDay == day,
+					) { clicked ->
+						updateSelectedCalendarDay(clicked)
 					}
 				},
 				monthHeader = {
-					MonthHeader(
+					MonthHeaderInCalendar(
 						modifier = Modifier.padding(vertical = 8.dp),
 						daysOfWeek = daysOfWeek,
 					)
 				},
 			)
-			Divider(color = Color.White)
-			if (classes.isNotEmpty()) {
-				LazyColumn(modifier = Modifier.fillMaxWidth()) {
-					item {
-						Row(
-							modifier = Modifier
-								.fillParentMaxWidth()
-								.padding(horizontal = 16.dp),
-							horizontalArrangement = Arrangement.SpaceBetween
-						) {
-							Row {
-								Box(
-									modifier = Modifier
-										.padding(6.dp)
-										.size(25.dp)
-										.aspectRatio(1f)
-										.clip(CircleShape)
-										.background(color = Color.Blue)
-								) {
-									Text(
-										modifier = Modifier
-											.align(Alignment.Center),
-										textAlign = TextAlign.Center,
-										text = classes.size.toString(),
-										color = Color.White,
-										fontSize = 12.sp,
-									)
-								}
-								Text(
-									modifier = Modifier
-										.align(Alignment.CenterVertically),
-									text = "Your classes",
-									color = Color.White,
-									fontSize = 12.sp,
-								)
-							}
-							Text(
-								modifier = Modifier
-									.align(Alignment.CenterVertically),
-								text = selectedCalendarDay?.date.toString(),
-								color = Color.White,
-								fontSize = 12.sp,
-							)
-						}
-					}
-					val maxLines = classes.maxBy { it.key }.key + 1
-					items(maxLines) {
-						ClassInformation(classes[it])
-					}
-				}
-			} else {
-				Box(
-					modifier = Modifier
-						.padding(4.dp)
-						.aspectRatio(1f)
-						.align(CenterHorizontally),
-					contentAlignment = Alignment.Center
-				) {
-					Text(
-						modifier = Modifier
-							.align(Alignment.Center),
-						textAlign = TextAlign.Center,
-						text = "No classes",
-						color = Color.White,
-						fontSize = 20.sp,
-					)
-				}
-			}
+			Divider(
+				modifier = Modifier
+					.padding(vertical = dimensionResource(R.dimen.list_item_padding))
+			)
+			ClassesPreview(classes, selectedCalendarDay)
 		}
 	}
 }
 
-
 @Composable
-private fun MonthHeader(
-	modifier: Modifier = Modifier,
-	daysOfWeek: List<DayOfWeek> = emptyList(),
+private fun ColumnScope.ClassesPreview(
+	classes: Map<Int, LessonWithSubject>,
+	selectedCalendarDay: CalendarDay?,
 ) {
-	Row(modifier.fillMaxWidth()) {
-		for (dayOfWeek in daysOfWeek) {
+	if (classes.isNotEmpty()) {
+		LazyColumn(modifier = Modifier.fillMaxWidth()) {
+			item {
+				Row(
+					modifier = Modifier
+						.fillParentMaxWidth()
+						.padding(horizontal = 16.dp),
+					horizontalArrangement = Arrangement.SpaceBetween
+				) {
+					Row {
+						Box(
+							modifier = Modifier
+								.size(25.dp)
+								.aspectRatio(1f)
+								.clip(CircleShape)
+								.background(color = MaterialTheme.colorScheme.secondary)
+						) {
+							Text(
+								modifier = Modifier
+									.align(Alignment.Center),
+								textAlign = TextAlign.Center,
+								text = classes.size.toString(),
+								color = MaterialTheme.colorScheme.onSecondary,
+								style = MaterialTheme.typography.labelMedium,
+							)
+						}
+						Spacer(Modifier.width(dimensionResource(R.dimen.list_item_padding)))
+						Text(
+							modifier = Modifier.align(Alignment.CenterVertically),
+							text = "Your classes",
+							color = MaterialTheme.colorScheme.onSurface,
+							style = MaterialTheme.typography.labelMedium,
+						)
+					}
+					Text(
+						modifier = Modifier
+							.align(Alignment.CenterVertically),
+						text = selectedCalendarDay?.date.toString(),
+						color = MaterialTheme.colorScheme.onSurface,
+						style = MaterialTheme.typography.labelMedium,
+					)
+				}
+			}
+			val maxLines = classes.maxBy { it.key }.key + 1
+			items(maxLines) { classIndex ->
+				ClassInformation(classes[classIndex])
+				if ((classIndex + 1) != maxLines) {
+					Divider(color = MaterialTheme.colorScheme.onBackground)
+				}
+			}
+		}
+	} else {
+		Box(
+			modifier = Modifier
+				.padding(4.dp)
+				.aspectRatio(1f)
+				.align(CenterHorizontally),
+			contentAlignment = Alignment.Center
+		) {
 			Text(
-				modifier = Modifier.weight(1f),
+				modifier = Modifier
+					.align(Alignment.Center),
 				textAlign = TextAlign.Center,
-				fontSize = 12.sp,
-				color = Color.White,
-				text = dayOfWeek.displayText(uppercase = true),
-				fontWeight = FontWeight.Light,
+				text = "No classes",
+				color = MaterialTheme.colorScheme.onSurface,
+				style = MaterialTheme.typography.bodyMedium,
 			)
 		}
 	}
@@ -364,81 +349,18 @@ private fun LazyItemScope.ClassInformation(lesson: LessonWithSubject?) {
 	Row(
 		modifier = Modifier
 			.fillParentMaxWidth()
-			.height(IntrinsicSize.Max)
-			.padding(vertical = dimensionResource(R.dimen.list_item_padding)),
-		horizontalArrangement = Arrangement.Center,
+			.padding(
+				vertical = dimensionResource(R.dimen.list_item_padding),
+				horizontal = dimensionResource(R.dimen.horizontal_margin)
+			),
+		horizontalArrangement = Arrangement.SpaceBetween,
+		verticalAlignment = Alignment.CenterVertically
 	) {
 		val lessonName = lesson?.subject?.getName() ?: ""
-		Text(text = lessonName)
-	}
-	Divider(color = Color.White, thickness = 2.dp)
-}
-
-@Composable
-private fun Day(
-	day: CalendarDay,
-	isSelected: Boolean = false,
-	onClick: (CalendarDay) -> Unit = {},
-) {
-	Box(
-		modifier = Modifier
-			.aspectRatio(1f) // This is important for square-sizing!
-			.border(
-				width = if (isSelected) 1.dp else 0.dp,
-				color = if (isSelected) Color.Gray else Color.Transparent,
-			)
-			.padding(1.dp)
-			.background(color = Color.DarkGray)
-			// Disable clicks on inDates/outDates
-			.clickable(
-				enabled = day.position == DayPosition.MonthDate,
-				onClick = { onClick(day) },
-			),
-	) {
-		val textColor = when (day.position) {
-			DayPosition.MonthDate -> Color.Unspecified
-			DayPosition.InDate, DayPosition.OutDate -> Color.Transparent
-		}
 		Text(
-			modifier = Modifier
-				.align(Alignment.Center)
-				.padding(top = 3.dp, end = 3.dp),
-			text = day.date.dayOfMonth.toString(),
-			color = textColor,
-			fontSize = 12.sp,
-		)
-	}
-}
-
-@Composable
-private fun CalendarHeader(
-	modifier: Modifier,
-	currentMonth: YearMonth,
-	goToPrevious: () -> Unit,
-	goToNext: () -> Unit,
-) {
-	Row(
-		modifier = modifier.height(35.dp),
-		verticalAlignment = Alignment.CenterVertically,
-	) {
-		CalendarNavigationIcon(
-			imageVector = Icons.Default.ArrowLeft,
-			contentDescription = "Previous",
-			onClick = goToPrevious,
-		)
-		Text(
-			modifier = Modifier
-				.weight(1f)
-				.testTag("MonthTitle"),
-			text = currentMonth.displayText(),
-			fontSize = 22.sp,
-			textAlign = TextAlign.Center,
-			fontWeight = FontWeight.Medium,
-		)
-		CalendarNavigationIcon(
-			imageVector = Icons.Default.ArrowRight,
-			contentDescription = "Next",
-			onClick = goToNext,
+			modifier = Modifier.weight(0.75f),
+			text = lessonName,
+			color = MaterialTheme.colorScheme.onSurface
 		)
 	}
 }

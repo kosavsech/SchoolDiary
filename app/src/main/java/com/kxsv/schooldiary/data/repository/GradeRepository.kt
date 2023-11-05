@@ -18,9 +18,9 @@ interface GradeRepository {
 	
 	fun observeAllWithSubjectOrderedByFetchDate(): Flow<List<GradeWithSubject>>
 	
-	fun getGradesBySubjectIdStream(subjectId: String): Flow<List<GradeEntity>>
+	fun observeGradesBySubjectId(subjectId: String): Flow<List<GradeEntity>>
 	
-	fun getGradeStream(gradeId: String): Flow<GradeEntity>
+	fun observeGradeById(gradeId: String): Flow<GradeEntity>
 	
 	suspend fun getGrades(): List<GradeEntity>
 	

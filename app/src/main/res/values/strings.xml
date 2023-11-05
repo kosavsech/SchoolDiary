@@ -255,5 +255,25 @@
     <string name="calendar_scroll_paged">Calendar scroll paged</string>
     <string name="calendar_scroll_paged_not_found">Calendar scroll paged not found</string>
     <string name="year">Year</string>
+    <string name="study_days_until_holidays">Study days until holidays</string>
+    <string name="days_until_holidays">Days until holidays</string>
+    <string name="days_until_holidays_end">Days until holidays end</string>
+    <string name="study_days_until_period_end">Study days until period end</string>
+    <string name="days_until_period_end">Days until period end</string>
+    <string name="holidays">Holidays</string>
+    <string name="label_target_mark">Target mark</string>
+    <string name="place_holder_mark">2.89</string>
+    <string name="error_msg_mark_input">Follow the format.\nAlso ensure that target is more than 2 and is less than 5</string>
+    <string name="label_lower_bound_mark">Lower bound mark</string>
+    <string name="enter_lower_bound_mark_dialog_title">Enter lower bound mark:</string>
+    <string name="default_lower_bound_mark_not_found">Default lower bound mark not found</string>
+    <string name="default_lower_bound_mark">Default lower bound</string>
+    <string name="enter_default_lower_bound_mark_dialog_title">Enter default lower bound mark</string>
+    <string name="default_lower_bound_mark_description">This mark will be used in calculations of bad marks posible estimated</string>
+    <string name="edit_lower_bound_mark">Edit lower bound mark</string>
+    <string name="current_mark_save">"Current mark "</string>
+    <string name="no_grades_yet">No grades fetched and saved yet</string>
+    <string name="lessons_left_desc">With lessons amount as shown below</string>
+    <string name="lessons_left">"Lesson hours left: %1$s"</string>
 
 </resources>

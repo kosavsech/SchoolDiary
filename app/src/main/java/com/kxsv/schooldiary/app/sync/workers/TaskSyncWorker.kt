@@ -33,6 +33,7 @@ import com.kxsv.schooldiary.di.util.TaskSummaryNotification
 import com.kxsv.schooldiary.ui.screens.destinations.TaskDetailScreenDestination
 import com.kxsv.schooldiary.ui.screens.grade_list.MY_URI
 import com.kxsv.schooldiary.util.PERMISSION_REQUEST_CODE
+import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.measurePerformanceInMS
 import com.kxsv.schooldiary.util.isPermissionGranted
 import dagger.assisted.Assisted
@@ -41,7 +42,6 @@ import kotlinx.coroutines.TimeoutCancellationException
 import org.jsoup.HttpStatusException
 import org.jsoup.UnsupportedMimeTypeException
 import java.io.IOException
-import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
@@ -133,10 +133,19 @@ class TaskSyncWorker @AssistedInject constructor(
 	
 	private fun createNotification(taskWithSubject: TaskWithSubject): Notification {
 		createNotificationChannel()
-		val subjectNameShortened = taskWithSubject.subject.getName()
-			.take(10) + if (taskWithSubject.subject.getName().length > 10) "... " else " "
-		val dateText = taskWithSubject.taskEntity.dueDate.format(DateTimeFormatter.ISO_LOCAL_DATE)
-		val title = subjectNameShortened + dateText
+		val dateText = taskWithSubject.taskEntity.dueDate.format(Utils.monthDayDateFormatter)
+		val rawSubjectName = taskWithSubject.subject.getName()
+		val subjectNameLength = rawSubjectName.length
+		val notificationTitleLimit = 50
+		val subjectName =
+			if (dateText.length + " ".length + subjectNameLength > notificationTitleLimit) {
+				val charExcess =
+					notificationTitleLimit - dateText.length - "... ".length - subjectNameLength
+				rawSubjectName.take(subjectNameLength + charExcess) + "... "
+			} else {
+				"$rawSubjectName "
+			}
+		val title = subjectName + dateText
 		
 		val text = when (taskWithSubject.taskEntity.fetchedTitleBoundToId) {
 			null -> taskWithSubject.taskEntity.title

@@ -13,6 +13,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class UserPreferences(
 	val defaultTargetMark: Double = 4.6,
+	val defaultLowerBoundMark: Double = 2.6,
 	val defaultRoundRule: Double = 0.6,
 	val defaultLessonDuration: Long = 45,
 	val suppressInitLogin: Boolean = false,
@@ -22,31 +23,31 @@ data class UserPreferences(
 	val periodsRanges: PersistentList<PeriodWithRange> = persistentListOf(
 		PeriodWithRange(
 			Period.FIRST_TERM,
-			PeriodDateRange(start = "9_1", end = "10_31")
+			PeriodDateRange(start = "9_1", end = "10_27")
 		),
 		PeriodWithRange(
 			Period.SECOND_TERM,
-			PeriodDateRange(start = "11_8", end = "12_28")
+			PeriodDateRange(start = "11_7", end = "12_29")
 		),
 		PeriodWithRange(
 			Period.THIRD_TERM,
-			PeriodDateRange(start = "1_12", end = "3_27")
+			PeriodDateRange(start = "1_9", end = "3_22")
 		),
 		PeriodWithRange(
 			Period.FOURTH_TERM,
-			PeriodDateRange(start = "4_6", end = "5_31")
+			PeriodDateRange(start = "4_1", end = "5_25")
 		),
 		PeriodWithRange(
 			Period.FIRST_SEMESTER,
-			PeriodDateRange(start = "9_1", end = "12_27")
+			PeriodDateRange(start = "9_1", end = "12_29")
 		),
 		PeriodWithRange(
 			Period.SECOND_SEMESTER,
-			PeriodDateRange(start = "1_9", end = "5_31")
+			PeriodDateRange(start = "1_9", end = "5_25")
 		)
 	),
 	val defaultPatternId: Long = 1L,
-	val calendarScrollPaged: Boolean = false,
+	val calendarScrollPaged: Boolean = true,
 	
 	val eduLogin: String? = null,
 	val eduPassword: String? = null,

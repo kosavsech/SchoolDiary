@@ -43,8 +43,8 @@ import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.Patt
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditPatternTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AddEditPatternScreenNavActions
 import com.kxsv.schooldiary.ui.screens.navArgs
+import com.kxsv.schooldiary.ui.util.AppSnackbarHost
 import com.kxsv.schooldiary.ui.util.LoadingContent
-import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.kxsv.schooldiary.util.Utils.fromLocalTime
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -177,7 +177,7 @@ private fun AddEditPatternContent(
 ) {
 	LoadingContent(
 		modifier = modifier,
-		loading = loading,
+		isLoading = loading,
 		empty = false,
 		onRefresh = null
 	) {

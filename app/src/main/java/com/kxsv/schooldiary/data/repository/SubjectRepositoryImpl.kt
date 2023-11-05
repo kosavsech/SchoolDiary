@@ -13,10 +13,10 @@ import com.kxsv.schooldiary.data.util.DataIdGenUtils.generateSubjectId
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import com.kxsv.schooldiary.data.util.user_preferences.Period
 import com.kxsv.schooldiary.data.util.user_preferences.PeriodType
+import com.kxsv.schooldiary.util.Extensions.toList
 import com.kxsv.schooldiary.util.Utils
 import com.kxsv.schooldiary.util.Utils.isHoliday
 import com.kxsv.schooldiary.util.Utils.periodRangeEntryToLocalDate
-import com.kxsv.schooldiary.util.Utils.toList
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -55,15 +55,15 @@ class SubjectRepositoryImpl @Inject constructor(
 		val endRange = Utils.currentDate.plusDays(7)
 		
 		val periodType = userPreferencesRepository.getEducationPeriodType()
-		val periodsRanges = userPreferencesRepository.getPeriodsRanges()
-			.filter { Period.getTypeByPeriod(it.period) == periodType }
+		val termsPeriodsRanges = userPreferencesRepository.getPeriodsRanges()
+			.filter { Period.getTypeByPeriod(it.period) == PeriodType.TERMS }
 			.map {
 				periodRangeEntryToLocalDate(it.range.start)..periodRangeEntryToLocalDate(it.range.end)
 			}
 		
 		val dayInfos = mutableListOf<Deferred<Elements>>()
 		(startRange..endRange).toList().forEach { date ->
-			if (isHoliday(date, periodsRanges)) return@forEach
+			if (isHoliday(date, termsPeriodsRanges)) return@forEach
 			dayInfos += async { webService.getDayInfo(date) }
 		}
 		val termIndexRange = if (periodType == PeriodType.TERMS) {

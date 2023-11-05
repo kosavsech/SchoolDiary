@@ -16,7 +16,7 @@ import com.kxsv.schooldiary.data.util.Mark
 			entity = SubjectEntity::class,
 			parentColumns = ["subjectId"],
 			childColumns = ["subjectMasterId"],
-			onDelete = ForeignKey.SET_DEFAULT
+			onDelete = ForeignKey.CASCADE
 		),
 	],
 	indices = [Index(value = ["subjectMasterId"])]

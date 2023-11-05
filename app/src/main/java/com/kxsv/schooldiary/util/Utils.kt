@@ -4,21 +4,14 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.util.Log
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringArrayResource
-import androidx.compose.ui.res.stringResource
-import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.PatternStrokeEntity
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
 import com.kxsv.schooldiary.data.util.Mark
 import com.kxsv.schooldiary.data.util.user_preferences.Period
 import com.kxsv.schooldiary.data.util.user_preferences.PeriodType
 import com.kxsv.schooldiary.data.util.user_preferences.PeriodWithRange
+import com.kxsv.schooldiary.util.Extensions.roundTo
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import java.time.DayOfWeek
@@ -36,23 +29,20 @@ private const val TAG = "Utils"
 
 object Utils {
 	val taskDueDateFormatterLong: DateTimeFormatter = DateTimeFormatter.ofPattern("eeee, MMMM d")
+	val monthDayDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("MMM d")
 	val currentDate: LocalDate = LocalDate.now()
+	private val holidays: List<String> = listOf(
+		"11_6", "2_23", "3_8", "5_1", "5_9", "5_10",
+	)
 	
-	@Composable
-	fun AppSnackbarHost(hostState: SnackbarHostState) {
-		SnackbarHost(hostState = hostState) { data ->
-			Snackbar(
-				snackbarData = data,
-				containerColor = MaterialTheme.colorScheme.inverseSurface,
-				contentColor = MaterialTheme.colorScheme.inverseOnSurface
-			)
-		}
-	}
-	
-	fun isHoliday(givenDate: LocalDate, periodsRanges: List<ClosedRange<LocalDate>>): Boolean {
-		if (givenDate.dayOfWeek == DayOfWeek.SUNDAY) return true
-		return periodsRanges.all { periodDateRange ->
-			givenDate !in periodDateRange
+	fun isHoliday(date: LocalDate, termsPeriodRanges: List<ClosedRange<LocalDate>>): Boolean {
+		if (date.dayOfWeek == DayOfWeek.SUNDAY) return true
+		
+		val isNonWorking = date in (holidays.map { periodRangeEntryToLocalDate(it) })
+		return if (!isNonWorking) {
+			termsPeriodRanges.all { date !in it }
+		} else {
+			true
 		}
 	}
 	
@@ -67,50 +57,156 @@ object Utils {
 		else -> null
 	}
 	
+	fun calculateStudyDaysUntilHolidaysStart(allPeriodRanges: List<PeriodWithRange>): Int? {
+		val currentPeriodResult = calculateDaysUntilHolidaysStart(allPeriodRanges) ?: return null
+		val termsPeriodsRanges = allPeriodRanges
+			.filter { Period.getTypeByPeriod(it.period) == PeriodType.TERMS }
+			.map {
+				periodRangeEntryToLocalDate(it.range.start)..periodRangeEntryToLocalDate(it.range.end)
+			}
+		var counter = 0
+		for (i in 0L until currentPeriodResult) {
+			val date = currentDate.plusDays(i)
+			if (!isHoliday(date, termsPeriodsRanges)) counter++
+		}
+		return counter
+	}
 	
-	fun Collection<PeriodWithRange>.getCurrentPeriod(): EduPerformancePeriod? {
-		if (this.isEmpty()) return null
+	fun calculateStudyDaysUntilPeriodEnd(
+		allPeriodRanges: List<PeriodWithRange>,
+		periodType: PeriodType,
+	): Int? {
+		val currentPeriodResult =
+			calculateDaysUntilPeriodEnd(allPeriodRanges, periodType) ?: return null
+		val termsPeriodsRanges = allPeriodRanges
+			.filter { Period.getTypeByPeriod(it.period) == PeriodType.TERMS }
+			.map {
+				periodRangeEntryToLocalDate(it.range.start)..periodRangeEntryToLocalDate(it.range.end)
+			}
+		var counter = 0
+		for (i in 0L until currentPeriodResult) {
+			val date = currentDate.plusDays(i)
+			if (!isHoliday(date, termsPeriodsRanges)) counter++
+		}
+		return counter
+	}
+	
+	fun calculateDaysUntilPeriodStart(
+		allPeriodRanges: List<PeriodWithRange>, periodType: PeriodType,
+	): Int? {
+		if (allPeriodRanges.isEmpty()) return null
+		
+		val periodsRanges =
+			allPeriodRanges.filter { Period.getTypeByPeriod(it.period) == periodType }
 		
 		val lastPeriodEnd =
-			periodRangeEntryToLocalDate(this.maxBy { it.period.ordinal }.range.end)
-		
-		var holidayCandidate: Pair<PeriodWithRange?, Long> = Pair(null, 366)
+			periodRangeEntryToLocalDate(periodsRanges.maxBy { it.period.ordinal }.range.end)
 		if (currentDate.isAfter(lastPeriodEnd)) {
-			return EduPerformancePeriod.FOURTH
-		} else {
-			this.forEach { periodWithRange ->
-				val startDate = periodRangeEntryToLocalDate(periodWithRange.range.start)
-				val endDate = periodRangeEntryToLocalDate(periodWithRange.range.end)
-				val periodTimeRange = startDate..endDate
-				
-				if (currentDate in periodTimeRange) {
-					/*Log.d(
-						TAG,
-						"getCurrentPeriod() returned: ${periodWithRange.period.convertToEduPerformancePeriod()}"
-					)*/
-					return periodWithRange.period.convertToEduPerformancePeriod()
-				} else {
-					val daysUntilEnd = currentDate.until(endDate, ChronoUnit.DAYS)
-					if (daysUntilEnd > 0) {
-//						Log.d(TAG, "getCurrentPeriod() skipped: $periodWithRange")
-						return@forEach
-					}
-					if (daysUntilEnd < holidayCandidate.second) {
-//						Log.d(TAG, "getCurrentPeriod: was $holidayCandidate")
-						holidayCandidate = Pair(periodWithRange, daysUntilEnd)
-//						Log.d(TAG, "getCurrentPeriod: become $holidayCandidate")
-					}
-				}
-			}
+			val firstPeriodStart =
+				periodRangeEntryToLocalDate(periodsRanges.minBy { it.period.ordinal }.range.start)
+			return (currentDate.until(firstPeriodStart, ChronoUnit.DAYS) + 1).toInt()
 		}
 		
-		val result = if (holidayCandidate.first != null) {
-			holidayCandidate.first!!.period.convertToEduPerformancePeriod()
+		var candidate: Pair<PeriodWithRange?, Long> = Pair(null, 366)
+		periodsRanges.forEach { periodWithRange: PeriodWithRange ->
+			val periodStart = periodRangeEntryToLocalDate(periodWithRange.range.start)
+			val periodEnd = periodRangeEntryToLocalDate(periodWithRange.range.end)
+			val periodTimeRange = periodStart..periodEnd
+			
+			if (currentDate !in periodTimeRange) {
+				val daysUntilStart = currentDate.until(periodStart, ChronoUnit.DAYS)
+				if (daysUntilStart < 0) return@forEach
+				
+				if (daysUntilStart < candidate.second) {
+					candidate = Pair(periodWithRange, daysUntilStart)
+				}
+			} else {
+				return null
+			}
+		}
+		return if (candidate.first != null) {
+			candidate.second.toInt()
 		} else {
 			null
 		}
-//		Log.d(TAG, "getCurrentPeriod() returned candidate: $result")
-		return result
+	}
+	
+	fun calculateDaysUntilHolidaysEnd(
+		allPeriodRanges: List<PeriodWithRange>,
+	): Int? = calculateDaysUntilPeriodStart(allPeriodRanges, PeriodType.TERMS)
+	
+	fun calculateDaysUntilPeriodEnd(
+		allPeriodRanges: List<PeriodWithRange>, periodType: PeriodType,
+	): Int? {
+		if (allPeriodRanges.isEmpty()) return null
+		
+		val periodsRanges =
+			allPeriodRanges.filter { Period.getTypeByPeriod(it.period) == periodType }
+		
+		val finalPeriodsEnd =
+			periodRangeEntryToLocalDate(periodsRanges.maxBy { it.period.ordinal }.range.end)
+		if (currentDate.isAfter(finalPeriodsEnd)) return null
+		
+		periodsRanges.forEach { periodWithRange: PeriodWithRange ->
+			val periodStart = periodRangeEntryToLocalDate(periodWithRange.range.start)
+			val periodEnd = periodRangeEntryToLocalDate(periodWithRange.range.end)
+			val periodTimeRange = periodStart..periodEnd
+			
+			if (currentDate in periodTimeRange) {
+				return (currentDate.until(periodEnd, ChronoUnit.DAYS) + 1).toInt()
+			}
+		}
+		return null
+	}
+	
+	fun calculateDaysUntilHolidaysStart(
+		allPeriodRanges: List<PeriodWithRange>,
+	): Int? = calculateDaysUntilPeriodEnd(allPeriodRanges, PeriodType.TERMS)
+	
+	/**
+	 * Gets current period for ui.
+	 * If current date is in range of period, then return it.
+	 * Else return closest next period
+	 *
+	 * @param allPeriodRanges
+	 * @param periodType
+	 * @return
+	 */
+	fun getCurrentPeriodForUi(
+		allPeriodRanges: List<PeriodWithRange>, periodType: PeriodType,
+	): EduPerformancePeriod? {
+		if (allPeriodRanges.isEmpty()) return null
+		
+		val periodsRanges =
+			allPeriodRanges.filter { Period.getTypeByPeriod(it.period) == periodType }
+		
+		val lastPeriodEnd =
+			periodRangeEntryToLocalDate(periodsRanges.maxBy { it.period.ordinal }.range.end)
+		if (currentDate.isAfter(lastPeriodEnd)) return EduPerformancePeriod.FOURTH
+		
+		var candidate: Pair<PeriodWithRange?, Long> = Pair(null, 366)
+		periodsRanges.forEach { periodWithRange ->
+			val periodStart = periodRangeEntryToLocalDate(periodWithRange.range.start)
+			val periodEnd = periodRangeEntryToLocalDate(periodWithRange.range.end)
+			val periodTimeRange = periodStart..periodEnd
+			
+			if (currentDate !in periodTimeRange) {
+				val daysUntilEnd = currentDate.until(periodEnd, ChronoUnit.DAYS) + 1
+				if (daysUntilEnd < 0) return@forEach
+				
+				if (daysUntilEnd < candidate.second) {
+					candidate = Pair(periodWithRange, daysUntilEnd)
+				}
+			} else {
+				return periodWithRange.period.convertToEduPerformancePeriod()
+			}
+		}
+		
+		return if (candidate.first != null) {
+			candidate.first!!.period.convertToEduPerformancePeriod()
+		} else {
+			null
+		}
 	}
 	
 	fun List<PatternStrokeEntity>.getCurrentLessonIndexByTime(currentTime: LocalTime): Int? {
@@ -167,7 +263,8 @@ object Utils {
 	}
 	
 	/**
-	 * Gets next [n] lessons indices after [startIndex]
+	 * Gets next [n] lessons indices after [startIndex].
+	 * Used on list of lessons indices.
 	 *
 	 * @param n how much lessons to take
 	 * @param startIndex starting index to search lessons
@@ -199,7 +296,6 @@ object Utils {
 	
 	fun fromLocalTime(localTime: LocalTime?): String? =
 		localTime?.format(DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH))
-	
 	
 	fun localDateToPeriodRangeEntry(date: LocalDate): String =
 		"${date.monthValue}_${date.dayOfMonth}"
@@ -238,23 +334,7 @@ object Utils {
 	fun localDateToDatestamp(date: LocalDate?): Long? =
 		date?.atStartOfDay(ZoneId.of("Europe/Moscow"))?.toEpochSecond()
 	
-	fun Double.stringRoundTo(n: Int): String {
-		return String.format("%.${n}f", this, Locale.ENGLISH)
-	}
-	
-	fun Double.roundTo(n: Int): Double {
-		return String.format("%.${n}f", this, Locale.ENGLISH).toDouble()
-	}
-	
-	fun Float.stringRoundTo(n: Int): String {
-		return String.format("%.${n}f", this, Locale.ENGLISH)
-	}
-	
-	fun Float.roundTo(n: Int): Float {
-		return String.format("%.${n}f", this, Locale.ENGLISH).toFloat()
-	}
-	
-	fun roundWithRule(x: Double, roundRule: Double): Double {
+	private fun roundWithRule(x: Double, roundRule: Double): Double {
 		val floored = floor(x)
 		return if (x >= (floored + roundRule)) {
 			ceil(x)
@@ -264,63 +344,120 @@ object Utils {
 	}
 	
 	/**
-	 * @param x which is [grade][Mark.value]
-	 * @throws IllegalArgumentException if param [x] > [5][Mark.FIVE] or [x] < [2][Mark.TWO]
+	 * @param mark is mark with type [Double] so could consume any number of marks.
+	 * @throws IllegalArgumentException if param [mark] > [5][Mark.FIVE] or [mark] < [2][Mark.TWO]
 	 */
-	fun getLowerBoundOfGrade(x: Int, roundRule: Double): Double {
-		if (x > Mark.FIVE.value!! || x < Mark.TWO.value!!) throw IllegalArgumentException("Non-existent grade")
-		return x - 1 + roundRule
-	}
-	
-	/**
-	 * @param x is mark with type [Double] so could consume any number of marks.
-	 * @throws IllegalArgumentException if param [x] > [5][Mark.FIVE] or [x] < [2][Mark.TWO]
-	 */
-	fun getLowerBoundForMark(x: Double, roundRule: Double): Double {
-		if (x > Mark.FIVE.value!! || x < Mark.TWO.value!!) throw IllegalArgumentException("Non-existent mark")
-		return roundWithRule(x, roundRule) - 1 + roundRule
-	}
-	
-	/**
-	 *
-	 * @return null if string is either null or empty or consists solely
-	 * of whitespace characters, else trimmed self
-	 */
-	fun String?.nonEmptyTrim(): String? {
-		return this.let {
-			if (it.isNullOrBlank()) {
-				return@let null
-			} else {
-				return@let it.trim()
-			}
-		}
+	fun getRuinBoundForMark(mark: Double, roundRule: Double): Double {
+		if (mark > Mark.FIVE.value!! || mark < Mark.TWO.value!!) throw IllegalArgumentException("Non-existent mark")
+		return roundWithRule(mark, roundRule) - 1 + roundRule
 	}
 	
 	fun calculateMarksUntilTarget(
+		roundRule: Double,
 		target: Double,
 		avgMark: Double,
 		sum: Int,
 		valueSum: Double,
-	): Map<Int, Int?> {
-		fun calculateGrades(grade: Int): Int? {
-			var processAvg = avgMark
-			var gradeCount: Int = if (processAvg >= grade) return null else 0
-			while (processAvg < target && gradeCount < 81) {
-				gradeCount++
-				processAvg = (valueSum + grade * gradeCount) / (sum + gradeCount)
+	): List<CalculatedMark> {
+		fun calculateGrades(strategy: MarkStrategy): CalculatedMark? {
+			val strategyGrades = strategy.getIntValuesOfGrades() ?: return null
+			
+			when (strategyGrades.size) {
+				1 -> {
+					val strategyGrade = strategyGrades.component1()
+					var gradeCount =
+						if (strategyGrade < getRuinBoundForMark(avgMark, roundRule)) {
+							Log.w(
+								TAG,
+								"calculateMarksUntilTarget: auto-skip of $strategyGrade strategy"
+							)
+							return null
+						} else {
+							1
+						}
+					
+					while (true) {
+						val valueOfAddedByGrade = strategyGrade * gradeCount
+						
+						val interimValue = valueSum + valueOfAddedByGrade
+						val interimSum = sum + gradeCount
+						val interimAvg = interimValue / interimSum
+						
+						if (interimAvg >= target || gradeCount == 50) {
+							return if (gradeCount != 0 && gradeCount != 50) {
+								val result = CalculatedMark(
+									strategy = strategy,
+									count = listOf(gradeCount),
+									outcome = interimAvg.roundTo(2)
+								)
+								Log.d(
+									TAG,
+									"calculateMarksUntilTarget($strategyGrade) returned: $result"
+								)
+								result
+							} else {
+								null
+							}
+						}
+						
+						gradeCount++
+					}
+					
+				}
+				
+				2 -> {
+					val maxGrade = maxOf(strategyGrades.component1(), strategyGrades.component2())
+					if (maxGrade < getRuinBoundForMark(avgMark, roundRule)) {
+						Log.w(
+							TAG,
+							"calculateMarksUntilTarget: auto-skip of ${strategyGrades[0]} and ${strategyGrades[1]}"
+						)
+						return null
+					}
+					
+					var applyingFirstGrade = false
+					var firstGradeCount = 0
+					var secondGradeCount = 1
+					
+					while (true) {
+						val valueOfAddedByFirst = strategyGrades.component1() * firstGradeCount
+						val valueOfAddedBySecond = strategyGrades.component2() * secondGradeCount
+						
+						val interimValue = valueSum + valueOfAddedByFirst + valueOfAddedBySecond
+						val interimSum = sum + firstGradeCount + secondGradeCount
+						val interimAvg = interimValue / interimSum
+						
+						applyingFirstGrade =
+							if (interimAvg < target && firstGradeCount < 50 && secondGradeCount < 50) {
+								!applyingFirstGrade
+							} else {
+								return if (firstGradeCount != 50 && secondGradeCount != 50 && secondGradeCount != 0) {
+									val result = CalculatedMark(
+										strategy = strategy,
+										count = listOf(firstGradeCount, secondGradeCount),
+										outcome = interimAvg.roundTo(2)
+									)
+									result
+								} else {
+									null
+								}
+							}
+						if (applyingFirstGrade) firstGradeCount++ else secondGradeCount++
+					}
+				}
+				
+				else -> return null
 			}
-			return gradeCount
 		}
 		
-		val result = mutableMapOf<Int, Int?>()
-		for (i in 3..5) {
-			result[i] = calculateGrades(grade = i)
+		val result = mutableListOf<CalculatedMark>()
+		MarkStrategy.values().dropLast(2).forEach { markStrategy ->
+			calculateGrades(markStrategy)?.let {
+				result.add(it)
+			}
 		}
 		return result
 	}
-	
-	private fun <T> List<T>.isEqualsIgnoreOrder(other: List<T>) =
-		this.size == other.size && this.toSet() == other.toSet()
 	
 	fun calculateRealizableBadMarks(
 		roundRule: Double,
@@ -328,53 +465,53 @@ object Utils {
 		avgMark: Double,
 		sum: Int,
 		valueSum: Double,
-	): List<RealizableBadMarks> {
-		fun calculateGrades(strategy: BadMarkStrategy): RealizableBadMarks? {
+	): List<CalculatedMark> {
+		fun calculateGrades(strategy: MarkStrategy): CalculatedMark? {
 			var currentInProcessAvg = avgMark
-			val strategyGrades = strategy.getIntValuesOfGrades()
-			if (strategyGrades.first() == null) return null
+			val strategyGrades = strategy.getIntValuesOfGrades() ?: return null
+			
 			when (strategyGrades.size) {
 				1 -> {
-					var firstGradeCount: Int =
-						if (strategyGrades.first()!!
-							>= roundWithRule(currentInProcessAvg, roundRule)
-						) {
-							Log.w(TAG, "calculateGrades: auto-skip of ${strategyGrades[0]}")
+					val strategyGrade = strategyGrades.component1()
+					var gradeCount =
+						if (strategyGrade >= lowerBound) {
+							Log.w(TAG, "calculateGrades: auto-skip of $strategyGrade strategy")
 							return null
 						} else {
 							1
 						}
 					
 					while (true) {
-						val valueOfFirstGradeAdded = strategyGrades.first()!! * firstGradeCount
-						val finalValue = valueSum + valueOfFirstGradeAdded
-						val finalSum = sum + firstGradeCount
+						val valueOfAddedByGrade = strategyGrade * gradeCount
 						
-						(finalValue / finalSum).let {
-							if (it >= lowerBound) {
-								Log.d(TAG, "currentInProcessAvg: $it > $lowerBound")
-								currentInProcessAvg = it
-							} else {
-								return if ((firstGradeCount - 1) != 0) {
-									val result = RealizableBadMarks(
-										strategy = strategy,
-										count = listOf(firstGradeCount - 1)
-									)
-									Log.d(TAG, "calculateGrades(1) returned: $result")
-									result
-								} else {
-									null
-								}
-							}
+						val interimValue = valueSum + valueOfAddedByGrade
+						val interimSum = sum + gradeCount
+						val interimAvg = interimValue / interimSum
+						
+						if (interimAvg >= lowerBound && gradeCount <= 100) {
+							Log.d(TAG, "currentInProcessAvg: $interimAvg > $lowerBound")
+							currentInProcessAvg = interimAvg
+						} else if ((gradeCount - 1) != 0) {
+							val result = CalculatedMark(
+								strategy = strategy,
+								count = listOf(gradeCount - 1),
+								outcome = currentInProcessAvg.roundTo(2)
+							)
+							Log.d(TAG, "calculateGrades(1) returned: $result")
+							return result
+						} else {
+							return null
 						}
-						firstGradeCount++
+						
+						
+						gradeCount++
 					}
 					
 				}
 				
 				2 -> {
-					val maxGrade = maxOf(strategyGrades.first()!!, strategyGrades.last()!!)
-					if (maxGrade >= roundWithRule(currentInProcessAvg, roundRule)) {
+					val maxGrade = maxOf(strategyGrades.component1(), strategyGrades.component2())
+					if (maxGrade >= lowerBound) {
 						Log.w(
 							TAG,
 							"calculateGrades: auto-skip of ${strategyGrades[0]} and ${strategyGrades[1]}"
@@ -390,47 +527,50 @@ object Utils {
 					var isFirstGradeBanned = false
 					
 					while (true) {
-						val valueOfFirstGradeAdded = strategyGrades.first()!! * firstGradeCount
-						val valueOfSecondGradeAdded = strategyGrades.last()!! * secondGradeCount
-						val finalValue =
-							valueSum + valueOfFirstGradeAdded + valueOfSecondGradeAdded
-						val finalSum = sum + firstGradeCount + secondGradeCount
+						val valueOfAddedByFirst = strategyGrades.component1() * firstGradeCount
+						val valueOfAddedBySecond = strategyGrades.component2() * secondGradeCount
 						
-						(finalValue / finalSum).let {
-							if (it >= lowerBound) {
-								currentInProcessAvg = it
-							} else {
-								if (applyingFirstGrade) {
-									firstGradeCount--
-									isFirstGradeBanned = true
-								} else {
-									secondGradeCount--
-									isSecondGradeBanned = true
-								}
-							}
-						}
+						val interimValue = valueSum + valueOfAddedByFirst + valueOfAddedBySecond
+						val interimSum = sum + firstGradeCount + secondGradeCount
+						val interimAvg = interimValue / interimSum
 						
-						applyingFirstGrade = if (isFirstGradeBanned || isSecondGradeBanned) {
-							if (isFirstGradeBanned && isSecondGradeBanned) {
-								return if (firstGradeCount != 0 && secondGradeCount != 0) {
-									val result = RealizableBadMarks(
-										strategy = strategy,
-										count = listOf(firstGradeCount, secondGradeCount)
-									)
-									result
-								} else {
-									null
-								}
-							} else {
-								!isFirstGradeBanned
-								// !isFirstGradeBanned == isSecondGradeBanned
-								// Because we are checking, if we applying first grade
-								// on next iteration. And one of them is guaranteed banned.
-							}
+						if (interimAvg >= lowerBound) {
+							currentInProcessAvg = interimAvg
 						} else {
-							// casual in-progress behaviour of switcher
-							!applyingFirstGrade
+							if (applyingFirstGrade) {
+								firstGradeCount--
+								isFirstGradeBanned = true
+							} else {
+								secondGradeCount--
+								isSecondGradeBanned = true
+							}
 						}
+						
+						
+						applyingFirstGrade =
+							if ((isFirstGradeBanned || isSecondGradeBanned) || (firstGradeCount >= 100 || secondGradeCount >= 100)) {
+								if (isFirstGradeBanned && isSecondGradeBanned || (firstGradeCount >= 100 || secondGradeCount >= 100)) {
+									return if (firstGradeCount != 0 && secondGradeCount != 0) {
+										val result = CalculatedMark(
+											strategy = strategy,
+											count = listOf(firstGradeCount, secondGradeCount),
+											outcome = currentInProcessAvg.roundTo(2)
+										)
+										result
+									} else {
+										null
+									}
+								} else {
+									!isFirstGradeBanned
+									// !isFirstGradeBanned == isSecondGradeBanned
+									// We are checking, are we applying first grade on next iteration.
+									// i.e. we apply first grade always, unless it is banned.
+									// And one of them is guaranteed banned.
+								}
+							} else {
+								// casual in-progress behaviour of switcher
+								!applyingFirstGrade
+							}
 						if (applyingFirstGrade) firstGradeCount++ else secondGradeCount++
 					}
 				}
@@ -439,51 +579,13 @@ object Utils {
 			}
 		}
 		
-		val result = mutableListOf<RealizableBadMarks>()
-		BadMarkStrategy.values().forEach { badMarkStrategy ->
+		val result = mutableListOf<CalculatedMark>()
+		MarkStrategy.values().drop(2).forEach { badMarkStrategy ->
 			calculateGrades(badMarkStrategy)?.let { newCalculatedRealizable ->
 				result.add(newCalculatedRealizable)
 			}
 		}
 		return result
-	}
-	
-	enum class BadMarkStrategy(private val mark1: Mark, private val mark2: Mark?) {
-		FOURS(Mark.FOUR, null),
-		FOURS_THREES(Mark.FOUR, Mark.THREE),
-		THREES(Mark.THREE, null),
-		THREES_TWOS(Mark.THREE, Mark.TWO),
-		TWOS(Mark.TWO, null);
-		
-		
-		fun getIntValuesOfGrades(): List<Int?> {
-			return if (this.mark2?.value != null) {
-				listOf(this.mark1.value, this.mark2.value)
-			} else {
-				listOf(this.mark1.value)
-			}
-		}
-		
-		operator fun component1(): Int = this.mark1.value!!
-		
-		operator fun component2(): Int? = this.mark2?.value
-		
-	}
-	
-	data class RealizableBadMarks(
-		val strategy: BadMarkStrategy,
-		val count: List<Int?>,
-	)
-	
-	fun ClosedRange<LocalDate>.toList(limiter: Long? = null): List<LocalDate> {
-		val dates = mutableListOf(this.start)
-		var daysAdded = 1L
-		while (daysAdded <= ChronoUnit.DAYS.between(this.start, this.endInclusive)) {
-			dates.add(this.start.plusDays(daysAdded))
-			daysAdded++
-			if (limiter != null && limiter == daysAdded) break
-		}
-		return dates
 	}
 	
 	inline fun <T> measurePerformanceInMS(logger: (Long, T) -> Unit, func: () -> T): T {
@@ -493,46 +595,6 @@ object Utils {
 		logger.invoke(endTime - startTime, result)
 		return result
 	}
-	
-	data class PeriodButton(
-		val text: String,
-		val callbackPeriod: EduPerformancePeriod,
-	)
-	
-	@Composable
-	fun getPeriodButtons(periodType: PeriodType, withYear: Boolean): List<PeriodButton> {
-		val periods = if (periodType == PeriodType.TERMS) {
-			Period.values().toList().dropLast(2)
-		} else {
-			Period.values().toList().drop(4)
-		}.map { it.convertToEduPerformancePeriod() } as MutableList<EduPerformancePeriod>
-		if (withYear) periods.add(EduPerformancePeriod.YEAR)
-		
-		val result = periods.map {
-			if (it != EduPerformancePeriod.YEAR) {
-				PeriodButton(
-					text = stringArrayResource(R.array.ordinals)[it.value.toInt()] + " " + stringResource(
-						when (periodType) {
-							PeriodType.TERMS -> R.string.term
-							PeriodType.SEMESTERS -> R.string.semester
-						}
-					),
-					callbackPeriod = it
-				)
-			} else {
-				PeriodButton(
-					text = stringResource(R.string.year),
-					callbackPeriod = it
-				)
-			}
-		}
-		return result
-	}
-	
-	data class ScheduleCompareResult(
-		val isNew: Boolean,
-		val isDifferent: Boolean,
-	)
 	
 	/**
 	 * Returns a [Flow] whose values are generated by [transform] function that process the most

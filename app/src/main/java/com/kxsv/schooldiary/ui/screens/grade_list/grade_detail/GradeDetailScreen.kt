@@ -1,5 +1,7 @@
 package com.kxsv.schooldiary.ui.screens.grade_list.grade_detail
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,27 +14,32 @@ import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.subject.SubjectEntity
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditGradeTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.GradeDetailScreenNavActions
+import com.kxsv.schooldiary.ui.util.AppSnackbarHost
 import com.kxsv.schooldiary.ui.util.LoadingContent
-import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import java.time.LocalDate
@@ -58,7 +65,11 @@ fun GradeDetailScreen(
 		snackbarHost = { AppSnackbarHost(hostState = snackbarHostState) },
 		topBar = { AddEditGradeTopAppBar { navigator.popBackStack() } },
 	) { paddingValues ->
+		// complete this shit
 		
+		val onSubjectClick = remember<(String) -> Unit> {
+			{ navigator.onSubjectClick(it) }
+		}
 		AddEditSubjectContent(
 			modifier = Modifier.padding(paddingValues),
 			isLoading = uiState.isLoading,
@@ -66,6 +77,7 @@ fun GradeDetailScreen(
 			typeOfWork = uiState.typeOfWork,
 			gradeDate = uiState.gradeDate,
 			pickedSubject = uiState.subject,
+			onSubjectClick = onSubjectClick
 		)
 		
 		uiState.userMessage?.let { userMessage ->
@@ -86,9 +98,10 @@ private fun AddEditSubjectContent(
 	typeOfWork: String,
 	gradeDate: LocalDate?,
 	pickedSubject: SubjectEntity?,
+	onSubjectClick: (String) -> Unit,
 ) {
 	LoadingContent(
-		loading = isLoading,
+		isLoading = isLoading,
 		empty = false,
 		onRefresh = { /*TODO*/ }
 	) {
@@ -121,7 +134,10 @@ private fun AddEditSubjectContent(
 					.align(CenterHorizontally)
 			)
 			
-			SubjectRow(subject = pickedSubject)
+			SubjectRow(
+				subject = pickedSubject,
+				onSubjectClick = onSubjectClick
+			)
 		}
 	}
 }
@@ -142,7 +158,7 @@ private fun MarkRow(mark: String) {
 		Spacer(modifier = Modifier.padding(horizontal = 8.dp))
 		Text(
 			text = mark,
-			style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
+			style = MaterialTheme.typography.titleMedium,
 		)
 	}
 }
@@ -163,7 +179,7 @@ private fun TypeOfWorkRow(typeOfWork: String) {
 		Spacer(modifier = Modifier.padding(horizontal = 8.dp))
 		Text(
 			text = typeOfWork,
-			style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
+			style = MaterialTheme.typography.titleMedium,
 		)
 	}
 }
@@ -188,7 +204,7 @@ private fun DateRow(
 		Spacer(modifier = Modifier.padding(horizontal = 8.dp))
 		Text(
 			text = pickDateText,
-			style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
+			style = MaterialTheme.typography.titleMedium,
 		)
 	}
 }
@@ -197,10 +213,25 @@ private fun DateRow(
 @Composable
 private fun SubjectRow(
 	subject: SubjectEntity?,
+	onSubjectClick: (String) -> Unit,
 ) {
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
+			.clip(MaterialTheme.shapes.extraLarge)
+			.clickable(
+				interactionSource = remember { MutableInteractionSource() },
+				indication = rememberRipple(
+					bounded = false,
+					radius = Dp.Unspecified,
+					color = MaterialTheme.colorScheme.onSurfaceVariant
+				),
+				onClick = {
+					if (subject != null) {
+						onSubjectClick(subject.subjectId)
+					}
+				}
+			)
 			.padding(vertical = dimensionResource(R.dimen.vertical_margin)),
 		verticalAlignment = Alignment.CenterVertically
 	) {
@@ -212,7 +243,7 @@ private fun SubjectRow(
 		Spacer(modifier = Modifier.padding(horizontal = 8.dp))
 		Text(
 			text = subject?.getName() ?: stringResource(R.string.pick_subject_hint),
-			style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
+			style = MaterialTheme.typography.titleMedium,
 		)
 	}
 }

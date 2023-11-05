@@ -1,5 +1,6 @@
 package com.kxsv.schooldiary.data.local
 
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
@@ -32,8 +33,11 @@ import com.kxsv.schooldiary.data.local.features.time_pattern.pattern_stroke.Patt
 		GradeEntity::class, EduPerformanceEntity::class,
 		TaskEntity::class
 	],
-	version = 2,
-	exportSchema = false
+	version = 5,
+	exportSchema = true,
+	autoMigrations = [
+		AutoMigration(from = 2, to = 5),
+	]
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {

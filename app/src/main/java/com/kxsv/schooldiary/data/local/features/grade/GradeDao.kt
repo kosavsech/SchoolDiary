@@ -22,7 +22,7 @@ interface GradeDao {
 	@Query("SELECT * FROM $GRADE_TABLE_NAME ORDER BY fetchDateTime DESC")
 	fun observeAlleWithSubjectOrderedByFetchDate(): Flow<List<GradeWithSubject>>
 	
-	@Query("SELECT * FROM $GRADE_TABLE_NAME WHERE subjectMasterId = :subjectId")
+	@Query("SELECT * FROM $GRADE_TABLE_NAME WHERE subjectMasterId = :subjectId ORDER BY date DESC")
 	fun observeAllBySubjectId(subjectId: String): Flow<List<GradeEntity>>
 	
 	@Query("SELECT * FROM $GRADE_TABLE_NAME WHERE gradeId = :gradeId")

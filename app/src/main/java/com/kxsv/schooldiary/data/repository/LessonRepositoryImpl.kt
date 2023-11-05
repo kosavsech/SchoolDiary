@@ -17,8 +17,9 @@ import com.kxsv.schooldiary.data.remote.parsers.LessonParser
 import com.kxsv.schooldiary.data.remote.util.NetworkException
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.Dispatcher
+import com.kxsv.schooldiary.util.Extensions.toList
+import com.kxsv.schooldiary.util.ScheduleCompareResult
 import com.kxsv.schooldiary.util.Utils
-import com.kxsv.schooldiary.util.Utils.toList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -82,11 +83,11 @@ class LessonRepositoryImpl @Inject constructor(
 	 * @throws NetworkException.PageNotFound
 	 * @throws java.io.IOException if couldn't parseTermRows document
 	 * */
-	override suspend fun fetchSoonSchedule(): Map<LocalDate, Utils.ScheduleCompareResult> =
+	override suspend fun fetchSoonSchedule(): Map<LocalDate, ScheduleCompareResult> =
 		coroutineScope {
 			val startRange = Utils.currentDate
 			val endRange = startRange.plusDays(14)
-			val newSchedules: MutableMap<LocalDate, Utils.ScheduleCompareResult> =
+			val newSchedules: MutableMap<LocalDate, ScheduleCompareResult> =
 				mutableMapOf()
 			
 			(startRange..endRange).toList().forEach { date ->
@@ -114,7 +115,7 @@ class LessonRepositoryImpl @Inject constructor(
 	 * @throws java.io.IOException if couldn't parseTermRows document
 	 */
 	
-	private suspend fun fetchCompareSchedule(date: LocalDate): Utils.ScheduleCompareResult? {
+	private suspend fun fetchCompareSchedule(date: LocalDate): ScheduleCompareResult? {
 		return withContext(ioDispatcher) {
 			val localSchedule = async {
 				val mappedLocalSchedule = mutableMapOf<Int, SubjectEntity>()
@@ -131,7 +132,7 @@ class LessonRepositoryImpl @Inject constructor(
 			if (localSchedule.await().isEmpty() && remoteSchedule.await().isNotEmpty()) {
 				Log.d(TAG, "fetchCompareSchedule: new schedule saved for date = $date")
 				remoteSchedule.await().save(lessonDataSource, subjectDataSource, studyDayDataSource)
-				return@withContext Utils.ScheduleCompareResult(isNew = true, isDifferent = false)
+				return@withContext ScheduleCompareResult(isNew = true, isDifferent = false)
 			} else {
 				val local = localSchedule.await()
 				val remoteIndexed = remoteSchedule.await()
@@ -139,7 +140,7 @@ class LessonRepositoryImpl @Inject constructor(
 				
 				if (remoteIndexed.isNotEmpty() && !local.isSameAs(remoteIndexed)) {
 					Log.d(TAG, "fetchCompareSchedule: schedule is different for date = $date")
-					return@withContext Utils.ScheduleCompareResult(
+					return@withContext ScheduleCompareResult(
 						isNew = false,
 						isDifferent = true
 					)

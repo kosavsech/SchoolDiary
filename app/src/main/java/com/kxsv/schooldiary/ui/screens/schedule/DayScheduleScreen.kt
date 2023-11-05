@@ -40,6 +40,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -77,10 +78,11 @@ import com.kxsv.schooldiary.ui.screens.destinations.DayScheduleCopyScreenDestina
 import com.kxsv.schooldiary.ui.screens.destinations.PatternsScreenDestination
 import com.kxsv.schooldiary.ui.screens.grade_list.MY_URI
 import com.kxsv.schooldiary.ui.screens.patterns.PatternSelectionResult
+import com.kxsv.schooldiary.ui.theme.AppTheme
+import com.kxsv.schooldiary.ui.util.AppSnackbarHost
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.ui.util.displayText
 import com.kxsv.schooldiary.util.Utils
-import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.kxsv.schooldiary.util.Utils.localDateToDatestamp
 import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
@@ -245,6 +247,9 @@ fun DayScheduleScreen(
 			onClassClick = onClassClick
 		)
 		
+		val onSubjectClick = remember<(String) -> Unit> {
+			{ navigator.onSubjectClick(it) }
+		}
 		val onDeleteClass = remember<(LessonWithSubject) -> Unit> {
 			{ viewModel.deleteClass(it) }
 		}
@@ -262,6 +267,7 @@ fun DayScheduleScreen(
 			classDetailed = uiState.classDetailed,
 			selectedDate = uiState.selectedDate,
 			currentPattern = uiState.currentTimings,
+			onSubjectClick = onSubjectClick,
 			onDeleteClass = onDeleteClass,
 			onEditClass = onEditClass,
 			unselectClass = unselectClass,
@@ -288,6 +294,7 @@ private fun LessonDialog(
 	classDetailed: LessonWithSubject?,
 	selectedDate: LocalDate,
 	currentPattern: List<PatternStrokeEntity>,
+	onSubjectClick: (String) -> Unit,
 	onDeleteClass: (LessonWithSubject) -> Unit,
 	onEditClass: (Long) -> Unit,
 	unselectClass: () -> Unit,
@@ -298,42 +305,65 @@ private fun LessonDialog(
 			dialogState = dialogState,
 			onCloseRequest = { unselectClass(); it.hide() },
 		) {
-			Column(Modifier.padding(dimensionResource(R.dimen.horizontal_margin))) {
-				Text(
-					classDetailed.subject.getName(),
-					style = MaterialTheme.typography.titleMedium
-				)
-				Spacer(modifier = Modifier.padding(vertical = 4.dp))
-				Text(
-					selectedDate.dayOfWeek.name,
-					style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Normal)
-				)
-				Spacer(modifier = Modifier.padding(vertical = 2.dp))
-				
-				val text: String =
-					if (classDetailed.lesson.index >= 0 && classDetailed.lesson.index <= currentPattern.lastIndex) {
-						currentPattern[classDetailed.lesson.index].startTime.format(
-							DateTimeFormatter.ofLocalizedTime(
-								FormatStyle.SHORT
-							)
-						) + " - " +
-								currentPattern[classDetailed.lesson.index].endTime.format(
-									DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
-								)
-					} else stringResource(
-						R.string.class_out_of_strokes_bounds_message,
-						classDetailed.lesson.index + 1
+			Column(
+				modifier = Modifier
+					.padding(dimensionResource(R.dimen.horizontal_margin))
+			
+			) {
+				Column(
+					modifier = Modifier
+						.fillMaxWidth()
+						.clip(MaterialTheme.shapes.extraLarge)
+						.clickable {
+							onSubjectClick(classDetailed.subject.subjectId)
+							dialogState.hide()
+						}
+						.padding(dimensionResource(R.dimen.list_item_padding)),
+					verticalArrangement = Arrangement.Center,
+				) {
+					Text(
+						text = classDetailed.subject.getName(),
+						style = MaterialTheme.typography.titleMedium
 					)
-				Text(
-					text,
-					style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Normal)
-				)
-				Spacer(modifier = Modifier.padding(vertical = 4.dp))
+					Spacer(modifier = Modifier.padding(vertical = 4.dp))
+					Text(
+						text = selectedDate.dayOfWeek.name,
+						style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Normal)
+					)
+					Spacer(modifier = Modifier.padding(vertical = 2.dp))
+					
+					val text: String =
+						if (classDetailed.lesson.index >= 0 && classDetailed.lesson.index <= currentPattern.lastIndex) {
+							currentPattern[classDetailed.lesson.index].startTime.format(
+								DateTimeFormatter.ofLocalizedTime(
+									FormatStyle.SHORT
+								)
+							) + " - " +
+									currentPattern[classDetailed.lesson.index].endTime.format(
+										DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+									)
+						} else stringResource(
+							R.string.class_out_of_strokes_bounds_message,
+							classDetailed.lesson.index + 1
+						)
+					Text(
+						text,
+						style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Normal)
+					)
+				}
+				
 				Row(
 					modifier = Modifier.fillMaxWidth(),
 					horizontalArrangement = Arrangement.Center
 				) {
 					val coroutineScope = rememberCoroutineScope()
+					FilledTonalButton(
+						onClick = { onDeleteClass(classDetailed) },
+						modifier = Modifier.weight(0.45f)
+					) {
+						Text(text = stringResource(R.string.btn_delete))
+					}
+					Spacer(modifier = Modifier.weight(0.1f))
 					FilledTonalButton(
 						onClick = {
 							coroutineScope.launch {
@@ -351,20 +381,16 @@ private fun LessonDialog(
 					) {
 						Text(text = stringResource(R.string.btn_edit))
 					}
-					Spacer(modifier = Modifier.weight(0.1f))
-					FilledTonalButton(
-						onClick = { onDeleteClass(classDetailed) },
-						modifier = Modifier.weight(0.45f)
-					) {
-						Text(text = stringResource(R.string.btn_delete))
-					}
 				}
 				val cabinetText = remember(classDetailed) {
 					classDetailed.lesson.cabinet ?: classDetailed.subject.cabinet
 				}
 				if (cabinetText != null) {
 					Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding)))
-					Row(verticalAlignment = Alignment.CenterVertically) {
+					Row(
+						modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.list_item_padding)),
+						verticalAlignment = Alignment.CenterVertically
+					) {
 						Icon(Icons.Default.LocationOn, stringResource(R.string.lesson_room))
 						Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.list_item_padding)))
 						Column {
@@ -433,7 +459,7 @@ fun ScheduleComparisonTable(
 		val maxLines = maxOf(classes.maxBy { it.key }.key, fetchedClasses.maxBy { it.key }.key) + 1
 		
 		LoadingContent(
-			loading = loading,
+			isLoading = loading,
 			empty = false,
 			emptyContent = {},
 			isContentScrollable = true,
@@ -551,7 +577,7 @@ private fun ScheduleForDay(
 	onClassClick: (LessonWithSubject) -> Unit,
 ) {
 	LoadingContent(
-		loading = loading,
+		isLoading = loading,
 		empty = classes.isEmpty(),
 		emptyContent = {
 			Column(
@@ -635,6 +661,7 @@ private fun Day(
 ) {
 	val configuration = LocalConfiguration.current
 	val screenWidth = configuration.screenWidthDp.dp
+	val backgroundColor = MaterialTheme.colorScheme.surfaceColorAtElevation(40.dp)
 	Box(
 		modifier = Modifier
 			// If paged scrolling is disabled (calendarScrollPaged = false),
@@ -642,7 +669,7 @@ private fun Day(
 			.width(screenWidth / 6)
 			.padding(2.dp)
 			.clip(RoundedCornerShape(20.dp))
-			.background(color = MaterialTheme.colorScheme.surfaceVariant)
+			.background(backgroundColor)
 			.border(
 				shape = RoundedCornerShape(20.dp),
 				width = if (selected) 2.dp else 0.dp,
@@ -657,18 +684,23 @@ private fun Day(
 			horizontalAlignment = Alignment.CenterHorizontally,
 			verticalArrangement = Arrangement.spacedBy(5.dp),
 		) {
-			Text(
-				text = date.month.displayText(),
-				style = MaterialTheme.typography.labelMedium,
-			)
+			val textColor = MaterialTheme.colorScheme.onSurface
+			if (date.month != Utils.currentDate.month) {
+				Text(
+					text = date.month.displayText(),
+					style = MaterialTheme.typography.labelMedium,
+					color = textColor
+				)
+			}
 			Text(
 				text = dateFormatter.format(date),
 				style = MaterialTheme.typography.titleMedium,
-				
-				)
+				color = textColor
+			)
 			Text(
 				text = date.dayOfWeek.displayText(),
 				style = MaterialTheme.typography.labelMedium,
+				color = textColor
 			)
 		}
 	}
@@ -733,22 +765,27 @@ private fun ClassItem(
 			lesson.subject.getName(),
 			style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Medium)
 		)
-		Spacer(modifier = Modifier.padding(vertical = 4.dp))
-		Row {
-			Row(verticalAlignment = Alignment.Top) {
-				Icon(
-					imageVector = Icons.Default.LocationOn,
-					contentDescription = stringResource(R.string.lesson_room),
-					modifier = Modifier.size(18.dp)
-				)
+		val cabinetText = remember(lesson) {
+			lesson.lesson.cabinet ?: lesson.subject.cabinet
+		}
+		if (cabinetText != null) {
+			Spacer(modifier = Modifier.padding(vertical = 4.dp))
+			Row {
+				Row(verticalAlignment = Alignment.Top) {
+					Icon(
+						imageVector = Icons.Default.LocationOn,
+						contentDescription = stringResource(R.string.lesson_room),
+						modifier = Modifier.size(18.dp)
+					)
+					Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+					Text(
+						text = cabinetText,
+						style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium)
+					)
+				}
 				Spacer(modifier = Modifier.padding(horizontal = 4.dp))
-				Text(
-					lesson.subject.getCabinetString(),
-					style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium)
-				)
+				// TODO: add tags
 			}
-			Spacer(modifier = Modifier.padding(horizontal = 4.dp))
-			// TODO: add tags
 		}
 		Spacer(modifier = Modifier.padding(vertical = 4.dp))
 		
@@ -770,57 +807,59 @@ private val previewCurrentPattern = listOf(
 
 @Preview(
 	device = "id:pixel_4", showSystemUi = true, showBackground = true,
-	uiMode = Configuration.UI_MODE_NIGHT_YES
+	uiMode = Configuration.UI_MODE_TYPE_NORMAL
 )
 @Composable
 private fun DayScheduleContentPreview() {
-	Surface {
-		DayScheduleContent(
-			modifier = Modifier,
-			loading = false,
-//			fetchedClasses = null,
-			classes = mapOf(
-				Pair(
-					1, LessonWithSubject(
-						LessonEntity(1, 0, "0"),
-						SubjectEntity("Русский язык", "210")
-					)
+	AppTheme(darkTheme = false) {
+		Surface {
+			DayScheduleContent(
+				modifier = Modifier,
+				loading = false,
+				fetchedClasses = null,
+				classes = mapOf(
+					Pair(
+						1, LessonWithSubject(
+							LessonEntity(1, 0, "0"),
+							SubjectEntity("Русский язык", "210")
+						)
+					),
+					Pair(
+						3, LessonWithSubject(
+							LessonEntity(3, 0, "0"),
+							SubjectEntity("Английский языкАнглийский язык")
+						)
+					),
 				),
-				Pair(
-					3, LessonWithSubject(
-						LessonEntity(3, 0, "0"),
-						SubjectEntity("Английский языкАнглийский язык", "316")
-					)
-				),
-			),
-			fetchedClasses = mapOf(
-				Pair(
-					2, LessonWithSubject(
-						LessonEntity(0, 0, "0"),
-						SubjectEntity("Английский языкАнглийский язык", "316")
-					)
-				),
-				Pair(
-					3, LessonWithSubject(
-						LessonEntity(1, 0, "0"),
-						SubjectEntity("Английский язык", "316")
-					)
-				),
-				Pair(
-					4, LessonWithSubject(
-						LessonEntity(2, 0, "0"),
-						SubjectEntity("Немецкий язык", "316")
-					)
-				),
-			),
-			selectedDate = Utils.currentDate,
-			currentPattern = previewCurrentPattern,
-			calendarScrollPaged = false,
-			onRefresh = {},
-			changeDate = {},
-			scheduleChoose = { },
-			onClassClick = {}
-		)
+//			fetchedClasses = mapOf(
+//				Pair(
+//					2, LessonWithSubject(
+//						LessonEntity(0, 0, "0"),
+//						SubjectEntity("Английский языкАнглийский язык", "316")
+//					)
+//				),
+//				Pair(
+//					3, LessonWithSubject(
+//						LessonEntity(1, 0, "0"),
+//						SubjectEntity("Английский язык", "316")
+//					)
+//				),
+//				Pair(
+//					4, LessonWithSubject(
+//						LessonEntity(2, 0, "0"),
+//						SubjectEntity("Немецкий язык", "316")
+//					)
+//				),
+//			),
+				selectedDate = Utils.currentDate,
+				currentPattern = previewCurrentPattern,
+				calendarScrollPaged = true,
+				onRefresh = {},
+				changeDate = {},
+				scheduleChoose = { },
+				onClassClick = {}
+			)
+		}
 	}
 }
 
@@ -839,6 +878,7 @@ private fun LessonDialogPreview() {
 			),
 			selectedDate = Utils.currentDate,
 			currentPattern = previewCurrentPattern,
+			onSubjectClick = {},
 			onDeleteClass = {},
 			onEditClass = {},
 			unselectClass = {}

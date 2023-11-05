@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.kxsv.schooldiary.data.local.AppDatabase
 import com.kxsv.schooldiary.data.local.features.associative_tables.subject_teacher.SubjectTeacherDao
@@ -49,6 +50,52 @@ object DatabaseModule {
 		strokeDaoProvider: Provider<PatternStrokeDao>,
 		dataStore: Provider<DataStore<UserPreferences>>,
 	): AppDatabase {
+		val MIGRATION_3_4 = object : Migration(3, 4) {
+			override fun migrate(db: SupportSQLiteDatabase) {
+				db.execSQL(
+					"""
+                CREATE TABLE new_grade (`mark` TEXT NOT NULL, `typeOfWork` TEXT NOT NULL,
+				`date` INTEGER NOT NULL, `fetchDateTime` INTEGER NOT NULL,
+				`subjectMasterId` TEXT NOT NULL, `lessonIndex` INTEGER NOT NULL,
+				`index` INTEGER NOT NULL, `gradeId` TEXT NOT NULL, PRIMARY KEY(`gradeId`),
+				FOREIGN KEY(`subjectMasterId`) REFERENCES `subject`(`subjectId`)
+				ON UPDATE NO ACTION ON DELETE CASCADE )
+                """.trimIndent()
+				)
+				db.execSQL(
+					"""
+                INSERT INTO new_grade (`mark`, `typeOfWork`, `date`,
+				`fetchDateTime`, `subjectMasterId`, `lessonIndex`,
+				`index`, `gradeId`)
+                SELECT `mark`, `typeOfWork`, `date`, `fetchDateTime`, `subjectMasterId`,
+				`lessonIndex`, `index`, `gradeId` FROM grade
+                """.trimIndent()
+				)
+				db.execSQL("DROP TABLE grade")
+				db.execSQL("ALTER TABLE new_grade RENAME TO grade")
+				///
+				db.execSQL(
+					"""
+                CREATE TABLE new_eduPerformance (`subjectMasterId` TEXT NOT NULL, `marks` TEXT NOT NULL,
+				`finalMark` TEXT, `examMark` TEXT, `period` TEXT NOT NULL,
+				`eduPerformanceId` TEXT NOT NULL,
+				PRIMARY KEY(`eduPerformanceId`),
+				FOREIGN KEY(`subjectMasterId`) REFERENCES `subject`(`subjectId`)
+				ON UPDATE NO ACTION ON DELETE CASCADE )
+                """.trimIndent()
+				)
+				db.execSQL(
+					"""
+                INSERT INTO new_eduPerformance (`subjectMasterId`, `marks`, `finalMark`,
+				`examMark`, `period`, `eduPerformanceId`)
+                SELECT `subjectMasterId`, `marks`, `finalMark`,
+				`examMark`, `period`, `eduPerformanceId` FROM eduPerformance
+                """.trimIndent()
+				)
+				db.execSQL("DROP TABLE eduPerformance")
+				db.execSQL("ALTER TABLE new_eduPerformance RENAME TO eduPerformance")
+			}
+		}
 		return Room.databaseBuilder(
 			context.applicationContext,
 			AppDatabase::class.java,
@@ -63,7 +110,8 @@ object DatabaseModule {
 					dataStore = dataStore
 				)
 			)
-			.fallbackToDestructiveMigration()
+//			.addMigrations(MIGRATION_3_4)
+//			.fallbackToDestructiveMigration()
 			.build()
 	}
 	
@@ -85,7 +133,7 @@ object DatabaseModule {
 		private suspend fun populateDatabase() {
 			val timePatternEntities = listOf(
 				TimePatternWithStrokes(
-					timePattern = TimePatternEntity("Default", 1),
+					timePattern = TimePatternEntity("Default"),
 					strokes = listOf(
 						PatternStrokeEntity(
 							index = 0,
@@ -199,23 +247,68 @@ object DatabaseModule {
 						),
 						PatternStrokeEntity(
 							index = 4,
-							startTime = LocalTime.of(12, 5),
-							endTime = LocalTime.of(12, 45)
+							startTime = LocalTime.of(12, 0),
+							endTime = LocalTime.of(12, 40)
 						),
 						PatternStrokeEntity(
 							index = 5,
-							startTime = LocalTime.of(12, 55),
-							endTime = LocalTime.of(13, 35)
+							startTime = LocalTime.of(12, 45),
+							endTime = LocalTime.of(13, 25)
 						),
 						PatternStrokeEntity(
 							index = 6,
-							startTime = LocalTime.of(13, 45),
-							endTime = LocalTime.of(14, 25)
+							startTime = LocalTime.of(13, 30),
+							endTime = LocalTime.of(14, 10)
 						),
 						PatternStrokeEntity(
 							index = 7,
-							startTime = LocalTime.of(14, 35),
-							endTime = LocalTime.of(15, 10)
+							startTime = LocalTime.of(14, 15),
+							endTime = LocalTime.of(14, 55)
+						),
+					)
+				),
+				TimePatternWithStrokes(
+					timePattern = TimePatternEntity("с 8:00 по 40"),
+					strokes = listOf(
+						PatternStrokeEntity(
+							index = 0,
+							startTime = LocalTime.of(8, 0),
+							endTime = LocalTime.of(8, 40),
+						),
+						PatternStrokeEntity(
+							index = 1,
+							startTime = LocalTime.of(8, 45),
+							endTime = LocalTime.of(9, 25)
+						),
+						PatternStrokeEntity(
+							index = 2,
+							startTime = LocalTime.of(9, 40),
+							endTime = LocalTime.of(10, 20)
+						),
+						PatternStrokeEntity(
+							index = 3,
+							startTime = LocalTime.of(10, 35),
+							endTime = LocalTime.of(11, 15)
+						),
+						PatternStrokeEntity(
+							index = 4,
+							startTime = LocalTime.of(11, 25),
+							endTime = LocalTime.of(12, 5)
+						),
+						PatternStrokeEntity(
+							index = 5,
+							startTime = LocalTime.of(12, 25),
+							endTime = LocalTime.of(13, 5)
+						),
+						PatternStrokeEntity(
+							index = 6,
+							startTime = LocalTime.of(13, 20),
+							endTime = LocalTime.of(14, 0)
+						),
+						PatternStrokeEntity(
+							index = 7,
+							startTime = LocalTime.of(14, 10),
+							endTime = LocalTime.of(14, 50)
 						),
 					)
 				),

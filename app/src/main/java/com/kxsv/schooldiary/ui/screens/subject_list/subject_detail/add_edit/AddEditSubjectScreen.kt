@@ -51,8 +51,8 @@ import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AddEditSubjectScreenNavActions
 import com.kxsv.schooldiary.ui.screens.teacher_list.AddEditTeacherDialog
+import com.kxsv.schooldiary.ui.util.AppSnackbarHost
 import com.kxsv.schooldiary.ui.util.LoadingContent
-import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.result.ResultBackNavigator
@@ -89,8 +89,6 @@ fun AddEditSubjectScreen(
 		}
 	}
 	
-	val teacherCreateDialog = rememberMaterialDialogState(false)
-	val teacherSelectDialog = rememberMaterialDialogState(false)
 	val saveSubject = remember { { viewModel.saveSubject() } }
 	Scaffold(
 		modifier = Modifier.fillMaxSize(),
@@ -104,6 +102,8 @@ fun AddEditSubjectScreen(
 			}
 		}
 	) { paddingValues ->
+		val teacherCreateDialog = rememberMaterialDialogState(false)
+		val teacherSelectDialog = rememberMaterialDialogState(false)
 		
 		val onCheckedChange = remember<(Set<String>) -> Unit> {
 			{ viewModel.updateSelectedTeachers(it) }
@@ -200,7 +200,7 @@ private fun AddEditSubjectContent(
 ) {
 	LoadingContent(
 		modifier = modifier,
-		loading = isLoading,
+		isLoading = isLoading,
 		empty = false,
 		emptyContent = { Text(text = "Empty") },
 	) {

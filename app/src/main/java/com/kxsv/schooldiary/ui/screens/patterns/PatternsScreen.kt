@@ -51,8 +51,8 @@ import com.kxsv.schooldiary.ui.main.app_bars.topbar.PatternSelectionTopAppBar
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.PatternsTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.PatternsScreenNavActions
 import com.kxsv.schooldiary.ui.screens.destinations.AddEditPatternScreenDestination
+import com.kxsv.schooldiary.ui.util.AppSnackbarHost
 import com.kxsv.schooldiary.ui.util.LoadingContent
-import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.kxsv.schooldiary.util.Utils.fromLocalTime
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -164,7 +164,7 @@ private fun PatternsContent(
 ) {
 	LoadingContent(
 		modifier = modifier,
-		loading = loading,
+		isLoading = loading,
 		empty = false,
 		isContentScrollable = true,
 		emptyContent = { Text(text = "empty content") },

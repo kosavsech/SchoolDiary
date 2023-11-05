@@ -4,7 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -35,10 +35,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
 import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity
-import com.kxsv.schooldiary.data.local.features.teacher.TeacherEntity.Companion.shortName
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.TeachersTopAppBar
+import com.kxsv.schooldiary.ui.util.AppSnackbarHost
 import com.kxsv.schooldiary.ui.util.LoadingContent
-import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.ramcosta.composedestinations.annotation.Destination
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 import kotlinx.coroutines.CoroutineScope
@@ -145,7 +144,7 @@ private fun TeachersContent(
 ) {
 	LoadingContent(
 		modifier = modifier,
-		loading = isLoading,
+		isLoading = isLoading,
 		empty = teacherEntities.isEmpty(),
 		isContentScrollable = true,
 		emptyContent = {
@@ -160,15 +159,16 @@ private fun TeachersContent(
 			}
 		}
 	) {
-		LazyColumn(
-			contentPadding = PaddingValues(vertical = dimensionResource(R.dimen.vertical_margin)),
-		) {
+		LazyColumn {
 			items(teacherEntities) { teacherEntity ->
 				TeacherItem(
 					teacherEntity = teacherEntity,
 					onTeacherClick = { onTeacherClick(teacherEntity) },
 					onDeleteClick = { onDeleteClick(teacherEntity.teacherId) }
 				)
+				if (teacherEntity != teacherEntities.last()) {
+					Divider(color = MaterialTheme.colorScheme.onSurface)
+				}
 			}
 		}
 	}
@@ -193,14 +193,22 @@ private fun TeacherItem(
 				.weight(1f)
 				.padding(horizontal = dimensionResource(R.dimen.horizontal_margin))
 		) {
-			Text(
-				text = teacherEntity.shortName(),
-				style = MaterialTheme.typography.bodyLarge,
+			if (teacherEntity.lastName.isNotBlank()) {
+				Text(
+					text = teacherEntity.lastName,
+					style = MaterialTheme.typography.bodyLarge,
+				)
+			}
+			if (teacherEntity.firstName.isNotBlank()) Text(
+				text = teacherEntity.firstName
+						+ if (teacherEntity.patronymic.isNotBlank()) " " + teacherEntity.patronymic else "",
+				style = MaterialTheme.typography.bodyMedium,
 			)
+			
 			if (teacherEntity.phoneNumber.isNotBlank()) {
 				Text(
 					text = teacherEntity.phoneNumber,
-					style = MaterialTheme.typography.labelMedium
+					style = MaterialTheme.typography.labelSmall
 				)
 			}
 		}

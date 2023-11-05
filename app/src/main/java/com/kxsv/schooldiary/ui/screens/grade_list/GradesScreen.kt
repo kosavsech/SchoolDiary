@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -36,9 +37,9 @@ import com.kxsv.schooldiary.data.util.Mark.Companion.getStringValueFrom
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.GradesTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AppUpdateNavActions
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.GradesScreenNavActions
+import com.kxsv.schooldiary.ui.util.AppSnackbarHost
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.util.Utils
-import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.ramcosta.composedestinations.annotation.DeepLink
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.FULL_ROUTE_PLACEHOLDER
@@ -143,7 +144,7 @@ private fun GradesContent(
 ) {
 	LoadingContent(
 		modifier = modifier,
-		loading = loading,
+		isLoading = loading,
 		empty = grades.isEmpty(),
 		emptyContent = { Text(text = "No subjects for yet") },
 		isContentScrollable = true,
@@ -182,10 +183,14 @@ private fun GradeItem(
 			text = getStringValueFrom(gradeWithSubject.grade.mark),
 			style = MaterialTheme.typography.titleMedium,
 		)
+		Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.list_item_padding)))
 		Text(
 			text = gradeWithSubject.subject.getName(),
 			style = MaterialTheme.typography.titleMedium,
+			maxLines = 2,
+			modifier = Modifier.weight(0.70f)
 		)
+		Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.list_item_padding)))
 		Text(
 			text = gradeWithSubject.grade.date.format(DateTimeFormatter.ISO_LOCAL_DATE),
 			style = MaterialTheme.typography.titleMedium,
@@ -232,7 +237,7 @@ private fun SubjectItemPreview() {
 					fetchDateTime = LocalDateTime.now(),
 					subjectMasterId = "0",
 				),
-				SubjectEntity("Английский язык")
+				SubjectEntity("Алгебра (начала математического анализа)")
 			),
 			onGradeClick = {}
 		)

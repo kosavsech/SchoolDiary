@@ -24,8 +24,8 @@ import com.kxsv.schooldiary.ui.main.app_bars.topbar.TimetableSettingsTopAppBar
 import com.kxsv.schooldiary.ui.screens.settings.utils.GetSettingItemComposable
 import com.kxsv.schooldiary.ui.screens.settings.utils.SettingsItem
 import com.kxsv.schooldiary.ui.screens.settings.utils.SettingsItemType
+import com.kxsv.schooldiary.ui.util.AppSnackbarHost
 import com.kxsv.schooldiary.ui.util.LoadingContent
-import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.vanpra.composematerialdialogs.MaterialDialog
@@ -126,7 +126,7 @@ private fun TimetableSettingsContent(
 	)
 	LoadingContent(
 		modifier = modifier,
-		loading = loading,
+		isLoading = loading,
 		empty = false,
 		isContentScrollable = false,
 	) {

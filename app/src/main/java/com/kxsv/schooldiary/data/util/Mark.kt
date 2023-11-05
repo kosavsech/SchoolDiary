@@ -20,6 +20,7 @@ enum class Mark(val value: Int?, private val letterValue: Char?) {
 			"1" -> ONE
 			"Н" -> ABSENT
 			"Не был" -> ABSENT
+			"Не былНе был" -> ABSENT
 			"Б" -> ILL
 			"Болел" -> ILL
 			"" -> null

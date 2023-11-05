@@ -11,6 +11,10 @@ interface StudyDayRepository {
 	
 	fun observeStudyDay(studyDayId: Long): Flow<StudyDayEntity>
 	
+	fun observeWeekSampleNext(currentDate: LocalDate): Flow<List<StudyDayWithSchedulesAndSubjects>>
+	
+	fun observeWeekSampleBefore(currentDate: LocalDate): Flow<List<StudyDayWithSchedulesAndSubjects>>
+	
 	suspend fun getAll(): List<StudyDayEntity>
 	
 	suspend fun getById(studyDayId: Long): StudyDayEntity?
@@ -18,6 +22,8 @@ interface StudyDayRepository {
 	suspend fun getByDate(date: LocalDate): StudyDayEntity?
 	
 	suspend fun getDayAndSchedulesWithSubjectsByDate(date: LocalDate): StudyDayWithSchedulesAndSubjects?
+	
+	suspend fun getWeekSample(currentDate: LocalDate): List<StudyDayWithSchedulesAndSubjects>?
 	
 	/**
 	 * Get date for next lesson of subject

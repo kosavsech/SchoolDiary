@@ -29,6 +29,12 @@ class UserPreferencesRepositoryImpl @Inject constructor(
 		}
 	}
 	
+	override fun observeLowerBoundMark(): Flow<Double> {
+		return dataStore.data.map {
+			it.defaultLowerBoundMark
+		}
+	}
+	
 	override fun observeEducationPeriodType(): Flow<PeriodType> {
 		return dataStore.data.map {
 			it.educationPeriodType
@@ -96,6 +102,16 @@ class UserPreferencesRepositoryImpl @Inject constructor(
 	override suspend fun setTargetMark(targetMark: Double) {
 		dataStore.updateData {
 			it.copy(defaultTargetMark = targetMark)
+		}
+	}
+	
+	override suspend fun getLowerBoundMark(): Double {
+		return dataStore.data.first().defaultLowerBoundMark
+	}
+	
+	override suspend fun setLowerBoundMark(lowerBoundMark: Double) {
+		dataStore.updateData {
+			it.copy(defaultLowerBoundMark = lowerBoundMark)
 		}
 	}
 	

@@ -46,8 +46,8 @@ import com.kxsv.schooldiary.ui.screens.destinations.TimetableSettingsScreenDesti
 import com.kxsv.schooldiary.ui.screens.destinations.TypedDestination
 import com.kxsv.schooldiary.ui.screens.settings.utils.SettingsScreenCategory
 import com.kxsv.schooldiary.ui.theme.AppTheme
+import com.kxsv.schooldiary.ui.util.AppSnackbarHost
 import com.kxsv.schooldiary.ui.util.LoadingContent
-import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.CoroutineScope
@@ -81,7 +81,7 @@ fun SettingsScreen(
 		SettingsContent(
 			modifier = Modifier.padding(paddingValues),
 			loading = uiState.isLoading,
-			onTermCategoryClick = onTermCategoryClick,
+			onCategoryClick = onTermCategoryClick,
 			nonFunctionalCategoryClicked = nonFunctionalCategoryClicked
 		)
 		
@@ -92,7 +92,7 @@ fun SettingsScreen(
 private fun SettingsContent(
 	modifier: Modifier,
 	loading: Boolean,
-	onTermCategoryClick: (TypedDestination<out Any?>) -> Unit,
+	onCategoryClick: (TypedDestination<out Any?>) -> Unit,
 	nonFunctionalCategoryClicked: () -> Unit,
 ) {
 	val settingsCategories = listOf(
@@ -119,7 +119,7 @@ private fun SettingsContent(
 	)
 	LoadingContent(
 		modifier = modifier,
-		loading = loading,
+		isLoading = loading,
 		empty = false,
 		isContentScrollable = false,
 	) {
@@ -141,7 +141,7 @@ private fun SettingsContent(
 							if (settingItem.onClick != null) {
 								settingItem.onClick.invoke()
 							} else if (settingItem.destination != null) {
-								onTermCategoryClick(settingItem.destination)
+								onCategoryClick(settingItem.destination)
 							} else {
 								nonFunctionalCategoryClicked()
 							}

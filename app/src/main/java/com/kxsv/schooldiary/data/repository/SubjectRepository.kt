@@ -29,6 +29,13 @@ interface SubjectRepository {
 	
 	suspend fun createSubject(subject: SubjectEntity, teachersIds: Set<String>?): String
 	
+	/**
+	 * Update subject
+	 * if [teachersIds] is null, that means no changes to ids of this subject
+	 *
+	 * @param subject
+	 * @param teachersIds
+	 */
 	suspend fun updateSubject(subject: SubjectEntity, teachersIds: Set<String>?)
 	
 	suspend fun deleteAllSubjects()

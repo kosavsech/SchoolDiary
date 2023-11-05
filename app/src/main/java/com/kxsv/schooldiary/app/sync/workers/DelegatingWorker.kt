@@ -32,8 +32,6 @@ internal fun KClass<out CoroutineWorker>.delegatedData() =
 		.putString(WORKER_CLASS_NAME, qualifiedName)
 		.build()
 
-private const val TAG = "DelegatingWorker"
-
 /**
  * A worker that delegates sync to another [CoroutineWorker] constructed with a [HiltWorkerFactory].
  *
@@ -48,7 +46,8 @@ class DelegatingWorker(
 	workerParams: WorkerParameters,
 ) : CoroutineWorker(appContext, workerParams) {
 	
-	private val workerClassName = workerParams.inputData.getString(WORKER_CLASS_NAME) ?: ""
+	private val workerClassName =
+		workerParams.inputData.getString(WORKER_CLASS_NAME) ?: ""
 	
 	private val delegateWorker = EntryPointAccessors.fromApplication(
 		appContext,

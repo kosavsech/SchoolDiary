@@ -185,7 +185,10 @@ class GradeSyncWorker @AssistedInject constructor(
 	private fun createNotification(gradeEntity: GradeWithSubject): Notification {
 		createNotificationChannel()
 		
-		val text = Mark.getStringValueFrom(gradeEntity.grade.mark) + " | " + gradeEntity.grade.date
+		val text =
+			Mark.getStringValueFrom(gradeEntity.grade.mark) + " | " + gradeEntity.grade.date.format(
+				Utils.monthDayDateFormatter
+			)
 		return gradeNotificationBuilder.setContentText(text)
 			.setContentTitle(gradeEntity.subject.getName()).build()
 	}

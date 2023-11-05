@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -24,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,6 +33,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kxsv.schooldiary.R
+import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceEntity
 import com.kxsv.schooldiary.data.local.features.edu_performance.EduPerformanceWithSubject
 import com.kxsv.schooldiary.data.util.AppVersionState
 import com.kxsv.schooldiary.data.util.EduPerformancePeriod
@@ -42,11 +43,11 @@ import com.kxsv.schooldiary.data.util.user_preferences.PeriodType
 import com.kxsv.schooldiary.ui.main.app_bars.topbar.EduPerformanceTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AppUpdateNavActions
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.EduPerformanceScreenNavActions
+import com.kxsv.schooldiary.ui.util.AppSnackbarHost
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.ui.util.TermSelector
-import com.kxsv.schooldiary.util.Utils
-import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
-import com.kxsv.schooldiary.util.Utils.stringRoundTo
+import com.kxsv.schooldiary.ui.util.getPeriodButtons
+import com.kxsv.schooldiary.util.Extensions.stringRoundTo
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.CoroutineScope
@@ -87,9 +88,13 @@ fun EduPerformanceScreen(
 	) { paddingValues ->
 		val uiState = viewModel.uiState.collectAsState().value
 		
+		val allEduPerformances = remember(uiState.allEduPerformances) {
+			uiState.allEduPerformances.map { it.eduPerformance }
+		}
 		EduPerformanceContent(
 			isLoading = uiState.isLoading,
-			eduPerformanceList = uiState.eduPerformanceList,
+			allEduPerformances = allEduPerformances,
+			eduPerformancesForPeriod = uiState.eduPerformancesForPeriod,
 			periodType = viewModel.periodType.collectAsState().value,
 			onPeriodChange = { viewModel.changePeriod(it) },
 			onEduPerformanceClick = { eduPerformanceId ->
@@ -105,7 +110,8 @@ fun EduPerformanceScreen(
 @Composable
 private fun EduPerformanceContent(
 	isLoading: Boolean,
-	eduPerformanceList: List<EduPerformanceWithSubject>,
+	allEduPerformances: List<EduPerformanceEntity>,
+	eduPerformancesForPeriod: List<EduPerformanceWithSubject>,
 	periodType: PeriodType,
 	onPeriodChange: (EduPerformancePeriod) -> Unit,
 	onEduPerformanceClick: (String) -> Unit,
@@ -115,14 +121,14 @@ private fun EduPerformanceContent(
 ) {
 	LoadingContent(
 		modifier = modifier,
-		loading = isLoading,
-		empty = eduPerformanceList.isEmpty(),
+		isLoading = isLoading,
+		empty = eduPerformancesForPeriod.isEmpty(),
 		emptyContent = {
 			Column {
 				TermSelector(
 					currentPeriod = currentEduPerformancePeriod,
 					onPeriodChange = onPeriodChange,
-					buttons = Utils.getPeriodButtons(periodType = periodType, withYear = true)
+					buttons = getPeriodButtons(periodType = periodType, withYear = true)
 				)
 				Text(text = "No subjects yet")
 			}
@@ -134,12 +140,14 @@ private fun EduPerformanceContent(
 			TermSelector(
 				currentPeriod = currentEduPerformancePeriod,
 				onPeriodChange = onPeriodChange,
-				buttons = Utils.getPeriodButtons(periodType = periodType, withYear = true)
+				buttons = getPeriodButtons(periodType = periodType, withYear = true)
 			)
 			LazyColumn {
-				items(eduPerformanceList) { performanceWithSubject ->
+				items(eduPerformancesForPeriod) { performanceForPeriod ->
 					PerformanceRow(
-						performanceWithSubject = performanceWithSubject,
+						allEduPerformancesForSubject = allEduPerformances
+							.filter { it.subjectMasterId == performanceForPeriod.subject.subjectId },
+						performanceWithSubject = performanceForPeriod,
 						onEduPerformanceClick = onEduPerformanceClick
 					)
 				}
@@ -150,6 +158,7 @@ private fun EduPerformanceContent(
 
 @Composable
 private fun PerformanceRow(
+	allEduPerformancesForSubject: List<EduPerformanceEntity>,
 	performanceWithSubject: EduPerformanceWithSubject,
 	onEduPerformanceClick: (String) -> Unit,
 ) {
@@ -168,13 +177,13 @@ private fun PerformanceRow(
 			Text(
 				text = performanceWithSubject.subject.getName(),
 				style = MaterialTheme.typography.titleMedium,
+				modifier = Modifier.weight(0.75f)
 			)
-			Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.horizontal_margin)))
 			val avgMark = if (performanceWithSubject.eduPerformance.finalMark == null &&
 				performanceWithSubject.eduPerformance.marks.isNotEmpty()
 			) {
-				var sum = 0.0
-				performanceWithSubject.eduPerformance.marks.forEach { if (it != null) sum += it.value!! }
+				val sum =
+					performanceWithSubject.eduPerformance.marks.sumOf { it?.value ?: 0 }.toDouble()
 				
 				(sum / performanceWithSubject.eduPerformance.marks.size).stringRoundTo(2)
 			} else if (performanceWithSubject.eduPerformance.finalMark != null) {
@@ -204,18 +213,11 @@ private fun PerformanceRow(
 				verticalAlignment = Alignment.CenterVertically,
 				horizontalArrangement = Arrangement.SpaceBetween,
 			) {
-				for (i in 1..5) {
-					if (i != 5) {
-						YearPerformanceRowItem(
-							index = i,
-							grade = performanceWithSubject.eduPerformance.marks[i - 1]
-						)
-					} else {
-						YearPerformanceRowItem(
-							index = i,
-							grade = performanceWithSubject.eduPerformance.finalMark
-						)
-					}
+				allEduPerformancesForSubject.forEach {
+					YearPerformanceRowItem(
+						index = it.period.value,
+						grade = it.finalMark
+					)
 				}
 			}
 		}
@@ -224,15 +226,15 @@ private fun PerformanceRow(
 
 @Composable
 fun YearPerformanceRowItem(
-	index: Int,
+	index: String,
 	grade: Mark?,
 ) {
 	val term = when (index) {
-		1 -> "I"
-		2 -> "II"
-		3 -> "III"
-		4 -> "IV"
-		5 -> "Year"
+		"1" -> "I"
+		"2" -> "II"
+		"3" -> "III"
+		"4" -> "IV"
+		"year" -> "Year"
 		else -> "wtf?"
 	}
 	val configuration = LocalConfiguration.current

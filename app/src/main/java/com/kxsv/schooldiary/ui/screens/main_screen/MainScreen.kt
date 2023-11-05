@@ -1,11 +1,13 @@
 package com.kxsv.schooldiary.ui.screens.main_screen
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -48,7 +50,6 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -77,9 +78,10 @@ import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AppUpdateNavActions
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.MainScreenNavActions
 import com.kxsv.schooldiary.ui.screens.destinations.AddEditLessonScreenDestination
 import com.kxsv.schooldiary.ui.theme.AppTheme
+import com.kxsv.schooldiary.ui.util.AppSnackbarHost
+import com.kxsv.schooldiary.ui.util.DaysCounter
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.util.Utils
-import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.kxsv.schooldiary.util.Utils.fromLocalTime
 import com.kxsv.schooldiary.util.Utils.getCurrentLessonIndexByTime
 import com.kxsv.schooldiary.util.Utils.getIndexOfClosestLessonToTime
@@ -96,7 +98,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.toKotlinLocalTime
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -218,6 +219,7 @@ fun MainScreen(
 		MainScreenContent(
 			modifier = Modifier.padding(paddingValues),
 			isLoading = uiState.isLoading,
+			daysCounters = uiState.daysCounter,
 			itemList = uiState.itemList,
 			onRefresh = onRefresh,
 			onScheduleShowMore = onScheduleShowMore,
@@ -229,6 +231,9 @@ fun MainScreen(
 			onTasksShowMore = onTasksShowMore,
 		)
 		
+		val onSubjectClick = remember<(String) -> Unit> {
+			{ navigator.onSubjectClick(it) }
+		}
 		val unselectClass = remember {
 			{ viewModel.unselectClass() }
 		}
@@ -237,6 +242,7 @@ fun MainScreen(
 			classDetailed = uiState.classDetailed,
 			selectedDate = uiState.classDetailedDate,
 			classTimings = uiState.classDetailedTimings,
+			onSubjectClick = onSubjectClick,
 			onDeleteClass = onDeleteClass,
 			onEditClass = onEditClass,
 			unselectClass = unselectClass,
@@ -250,6 +256,7 @@ private fun LessonDialog(
 	classDetailed: LessonWithSubject?,
 	selectedDate: LocalDate?,
 	classTimings: ClosedRange<LocalTime>?,
+	onSubjectClick: (String) -> Unit,
 	onDeleteClass: (Long) -> Unit,
 	onEditClass: (Long) -> Unit,
 	unselectClass: () -> Unit,
@@ -259,58 +266,70 @@ private fun LessonDialog(
 		onCloseRequest = { unselectClass(); it.hide() },
 	) {
 		if (classDetailed != null && selectedDate != null) {
-			Column(Modifier.padding(dimensionResource(R.dimen.horizontal_margin))) {
-				Text(
-					classDetailed.subject.getName(),
-					style = MaterialTheme.typography.titleMedium
-				)
-				Spacer(modifier = Modifier.padding(vertical = 4.dp))
-				Text(
-					selectedDate.dayOfWeek.name,
-					style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Normal)
-				)
-				Spacer(modifier = Modifier.padding(vertical = 2.dp))
-				
-				val text: String =
-					if (classTimings != null) {
-						classTimings.start.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)) +
-								" - " +
-								classTimings.endInclusive.format(
-									DateTimeFormatter.ofLocalizedTime(
-										FormatStyle.SHORT
-									)
-								)
-					} else stringResource(
-						R.string.class_out_of_strokes_bounds_message,
-						classDetailed.lesson.index + 1
+			Column(
+				modifier = Modifier
+					.padding(dimensionResource(R.dimen.horizontal_margin))
+			
+			) {
+				Column(
+					modifier = Modifier
+						.fillMaxWidth()
+						.clip(MaterialTheme.shapes.extraLarge)
+						.clickable {
+							onSubjectClick(classDetailed.subject.subjectId)
+							dialogState.hide()
+						}
+						.padding(dimensionResource(R.dimen.list_item_padding)),
+					verticalArrangement = Arrangement.Center,
+				) {
+					Text(
+						classDetailed.subject.getName(),
+						style = MaterialTheme.typography.titleMedium
 					)
-				Text(
-					text,
-					style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Normal)
-				)
-				Spacer(modifier = Modifier.padding(vertical = 4.dp))
+					Spacer(modifier = Modifier.padding(vertical = 4.dp))
+					Text(
+						selectedDate.dayOfWeek.name,
+						style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Normal)
+					)
+					Spacer(modifier = Modifier.padding(vertical = 2.dp))
+					
+					val text: String =
+						if (classTimings != null) {
+							classTimings.start.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)) +
+									" - " +
+									classTimings.endInclusive.format(
+										DateTimeFormatter.ofLocalizedTime(
+											FormatStyle.SHORT
+										)
+									)
+						} else stringResource(
+							R.string.class_out_of_strokes_bounds_message,
+							classDetailed.lesson.index + 1
+						)
+					Text(
+						text,
+						style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Normal)
+					)
+				}
 				Row(
 					modifier = Modifier.fillMaxWidth(),
 					horizontalArrangement = Arrangement.Center
 				) {
-					val coroutineScope = rememberCoroutineScope()
-					FilledTonalButton(
-						onClick = {
-							coroutineScope.launch {
-								onEditClass(classDetailed.lesson.lessonId)
-								dialogState.hide()
-							}
-						},
-						modifier = Modifier.weight(0.45f)
-					) {
-						Text(text = stringResource(R.string.btn_edit))
-					}
-					Spacer(modifier = Modifier.weight(0.1f))
 					FilledTonalButton(
 						onClick = { onDeleteClass(classDetailed.lesson.lessonId) },
 						modifier = Modifier.weight(0.45f)
 					) {
 						Text(text = stringResource(R.string.btn_delete))
+					}
+					Spacer(modifier = Modifier.weight(0.1f))
+					FilledTonalButton(
+						onClick = {
+							onEditClass(classDetailed.lesson.lessonId)
+							dialogState.hide()
+						},
+						modifier = Modifier.weight(0.45f)
+					) {
+						Text(text = stringResource(R.string.btn_edit))
 					}
 				}
 				val cabinetText = remember(classDetailed) {
@@ -319,6 +338,7 @@ private fun LessonDialog(
 				if (cabinetText != null) {
 					Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding)))
 					Row(
+						modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.list_item_padding)),
 						verticalAlignment = Alignment.CenterVertically,
 						horizontalArrangement = Arrangement.SpaceBetween
 					) {
@@ -349,6 +369,7 @@ private fun LessonDialog(
 private fun MainScreenContent(
 	modifier: Modifier,
 	isLoading: Boolean,
+	daysCounters: List<DaysCounter>,
 	itemList: List<MainScreenItem>,
 	onRefresh: () -> Unit,
 	onScheduleShowMore: () -> Unit,
@@ -361,8 +382,8 @@ private fun MainScreenContent(
 ) {
 	LoadingContent(
 		modifier = modifier,
-		loading = isLoading,
-		empty = itemList.isEmpty(),
+		isLoading = isLoading,
+		empty = (itemList.isEmpty() && daysCounters.isEmpty()),
 		isContentScrollable = true,
 		onRefresh = onRefresh
 	) {
@@ -370,10 +391,23 @@ private fun MainScreenContent(
 			Column(
 				modifier = Modifier
 					.verticalScroll(rememberScrollState())
+					.fillMaxWidth()
 					.padding(horizontal = dimensionResource(id = R.dimen.horizontal_margin))
 			) {
+				DaysLeftBoard(counters = daysCounters)
+				if (itemList.isEmpty()) {
+					Box(
+						contentAlignment = Alignment.Center,
+						modifier = Modifier.fillMaxSize()
+					) {
+						Text(
+							text = stringResource(id = R.string.holidays),
+							style = MaterialTheme.typography.displayMedium,
+							modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding))
+						)
+					}
+				}
 				itemList.forEach {
-					if (it.date.dayOfWeek == DayOfWeek.SUNDAY) return@forEach
 					if (it.date == Utils.currentDate) {
 						key(it.date, it.classes, it.pattern) {
 							CurrentDay(
@@ -403,6 +437,33 @@ private fun MainScreenContent(
 			}
 		}
 	}
+}
+
+@Composable
+private fun DaysLeftBoard(
+	counters: List<DaysCounter>,
+) {
+	Column {
+		counters.forEach {
+			if (it.value != null) {
+				key(it) {
+					DaysLeftItem(title = it.textRes, value = it.value)
+				}
+			}
+		}
+	}
+}
+
+@Composable
+private fun DaysLeftItem(
+	@StringRes title: Int,
+	value: Int,
+) {
+	Text(
+		text = stringResource(id = title) + ": " + value,
+		style = MaterialTheme.typography.bodyLarge,
+		modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding))
+	)
 }
 
 @Composable
@@ -731,7 +792,7 @@ private fun LessonInfo(
 		)
 	} else {
 		LessonBrief(
-			subjectEntity = lessonWithSubject.subject,
+			lessonWithSubject = lessonWithSubject,
 			startTime = startTime,
 			endTime = endTime,
 			onLessonClick = onLessonClick,
@@ -999,7 +1060,7 @@ private fun LessonDetailed(
 
 @Composable
 private fun LessonBrief(
-	subjectEntity: SubjectEntity,
+	lessonWithSubject: LessonWithSubject,
 	startTime: LocalTime?,
 	endTime: LocalTime?,
 	onLessonClick: () -> Unit,
@@ -1027,7 +1088,7 @@ private fun LessonBrief(
 			)
 			Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.list_item_padding)))
 			Text(
-				text = subjectEntity.getName(),
+				text = lessonWithSubject.subject.getName(),
 				style = MaterialTheme.typography.bodyLarge,
 				maxLines = 1,
 				overflow = TextOverflow.Ellipsis
@@ -1048,10 +1109,10 @@ private fun LessonBrief(
 					style = MaterialTheme.typography.bodyMedium
 				)
 			}
-			val cabinet = remember(subjectEntity) {
-				subjectEntity.getCabinetString()
+			val cabinetText = remember(lessonWithSubject) {
+				lessonWithSubject.lesson.cabinet ?: lessonWithSubject.subject.cabinet
 			}
-			if (cabinet.isNotBlank()) {
+			if (cabinetText != null) {
 				Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.list_item_padding)))
 				Row(
 					verticalAlignment = Alignment.CenterVertically
@@ -1061,7 +1122,7 @@ private fun LessonBrief(
 						contentDescription = "Time of lesson left"
 					)
 					Text(
-						text = subjectEntity.getCabinetString(),
+						text = cabinetText,
 						style = MaterialTheme.typography.bodyMedium
 					)
 				}
@@ -1200,6 +1261,7 @@ private fun MainScreenContentPreview() {
 			MainScreenContent(
 				modifier = Modifier,
 				isLoading = false,
+				daysCounters = emptyList(),
 				itemList = previewItems,
 				onRefresh = {},
 				onScheduleShowMore = {},
@@ -1208,8 +1270,7 @@ private fun MainScreenContentPreview() {
 				onDeleteClick = {},
 				onTaskClicked = {},
 				onTaskChecked = { _, _ -> },
-				onTasksShowMore = {},
-			)
+			) {}
 		}
 	}
 }

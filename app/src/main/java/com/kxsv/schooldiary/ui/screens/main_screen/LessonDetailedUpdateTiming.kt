@@ -7,5 +7,5 @@ enum class LessonDetailedUpdateTiming(val timing: Long) {
 	LONG(15_000L),
 	DEFAULT(5_000L),
 	SHORT(1_000L),
-	VERY_SHORT(500L)
+	VERY_SHORT(100L)
 }

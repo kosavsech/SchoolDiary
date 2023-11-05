@@ -30,7 +30,9 @@ import com.kxsv.schooldiary.di.util.ScheduleSummaryNotification
 import com.kxsv.schooldiary.ui.screens.destinations.DayScheduleScreenDestination
 import com.kxsv.schooldiary.ui.screens.grade_list.MY_URI
 import com.kxsv.schooldiary.util.PERMISSION_REQUEST_CODE
+import com.kxsv.schooldiary.util.ScheduleCompareResult
 import com.kxsv.schooldiary.util.Utils
+import com.kxsv.schooldiary.util.Utils.monthDayDateFormatter
 import com.kxsv.schooldiary.util.isPermissionGranted
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -39,7 +41,6 @@ import org.jsoup.HttpStatusException
 import org.jsoup.UnsupportedMimeTypeException
 import java.io.IOException
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
@@ -132,7 +133,7 @@ class ScheduleSyncWorker @AssistedInject constructor(
 		return scheduleSummaryNotificationBuilder.build()
 	}
 	
-	private fun createNotification(schedule: Map.Entry<LocalDate, Utils.ScheduleCompareResult>): Notification {
+	private fun createNotification(schedule: Map.Entry<LocalDate, ScheduleCompareResult>): Notification {
 		createNotificationChannel()
 		val title = if (schedule.value.isNew) {
 			"New schedule"
@@ -141,10 +142,10 @@ class ScheduleSyncWorker @AssistedInject constructor(
 		}
 		val text = if (schedule.value.isNew) {
 			"Fetched on date: " +
-					schedule.key.format(DateTimeFormatter.ISO_LOCAL_DATE)
+					schedule.key.format(monthDayDateFormatter)
 		} else {
 			"Fetched on date: " +
-					schedule.key.format(DateTimeFormatter.ISO_LOCAL_DATE)
+					schedule.key.format(monthDayDateFormatter)
 		}
 		
 		val validDayScheduleScreenRoute = if (schedule.value.isNew) {

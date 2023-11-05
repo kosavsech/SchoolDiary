@@ -12,8 +12,8 @@ import com.kxsv.schooldiary.data.util.DataIdGenUtils.generateGradeId
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.ApplicationScope
 import com.kxsv.schooldiary.di.util.Dispatcher
+import com.kxsv.schooldiary.util.Extensions.toList
 import com.kxsv.schooldiary.util.Utils
-import com.kxsv.schooldiary.util.Utils.toList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -50,11 +50,11 @@ class GradeRepositoryImpl @Inject constructor(
 		return gradeDataSource.observeAlleWithSubjectOrderedByFetchDate()
 	}
 	
-	override fun getGradesBySubjectIdStream(subjectId: String): Flow<List<GradeEntity>> {
+	override fun observeGradesBySubjectId(subjectId: String): Flow<List<GradeEntity>> {
 		return gradeDataSource.observeAllBySubjectId(subjectId)
 	}
 	
-	override fun getGradeStream(gradeId: String): Flow<GradeEntity> {
+	override fun observeGradeById(gradeId: String): Flow<GradeEntity> {
 		return gradeDataSource.observeById(gradeId)
 	}
 	

@@ -15,6 +15,17 @@ interface StudyDayDao {
 	@Query("SELECT * FROM $STUDY_DAY_TABLE_NAME WHERE studyDayId = :studyDayId")
 	fun observeById(studyDayId: Long): Flow<StudyDayEntity>
 	
+	@Transaction
+	@Query(
+		"SELECT * FROM $STUDY_DAY_TABLE_NAME WHERE date >= :startDate AND date <= :endDate " +
+				"ORDER BY $STUDY_DAY_TABLE_NAME.date ASC " +
+				"LIMIT 6"
+	)
+	fun observeWeekSample(
+		startDate: LocalDate,
+		endDate: LocalDate,
+	): Flow<List<StudyDayWithSchedulesAndSubjects>>
+	
 	@Query("SELECT * FROM $STUDY_DAY_TABLE_NAME")
 	suspend fun getAll(): List<StudyDayEntity>
 	
@@ -29,6 +40,17 @@ interface StudyDayDao {
 	suspend fun getByDateWithSchedulesAndSubjects(date: LocalDate): StudyDayWithSchedulesAndSubjects?
 	
 	@Transaction
+	@Query(
+		"SELECT * FROM $STUDY_DAY_TABLE_NAME WHERE date >= :startDate AND date <= :endDate " +
+				"ORDER BY $STUDY_DAY_TABLE_NAME.date ASC " +
+				"LIMIT 6"
+	)
+	suspend fun getWeekSample(
+		startDate: LocalDate,
+		endDate: LocalDate,
+	): List<StudyDayWithSchedulesAndSubjects>?
+	
+	@Transaction
 	@RewriteQueriesToDropUnusedColumns
 	@Query(
 		"SELECT $STUDY_DAY_TABLE_NAME.date FROM $STUDY_DAY_TABLE_NAME " +
@@ -38,7 +60,7 @@ interface StudyDayDao {
 				"ORDER BY $STUDY_DAY_TABLE_NAME.date ASC " +
 				"LIMIT 1"
 	)
-	suspend fun getDateForNextLessonOfSubject(subjectId: String, startDate: LocalDate): LocalDate
+	suspend fun getDateForNextLessonOfSubject(subjectId: String, startDate: LocalDate): LocalDate?
 	
 	@Upsert
 	suspend fun upsertAll(studyDays: List<StudyDayEntity>)

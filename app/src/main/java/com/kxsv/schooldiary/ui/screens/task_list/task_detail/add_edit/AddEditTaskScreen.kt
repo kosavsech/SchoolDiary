@@ -52,9 +52,9 @@ import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AddEditTaskScreenNavActions
 import com.kxsv.schooldiary.ui.screens.navArgs
+import com.kxsv.schooldiary.ui.util.AppSnackbarHost
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.util.Utils
-import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.result.ResultBackNavigator
@@ -223,7 +223,7 @@ private fun AddEditSubjectContent(
 	changeSubject: (SubjectEntity) -> Unit,
 ) {
 	LoadingContent(
-		loading = isLoading,
+		isLoading = isLoading,
 		empty = false,
 	) {
 		Column(

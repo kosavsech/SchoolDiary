@@ -21,14 +21,19 @@ import com.kxsv.schooldiary.data.repository.TaskRepository
 import com.kxsv.schooldiary.data.repository.UpdateRepository
 import com.kxsv.schooldiary.data.repository.UserPreferencesRepository
 import com.kxsv.schooldiary.data.util.AppVersionState
+import com.kxsv.schooldiary.data.util.user_preferences.Period
+import com.kxsv.schooldiary.data.util.user_preferences.PeriodType
 import com.kxsv.schooldiary.di.util.AppDispatchers
 import com.kxsv.schooldiary.di.util.Dispatcher
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.DELETE_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
+import com.kxsv.schooldiary.ui.util.DaysCounter
+import com.kxsv.schooldiary.ui.util.DaysCounterType
 import com.kxsv.schooldiary.ui.util.WhileUiSubscribed
+import com.kxsv.schooldiary.util.Extensions.toList
 import com.kxsv.schooldiary.util.Utils
-import com.kxsv.schooldiary.util.Utils.toList
+import com.kxsv.schooldiary.util.Utils.isHoliday
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -47,6 +52,7 @@ import java.time.LocalTime
 import javax.inject.Inject
 
 data class MainUiState(
+	val daysCounter: List<DaysCounter> = emptyList(),
 	val itemList: List<MainScreenItem> = emptyList(),
 	val classDetailed: LessonWithSubject? = null,
 	val classDetailedDate: LocalDate? = null,
@@ -99,7 +105,9 @@ class MainScreenViewModel @Inject constructor(
 		_uiState, _classes, _tasks, _patterns
 	) { state, classes, tasks, patterns ->
 		val itemList = mutableListOf<MainScreenItem>()
+		val periodsRanges = userPreferencesRepository.getPeriodsRanges()
 		(startRange..endRange).toList().forEach { itemDate ->
+			if (isHoliday(itemDate, termsPeriodsRanges.value)) return@forEach
 			val item = MainScreenItem(
 				date = itemDate,
 				tasks = tasks[itemDate] ?: emptyList(),
@@ -119,6 +127,33 @@ class MainScreenViewModel @Inject constructor(
 	private var netFetchJob: Job? = null
 	
 	val toShowUpdateDialog = MutableStateFlow<AppVersionState>(AppVersionState.NotFound)
+	private var termsPeriodsRanges = MutableStateFlow<List<ClosedRange<LocalDate>>>(emptyList())
+	
+	init {
+		viewModelScope.launch(ioDispatcher) {
+			val periodType = userPreferencesRepository.getEducationPeriodType()
+			val allPeriodRanges = userPreferencesRepository.getPeriodsRanges()
+			termsPeriodsRanges.update {
+				allPeriodRanges
+					.filter { Period.getTypeByPeriod(it.period) == PeriodType.TERMS }
+					.map {
+						Utils.periodRangeEntryToLocalDate(it.range.start)..Utils.periodRangeEntryToLocalDate(
+							it.range.end
+						)
+					}
+			}
+			
+			val newDaysCounterList = mutableListOf<DaysCounter>()
+			DaysCounterType.values().forEach { daysCounterType ->
+				val daysCounter = DaysCounter(
+					textRes = daysCounterType.textRes,
+					value = daysCounterType.calculate(allPeriodRanges, periodType)
+				)
+				newDaysCounterList.add(daysCounter)
+			}
+			_uiState.update { it.copy(daysCounter = newDaysCounterList) }
+		}
+	}
 	
 	private fun observeIsUpdateAvailable() {
 		viewModelScope.launch(ioDispatcher) {

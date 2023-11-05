@@ -12,6 +12,8 @@ interface UserPreferencesRepository {
 	
 	fun observeTargetMark(): Flow<Double>
 	
+	fun observeLowerBoundMark(): Flow<Double>
+	
 	fun observeEducationPeriodType(): Flow<PeriodType>
 	
 	fun observePeriodsRanges(): Flow<PersistentList<PeriodWithRange>>
@@ -35,6 +37,10 @@ interface UserPreferencesRepository {
 	suspend fun getTargetMark(): Double
 	
 	suspend fun setTargetMark(targetMark: Double)
+	
+	suspend fun getLowerBoundMark(): Double
+	
+	suspend fun setLowerBoundMark(lowerBoundMark: Double)
 	
 	suspend fun getEducationPeriodType(): PeriodType
 	

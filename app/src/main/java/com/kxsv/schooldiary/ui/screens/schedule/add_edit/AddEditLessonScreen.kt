@@ -68,12 +68,15 @@ import com.kxsv.schooldiary.ui.main.app_bars.topbar.AddEditScheduleTopAppBar
 import com.kxsv.schooldiary.ui.main.navigation.ADD_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.EDIT_RESULT_OK
 import com.kxsv.schooldiary.ui.main.navigation.nav_actions.AddEditLessonScreenNavActions
+import com.kxsv.schooldiary.ui.screens.destinations.AddEditSubjectScreenDestination
+import com.kxsv.schooldiary.ui.util.AppSnackbarHost
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.util.Utils
-import com.kxsv.schooldiary.util.Utils.AppSnackbarHost
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.ramcosta.composedestinations.result.NavResult
 import com.ramcosta.composedestinations.result.ResultBackNavigator
+import com.ramcosta.composedestinations.result.ResultRecipient
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.MaterialDialogState
 import com.vanpra.composematerialdialogs.datetime.date.datepicker
@@ -94,6 +97,7 @@ data class AddEditLessonDestinationNavArgs(
 @Composable
 fun AddEditLessonScreen(
 	resultBackNavigator: ResultBackNavigator<Int>,
+	subjectAddEditResult: ResultRecipient<AddEditSubjectScreenDestination, Int>,
 	destinationsNavigator: DestinationsNavigator,
 	viewModel: AddEditLessonViewModel = hiltViewModel(),
 	snackbarHostState: SnackbarHostState,
@@ -102,6 +106,15 @@ fun AddEditLessonScreen(
 	val navigator = AddEditLessonScreenNavActions(
 		destinationsNavigator = destinationsNavigator, resultBackNavigator = resultBackNavigator
 	)
+	subjectAddEditResult.onNavResult { result ->
+		when (result) {
+			is NavResult.Canceled -> {}
+			is NavResult.Value -> {
+				viewModel.showEditResultMessage(result.value)
+				viewModel.loadAvailableSubjects()
+			}
+		}
+	}
 	val saveLesson = remember {
 		{ viewModel.saveLesson() }
 	}
@@ -138,6 +151,9 @@ fun AddEditLessonScreen(
 		val updateCabinet = remember<(String) -> Unit> {
 			{ viewModel.updateCabinet(it) }
 		}
+		val onCreateSubject = remember {
+			{ navigator.onCreateSubject() }
+		}
 		AddEditLessonContent(
 			modifier = Modifier.padding(paddingValues),
 			isLoading = uiState.isLoading,
@@ -153,7 +169,8 @@ fun AddEditLessonScreen(
 			onSubjectChanged = saveSelectedSubject,
 			onDateChanged = updateDate,
 			onIndexUpdate = updateIndex,
-			onCabinetUpdate = updateCabinet
+			onCabinetUpdate = updateCabinet,
+			onCreateSubject = onCreateSubject
 		)
 		
 		LaunchedEffect(uiState.isClassSaved) {
@@ -191,9 +208,10 @@ private fun AddEditLessonContent(
 	onDateChanged: (LocalDate) -> Unit,
 	onIndexUpdate: (String) -> Unit,
 	onCabinetUpdate: (String) -> Unit,
+	onCreateSubject: () -> Unit,
 ) {
 	LoadingContent(
-		loading = isLoading,
+		isLoading = isLoading,
 		empty = false,
 		emptyContent = { Text(text = "Empty") },
 		onRefresh = {}) {
@@ -207,7 +225,8 @@ private fun AddEditLessonContent(
 				initialSubjectSelection = initialSubjectSelection,
 				onSubjectChanged = onSubjectChanged,
 				subjects = subjects,
-				onSubjectDialogShown = onSubjectDialogShown
+				onSubjectDialogShown = onSubjectDialogShown,
+				onCreateSubject = onCreateSubject
 			)
 			Divider(
 				Modifier
@@ -412,6 +431,7 @@ private fun SubjectRow(
 	subjects: List<SubjectEntity>,
 	onSubjectDialogShown: () -> Unit,
 	subjectDialog: MaterialDialogState = rememberMaterialDialogState(false),
+	onCreateSubject: () -> Unit,
 ) {
 	Row(
 		modifier = Modifier
@@ -439,7 +459,8 @@ private fun SubjectRow(
 		dialogState = subjectDialog,
 		subjects = subjects.map { listSubject -> listSubject.getName() },
 		initialSelection = initialSubjectSelection,
-		onChoiceChange = onSubjectChanged
+		onChoiceChange = onSubjectChanged,
+		onCreateSubject = onCreateSubject
 	)
 }
 
@@ -469,16 +490,21 @@ private fun DatePickerDialog(
 
 @Composable
 private fun SubjectPickerDialog(
+	isLoading: Boolean,
 	dialogState: MaterialDialogState,
 	subjects: List<String>,
 	initialSelection: Int?,
 	onChoiceChange: (Int) -> Unit,
-	isLoading: Boolean,
+	onCreateSubject: () -> Unit,
 ) {
 	if (!isLoading) {
 		MaterialDialog(
 			dialogState = dialogState,
 			buttons = {
+				button(
+					res = R.string.btn_add,
+					onClick = onCreateSubject
+				)
 				positiveButton(res = R.string.btn_select)
 				negativeButton(res = R.string.btn_cancel)
 			}
@@ -523,7 +549,8 @@ private fun AddEditScheduleContentPreview() {
 			onSubjectDialogShown = {},
 			onSubjectChanged = {},
 			onDateChanged = {},
-			onIndexUpdate = {}
+			onIndexUpdate = {},
+			{}
 		) {}
 	}
 }
