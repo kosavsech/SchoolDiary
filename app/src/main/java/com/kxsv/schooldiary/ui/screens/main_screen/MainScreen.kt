@@ -82,6 +82,7 @@ import com.kxsv.schooldiary.ui.util.AppSnackbarHost
 import com.kxsv.schooldiary.ui.util.DaysCounter
 import com.kxsv.schooldiary.ui.util.LoadingContent
 import com.kxsv.schooldiary.util.Utils
+import com.kxsv.schooldiary.util.Utils.convertMillis
 import com.kxsv.schooldiary.util.Utils.fromLocalTime
 import com.kxsv.schooldiary.util.Utils.getCurrentLessonIndexByTime
 import com.kxsv.schooldiary.util.Utils.getIndexOfClosestLessonToTime
@@ -144,12 +145,12 @@ fun MainScreen(
 			is AppVersionState.MustUpdate -> {
 				updateDialog.onMandatoryUpdate(toShowUpdateDialog.update)
 			}
-			
+
 			is AppVersionState.ShouldUpdate -> {
 				updateDialog.onAvailableUpdate(toShowUpdateDialog.update)
 				viewModel.onUpdateDialogShown()
 			}
-			
+
 			else -> Unit
 		}
 	}
@@ -165,7 +166,7 @@ fun MainScreen(
 	) { paddingValues ->
 		val uiState = viewModel.uiState.collectAsState().value
 		val classDialogState = rememberMaterialDialogState(false)
-		
+
 		val onRefresh = remember {
 			{ viewModel.refresh() }
 		}
@@ -215,7 +216,7 @@ fun MainScreen(
 		val onTasksShowMore = remember<(LocalDate) -> Unit> {
 			{ navigator.onTasksShowMore(date = it) }
 		}
-		
+
 		MainScreenContent(
 			modifier = Modifier.padding(paddingValues),
 			isLoading = uiState.isLoading,
@@ -230,7 +231,7 @@ fun MainScreen(
 			onTaskClicked = onTaskClicked,
 			onTasksShowMore = onTasksShowMore,
 		)
-		
+
 		val onSubjectClick = remember<(String) -> Unit> {
 			{ navigator.onSubjectClick(it) }
 		}
@@ -269,7 +270,7 @@ private fun LessonDialog(
 			Column(
 				modifier = Modifier
 					.padding(dimensionResource(R.dimen.horizontal_margin))
-			
+
 			) {
 				Column(
 					modifier = Modifier
@@ -292,7 +293,7 @@ private fun LessonDialog(
 						style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Normal)
 					)
 					Spacer(modifier = Modifier.padding(vertical = 2.dp))
-					
+
 					val text: String =
 						if (classTimings != null) {
 							classTimings.start.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)) +
@@ -481,14 +482,14 @@ private fun CurrentDay(
 			elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.0.dp)
 		) {
 			Column {
-				var currentTime by remember { mutableStateOf(LocalTime.now()) }
-				LaunchedEffect(currentTime) {
+				var timeUpdatedByTiming by remember { mutableStateOf(LocalTime.now()) }
+				LaunchedEffect(timeUpdatedByTiming) {
 					delay(CURRENT_DAY_INFO_UPDATE_TIMING)
-					currentTime = LocalTime.now()
+					timeUpdatedByTiming = LocalTime.now()
 				}
-				
-				val currentLessonIndex = remember(currentPattern, currentTime) {
-					currentPattern.getCurrentLessonIndexByTime(currentTime)
+
+				val currentLessonIndex = remember(currentPattern, timeUpdatedByTiming) {
+					currentPattern.getCurrentLessonIndexByTime(timeUpdatedByTiming)
 				}
 				val currentLesson = remember(currentLessonIndex, classes) {
 					if (currentLessonIndex == null) return@remember null
@@ -507,7 +508,7 @@ private fun CurrentDay(
 							lessonWithSubject = currentLesson,
 							startTime = startTime,
 							endTime = endTime,
-							currentTime = currentTime,
+							timeUpdatedByTiming = timeUpdatedByTiming,
 							onLessonClick = {
 								onLessonClick(
 									currentLesson,
@@ -520,21 +521,22 @@ private fun CurrentDay(
 						)
 					}
 				}
-				
-				val nextFourLessonsIndices = remember(currentTime, currentPattern, classes) {
-					if (currentPattern.isNotEmpty() && classes.isNotEmpty()) {
-						classes.keys.getNextLessonsIndices(
-							n = 4,
-							startIndex = classes.keys
-								.getIndexOfClosestLessonToTime(
-									time = currentTime,
-									pattern = currentPattern
-								)
-						)
-					} else null
-				}
-				
-				
+
+				val nextFourLessonsIndices =
+					remember(timeUpdatedByTiming, currentPattern, classes) {
+						if (currentPattern.isNotEmpty() && classes.isNotEmpty()) {
+							classes.keys.getNextLessonsIndices(
+								n = 4,
+								startIndex = classes.keys
+									.getIndexOfClosestLessonToTime(
+										time = timeUpdatedByTiming,
+										pattern = currentPattern
+									)
+							)
+						} else null
+					}
+
+
 				nextFourLessonsIndices?.forEach { lessonIndex ->
 					key(lessonIndex, currentLesson, classes, currentPattern) {
 						val isDetailed = (lessonIndex == nextFourLessonsIndices.first())
@@ -557,7 +559,7 @@ private fun CurrentDay(
 							lessonWithSubject = lessonWithSubject,
 							startTime = startTime,
 							endTime = endTime,
-							currentTime = currentTime,
+							timeUpdatedByTiming = timeUpdatedByTiming,
 							onLessonClick = {
 								onLessonClick(classes[lessonIndex], Utils.currentDate, timings)
 							},
@@ -569,18 +571,18 @@ private fun CurrentDay(
 						}
 					}
 				}
-				
+
 				val emptyLessonsTextRes =
 					remember(currentPattern, classes, nextFourLessonsIndices, currentLesson) {
 						when {
 							currentPattern.isEmpty() -> R.string.pattern_not_set
-							
+
 							classes.isEmpty() -> R.string.no_schedule_for_day
-							
+
 							nextFourLessonsIndices.isNullOrEmpty() && (currentLesson == null) -> {
 								R.string.study_day_passed
 							}
-							
+
 							else -> null
 						}
 					}
@@ -607,7 +609,7 @@ private fun ScheduleDay(
 	onTaskClicked: (String) -> Unit,
 	onTasksShowMore: () -> Unit,
 ) {
-	Column() {
+	Column {
 		key(date) { DayHeader(date = date) }
 		ElevatedCard(
 			elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.0.dp)
@@ -641,7 +643,7 @@ fun ShowMore(
 	onClick: () -> Unit,
 ) {
 	Divider()
-	
+
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -669,7 +671,7 @@ fun ShowMore(
 			tint = LocalContentColor.current
 		)
 	}
-	
+
 }
 
 @Composable
@@ -773,7 +775,7 @@ private fun LessonInfo(
 	lessonWithSubject: LessonWithSubject,
 	startTime: LocalTime?,
 	endTime: LocalTime?,
-	currentTime: LocalTime,
+	timeUpdatedByTiming: LocalTime,
 	onLessonClick: () -> Unit,
 	onEditClass: () -> Unit,
 	onDeleteClick: () -> Unit,
@@ -785,7 +787,7 @@ private fun LessonInfo(
 			lessonWithSubject = lessonWithSubject,
 			startTime = startTime,
 			endTime = endTime,
-			currentTime = currentTime,
+			timeUpdatedByTiming = timeUpdatedByTiming,
 			onLessonClick = onLessonClick,
 			onEditClass = onEditClass,
 			onDeleteClick = onDeleteClick
@@ -818,9 +820,9 @@ private fun DayHeader(
 		val dayOfWeekText = remember(date) {
 			when (date) {
 				Utils.currentDate -> context.getString(R.string.today_filter)
-				
+
 				Utils.currentDate.plusDays(1) -> context.getString(R.string.tomorrow_filter)
-				
+
 				else -> date.dayOfWeek.getDisplayName(TextStyle.FULL_STANDALONE, Locale.ENGLISH)
 			}
 		}
@@ -836,24 +838,18 @@ private fun DayHeader(
 }
 
 @Composable
-fun Countdown(targetTime: Int?, delay: Long, content: @Composable (remainingTime: Int?) -> Unit) {
+fun Countdown(targetTime: Int, delay: Long, content: @Composable (remainingTime: Int) -> Unit) {
+	val currentTimeInMilli = LocalTime.now().toKotlinLocalTime().toMillisecondOfDay()
 	var remainingTime by remember(targetTime) {
-		mutableIntStateOf(
-			targetTime?.minus(
-				LocalTime.now().toKotlinLocalTime().toMillisecondOfDay()
-			) ?: Int.MIN_VALUE
-		)
+		mutableIntStateOf(targetTime.minus(currentTimeInMilli))
 	}
-	
-	content.invoke(if (remainingTime == Int.MIN_VALUE) null else remainingTime)
-	
+
+	content.invoke(remainingTime)
+
 	LaunchedEffect(remainingTime) {
-		if (targetTime != null) {
-			val diff = remainingTime - (targetTime - LocalTime.now().toKotlinLocalTime()
-				.toMillisecondOfDay())
-			delay(delay - diff)
-			remainingTime = targetTime - LocalTime.now().toKotlinLocalTime().toMillisecondOfDay()
-		}
+		val diff = remainingTime - (targetTime - currentTimeInMilli)
+		delay(delay - diff)
+		remainingTime = targetTime - currentTimeInMilli
 	}
 }
 
@@ -864,13 +860,13 @@ private fun LessonDetailed(
 	lessonWithSubject: LessonWithSubject,
 	startTime: LocalTime?,
 	endTime: LocalTime?,
-	currentTime: LocalTime,
+	timeUpdatedByTiming: LocalTime,
 	onLessonClick: () -> Unit,
 	onEditClass: () -> Unit,
 	onDeleteClick: () -> Unit,
 ) {
 	var delay by remember { mutableStateOf(LessonDetailedUpdateTiming.VERY_SHORT) }
-	
+
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -927,30 +923,32 @@ private fun LessonDetailed(
 					contentDescription = "Time until lesson start/end"
 				)
 				Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.list_item_padding) / 2))
-				val targetTime = remember(currentTime, startTime, endTime) {
-					if (startTime == null || endTime == null) return@remember null
-					if (currentTime in startTime..endTime) {
-						endTime.toKotlinLocalTime().toMillisecondOfDay()
+				val (countdownTargetTime, isCountingToEnd) = remember(
+					timeUpdatedByTiming,
+					startTime,
+					endTime
+				) {
+					if (startTime == null || endTime == null) return@remember Pair(null, true)
+					if (timeUpdatedByTiming in startTime..endTime) {
+						Pair(endTime.toKotlinLocalTime().toMillisecondOfDay(), true)
 					} else {
-						startTime.toKotlinLocalTime().toMillisecondOfDay()
+						Pair(startTime.toKotlinLocalTime().toMillisecondOfDay(), false)
+
 					}
 				}
-				Countdown(targetTime, delay.timing) { remainingTimeMillis ->
-					val timeUntil = if (remainingTimeMillis != null) {
-						val hours = (((remainingTimeMillis % dayMilSec) / hourMilSec)).toInt()
-						val minutes =
-							(((remainingTimeMillis % dayMilSec % hourMilSec) / minMilSec)).toInt()
-						val seconds =
-							(((remainingTimeMillis % dayMilSec % hourMilSec % minMilSec) / secMilSec)).toInt()
-						val milliSeconds = remainingTimeMillis % secMilSec
-						
-						if (hours < 0 || minutes < 0 || seconds < 0 || remainingTimeMillis <= 0) {
+				if (countdownTargetTime == null) {
+					Text(
+						text = stringResource(R.string.no_pattern_stroke),
+						style = MaterialTheme.typography.bodyMedium
+					)
+				} else {
+					Countdown(countdownTargetTime, delay.timing) { remainingTime ->
+						val convertedMillis = convertMillis(remainingTime)
+						val (hours, minutes, seconds, milliSeconds) = convertedMillis
+
+						val timeUntil = if (remainingTime <= 0) {
 							delay = LessonDetailedUpdateTiming.LONG
-							if (startTime != null && endTime != null) {
-								if (LocalTime.now() in startTime..endTime) "Finished" else "Started"
-							} else {
-								"Finished"
-							}
+							if (isCountingToEnd) "Finished" else "Started"
 						} else {
 							when {
 								hours < 1 && minutes < 1 -> {
@@ -960,32 +958,31 @@ private fun LessonDetailed(
 										in 11..99 -> milliSeconds.div(10f).roundToInt()
 										else -> milliSeconds
 									}
-									"$seconds.$tens S"
+									"$seconds.$tens s"
 								}
-								
+
 								hours < 1 && minutes < 5 -> {
 									delay = LessonDetailedUpdateTiming.SHORT
 									"$minutes m ${seconds + 1} s"
 								}
-								
+
 								hours < 1 -> {
 									delay = LessonDetailedUpdateTiming.DEFAULT
 									"${minutes + 1} m"
 								}
-								
+
 								else -> {
 									delay = LessonDetailedUpdateTiming.VERY_LONG
 									"$hours h ${minutes + 1} m"
 								}
 							}
 						}
-					} else null
-					Text(
-						text = timeUntil ?: stringResource(R.string.no_pattern_stroke),
-						style = MaterialTheme.typography.bodyMedium
-					)
+						Text(
+							text = timeUntil,
+							style = MaterialTheme.typography.bodyMedium
+						)
+					}
 				}
-				
 			}
 		}
 		Spacer(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.list_item_padding) / 2))
@@ -1030,9 +1027,9 @@ private fun LessonDetailed(
 				}
 			}
 		}
-		
-		val timeOfLessonPassed = remember(currentTime, startTime) {
-			startTime?.until(currentTime, ChronoUnit.SECONDS)?.toFloat()
+
+		val timeOfLessonPassed = remember(timeUpdatedByTiming, startTime) {
+			startTime?.until(timeUpdatedByTiming, ChronoUnit.SECONDS)?.toFloat()
 		}
 		val lessonDuration = remember(startTime, endTime) {
 			startTime?.until(endTime, ChronoUnit.SECONDS)?.toFloat()

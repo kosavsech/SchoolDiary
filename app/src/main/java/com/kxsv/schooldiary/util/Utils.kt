@@ -11,6 +11,10 @@ import com.kxsv.schooldiary.data.util.Mark
 import com.kxsv.schooldiary.data.util.user_preferences.Period
 import com.kxsv.schooldiary.data.util.user_preferences.PeriodType
 import com.kxsv.schooldiary.data.util.user_preferences.PeriodWithRange
+import com.kxsv.schooldiary.ui.screens.main_screen.dayMilSec
+import com.kxsv.schooldiary.ui.screens.main_screen.hourMilSec
+import com.kxsv.schooldiary.ui.screens.main_screen.minMilSec
+import com.kxsv.schooldiary.ui.screens.main_screen.secMilSec
 import com.kxsv.schooldiary.util.Extensions.roundTo
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -41,10 +45,10 @@ object Utils {
 		if (date.dayOfWeek == DayOfWeek.SUNDAY) return true
 		
 		val isNonWorking = date in (holidays.map { periodRangeEntryToLocalDate(it) })
-		return if (!isNonWorking) {
-			termsPeriodRanges.all { date !in it }
-		} else {
+		return if (isNonWorking) {
 			true
+		} else {
+			termsPeriodRanges.all { ranges -> date !in ranges }
 		}
 	}
 	
@@ -215,14 +219,25 @@ object Utils {
 		if (this.isEmpty()) return null
 		val studyTimeRange = this.first().startTime..this.last().endTime
 		if (currentTime !in studyTimeRange) return null
-		
+
 		this.forEach { timing ->
 			val lessonTimeRange = timing.startTime..timing.endTime
 			if (currentTime in lessonTimeRange) return timing.index
 		}
 		return null
 	}
-	
+
+	fun convertMillis(remainingTime: Int): List<Int> {
+		val hours = (((remainingTime % dayMilSec) / hourMilSec))
+		val minutes =
+			(((remainingTime % dayMilSec % hourMilSec) / minMilSec))
+		val seconds =
+			(((remainingTime % dayMilSec % hourMilSec % minMilSec) / secMilSec))
+		val milliSeconds = (remainingTime % secMilSec)
+
+		return listOf(hours, minutes, seconds, milliSeconds).map { it.toInt() }
+	}
+
 	/**
 	 * Get index of closest next lesson to time.
 	 *
