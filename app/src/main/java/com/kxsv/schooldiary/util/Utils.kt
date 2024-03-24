@@ -32,7 +32,9 @@ object Utils {
 	val monthDayDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("MMM d")
 	val currentDate: LocalDate = LocalDate.now()
 	private val holidays: List<String> = listOf(
-		"11_6", "2_23", "3_8", "5_1", "5_9", "5_10",
+		"11_6", "2_23", "2_24", "3_8", "3_9",
+		"4_29", "4_30", "5_1",
+		"5_9", "5_10",
 	)
 	
 	fun isHoliday(date: LocalDate, termsPeriodRanges: List<ClosedRange<LocalDate>>): Boolean {
