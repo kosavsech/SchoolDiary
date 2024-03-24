@@ -3,7 +3,7 @@
     "version": "0.2.1-alpha",
     "versionCode": 9,
     "apk": "https://github.com/kosavsech/SchoolDiary/releases/download/v0.2.1-alpha/app-release.apk",
-    "releaseNotes": "Fixed:\nHolidays added 29-30 of April\n",
+    "releaseNotes": "Fixed:\nHolidays added 29-30 of April\nFixed lesson time countdown text\n",
     "isCritical": false
   },
   {
